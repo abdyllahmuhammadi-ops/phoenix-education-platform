@@ -10273,6 +10273,7 @@ function TeacherGradebookStep({ onBack, onFinish, teacherClasses, prefillSchoolC
                               <span className="tgb-message-time">{m.time}</span>
                             </div>
                             <div className="tgb-message-text">{m.text}</div>
+                            <MessageAudioPlayback audio={m.audio} />
                           </div>
                         ))}
                         <div className="tgb-reply-row">
@@ -13004,6 +13005,170 @@ async function moderateSchoolMessage(text) {
   }
 }
 
+/* ============================================================
+   ققنوس — آموزش برای فردا
+   قابلیت‌های میکروفون — برای ارتباط صوتی (رهیار/پیام‌ها) و
+   ضبط صدا برای دروس قرائتی (مثل زبان و قرآن)
+   ============================================================ */
+
+// دکمه‌ی «گفتن به‌جای تایپ‌کردن» — صدا را با Web Speech API مرورگر به متن تبدیل می‌کند
+// و همان متن را داخل فیلد نوشتاری قرار می‌دهد (قابل ویرایش قبل از ارسال).
+// هیچ سرویس خارجی/پولی استفاده نمی‌شود؛ در مرورگرهایی که این قابلیت را ندارند (مثل فایرفاکس)،
+// دکمه خودش را مخفی می‌کند تا کاربر گیج نشود.
+function VoiceSpeechButton({ onTranscript, lang }) {
+  const [listening, setListening] = useState(false);
+  const [error, setError] = useState("");
+  const recognitionRef = React.useRef(null);
+
+  const SpeechRecognitionCtor =
+    typeof window !== "undefined" ? window.SpeechRecognition || window.webkitSpeechRecognition : null;
+
+  if (!SpeechRecognitionCtor) return null;
+
+  const toggleListening = () => {
+    if (listening) {
+      if (recognitionRef.current) recognitionRef.current.stop();
+      return;
+    }
+    setError("");
+    const rec = new SpeechRecognitionCtor();
+    rec.lang = lang || "fa-IR";
+    rec.interimResults = false;
+    rec.maxAlternatives = 1;
+    rec.onresult = (event) => {
+      const said = Array.from(event.results).map((r) => r[0].transcript).join(" ");
+      if (said.trim()) onTranscript(said.trim());
+    };
+    rec.onerror = () => {
+      setError("تشخیص گفتار ممکن نشد — لطفاً دوباره امتحان کنید یا به‌صورت نوشتاری ادامه دهید.");
+      setListening(false);
+    };
+    rec.onend = () => setListening(false);
+    recognitionRef.current = rec;
+    try {
+      rec.start();
+      setListening(true);
+    } catch (e) {
+      setError("دسترسی به میکروفون ممکن نشد.");
+    }
+  };
+
+  return (
+    <span className="voice-speech-wrap">
+      <button
+        type="button"
+        className={"voice-speech-btn" + (listening ? " listening" : "")}
+        onClick={toggleListening}
+        title={listening ? "در حال شنیدن... برای توقف بزنید" : "به‌جای تایپ، صحبت کنید"}
+      >
+        {listening ? "🔴 در حال شنیدن..." : "🎤 گفتن به‌جای تایپ"}
+      </button>
+      {error && <span className="voice-speech-error">{error}</span>}
+    </span>
+  );
+}
+
+// دکمه‌ی ضبط صدا — برای وقتی که خودِ صدا (نه فقط متن تبدیل‌شده) باید برای طرف مقابل ارسال شود؛
+// مناسب دروس قرائتی (زبان، قرآن) که تلفظ دقیق اهمیت دارد. حداکثر مدت ضبط محدود است تا حجم ذخیره‌سازی
+// کنترل‌شده بماند. خروجی یک data URL (base64) است که هم قابل پخش و هم قابل ذخیره در سامانه‌ی فعلی است.
+const VOICE_RECORDER_MAX_SECONDS = 90;
+
+function VoiceRecorderButton({ audio, onAudioChange }) {
+  const [recording, setRecording] = useState(false);
+  const [seconds, setSeconds] = useState(0);
+  const [error, setError] = useState("");
+  const mediaRecorderRef = React.useRef(null);
+  const chunksRef = React.useRef([]);
+  const timerRef = React.useRef(null);
+
+  const supported =
+    typeof navigator !== "undefined" && navigator.mediaDevices && typeof window.MediaRecorder !== "undefined";
+
+  if (!supported) return null;
+
+  const stopTimer = () => {
+    if (timerRef.current) {
+      clearInterval(timerRef.current);
+      timerRef.current = null;
+    }
+  };
+
+  const startRecording = async () => {
+    setError("");
+    try {
+      const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+      const recorder = new window.MediaRecorder(stream);
+      chunksRef.current = [];
+      recorder.ondataavailable = (e) => {
+        if (e.data && e.data.size > 0) chunksRef.current.push(e.data);
+      };
+      recorder.onstop = () => {
+        stream.getTracks().forEach((t) => t.stop());
+        const blob = new Blob(chunksRef.current, { type: "audio/webm" });
+        const reader = new FileReader();
+        reader.onloadend = () => {
+          onAudioChange({ dataUrl: reader.result, durationSec: seconds });
+        };
+        reader.readAsDataURL(blob);
+      };
+      mediaRecorderRef.current = recorder;
+      recorder.start();
+      setRecording(true);
+      setSeconds(0);
+      timerRef.current = setInterval(() => {
+        setSeconds((s) => {
+          const next = s + 1;
+          if (next >= VOICE_RECORDER_MAX_SECONDS) {
+            stopRecording();
+          }
+          return next;
+        });
+      }, 1000);
+    } catch (e) {
+      setError("دسترسی به میکروفون داده نشد — لطفاً اجازه‌ی استفاده از میکروفون را در مرورگر بدهید.");
+    }
+  };
+
+  const stopRecording = () => {
+    if (mediaRecorderRef.current && mediaRecorderRef.current.state !== "inactive") {
+      mediaRecorderRef.current.stop();
+    }
+    stopTimer();
+    setRecording(false);
+  };
+
+  const removeAudio = () => onAudioChange(null);
+
+  return (
+    <div className="voice-recorder-wrap">
+      {!audio ? (
+        <button
+          type="button"
+          className={"voice-record-btn" + (recording ? " recording" : "")}
+          onClick={recording ? stopRecording : startRecording}
+        >
+          {recording ? "⏹ پایان ضبط (" + seconds + "ث)" : "🎙️ ضبط صدا (مثلاً برای قرائت)"}
+        </button>
+      ) : (
+        <div className="voice-record-preview">
+          <audio controls src={audio.dataUrl} className="voice-record-audio" />
+          <button type="button" className="voice-record-remove" onClick={removeAudio}>
+            حذف ضبط
+          </button>
+        </div>
+      )}
+      {recording && <span className="voice-record-hint">حداکثر {VOICE_RECORDER_MAX_SECONDS} ثانیه</span>}
+      {error && <span className="voice-speech-error">{error}</span>}
+    </div>
+  );
+}
+
+// نمایش صوت ضبط‌شده‌ی یک پیام (در صندوق پیام‌ها/داشبورد) — در هر جایی که پیام ممکن است audio داشته باشد.
+function MessageAudioPlayback({ audio }) {
+  if (!audio || !audio.dataUrl) return null;
+  return <audio controls src={audio.dataUrl} className="voice-record-audio" style={{ marginTop: 6 }} />;
+}
+
 function MessagingStep({ onBack, initialInboxMode, initialGuardianPhone, initialSenderRole, initialMode, initialSchoolCode, initialClassName, initialStudentCode, initialAiQuestion, initialUserGender, initialUserGrade, initialUserField, previewSubjects, compensationSubjects }) {
   const [mode, setMode] = useState(initialMode || (initialInboxMode ? "inbox" : "send")); // "send" | "inbox" | "ai"
   const [senderRole, setSenderRole] = useState(initialSenderRole || "student"); // student | guardian | healthInstructor | healthMonitor | principal
@@ -13033,6 +13198,7 @@ function MessagingStep({ onBack, initialInboxMode, initialGuardianPhone, initial
   const [targetGuardianPhone, setTargetGuardianPhone] = useState("");
   const [senderName, setSenderName] = useState("");
   const [messageText, setMessageText] = useState("");
+  const [messageAudio, setMessageAudio] = useState(null); // { dataUrl, durationSec } | null — ضبط صدا (مثلاً قرائت)
   const [sent, setSent] = useState(false);
   const [sending, setSending] = useState(false);
 
@@ -13486,7 +13652,7 @@ function MessagingStep({ onBack, initialInboxMode, initialGuardianPhone, initial
   };
 
   const canSend = () => {
-    if (!messageText.trim()) return false;
+    if (!messageText.trim() && !messageAudio) return false;
     if (recipientType !== "teacher" && !senderName.trim()) return false;
     if (isPrincipalRole) return targetGuardianPhone.trim().length === 11;
     if (isHealthRole) {
@@ -13541,12 +13707,16 @@ function MessagingStep({ onBack, initialInboxMode, initialGuardianPhone, initial
 
   const performSend = async (guardianResolvedCode, resolvedSenderName) => {
     setBlockedReason("");
-    setModerating(true);
-    const verdict = await moderateSchoolMessage(messageText.trim());
-    setModerating(false);
-    if (!verdict.allowed) {
-      setBlockedReason(verdict.reason || "این پیام مجاز نیست.");
-      return;
+    // یک ضبط صوتی بدون متن همراه، قابل بررسی خودکار محتوا نیست (چون رونویسی نمی‌شود) — فقط متن تایپ‌شده
+    // بررسی می‌شود؛ اگر پیام صرفاً صوتی باشد، این بررسی رد می‌شود.
+    if (messageText.trim()) {
+      setModerating(true);
+      const verdict = await moderateSchoolMessage(messageText.trim());
+      setModerating(false);
+      if (!verdict.allowed) {
+        setBlockedReason(verdict.reason || "این پیام مجاز نیست.");
+        return;
+      }
     }
     setSending(true);
     try {
@@ -13559,16 +13729,19 @@ function MessagingStep({ onBack, initialInboxMode, initialGuardianPhone, initial
         } catch (e) {
           list = [];
         }
-        list.push({
+        const newMsg = {
           senderRole: roleLabel(),
           senderName: resolvedSenderName || senderName.trim(),
           text: messageText.trim(),
           time: new Date().toLocaleString("fa-IR"),
           private: isPrivateRole,
-        });
+        };
+        if (messageAudio) newMsg.audio = messageAudio;
+        list.push(newMsg);
         await window.storage.set(key, JSON.stringify(list), true);
       }
       setSent(true);
+      setMessageAudio(null);
     } catch (e) {
       setSent(true);
     }
@@ -13717,6 +13890,26 @@ function MessagingStep({ onBack, initialInboxMode, initialGuardianPhone, initial
         .pmg-inbox-time { font-size: 10.5px; color: #8a8060; }
         .pmg-inbox-text { font-size: 13.5px; color: #1c2540; line-height: 1.8; }
         .pmg-inbox-empty { text-align: center; color: #8a8060; font-size: 13px; padding: 20px 0; }
+        .voice-tools-row { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; margin-top: 8px; }
+        .voice-speech-wrap, .voice-recorder-wrap { display: inline-flex; flex-direction: column; gap: 4px; }
+        .voice-speech-btn, .voice-record-btn {
+          background: #fdf3e3; border: 1.3px solid #f0d9a8; color: #a8741f; font-weight: 700; font-size: 12px;
+          padding: 8px 14px; border-radius: 10px; cursor: pointer; display: inline-flex; align-items: center; gap: 6px;
+          white-space: nowrap;
+        }
+        .voice-speech-btn:hover, .voice-record-btn:hover { background: #f8e8c4; }
+        .voice-speech-btn.listening, .voice-record-btn.recording {
+          background: #fdeaea; border-color: #f0b4b4; color: #b91c1c; animation: voice-pulse 1.4s ease-in-out infinite;
+        }
+        @keyframes voice-pulse { 0%, 100% { opacity: 1; } 50% { opacity: 0.6; } }
+        .voice-speech-error { font-size: 11px; color: #b91c1c; }
+        .voice-record-hint { font-size: 10.5px; color: #8a8060; }
+        .voice-record-preview { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; }
+        .voice-record-audio { height: 34px; max-width: 240px; }
+        .voice-record-remove {
+          background: none; border: 1px solid #f0b4b4; color: #b91c1c; font-size: 11px; font-weight: 700;
+          padding: 5px 10px; border-radius: 8px; cursor: pointer;
+        }
         .pmg-ai-chat { max-height: 340px; overflow-y: auto; display: flex; flex-direction: column; gap: 10px; }
         .pmg-rahyar-history { background: #eef6f0; border: 1px solid #bfe0c8; border-radius: 10px; padding: 10px 12px; margin-bottom: 12px; }
         .pmg-rahyar-hw-note { background: #fdf3e3; border: 1px solid #f0d9a8; border-radius: 10px; padding: 10px 12px; margin-bottom: 12px; }
@@ -13904,6 +14097,17 @@ function MessagingStep({ onBack, initialInboxMode, initialGuardianPhone, initial
                 <label className="pmg-label">متن پیام (حداکثر ۳۰۰ حرف — فقط درس و تکلیف)</label>
                 <textarea className="pmg-textarea" placeholder="سؤال یا موضوع تکلیف خود را بنویسید..." maxLength={300} value={messageText} onChange={(e) => setMessageText(e.target.value)} />
                 <div className="pmg-char-count">{messageText.length}/300</div>
+                <div className="voice-tools-row">
+                  <VoiceSpeechButton
+                    onTranscript={(said) => setMessageText((prev) => (prev ? prev + " " + said : said).slice(0, 300))}
+                  />
+                  <VoiceRecorderButton audio={messageAudio} onAudioChange={setMessageAudio} />
+                </div>
+                {messageAudio && (
+                  <p className="pmg-char-count" style={{ marginTop: 2 }}>
+                    🎙️ یک ضبط صوتی ({messageAudio.durationSec} ثانیه) همراه این پیام ارسال می‌شود — مناسب قرائت و تلفظ.
+                  </p>
+                )}
               </div>
 
               {blockedReason && (
@@ -14027,6 +14231,7 @@ function MessagingStep({ onBack, initialInboxMode, initialGuardianPhone, initial
                           <span className="pmg-inbox-time">{m.time}</span>
                         </div>
                         <div className="pmg-inbox-text">{m.text}</div>
+                        <MessageAudioPlayback audio={m.audio} />
                       </div>
                     ))
                   )}
@@ -14182,6 +14387,11 @@ function MessagingStep({ onBack, initialInboxMode, initialGuardianPhone, initial
                   value={aiQuestion}
                   onChange={(e) => setAiQuestion(e.target.value)}
                 />
+                <div className="voice-tools-row">
+                  <VoiceSpeechButton
+                    onTranscript={(said) => setAiQuestion((prev) => (prev ? prev + " " + said : said))}
+                  />
+                </div>
               </div>
               <button type="button" className="pmg-send-btn" onClick={() => handleAskAiTeacher()} disabled={aiThinking}>
                 {aiThinking ? "در حال پاسخ‌گویی..." : "پرسیدن از " + aiPersona.name}
@@ -14306,6 +14516,7 @@ function StudentDashboard({
   onOpenTomorrowPreview,
   onOpenCompensation,
   onOpenStudyPlan,
+  onOpenRecitationPractice,
   onLogout,
 }) {
   const [todaySchedule, setTodaySchedule] = useState([]);
@@ -14995,6 +15206,12 @@ function StudentDashboard({
               <button type="button" className="sdb-quick-btn" onClick={onOpenStudyPlan}>
                 <span className="sdb-quick-icon">📋</span>
                 <span className="sdb-quick-label">برنامه‌ی مطالعاتی من</span>
+              </button>
+            )}
+            {onOpenRecitationPractice && (
+              <button type="button" className="sdb-quick-btn" onClick={onOpenRecitationPractice}>
+                <span className="sdb-quick-icon">🎙️</span>
+                <span className="sdb-quick-label">تمرین قرائت (قرآن، زبان، ...)</span>
               </button>
             )}
           </div>
@@ -16399,6 +16616,243 @@ function StudentStudyPlanView({ onBack, schoolCode, className, grade, studentCod
                 )}
               </div>
             ))}
+          </div>
+        )}
+      </div>
+    </div>
+  );
+}
+
+/* ============================================================
+   ققنوس — آموزش برای فردا
+   تمرین قرائت — برای دروس قرائتی (قرآن، زبان انگلیسی، ادبیات فارسی):
+   دانش‌آموز متن را با صدای بلند می‌خواند، تشخیص گفتار مرورگر آن را به متن
+   تبدیل می‌کند، و کلمه‌به‌کلمه با متن اصلی مقایسه می‌شود تا خودش تلفظش را
+   بررسی کند. کاملاً محلی و رایگان (بدون سرویس خارجی)، چیزی ذخیره نمی‌شود.
+   ============================================================ */
+
+const RECITATION_PASSAGES = {
+  "قرآن": {
+    lang: "ar-SA",
+    items: [
+      { title: "بسم الله", text: "بِسْمِ اللَّهِ الرَّحْمَٰنِ الرَّحِيمِ" },
+      { title: "سوره‌ی اخلاص", text: "قُلْ هُوَ اللَّهُ أَحَدٌ" },
+      { title: "سوره‌ی کوثر", text: "إِنَّا أَعْطَيْنَاكَ الْكَوْثَرَ" },
+    ],
+  },
+  "زبان انگلیسی": {
+    lang: "en-US",
+    items: [
+      { title: "جمله‌ی ۱", text: "The sun is shining in the blue sky today." },
+      { title: "جمله‌ی ۲", text: "I like to read books after school." },
+      { title: "جمله‌ی ۳", text: "My family and I go to the park on Friday." },
+    ],
+  },
+  "ادبیات فارسی": {
+    lang: "fa-IR",
+    items: [
+      { title: "جمله‌ی ۱", text: "باران بهاری بر درختان سبز می‌بارد." },
+      { title: "جمله‌ی ۲", text: "دانش‌آموزان صبح زود به مدرسه می‌روند." },
+      { title: "جمله‌ی ۳", text: "کتابخانه‌ی مدرسه پر از کتاب‌های جالب است." },
+    ],
+  },
+};
+
+function recitationWords(text) {
+  return text
+    .replace(/[.,!?؛،:؟«»"'()\-ـ]/g, " ")
+    .trim()
+    .toLowerCase()
+    .split(/\s+/)
+    .filter(Boolean);
+}
+
+// تطبیق کلمه‌به‌کلمه‌ی متن اصلی با آنچه شنیده شده، با روش زیررشته‌ی مشترک طولانی‌ترین (LCS) —
+// تا جابه‌جایی یا افتادگی یک کلمه، بقیه‌ی تطبیق را خراب نکند.
+function recitationCompareWords(targetWords, heardWords) {
+  const n = targetWords.length, m = heardWords.length;
+  const dp = Array.from({ length: n + 1 }, () => new Array(m + 1).fill(0));
+  for (let i = 1; i <= n; i++) {
+    for (let j = 1; j <= m; j++) {
+      dp[i][j] = targetWords[i - 1] === heardWords[j - 1] ? dp[i - 1][j - 1] + 1 : Math.max(dp[i - 1][j], dp[i][j - 1]);
+    }
+  }
+  const matched = new Array(n).fill(false);
+  let i = n, j = m;
+  while (i > 0 && j > 0) {
+    if (targetWords[i - 1] === heardWords[j - 1]) {
+      matched[i - 1] = true;
+      i--; j--;
+    } else if (dp[i - 1][j] >= dp[i][j - 1]) {
+      i--;
+    } else {
+      j--;
+    }
+  }
+  return matched;
+}
+
+function StudentRecitationPracticeView({ onBack }) {
+  const subjects = Object.keys(RECITATION_PASSAGES);
+  const [subject, setSubject] = useState(subjects[0]);
+  const [passageIndex, setPassageIndex] = useState(0);
+  const [listening, setListening] = useState(false);
+  const [error, setError] = useState("");
+  const [heardText, setHeardText] = useState("");
+  const [result, setResult] = useState(null); // [{word, ok}] | null
+  const recognitionRef = React.useRef(null);
+
+  const SpeechRecognitionCtor =
+    typeof window !== "undefined" ? window.SpeechRecognition || window.webkitSpeechRecognition : null;
+
+  const passage = RECITATION_PASSAGES[subject].items[passageIndex];
+  const isLatin = RECITATION_PASSAGES[subject].lang === "en-US";
+
+  const resetForNewPassage = () => {
+    setHeardText("");
+    setResult(null);
+    setError("");
+  };
+
+  const startListening = () => {
+    if (!SpeechRecognitionCtor) {
+      setError("مرورگر شما از تشخیص گفتار پشتیبانی نمی‌کند — لطفاً از کروم روی اندروید یا کامپیوتر استفاده کنید.");
+      return;
+    }
+    resetForNewPassage();
+    const rec = new SpeechRecognitionCtor();
+    rec.lang = RECITATION_PASSAGES[subject].lang;
+    rec.interimResults = false;
+    rec.maxAlternatives = 1;
+    rec.onresult = (event) => {
+      const said = Array.from(event.results).map((r) => r[0].transcript).join(" ");
+      setHeardText(said);
+      const targetWords = recitationWords(passage.text);
+      const heardWords = recitationWords(said);
+      const matched = recitationCompareWords(targetWords, heardWords);
+      setResult(targetWords.map((w, idx) => ({ word: w, ok: matched[idx] })));
+    };
+    rec.onerror = () => {
+      setError("تشخیص گفتار ممکن نشد — لطفاً دوباره امتحان کنید.");
+      setListening(false);
+    };
+    rec.onend = () => setListening(false);
+    recognitionRef.current = rec;
+    try {
+      rec.start();
+      setListening(true);
+    } catch (e) {
+      setError("دسترسی به میکروفون ممکن نشد.");
+    }
+  };
+
+  const stopListening = () => {
+    if (recognitionRef.current) recognitionRef.current.stop();
+  };
+
+  const correctCount = result ? result.filter((r) => r.ok).length : 0;
+  const totalCount = result ? result.length : 0;
+
+  return (
+    <div dir="rtl" className="rcp-root">
+      <style>{`
+        @import url('https://fonts.googleapis.com/css2?family=Vazirmatn:wght@400;500;600;700;800&display=swap');
+        .rcp-root, .rcp-root * { box-sizing: border-box; font-family: 'Vazirmatn', Tahoma, Arial, sans-serif; }
+        .rcp-root {
+          min-height: 100vh; min-height: 100dvh; width: 100%;
+          background: linear-gradient(180deg, #060b1f 0%, #0b1330 45%, #0d1735 100%);
+          padding: max(20px, env(safe-area-inset-top)) 14px 28px; display: flex; justify-content: center;
+        }
+        .rcp-card { width: 100%; max-width: 640px; background: linear-gradient(180deg, #fbf7ec 0%, #f6efdc 100%);
+          border-radius: 22px; padding: 24px 22px 28px; box-shadow: 0 20px 50px rgba(0,0,0,0.32); border: 1px solid rgba(224,168,62,0.25); }
+        .rcp-back { border: none; background: none; color: #a8741f; font-weight: 700; font-size: 12.5px; cursor: pointer; padding: 0; margin-bottom: 10px; }
+        .rcp-title { color: #1c2540; font-size: clamp(18px, 4vw, 22px); font-weight: 800; margin: 0 0 4px; }
+        .rcp-kicker { color: #a8741f; font-size: 12.5px; font-weight: 700; margin: 0 0 18px; }
+        .rcp-subject-row { display: flex; flex-wrap: wrap; gap: 8px; margin-bottom: 14px; }
+        .rcp-subject-btn { border: 1.3px solid #d9c9a0; background: #fff; color: #7a4a12; font-weight: 700; font-size: 12.5px;
+          padding: 8px 14px; border-radius: 10px; cursor: pointer; }
+        .rcp-subject-btn.active { background: #a8741f; color: #fff; border-color: #a8741f; }
+        .rcp-passage-row { display: flex; flex-wrap: wrap; gap: 6px; margin-bottom: 18px; }
+        .rcp-passage-btn { border: 1px solid #e3d2a3; background: #f8f2e3; color: #7a4a12; font-weight: 700; font-size: 11.5px;
+          padding: 6px 10px; border-radius: 8px; cursor: pointer; }
+        .rcp-passage-btn.active { background: #f0d9a8; border-color: #c99a3a; }
+        .rcp-passage-box { background: #fff; border: 1.3px solid #e3d2a3; border-radius: 14px; padding: 18px; text-align: center; margin-bottom: 16px; }
+        .rcp-passage-text { font-size: clamp(18px, 4vw, 24px); font-weight: 700; color: #1c2540; line-height: 2; }
+        .rcp-mic-row { display: flex; justify-content: center; margin-bottom: 16px; }
+        .rcp-mic-btn { background: #a8741f; color: #fff; font-weight: 800; font-size: 14px; border: none;
+          padding: 14px 28px; border-radius: 14px; cursor: pointer; display: inline-flex; align-items: center; gap: 8px; }
+        .rcp-mic-btn.listening { background: #b91c1c; animation: rcp-pulse 1.4s ease-in-out infinite; }
+        @keyframes rcp-pulse { 0%, 100% { opacity: 1; } 50% { opacity: 0.6; } }
+        .rcp-error { text-align: center; color: #b91c1c; font-size: 12.5px; margin-bottom: 10px; }
+        .rcp-result-box { background: #fff; border: 1.3px solid #e3d2a3; border-radius: 14px; padding: 16px; }
+        .rcp-result-score { text-align: center; font-weight: 800; color: #1c2540; margin-bottom: 10px; }
+        .rcp-result-words { display: flex; flex-wrap: wrap; gap: 6px; justify-content: center; font-size: 16px; }
+        .rcp-word-ok { color: #1f7a3c; font-weight: 700; }
+        .rcp-word-bad { color: #b91c1c; font-weight: 700; text-decoration: underline wavy; }
+        .rcp-heard-note { text-align: center; color: #8a8060; font-size: 11.5px; margin-top: 10px; }
+      `}</style>
+      <div className="rcp-card">
+        <button type="button" className="rcp-back" onClick={onBack}>→ بازگشت</button>
+        <h1 className="rcp-title">🎙️ تمرین قرائت</h1>
+        <p className="rcp-kicker">متن را بخوان، صدایت را به متن تبدیل می‌کنیم تا خودت تلفظت را بررسی کنی.</p>
+
+        <div className="rcp-subject-row">
+          {subjects.map((s) => (
+            <button
+              key={s}
+              type="button"
+              className={"rcp-subject-btn" + (s === subject ? " active" : "")}
+              onClick={() => { setSubject(s); setPassageIndex(0); resetForNewPassage(); }}
+            >
+              {s}
+            </button>
+          ))}
+        </div>
+
+        <div className="rcp-passage-row">
+          {RECITATION_PASSAGES[subject].items.map((item, idx) => (
+            <button
+              key={idx}
+              type="button"
+              className={"rcp-passage-btn" + (idx === passageIndex ? " active" : "")}
+              onClick={() => { setPassageIndex(idx); resetForNewPassage(); }}
+            >
+              {item.title}
+            </button>
+          ))}
+        </div>
+
+        <div className="rcp-passage-box">
+          <div className="rcp-passage-text" dir={isLatin ? "ltr" : "rtl"}>{passage.text}</div>
+        </div>
+
+        <div className="rcp-mic-row">
+          {!SpeechRecognitionCtor ? (
+            <p className="rcp-error">مرورگر شما از تشخیص گفتار پشتیبانی نمی‌کند — لطفاً از کروم استفاده کنید.</p>
+          ) : (
+            <button
+              type="button"
+              className={"rcp-mic-btn" + (listening ? " listening" : "")}
+              onClick={listening ? stopListening : startListening}
+            >
+              {listening ? "🔴 در حال شنیدن... (برای پایان بزن)" : "🎤 شروع خواندن"}
+            </button>
+          )}
+        </div>
+
+        {error && <p className="rcp-error">{error}</p>}
+
+        {result && (
+          <div className="rcp-result-box">
+            <p className="rcp-result-score">
+              {correctCount} از {totalCount} کلمه درست خوانده شد
+            </p>
+            <div className="rcp-result-words" dir={isLatin ? "ltr" : "rtl"}>
+              {result.map((r, idx) => (
+                <span key={idx} className={r.ok ? "rcp-word-ok" : "rcp-word-bad"}>{r.word}</span>
+              ))}
+            </div>
+            <p className="rcp-heard-note">چیزی که شنیده شد: «{heardText}»</p>
           </div>
         )}
       </div>
@@ -18115,6 +18569,10 @@ function PhoenixApp() {
     );
   }
 
+  if (screen === "studentRecitation") {
+    return <StudentRecitationPracticeView onBack={() => setScreen("studentDashboard")} />;
+  }
+
   if (screen === "adminQuestionBank") {
     return (
       <StudentQuestionBankView
@@ -18185,6 +18643,7 @@ function PhoenixApp() {
         }}
         onOpenQuestionBank={() => setScreen("studentQuestionBank")}
         onOpenStudyPlan={() => setScreen("studentStudyPlan")}
+        onOpenRecitationPractice={() => setScreen("studentRecitation")}
         onLogout={() => setScreen("welcome")}
       />
     );

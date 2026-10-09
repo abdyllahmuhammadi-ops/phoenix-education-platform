@@ -15273,6 +15273,85 @@ function TeacherQuestionBankStep({ onBack, prefillSchoolCode, teacherSchools, te
   const [examTypes, setExamTypes] = useState([]);
   const [saveMsg, setSaveMsg] = useState("");
 
+  // تولید سؤال پیشنهادی با رهیار — فقط پیشنهاد است؛ هیچ سؤالی بدون تأیید دستی معلم به بانک اضافه نمی‌شود
+  const [aiGenChapter, setAiGenChapter] = useState("");
+  const [aiGenCount, setAiGenCount] = useState(5);
+  const [aiGenQuestionType, setAiGenQuestionType] = useState(PQB_QUESTION_TYPES[0]);
+  const [aiGenDifficulty, setAiGenDifficulty] = useState("ترکیبی (آسان تا سخت)");
+  const [aiGenExamType, setAiGenExamType] = useState(PQB_EXAM_TYPES[0]);
+  const [aiGenLoading, setAiGenLoading] = useState(false);
+  const [aiGenResult, setAiGenResult] = useState(null);
+  const [aiGenError, setAiGenError] = useState("");
+  const [aiGenAddedIdx, setAiGenAddedIdx] = useState([]);
+
+  const handleGenerateAiQuestions = async () => {
+    if (!grade || !subject) return;
+    setAiGenLoading(true);
+    setAiGenError("");
+    setAiGenResult(null);
+    setAiGenAddedIdx([]);
+    try {
+      const response = await fetch("https://api.anthropic.com/v1/messages", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          model: "claude-sonnet-4-6",
+          max_tokens: 2000,
+          system:
+            "شما دستیار طراحی سؤال رهیار هستید. برای یک معلم واقعی، " +
+            aiGenCount +
+            " سؤال پیشنهادی برای درس «" +
+            subject +
+            "» پایه‌ی «" +
+            grade +
+            "»" +
+            (aiGenChapter.trim() ? "، دقیقاً درباره‌ی فصل/موضوع «" + aiGenChapter.trim() + "»" : "، از مباحث رایج و پرتکرار این پایه طبق کتاب درسی ایران") +
+            " بساز. نوع سؤال: «" + aiGenQuestionType + "». سطح دشواری: " +
+            (aiGenDifficulty === "ترکیبی (آسان تا سخت)" ? "سؤالات را با ترکیبی از سطح‌های آسان، متوسط و سخت بساز." : "همه‌ی سؤالات باید در سطح «" + aiGenDifficulty + "» باشند.") +
+            " این فقط یک پیشنهاد است — معلم واقعی هر سؤال را قبل از افزودن به بانک سؤال، کامل مرور و تأیید می‌کند و می‌تواند هرکدام را ویرایش یا رد کند؛ پس در طراحی سؤال دقت و صحت علمی را در اولویت قرار بده. " +
+            'یک آرایه‌ی JSON به نام "items" برگردان. هر عضو دقیقاً این ساختار را داشته باشد: {"chapter": "نام فصل/موضوع", "text": "متن کامل سؤال — اگر تستی چهارگزینه‌ای است، چهار گزینه را هم با علامت الف/ب/ج/د داخل همین متن بیاور", "cognitiveLevel": "یکی از: به‌خاطرسپاری/درک مفهومی/کاربرد/تحلیل/ارزیابی و قضاوت/خلق و ترکیب", "difficulty": "یکی از: آسان/متوسط/سخت", "explanation": "پاسخ درست، همراه با استدلال یا مراحل حل کامل"}. فقط همان شیء JSON را برگردان، بدون هیچ توضیح اضافه یا Markdown.',
+          messages: [{ role: "user", content: "لطفاً سؤالات را آماده کن." }],
+        }),
+      });
+      const data = await response.json();
+      const rawText = data && data.content && data.content[0] && data.content[0].text ? data.content[0].text : "";
+      const cleaned = rawText.replace(/```json|```/g, "").trim();
+      const parsed = JSON.parse(cleaned);
+      setAiGenResult(parsed.items || []);
+    } catch (e) {
+      setAiGenError("خطا در تولید سؤال. دوباره امتحان کنید.");
+    }
+    setAiGenLoading(false);
+  };
+
+  const handleAddAiQuestion = async (item, idx) => {
+    const newQ = {
+      id: Date.now() + "-" + Math.floor(Math.random() * 10000),
+      chapter: (item.chapter || aiGenChapter || "").trim(),
+      lessonTopic: "",
+      text: item.text || "",
+      type: aiGenQuestionType,
+      cognitiveLevel: item.cognitiveLevel || "",
+      explanation: item.explanation || "",
+      difficulty: item.difficulty || "متوسط",
+      examTypes: [aiGenExamType],
+      createdAt: new Date().toLocaleDateString("fa-IR"),
+      source: "پیشنهاد رهیار",
+    };
+    const next = [...questions, newQ];
+    setQuestions(next);
+    try {
+      if (typeof window !== "undefined" && window.storage) {
+        await window.storage.set(bankKey(), JSON.stringify(next), true);
+      }
+    } catch (e) {
+      // تلاش‌محور
+    }
+    setAiGenAddedIdx((prev) => [...prev, idx]);
+    setSaveMsg("✅ از پیشنهاد رهیار به بانک سؤال اضافه شد.");
+    setTimeout(() => setSaveMsg(""), 2000);
+  };
+
   const handleDownloadTeacherQuestions = () => {
     const lines = questions.map((q, idx) => {
       let block = idx + 1 + ". [" + q.chapter + (q.type ? " — " + q.type : "") + (q.difficulty ? " — " + q.difficulty : "") + "]\n" + q.text;
@@ -15463,19 +15542,19 @@ function TeacherQuestionBankStep({ onBack, prefillSchoolCode, teacherSchools, te
       const gradesToPull = KONKUR_CUMULATIVE_GRADES[grade];
       for (const g of gradesToPull) {
         if (g === grade) {
-          pool = pool.concat(questions.filter((q) => q.examTypes.includes(genExamType)));
+          pool = pool.concat(questions.filter((q) => (q.examTypes || []).includes(genExamType)));
         } else {
           try {
             const r = await window.storage.get("question-bank:" + schoolCode + ":" + skey(subject) + ":" + g, true);
             const bank = r && r.value ? JSON.parse(r.value) : [];
-            pool = pool.concat(bank.filter((q) => q.examTypes.includes(genExamType)).map((q) => ({ ...q, sourceGrade: g })));
+            pool = pool.concat(bank.filter((q) => (q.examTypes || []).includes(genExamType)).map((q) => ({ ...q, sourceGrade: g })));
           } catch (e) {
             // این پایه هنوز سؤالی برای این درس ندارد
           }
         }
       }
     } else {
-      pool = questions.filter((q) => q.examTypes.includes(genExamType));
+      pool = questions.filter((q) => (q.examTypes || []).includes(genExamType));
     }
     if (genChapter) pool = pool.filter((q) => q.chapter === genChapter);
     // مخلوط‌کردن تصادفی
@@ -15699,6 +15778,87 @@ function TeacherQuestionBankStep({ onBack, prefillSchoolCode, teacherSchools, te
             </div>
 
             <div className="pqb-section">
+              <h2 className="pqb-section-title">🤖 سؤال پیشنهادی رهیار</h2>
+              <p className="pqb-upload-hint">
+                رهیار می‌تواند چند سؤال پیشنهادی برای این درس و پایه بسازد تا کار شما سبک‌تر شود. این‌ها فقط پیشنهادند — هیچ‌کدام بدون این‌که خودتان مرور و تأیید کنید به بانک سؤال اضافه نمی‌شوند.
+              </p>
+              <div className="pqb-row">
+                <div className="pqb-field">
+                  <label className="pqb-label">فصل / موضوع (اختیاری)</label>
+                  <input className="pqb-input pqb-w-chapter" placeholder="خالی = رهیار خودش انتخاب می‌کند" value={aiGenChapter} onChange={(e) => setAiGenChapter(e.target.value)} />
+                </div>
+                <div className="pqb-field">
+                  <label className="pqb-label">تعداد سؤال</label>
+                  <input className="pqb-input" style={{ width: 90 }} type="number" min="1" max="15" value={aiGenCount} onChange={(e) => setAiGenCount(Math.max(1, Math.min(15, parseInt(e.target.value, 10) || 1)))} />
+                </div>
+                <div className="pqb-field">
+                  <label className="pqb-label">نوع سؤال</label>
+                  <select className="pqb-select pqb-w-topic" value={aiGenQuestionType} onChange={(e) => setAiGenQuestionType(e.target.value)}>
+                    {PQB_QUESTION_TYPES.map((t) => (
+                      <option key={t} value={t}>{t}</option>
+                    ))}
+                  </select>
+                </div>
+              </div>
+              <div className="pqb-row">
+                <div className="pqb-field">
+                  <label className="pqb-label">سطح دشواری</label>
+                  <select className="pqb-select" style={{ width: 190 }} value={aiGenDifficulty} onChange={(e) => setAiGenDifficulty(e.target.value)}>
+                    <option value="ترکیبی (آسان تا سخت)">ترکیبی (آسان تا سخت)</option>
+                    <option value="آسان">فقط آسان</option>
+                    <option value="متوسط">فقط متوسط</option>
+                    <option value="سخت">فقط سخت</option>
+                  </select>
+                </div>
+                <div className="pqb-field">
+                  <label className="pqb-label">مناسب برای</label>
+                  <select className="pqb-select" style={{ width: 170 }} value={aiGenExamType} onChange={(e) => setAiGenExamType(e.target.value)}>
+                    {PQB_EXAM_TYPES.map((t) => (
+                      <option key={t} value={t}>{t}</option>
+                    ))}
+                  </select>
+                </div>
+              </div>
+              <button type="button" className="pqb-submit-btn" onClick={handleGenerateAiQuestions} disabled={!grade || !subject || aiGenLoading}>
+                {aiGenLoading ? "در حال تولید سؤال..." : "🤖 تولید سؤال با رهیار"}
+              </button>
+              {aiGenError && <p className="pqb-upload-error">{aiGenError}</p>}
+
+              {aiGenResult && (
+                <div style={{ marginTop: 16 }}>
+                  <p style={{ fontWeight: 800, color: "#6b3fa0", marginBottom: 10 }}>
+                    پیشنهاد رهیار — {aiGenResult.length} سؤال برای مرور شما
+                  </p>
+                  <div className="pqb-question-list">
+                    {aiGenResult.length === 0 && <p className="pqb-empty">رهیار سؤالی تولید نکرد — دوباره امتحان کنید.</p>}
+                    {aiGenResult.map((item, i) => (
+                      <div key={i} className="pqb-question-item" style={{ background: "#f8f4ff" }}>
+                        <div className="pqb-question-meta">
+                          {item.chapter && <span className="pqb-tag">{item.chapter}</span>}
+                          {item.cognitiveLevel && <span className="pqb-tag pqb-tag-cognitive">{item.cognitiveLevel}</span>}
+                          {item.difficulty && <span className="pqb-tag">{item.difficulty}</span>}
+                        </div>
+                        <div className="pqb-question-text">{item.text}</div>
+                        {item.explanation && (
+                          <div className="pqb-explanation-box">
+                            <b>پاسخ و توضیح:</b> {item.explanation}
+                          </div>
+                        )}
+                        {aiGenAddedIdx.includes(i) ? (
+                          <p className="pqb-save-msg">✅ به بانک سؤال اضافه شد</p>
+                        ) : (
+                          <button type="button" className="pqb-delete-btn" style={{ color: "#6b3fa0" }} onClick={() => handleAddAiQuestion(item, i)}>
+                            ➕ مرور کردم، به بانک سؤال من اضافه کن
+                          </button>
+                        )}
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              )}
+            </div>
+
+            <div className="pqb-section">
               <h2 className="pqb-section-title">📤 آپلود نمونه سؤال از فایل</h2>
               <p className="pqb-upload-hint">
                 یک فایل متنی (.txt) شامل چند سؤال آپلود کنید — هر سؤال را با یک شماره (مثلاً «۱.») یا یک خط خالی از سؤال بعدی جدا کنید. سامانه سؤالات را جدا می‌کند تا پیش از افزودن نهایی بررسی و تأیید کنید.
@@ -15834,7 +15994,7 @@ function TeacherQuestionBankStep({ onBack, prefillSchoolCode, teacherSchools, te
                         {q.type && <span className="pqb-tag">{q.type}</span>}
                         {q.cognitiveLevel && <span className="pqb-tag pqb-tag-cognitive">{q.cognitiveLevel}</span>}
                         <span className="pqb-tag">{q.difficulty}</span>
-                        {q.examTypes.map((t) => (
+                        {(q.examTypes || []).map((t) => (
                           <span key={t} className="pqb-tag">{t}</span>
                         ))}
                       </div>
@@ -15909,6 +16069,57 @@ function pqbSeededShuffle(array, seedStr) {
   return arr;
 }
 
+// تمرین نامحدود با رهیار — مستقل از این‌که بانک رسمی معلم خالی باشد یا نه، همیشه در دسترس دانش‌آموز است
+// (برخلاف بقیه‌ی این صفحه که فقط وقتی بانک معلم سؤال دارد نمایش داده می‌شود)
+function StudentAiPracticeBlock({ grade, subject, aiPracticeLoading, aiPracticeError, aiPracticeQuestions, aiPracticeRevealedIds, onGenerate, onToggleReveal, onAskRahyar }) {
+  return (
+    <div className="pqb-section" style={{ marginTop: 18 }}>
+      <h2 className="pqb-section-title">🤖 تمرین نامحدود با رهیار</h2>
+      <p className="pqb-upload-hint">
+        منتظر معلم نباشید — اگر سؤال بانک رسمی کم بود یا خالی بود، یا فقط خواستید بیشتر تمرین کنید، رهیار همین حالا سؤال تمرینی تازه می‌سازد.
+        <br />
+        ⚠️ این سؤالات را معلم بازبینی نکرده — فقط برای تمرین شخصی‌اند، نه بخشی از بانک رسمی یا آزمون الزامی کنکور.
+      </p>
+      <button type="button" className="pqb-submit-btn" onClick={onGenerate} disabled={!grade || !subject || aiPracticeLoading}>
+        {aiPracticeLoading ? "در حال ساخت سؤال..." : "🤖 ۵ سؤال تمرینی تازه بساز"}
+      </button>
+      {aiPracticeError && <p className="pqb-upload-error">{aiPracticeError}</p>}
+
+      {aiPracticeQuestions.length > 0 && (
+        <div className="pqb-question-list" style={{ marginTop: 14 }}>
+          {aiPracticeQuestions.map((q) => (
+            <div key={q.id} className="pqb-question-item" style={{ background: "#f8f4ff" }}>
+              <div className="pqb-question-meta">
+                {q.chapter && <span className="pqb-tag">{q.chapter}</span>}
+                {q.difficulty && <span className="pqb-tag">{q.difficulty}</span>}
+                <span className="pqb-tag" style={{ background: "#e6dcf7", color: "#6b3fa0" }}>تمرین رهیار — بدون بازبینی معلم</span>
+              </div>
+              <div className="pqb-question-text">{q.text}</div>
+              {q.explanation && (
+                <>
+                  <button type="button" className="pqb-reveal-btn" onClick={() => onToggleReveal(q.id)}>
+                    {aiPracticeRevealedIds.includes(q.id) ? "🙈 پنهان کردن پاسخ" : "💡 ابتدا خودت فکر کن، بعد پاسخ را ببین"}
+                  </button>
+                  {aiPracticeRevealedIds.includes(q.id) && (
+                    <div className="pqb-explanation-box">
+                      <b>پاسخ و توضیح:</b> {q.explanation}
+                    </div>
+                  )}
+                </>
+              )}
+              {onAskRahyar && (
+                <button type="button" className="pqb-ask-rahyar-btn" onClick={() => onAskRahyar(q.text)}>
+                  🤖 پرسش از رهیار درباره‌ی این سؤال
+                </button>
+              )}
+            </div>
+          ))}
+        </div>
+      )}
+    </div>
+  );
+}
+
 function StudentQuestionBankView({ onBack, prefillSchoolCode, prefillGrade, prefillSubject, prefillClassName, studentCode, onAskRahyar }) {
   const [schoolCode, setSchoolCode] = useState(prefillSchoolCode || "");
   const [grade, setGrade] = useState(prefillGrade || "");
@@ -15933,6 +16144,52 @@ function StudentQuestionBankView({ onBack, prefillSchoolCode, prefillGrade, pref
   const [examKnownIds, setExamKnownIds] = useState([]);
   const [isMandatoryExam, setIsMandatoryExam] = useState(false);
   const fridayStatus = pqbFridayExamStatus();
+
+  // تمرین نامحدود با رهیار — وقتی بانک سؤال معلم کم یا خالی است، دانش‌آموز منتظر معلم نمی‌ماند؛
+  // این سؤالات فقط برای تمرین شخصی‌اند و توسط معلم بازبینی نشده‌اند (برخلاف بانک رسمی بالا)
+  const [aiPracticeLoading, setAiPracticeLoading] = useState(false);
+  const [aiPracticeError, setAiPracticeError] = useState("");
+  const [aiPracticeQuestions, setAiPracticeQuestions] = useState([]);
+  const [aiPracticeRevealedIds, setAiPracticeRevealedIds] = useState([]);
+
+  const handleGenerateAiPractice = async () => {
+    if (!grade || !subject) return;
+    setAiPracticeLoading(true);
+    setAiPracticeError("");
+    try {
+      const response = await fetch("https://api.anthropic.com/v1/messages", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          model: "claude-sonnet-4-6",
+          max_tokens: 2000,
+          system:
+            "شما رهیار، دستیار آموزشی دانش‌آموزی هستید. ۵ سؤال تمرینی برای درس «" +
+            subject +
+            "» پایه‌ی «" +
+            grade +
+            "»" +
+            (filterChapter.trim() ? "، دقیقاً درباره‌ی فصل/موضوع «" + filterChapter.trim() + "»" : "، از مباحث رایج و پرتکرار این پایه طبق کتاب درسی ایران") +
+            " بساز — سطح دشواری متنوع (آسان تا سخت) و مناسب تمرین شخصی دانش‌آموز، نه آزمون رسمی. " +
+            'یک آرایه‌ی JSON به نام "items" برگردان. هر عضو دقیقاً این ساختار را داشته باشد: {"chapter": "نام فصل/موضوع", "text": "متن کامل سؤال — اگر تستی چهارگزینه‌ای است، چهار گزینه را هم با علامت الف/ب/ج/د داخل همین متن بیاور", "difficulty": "یکی از: آسان/متوسط/سخت", "explanation": "پاسخ درست، همراه با استدلال یا مراحل حل کامل و قابل‌فهم برای یک دانش‌آموز"}. فقط همان شیء JSON را برگردان، بدون هیچ توضیح اضافه یا Markdown.',
+          messages: [{ role: "user", content: "لطفاً سؤالات تمرینی را آماده کن." }],
+        }),
+      });
+      const data = await response.json();
+      const rawText = data && data.content && data.content[0] && data.content[0].text ? data.content[0].text : "";
+      const cleaned = rawText.replace(/```json|```/g, "").trim();
+      const parsed = JSON.parse(cleaned);
+      const items = (parsed.items || []).map((item, i) => ({ ...item, id: "ai-" + Date.now() + "-" + i }));
+      setAiPracticeQuestions((prev) => [...items, ...prev]);
+    } catch (e) {
+      setAiPracticeError("خطا در ساخت سؤال تمرینی. دوباره امتحان کنید.");
+    }
+    setAiPracticeLoading(false);
+  };
+
+  const toggleAiPracticeReveal = (id) => {
+    setAiPracticeRevealedIds((prev) => (prev.includes(id) ? prev.filter((x) => x !== id) : [...prev, id]));
+  };
 
   useEffect(() => {
     if (!schoolCode || schoolCode.length !== 8 || !className) {
@@ -16104,7 +16361,7 @@ function StudentQuestionBankView({ onBack, prefillSchoolCode, prefillGrade, pref
   const chapters = Array.from(new Set(questions.map((q) => q.chapter)));
   const filtered = questions.filter((q) => {
     if (filterChapter && q.chapter !== filterChapter) return false;
-    if (filterExamType && !q.examTypes.includes(filterExamType)) return false;
+    if (filterExamType && !(q.examTypes || []).includes(filterExamType)) return false;
     return true;
   });
 
@@ -16211,7 +16468,20 @@ function StudentQuestionBankView({ onBack, prefillSchoolCode, prefillGrade, pref
         ) : !loaded ? (
           <p className="pqb-empty">برای مشاهده‌ی سؤالات، کد مدرسه، پایه و درس را وارد کنید.</p>
         ) : questions.length === 0 ? (
-          <p className="pqb-empty">هنوز سؤالی برای این درس و پایه در بانک سؤال ثبت نشده است.</p>
+          <>
+            <p className="pqb-empty">هنوز سؤالی برای این درس و پایه در بانک سؤال ثبت نشده است.</p>
+            <StudentAiPracticeBlock
+              grade={grade}
+              subject={subject}
+              aiPracticeLoading={aiPracticeLoading}
+              aiPracticeError={aiPracticeError}
+              aiPracticeQuestions={aiPracticeQuestions}
+              aiPracticeRevealedIds={aiPracticeRevealedIds}
+              onGenerate={handleGenerateAiPractice}
+              onToggleReveal={toggleAiPracticeReveal}
+              onAskRahyar={onAskRahyar}
+            />
+          </>
         ) : (
           <div className="pqb-section">
             <div className="pqb-row">
@@ -16342,6 +16612,18 @@ function StudentQuestionBankView({ onBack, prefillSchoolCode, prefillGrade, pref
                   ))}
                   {filtered.length === 0 && <p className="pqb-empty">سؤالی با این فیلتر یافت نشد.</p>}
                 </div>
+
+                <StudentAiPracticeBlock
+                  grade={grade}
+                  subject={subject}
+                  aiPracticeLoading={aiPracticeLoading}
+                  aiPracticeError={aiPracticeError}
+                  aiPracticeQuestions={aiPracticeQuestions}
+                  aiPracticeRevealedIds={aiPracticeRevealedIds}
+                  onGenerate={handleGenerateAiPractice}
+                  onToggleReveal={toggleAiPracticeReveal}
+                  onAskRahyar={onAskRahyar}
+                />
               </>
             )}
 

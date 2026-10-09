@@ -13275,23 +13275,16 @@ function MessagingStep({ onBack, initialInboxMode, initialGuardianPhone, initial
     // eslint-disable-next-line
   }, []);
 
+  // توجه مهم: طرح درس معلم محرمانه است و نباید در اختیار دانش‌آموز (یا هرکس دیگری جز خودِ معلم) قرار بگیرد —
+  // به همین دلیل اینجا دیگر محتوای طرح درس خوانده نمی‌شود؛ رهیار همیشه مستقیماً از دانش‌آموز می‌پرسد الان
+  // روی چه فصل/مبحثی هستند (previewTopicHint همیشه خالی می‌ماند).
   useEffect(() => {
     const targetSubject = (previewSubjects && previewSubjects[0]) || (compensationSubjects && compensationSubjects[0]);
-    if (!targetSubject || !initialSchoolCode || !initialUserGrade) return;
-    (async () => {
-      try {
-        if (typeof window === "undefined" || !window.storage) return;
-        const r = await window.storage.get("lesson-plans:" + initialSchoolCode + ":" + skey(targetSubject) + ":" + initialUserGrade, true).catch(() => null);
-        const plans = r && r.value ? JSON.parse(r.value) : [];
-        if (plans.length > 0) {
-          const last = plans[plans.length - 1];
-          setPreviewTopicHint(last.chapter + (last.lessonTitle ? " — " + last.lessonTitle : "") + (last.objective ? " (هدف: " + last.objective + ")" : ""));
-        }
-      } catch (e) {
-        // طرح درسی ثبت نشده؛ رهیار خودش از دانش‌آموز می‌پرسد
-      }
+    if (!targetSubject || !initialSchoolCode || !initialUserGrade) {
       setPreviewReady(true);
-    })();
+      return;
+    }
+    setPreviewReady(true);
     // eslint-disable-next-line
   }, []);
 
@@ -16862,7 +16855,7 @@ function StudentRecitationPracticeView({ onBack }) {
 
 const PLP_TEACHING_METHODS = ["سخنرانی و توضیح", "پرسش و پاسخ", "بحث گروهی", "آزمایش عملی", "کارگاهی / کار دستی", "حل مسئله", "بازی آموزشی", "ایفای نقش"];
 
-function TeacherLessonPlanStep({ onBack, prefillSchoolCode, teacherSchools, teacherMainSubject, teacherLevel, teacherClasses, onOpenQuestionBank, onOpenSuggestionBoxWithDraft }) {
+function TeacherLessonPlanStep({ onBack, prefillSchoolCode, teacherSchools, teacherMainSubject, teacherLevel, teacherClasses, teacherPhone, onOpenQuestionBank, onOpenSuggestionBoxWithDraft }) {
   const [schoolCode, setSchoolCode] = useState(prefillSchoolCode || "");
   const [className, setClassName] = useState(() => (teacherClasses && teacherClasses.length === 1 ? teacherClasses[0] : ""));
   const [grade, setGrade] = useState(() =>
@@ -16891,7 +16884,9 @@ function TeacherLessonPlanStep({ onBack, prefillSchoolCode, teacherSchools, teac
   const [aiGenFeedback, setAiGenFeedback] = useState("");
   const [aiGenFeedbackSent, setAiGenFeedbackSent] = useState(false);
 
-  const planKey = () => "lesson-plans:" + schoolCode + ":" + skey(subject) + ":" + grade;
+  // طرح درس خصوصی هر معلم است — حتی اگر همکار دیگری همین درس و پایه را در همین مدرسه تدریس کند،
+  // نباید طرح درس این معلم را ببیند یا ویرایش کند؛ به همین دلیل شماره‌ی موبایل معلم (شناسه‌ی یکتا) هم در کلید است.
+  const planKey = () => "lesson-plans:" + schoolCode + ":" + skey(subject) + ":" + grade + ":" + skey(teacherPhone || "نامشخص");
 
   const loadPlans = async () => {
     if (!schoolCode || schoolCode.length !== 8 || !grade) return;
@@ -16920,7 +16915,7 @@ function TeacherLessonPlanStep({ onBack, prefillSchoolCode, teacherSchools, teac
   useEffect(() => {
     loadPlans();
     // eslint-disable-next-line
-  }, [schoolCode, grade, subject]);
+  }, [schoolCode, grade, subject, teacherPhone]);
 
   const handleAddPlan = async () => {
     if (!schoolCode || schoolCode.length !== 8 || !grade || !chapter.trim() || !objective.trim()) return;
@@ -18476,6 +18471,8 @@ function PhoenixApp() {
   const [teacherSchools, setTeacherSchools] = useState([]);
   const [teacherFullName, setTeacherFullName] = useState("");
   const [teacherGender, setTeacherGender] = useState("");
+  // شماره‌ی موبایل معلم — برای جداسازی طرح درس هر معلم از همکارانش که همین درس/پایه را تدریس می‌کنند
+  const [teacherPhone, setTeacherPhone] = useState("");
   const [teacherSuggestionDraft, setTeacherSuggestionDraft] = useState(null);
   const [guardianQbSchoolCode, setGuardianQbSchoolCode] = useState("");
   const [guardianQbGrade, setGuardianQbGrade] = useState("");
@@ -18514,6 +18511,7 @@ function PhoenixApp() {
             setTeacherSchools([{ code: "12345678", name: "دبیرستان آزمایشی ققنوس" }]);
             setTeacherMainSubject("ریاضی");
             setTeacherFullName("معلم آزمایشی");
+            setTeacherPhone("09120000000");
             setScreen("teacherHome");
           } else if (role === "admin") {
             setAdminSchoolCode("12345678");
@@ -18807,6 +18805,7 @@ function PhoenixApp() {
         teacherMainSubject={teacherMainSubject}
         teacherLevel={teacherLevel}
         teacherClasses={teacherClasses}
+        teacherPhone={teacherPhone}
         onOpenQuestionBank={() => setScreen("teacherQuestionBank")}
         onOpenSuggestionBoxWithDraft={(category, text) => {
           setTeacherSuggestionDraft({ category, text });
@@ -18930,6 +18929,7 @@ function PhoenixApp() {
           setTeacherSchools(schools || []);
           setTeacherFullName(fullName || "");
           setTeacherGender(gender || "");
+          setTeacherPhone(prefillPhone || "");
           setScreen("teacherSchedule");
         }}
       />
@@ -19028,6 +19028,7 @@ function PhoenixApp() {
           setTeacherMainSubject(profile.mainSubject === "همه‌ی دروس (آموزگار پایه)" ? "" : profile.mainSubject || "");
           setTeacherFullName(profile.fullName || "");
           setTeacherGender(profile.gender || "");
+          setTeacherPhone(phone || "");
           setScreen("teacherHome");
         } else if (role === "admin") {
           setAdminSchoolCode(profile.schoolCode || "");

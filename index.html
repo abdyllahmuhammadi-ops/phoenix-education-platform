@@ -14510,6 +14510,7 @@ function StudentDashboard({
   onOpenCompensation,
   onOpenStudyPlan,
   onOpenRecitationPractice,
+  onOpenVirtualLab,
   onLogout,
 }) {
   const [todaySchedule, setTodaySchedule] = useState([]);
@@ -15205,6 +15206,12 @@ function StudentDashboard({
               <button type="button" className="sdb-quick-btn" onClick={onOpenRecitationPractice}>
                 <span className="sdb-quick-icon">🎙️</span>
                 <span className="sdb-quick-label">تمرین قرائت (قرآن، زبان، ...)</span>
+              </button>
+            )}
+            {onOpenVirtualLab && (
+              <button type="button" className="sdb-quick-btn" onClick={onOpenVirtualLab}>
+                <span className="sdb-quick-icon">🧫</span>
+                <span className="sdb-quick-label">آزمایشگاه مجازی</span>
               </button>
             )}
           </div>
@@ -17356,6 +17363,796 @@ function StudentRecitationPracticeView({ onBack }) {
   );
 }
 
+/* ============================================================
+   ققنوس — آموزش برای فردا
+   آزمایشگاه مجازی — آزمایش‌های تعاملی فیزیک، شیمی، زیست‌شناسی و برق
+   ============================================================ */
+
+const VLAB_LEVELS = ["ابتدایی", "متوسطه اول", "متوسطه دوم"];
+const VLAB_SUBJECTS = ["فیزیک", "شیمی", "زیست‌شناسی", "برق و الکترونیک"];
+
+const VLAB_EXPERIMENTS = [
+  {
+    id: "lever",
+    subject: "فیزیک",
+    level: "ابتدایی",
+    title: "اهرم‌ها و تعادل",
+    icon: "⚖️",
+    intro: "با تغییر وزن و فاصله‌ی دو طرف اهرم از تکیه‌گاه، ببین چه زمانی اهرم تعادل پیدا می‌کند. قانون: گشتاور = وزن × فاصله.",
+  },
+  {
+    id: "pendulum",
+    subject: "فیزیک",
+    level: "متوسطه اول",
+    title: "آونگ ساده",
+    icon: "🕰️",
+    intro: "طول آونگ را تغییر بده و ببین دوره‌ی تناوب (زمان یک رفت‌وبرگشت کامل) چطور تغییر می‌کند.",
+  },
+  {
+    id: "ohm",
+    subject: "برق و الکترونیک",
+    level: "متوسطه اول",
+    title: "مدار ساده و قانون اهم",
+    icon: "🔋",
+    intro: "با تغییر ولتاژ باتری و مقاومت، ببین جریان مدار و روشنایی لامپ چطور تغییر می‌کند. قانون اهم: جریان = ولتاژ ÷ مقاومت.",
+  },
+  {
+    id: "series-parallel",
+    subject: "برق و الکترونیک",
+    level: "متوسطه دوم",
+    title: "مدار سری و موازی",
+    icon: "🔌",
+    intro: "دو مقاومت را یک‌بار به‌صورت سری و یک‌بار به‌صورت موازی به مدار وصل کن و تفاوت روشنایی لامپ‌ها و جریان مدار را ببین.",
+  },
+  {
+    id: "states-of-matter",
+    subject: "شیمی",
+    level: "متوسطه اول",
+    title: "تغییر حالت ماده",
+    icon: "🧊",
+    intro: "دمای ظرف آب را از یخ تا بخار تغییر بده و ببین در هر دما ماده در چه حالتی است (جامد، مایع یا گاز).",
+  },
+  {
+    id: "acid-base",
+    subject: "شیمی",
+    level: "متوسطه دوم",
+    title: "واکنش اسید و باز",
+    icon: "🧪",
+    intro: "با افزودن قطره‌های اسید یا باز، pH محلول را تغییر بده و با شناساگر رنگی، اسیدی یا بازی بودن محلول را تشخیص بده.",
+  },
+  {
+    id: "plant-growth",
+    subject: "زیست‌شناسی",
+    level: "ابتدایی",
+    title: "رشد گیاه",
+    icon: "🌱",
+    intro: "میزان نور و آب گیاه را تنظیم کن و روز به روز ببین گیاه چطور رشد می‌کند.",
+  },
+  {
+    id: "microscope",
+    subject: "زیست‌شناسی",
+    level: "متوسطه دوم",
+    title: "میکروسکوپ مجازی",
+    icon: "🔬",
+    intro: "یک نمونه را زیر میکروسکوپ انتخاب کن، بزرگ‌نمایی را تنظیم کن و با تنظیم فوکوس، تصویر را واضح کن.",
+  },
+];
+
+function vlabClamp(v, min, max) {
+  return Math.max(min, Math.min(max, v));
+}
+
+/* ---------- ۱. اهرم‌ها و تعادل ---------- */
+function VlabLeverExperiment({ onReading }) {
+  const [leftMass, setLeftMass] = useState(5);
+  const [leftDist, setLeftDist] = useState(5);
+  const [rightMass, setRightMass] = useState(5);
+  const [rightDist, setRightDist] = useState(5);
+
+  const torqueLeft = leftMass * leftDist;
+  const torqueRight = rightMass * rightDist;
+  const tiltDeg = vlabClamp((torqueRight - torqueLeft) * 0.6, -22, 22);
+  let status = "⚖️ اهرم در تعادل است";
+  if (torqueLeft > torqueRight) status = "⬅️ سمت چپ سنگین‌تر است";
+  else if (torqueRight > torqueLeft) status = "➡️ سمت راست سنگین‌تر است";
+
+  useEffect(() => {
+    if (onReading) onReading(`چپ: جرم ${leftMass} × فاصله ${leftDist} = گشتاور ${torqueLeft} | راست: جرم ${rightMass} × فاصله ${rightDist} = گشتاور ${torqueRight} | ${status}`);
+    // eslint-disable-next-line
+  }, [leftMass, leftDist, rightMass, rightDist]);
+
+  return (
+    <div className="vlab-exp">
+      <svg viewBox="0 0 320 170" className="vlab-svg">
+        <polygon points="150,150 170,150 160,120" fill="#8a6d3b" />
+        <g transform={`rotate(${tiltDeg} 160 120)`}>
+          <rect x="30" y="116" width="260" height="8" rx="4" fill="#5b4636" />
+          <circle cx={30 + (10 - leftDist) * 8} cy="120" r={8 + leftMass} fill="#e2622f" />
+          <circle cx={290 - (10 - rightDist) * 8} cy="120" r={8 + rightMass} fill="#2f6fe2" />
+        </g>
+      </svg>
+      <div className="vlab-controls">
+        <div className="vlab-ctrl-col">
+          <label className="vlab-ctrl-label" style={{ color: "#e2622f" }}>وزن چپ (کیلوگرم): {leftMass}</label>
+          <input type="range" min="1" max="10" value={leftMass} onChange={(e) => setLeftMass(+e.target.value)} />
+          <label className="vlab-ctrl-label" style={{ color: "#e2622f" }}>فاصله از تکیه‌گاه (چپ): {leftDist}</label>
+          <input type="range" min="1" max="10" value={leftDist} onChange={(e) => setLeftDist(+e.target.value)} />
+        </div>
+        <div className="vlab-ctrl-col">
+          <label className="vlab-ctrl-label" style={{ color: "#2f6fe2" }}>وزن راست (کیلوگرم): {rightMass}</label>
+          <input type="range" min="1" max="10" value={rightMass} onChange={(e) => setRightMass(+e.target.value)} />
+          <label className="vlab-ctrl-label" style={{ color: "#2f6fe2" }}>فاصله از تکیه‌گاه (راست): {rightDist}</label>
+          <input type="range" min="1" max="10" value={rightDist} onChange={(e) => setRightDist(+e.target.value)} />
+        </div>
+      </div>
+      <div className="vlab-readout">
+        گشتاور چپ = {torqueLeft} | گشتاور راست = {torqueRight}
+        <br />
+        <b>{status}</b>
+      </div>
+    </div>
+  );
+}
+
+/* ---------- ۲. آونگ ساده ---------- */
+function VlabPendulumExperiment({ onReading }) {
+  const [length, setLength] = useState(80);
+  const [swinging, setSwinging] = useState(false);
+  const g = 9.8;
+  const period = 2 * Math.PI * Math.sqrt(length / 100 / g);
+
+  useEffect(() => {
+    if (onReading) onReading(`طول آونگ: ${length} سانتی‌متر | دوره‌ی تناوب محاسبه‌شده: ${period.toFixed(2)} ثانیه`);
+    // eslint-disable-next-line
+  }, [length]);
+
+  return (
+    <div className="vlab-exp">
+      <svg viewBox="0 0 320 220" className="vlab-svg">
+        <line x1="160" y1="15" x2="160" y2="25" stroke="#5b4636" strokeWidth="6" />
+        <g
+          className={swinging ? "vlab-pendulum-swing" : ""}
+          style={{ transformOrigin: "160px 20px", animationDuration: swinging ? period.toFixed(2) + "s" : undefined }}
+        >
+          <line x1="160" y1="20" x2="160" y2={20 + length} stroke="#8a6d3b" strokeWidth="2" />
+          <circle cx="160" cy={20 + length} r="14" fill="#c8862b" />
+        </g>
+      </svg>
+      <div className="vlab-controls">
+        <div className="vlab-ctrl-col" style={{ flex: 1 }}>
+          <label className="vlab-ctrl-label">طول آونگ (سانتی‌متر): {length}</label>
+          <input type="range" min="20" max="150" value={length} onChange={(e) => setLength(+e.target.value)} disabled={swinging} />
+        </div>
+        <button type="button" className="pqb-submit-btn" onClick={() => setSwinging((s) => !s)}>
+          {swinging ? "⏸️ توقف نوسان" : "▶️ شروع نوسان"}
+        </button>
+      </div>
+      <div className="vlab-readout">
+        دوره‌ی تناوب (T) = 2π√(L/g) ≈ <b>{period.toFixed(2)} ثانیه</b>
+        <br />
+        هرچه آونگ بلندتر باشد، نوسانش کندتر (دوره‌ی تناوبش بیشتر) است.
+      </div>
+    </div>
+  );
+}
+
+/* ---------- ۳. مدار ساده و قانون اهم ---------- */
+function VlabOhmExperiment({ onReading }) {
+  const [voltage, setVoltage] = useState(6);
+  const [resistance, setResistance] = useState(20);
+  const current = voltage / resistance; // آمپر
+  const brightness = vlabClamp((current / 1.2) * 100, 4, 100);
+
+  useEffect(() => {
+    if (onReading) onReading(`ولتاژ: ${voltage} ولت | مقاومت: ${resistance} اهم | جریان = V/R = ${current.toFixed(2)} آمپر`);
+    // eslint-disable-next-line
+  }, [voltage, resistance]);
+
+  return (
+    <div className="vlab-exp">
+      <svg viewBox="0 0 320 170" className="vlab-svg">
+        <rect x="30" y="60" width="26" height="50" fill="#5b4636" />
+        <text x="43" y="90" fontSize="11" fill="#fff" textAnchor="middle">+/−</text>
+        <line x1="56" y1="70" x2="260" y2="70" stroke="#5b4636" strokeWidth="3" />
+        <line x1="30" y1="110" x2="30" y2="70" stroke="#5b4636" strokeWidth="3" />
+        <line x1="30" y1="110" x2="260" y2="110" stroke="#5b4636" strokeWidth="3" />
+        <line x1="260" y1="70" x2="260" y2="110" stroke="#5b4636" strokeWidth="3" />
+        <polyline points="150,70 158,55 168,85 178,55 188,85 198,55 206,70" fill="none" stroke="#5b4636" strokeWidth="3" />
+        <circle cx="90" cy="90" r="18" fill={`rgba(242,197,72,${brightness / 100})`} stroke="#c8862b" strokeWidth="2" />
+      </svg>
+      <div className="vlab-controls">
+        <div className="vlab-ctrl-col" style={{ flex: 1 }}>
+          <label className="vlab-ctrl-label">ولتاژ باتری (ولت): {voltage}</label>
+          <input type="range" min="1" max="12" value={voltage} onChange={(e) => setVoltage(+e.target.value)} />
+          <label className="vlab-ctrl-label">مقاومت (اهم): {resistance}</label>
+          <input type="range" min="2" max="100" value={resistance} onChange={(e) => setResistance(+e.target.value)} />
+        </div>
+      </div>
+      <div className="vlab-readout">
+        جریان مدار (I) = V ÷ R = {voltage} ÷ {resistance} = <b>{current.toFixed(2)} آمپر</b>
+        <br />
+        هرچه جریان بیشتر باشد، لامپ روشن‌تر می‌شود.
+      </div>
+    </div>
+  );
+}
+
+/* ---------- ۴. مدار سری و موازی ---------- */
+function VlabSeriesParallelExperiment({ onReading }) {
+  const [mode, setMode] = useState("سری");
+  const [r1, setR1] = useState(10);
+  const [r2, setR2] = useState(20);
+  const voltage = 9;
+  let totalR, i1, i2, iTotal;
+  if (mode === "سری") {
+    totalR = r1 + r2;
+    iTotal = voltage / totalR;
+    i1 = iTotal;
+    i2 = iTotal;
+  } else {
+    totalR = (r1 * r2) / (r1 + r2);
+    i1 = voltage / r1;
+    i2 = voltage / r2;
+    iTotal = i1 + i2;
+  }
+  const b1 = vlabClamp((i1 / 1.2) * 100, 4, 100);
+  const b2 = vlabClamp((i2 / 1.2) * 100, 4, 100);
+
+  useEffect(() => {
+    if (onReading) onReading(`حالت: ${mode} | R1=${r1} R2=${r2} | مقاومت کل=${totalR.toFixed(1)} اهم | جریان کل=${iTotal.toFixed(2)} آمپر`);
+    // eslint-disable-next-line
+  }, [mode, r1, r2]);
+
+  return (
+    <div className="vlab-exp">
+      <svg viewBox="0 0 320 170" className="vlab-svg">
+        <rect x="20" y="70" width="24" height="40" fill="#5b4636" />
+        {mode === "سری" ? (
+          <g>
+            <line x1="44" y1="90" x2="300" y2="90" stroke="#5b4636" strokeWidth="3" />
+            <line x1="20" y1="110" x2="20" y2="90" stroke="#5b4636" strokeWidth="3" />
+            <line x1="20" y1="110" x2="300" y2="110" stroke="#5b4636" strokeWidth="3" />
+            <line x1="300" y1="90" x2="300" y2="110" stroke="#5b4636" strokeWidth="3" />
+            <circle cx="120" cy="90" r="16" fill={`rgba(242,197,72,${b1 / 100})`} stroke="#c8862b" strokeWidth="2" />
+            <circle cx="220" cy="90" r="16" fill={`rgba(242,197,72,${b2 / 100})`} stroke="#c8862b" strokeWidth="2" />
+          </g>
+        ) : (
+          <g>
+            <line x1="44" y1="80" x2="300" y2="80" stroke="#5b4636" strokeWidth="3" />
+            <line x1="20" y1="130" x2="20" y2="80" stroke="#5b4636" strokeWidth="3" />
+            <line x1="20" y1="130" x2="300" y2="130" stroke="#5b4636" strokeWidth="3" />
+            <line x1="300" y1="80" x2="300" y2="130" stroke="#5b4636" strokeWidth="3" />
+            <line x1="140" y1="80" x2="140" y2="130" stroke="#5b4636" strokeWidth="3" />
+            <line x1="200" y1="80" x2="200" y2="130" stroke="#5b4636" strokeWidth="3" />
+            <circle cx="140" cy="105" r="15" fill={`rgba(242,197,72,${b1 / 100})`} stroke="#c8862b" strokeWidth="2" />
+            <circle cx="200" cy="105" r="15" fill={`rgba(242,197,72,${b2 / 100})`} stroke="#c8862b" strokeWidth="2" />
+          </g>
+        )}
+      </svg>
+      <div className="vlab-controls">
+        <div className="vlab-ctrl-col">
+          <div className="vlab-toggle-row">
+            <button type="button" className={"vlab-toggle-btn" + (mode === "سری" ? " active" : "")} onClick={() => setMode("سری")}>سری</button>
+            <button type="button" className={"vlab-toggle-btn" + (mode === "موازی" ? " active" : "")} onClick={() => setMode("موازی")}>موازی</button>
+          </div>
+        </div>
+        <div className="vlab-ctrl-col">
+          <label className="vlab-ctrl-label">مقاومت ۱ (اهم): {r1}</label>
+          <input type="range" min="2" max="50" value={r1} onChange={(e) => setR1(+e.target.value)} />
+          <label className="vlab-ctrl-label">مقاومت ۲ (اهم): {r2}</label>
+          <input type="range" min="2" max="50" value={r2} onChange={(e) => setR2(+e.target.value)} />
+        </div>
+      </div>
+      <div className="vlab-readout">
+        مقاومت کل مدار = <b>{totalR.toFixed(1)} اهم</b> | جریان کل = <b>{iTotal.toFixed(2)} آمپر</b>
+        <br />
+        در حالت سری، جریان دو لامپ برابر است؛ در حالت موازی، ولتاژ دو لامپ برابر است.
+      </div>
+    </div>
+  );
+}
+
+/* ---------- ۵. تغییر حالت ماده ---------- */
+function VlabStatesOfMatterExperiment({ onReading }) {
+  const [temp, setTemp] = useState(-10);
+  let phase = "مایع (آب)";
+  if (temp <= 0) phase = "جامد (یخ)";
+  else if (temp >= 100) phase = "گاز (بخار آب)";
+  else if (temp <= 2) phase = "در حال ذوب شدن";
+  else if (temp >= 98) phase = "در حال جوشیدن";
+
+  useEffect(() => {
+    if (onReading) onReading(`دما: ${temp}°C | حالت ماده: ${phase}`);
+    // eslint-disable-next-line
+  }, [temp]);
+
+  const fillHeight = 90;
+  const dots = [];
+  const n = 18;
+  for (let i = 0; i < n; i++) {
+    let cx, cy;
+    if (temp <= 0) {
+      cx = 60 + (i % 6) * 22;
+      cy = 95 + Math.floor(i / 6) * 22;
+    } else if (temp < 100) {
+      cx = 60 + ((i * 37) % 160);
+      cy = 90 + ((i * 53) % 70);
+    } else {
+      cx = 60 + ((i * 41) % 170);
+      cy = 20 + ((i * 29) % 110);
+    }
+    dots.push(<circle key={i} cx={cx} cy={cy} r={temp >= 100 ? 3 : 5} fill="#3a7bd5" opacity={temp >= 100 ? 0.6 : 0.85} />);
+  }
+
+  return (
+    <div className="vlab-exp">
+      <svg viewBox="0 0 320 190" className="vlab-svg">
+        <rect x="50" y="20" width="180" height="150" fill="none" stroke="#5b4636" strokeWidth="3" />
+        {temp < 100 && <rect x="53" y={170 - fillHeight} width="174" height={fillHeight} fill="#cfe4fb" opacity="0.6" />}
+        {dots}
+        <rect x="250" y="20" width="18" height="150" fill="#eee" stroke="#5b4636" strokeWidth="2" />
+        <rect x="252" y={170 - vlabClamp((temp + 20) / 140, 0, 1) * 148} width="14" height={vlabClamp((temp + 20) / 140, 0, 1) * 148} fill={temp < 0 ? "#3a7bd5" : temp < 100 ? "#f2a65a" : "#e2622f"} />
+      </svg>
+      <div className="vlab-controls">
+        <div className="vlab-ctrl-col" style={{ flex: 1 }}>
+          <label className="vlab-ctrl-label">دما (درجه‌ی سانتی‌گراد): {temp}</label>
+          <input type="range" min="-20" max="120" value={temp} onChange={(e) => setTemp(+e.target.value)} />
+        </div>
+      </div>
+      <div className="vlab-readout">
+        در دمای {temp}°C، ماده در حالت <b>{phase}</b> است.
+        <br />
+        نکته: در دمای ۰°C و ۱۰۰°C، دما تا کامل تغییر حالت، ثابت می‌ماند.
+      </div>
+    </div>
+  );
+}
+
+/* ---------- ۶. واکنش اسید و باز ---------- */
+function VlabAcidBaseExperiment({ onReading }) {
+  const [ph, setPh] = useState(7);
+  const colors = ["#e2231a", "#e75a1a", "#f2a30f", "#f2d60f", "#c7e21a", "#6fcf3a", "#2fae4e", "#1f9e8c", "#1f8ee2", "#2f6fe2", "#4a4ae2", "#6a2fe2", "#8a1fc8", "#6a0f99", "#4a0870"];
+  const color = colors[vlabClamp(Math.round(ph), 0, 14)];
+  let label = "خنثی";
+  if (ph < 3) label = "اسیدی قوی";
+  else if (ph < 6) label = "اسیدی";
+  else if (ph <= 8) label = "خنثی";
+  else if (ph <= 11) label = "بازی";
+  else label = "بازی قوی";
+
+  useEffect(() => {
+    if (onReading) onReading(`pH محلول: ${ph} | طبقه‌بندی: ${label}`);
+    // eslint-disable-next-line
+  }, [ph]);
+
+  return (
+    <div className="vlab-exp">
+      <svg viewBox="0 0 320 170" className="vlab-svg">
+        <path d="M110,30 L110,90 L85,150 Q100,165 160,165 Q220,165 235,150 L210,90 L210,30 Z" fill="none" stroke="#5b4636" strokeWidth="3" />
+        <path d="M112,95 L87,148 Q101,161 159,161 Q219,161 233,148 L208,95 Z" fill={color} opacity="0.75" />
+      </svg>
+      <div className="vlab-controls">
+        <div className="vlab-ctrl-col">
+          <button type="button" className="pqb-submit-btn" style={{ background: "linear-gradient(135deg,#e2622f,#c8862b)" }} onClick={() => setPh((p) => vlabClamp(p - 1, 0, 14))}>
+            🧪 افزودن قطره‌ی اسید
+          </button>
+        </div>
+        <div className="vlab-ctrl-col">
+          <button type="button" className="pqb-submit-btn" onClick={() => setPh((p) => vlabClamp(p + 1, 0, 14))}>
+            🧪 افزودن قطره‌ی باز
+          </button>
+        </div>
+        <div className="vlab-ctrl-col">
+          <button type="button" className="vlab-toggle-btn" onClick={() => setPh(7)}>↺ محلول خنثی جدید</button>
+        </div>
+      </div>
+      <div className="vlab-readout">
+        pH = <b>{ph}</b> — <b>{label}</b>
+        <br />
+        در شناساگر عمومی: قرمز = اسیدی قوی، سبز = خنثی، بنفش = بازی قوی.
+      </div>
+    </div>
+  );
+}
+
+/* ---------- ۷. رشد گیاه ---------- */
+function VlabPlantGrowthExperiment({ onReading }) {
+  const [light, setLight] = useState(50);
+  const [water, setWater] = useState(50);
+  const [day, setDay] = useState(0);
+  const [height, setHeight] = useState(0);
+  const [lastGrowth, setLastGrowth] = useState(0);
+
+  const passDay = () => {
+    const distance = Math.abs(light - 70) + Math.abs(water - 60);
+    const growth = Math.max(0, 8 - distance / 10);
+    setHeight((h) => Math.min(100, h + growth));
+    setLastGrowth(growth);
+    setDay((d) => d + 1);
+  };
+  const reset = () => {
+    setDay(0);
+    setHeight(0);
+    setLastGrowth(0);
+  };
+
+  let status = "🌱 جوانه زده";
+  if (day > 0) {
+    if (lastGrowth >= 6) status = "😊 رشد عالی";
+    else if (lastGrowth >= 3) status = "🙂 رشد متوسط";
+    else status = "🥀 رشد ضعیف — نور یا آب را تنظیم کن";
+  }
+
+  useEffect(() => {
+    if (onReading) onReading(`روز ${day} | قد گیاه: ${height.toFixed(1)} سانتی‌متر | نور: ${light}٪ | آب: ${water}٪ | وضعیت: ${status}`);
+    // eslint-disable-next-line
+  }, [day, height]);
+
+  const leafCount = Math.floor(height / 20);
+  const leaves = [];
+  for (let i = 0; i < leafCount; i++) {
+    const y = 160 - i * 20 - 10;
+    leaves.push(<ellipse key={"l" + i} cx="150" cy={y} rx="14" ry="7" fill={lastGrowth >= 3 || day === 0 ? "#3fae4e" : "#b5b544"} />);
+    leaves.push(<ellipse key={"r" + i} cx="170" cy={y} rx="14" ry="7" fill={lastGrowth >= 3 || day === 0 ? "#3fae4e" : "#b5b544"} />);
+  }
+
+  return (
+    <div className="vlab-exp">
+      <svg viewBox="0 0 320 180" className="vlab-svg">
+        <rect x="90" y="160" width="140" height="16" fill="#8a6d3b" />
+        <line x1="160" y1="160" x2="160" y2={160 - height} stroke="#2c6e3f" strokeWidth="5" />
+        {leaves}
+      </svg>
+      <div className="vlab-controls">
+        <div className="vlab-ctrl-col" style={{ flex: 1 }}>
+          <label className="vlab-ctrl-label">☀️ نور (٪): {light}</label>
+          <input type="range" min="0" max="100" value={light} onChange={(e) => setLight(+e.target.value)} />
+          <label className="vlab-ctrl-label">💧 آب (٪): {water}</label>
+          <input type="range" min="0" max="100" value={water} onChange={(e) => setWater(+e.target.value)} />
+        </div>
+        <div className="vlab-ctrl-col">
+          <button type="button" className="pqb-submit-btn" onClick={passDay} disabled={height >= 100}>
+            ⏭️ یک روز بگذرد
+          </button>
+          <button type="button" className="vlab-toggle-btn" onClick={reset}>↺ کاشت دوباره</button>
+        </div>
+      </div>
+      <div className="vlab-readout">
+        روز {day} | قد گیاه: <b>{height.toFixed(1)} سانتی‌متر</b> | {status}
+        <br />
+        بهترین رشد نزدیک نور ۷۰٪ و آب ۶۰٪ اتفاق می‌افتد.
+      </div>
+    </div>
+  );
+}
+
+/* ---------- ۸. میکروسکوپ مجازی ---------- */
+const VLAB_SLIDES = [
+  { id: "onion", name: "پوست پیاز" },
+  { id: "blood", name: "گلبول قرمز خون" },
+  { id: "plant", name: "سلول گیاهی" },
+];
+function VlabSlideSvg({ slideId, zoomScale }) {
+  if (slideId === "onion") {
+    const cells = [];
+    for (let r = 0; r < 3; r++) {
+      for (let c = 0; c < 4; c++) {
+        cells.push(
+          <g key={r + "-" + c}>
+            <rect x={20 + c * 45} y={20 + r * 45} width="42" height="42" fill="none" stroke="#8a6d3b" strokeWidth="1.5" />
+            <circle cx={20 + c * 45 + 21} cy={20 + r * 45 + 21} r="7" fill="#c8862b" opacity="0.7" />
+          </g>
+        );
+      }
+    }
+    return <g transform={`scale(${zoomScale}) translate(${(1 - zoomScale) * 80 / zoomScale},${(1 - zoomScale) * 80 / zoomScale})`}>{cells}</g>;
+  }
+  if (slideId === "blood") {
+    const cells = [];
+    for (let i = 0; i < 10; i++) {
+      const cx = 25 + ((i * 37) % 150);
+      const cy = 25 + ((i * 53) % 130);
+      cells.push(
+        <g key={i}>
+          <circle cx={cx} cy={cy} r="14" fill="#c0392b" />
+          <circle cx={cx} cy={cy} r="6" fill="#e2622f" opacity="0.7" />
+        </g>
+      );
+    }
+    return <g transform={`scale(${zoomScale})`}>{cells}</g>;
+  }
+  const cells = [];
+  for (let r = 0; r < 3; r++) {
+    for (let c = 0; c < 3; c++) {
+      cells.push(
+        <g key={r + "-" + c}>
+          <rect x={15 + c * 55} y={15 + r * 55} width="50" height="50" rx="8" fill="none" stroke="#2c6e3f" strokeWidth="2" />
+          <ellipse cx={15 + c * 55 + 18} cy={15 + r * 55 + 20} rx="7" ry="5" fill="#3fae4e" />
+          <ellipse cx={15 + c * 55 + 32} cy={15 + r * 55 + 32} rx="7" ry="5" fill="#3fae4e" />
+        </g>
+      );
+    }
+  }
+  return <g transform={`scale(${zoomScale})`}>{cells}</g>;
+}
+function VlabMicroscopeExperiment({ onReading }) {
+  const [slideId, setSlideId] = useState(VLAB_SLIDES[0].id);
+  const [zoom, setZoom] = useState(1);
+  const [focus, setFocus] = useState(0);
+  const targetFocus = 55;
+  const blurAmount = Math.abs(focus - targetFocus) / 8;
+  const isClear = blurAmount < 1.5;
+
+  useEffect(() => {
+    if (onReading) onReading(`نمونه: ${VLAB_SLIDES.find((s) => s.id === slideId).name} | بزرگ‌نمایی: ${zoom}× | وضوح تصویر: ${isClear ? "واضح" : "نامشخص"}`);
+    // eslint-disable-next-line
+  }, [slideId, zoom, focus]);
+
+  return (
+    <div className="vlab-exp">
+      <svg viewBox="0 0 200 200" className="vlab-svg vlab-scope-circle">
+        <defs>
+          <clipPath id="vlabScopeClip">
+            <circle cx="100" cy="100" r="95" />
+          </clipPath>
+        </defs>
+        <circle cx="100" cy="100" r="95" fill="#eef6f0" />
+        <g clipPath="url(#vlabScopeClip)" style={{ filter: `blur(${blurAmount}px)` }}>
+          <VlabSlideSvg slideId={slideId} zoomScale={zoom} />
+        </g>
+        <circle cx="100" cy="100" r="95" fill="none" stroke="#5b4636" strokeWidth="4" />
+      </svg>
+      <div className="vlab-controls">
+        <div className="vlab-ctrl-col">
+          <label className="vlab-ctrl-label">نمونه</label>
+          <select className="pqb-select" value={slideId} onChange={(e) => setSlideId(e.target.value)}>
+            {VLAB_SLIDES.map((s) => (
+              <option key={s.id} value={s.id}>{s.name}</option>
+            ))}
+          </select>
+          <label className="vlab-ctrl-label">بزرگ‌نمایی: {zoom}×</label>
+          <input type="range" min="1" max="4" step="1" value={zoom} onChange={(e) => setZoom(+e.target.value)} />
+        </div>
+        <div className="vlab-ctrl-col" style={{ flex: 1 }}>
+          <label className="vlab-ctrl-label">تنظیم فوکوس</label>
+          <input type="range" min="0" max="100" value={focus} onChange={(e) => setFocus(+e.target.value)} />
+        </div>
+      </div>
+      <div className="vlab-readout">
+        {isClear ? "✅ تصویر واضح است" : "🔍 فوکوس را تنظیم کن تا تصویر واضح شود"}
+      </div>
+    </div>
+  );
+}
+
+const VLAB_COMPONENTS = {
+  lever: VlabLeverExperiment,
+  pendulum: VlabPendulumExperiment,
+  ohm: VlabOhmExperiment,
+  "series-parallel": VlabSeriesParallelExperiment,
+  "states-of-matter": VlabStatesOfMatterExperiment,
+  "acid-base": VlabAcidBaseExperiment,
+  "plant-growth": VlabPlantGrowthExperiment,
+  microscope: VlabMicroscopeExperiment,
+};
+
+function StudentVirtualLabView({ onBack, grade, studentCode, schoolCode }) {
+  const [subjectFilter, setSubjectFilter] = useState("همه");
+  const [levelFilter, setLevelFilter] = useState("همه");
+  const [activeId, setActiveId] = useState(null);
+  const [reading, setReading] = useState("");
+  const [reportText, setReportText] = useState("");
+  const [saveMsg, setSaveMsg] = useState("");
+  const [savedReports, setSavedReports] = useState([]);
+  const [showReports, setShowReports] = useState(false);
+
+  const reportsKey = "lab-reports:" + (schoolCode || "نامشخص") + ":" + skey(studentCode || "ناشناس");
+
+  const loadReports = async () => {
+    try {
+      if (typeof window === "undefined" || !window.storage) return;
+      const r = await window.storage.get(reportsKey, true).catch(() => null);
+      setSavedReports(r && r.value ? JSON.parse(r.value) : []);
+    } catch (e) {
+      setSavedReports([]);
+    }
+  };
+
+  const filtered = VLAB_EXPERIMENTS.filter((ex) => {
+    if (subjectFilter !== "همه" && ex.subject !== subjectFilter) return false;
+    if (levelFilter !== "همه" && ex.level !== levelFilter) return false;
+    return true;
+  });
+
+  const activeExperiment = VLAB_EXPERIMENTS.find((e) => e.id === activeId);
+  const ActiveComponent = activeId ? VLAB_COMPONENTS[activeId] : null;
+
+  const openExperiment = (id) => {
+    setActiveId(id);
+    setReading("");
+    setReportText("");
+    setSaveMsg("");
+  };
+
+  const saveReport = async () => {
+    if (!reportText.trim()) return;
+    const entry = {
+      id: Date.now() + "-" + Math.floor(Math.random() * 10000),
+      experimentId: activeId,
+      title: activeExperiment ? activeExperiment.title : "",
+      subject: activeExperiment ? activeExperiment.subject : "",
+      reading,
+      reportText: reportText.trim(),
+      savedAt: new Date().toLocaleDateString("fa-IR"),
+    };
+    try {
+      if (typeof window !== "undefined" && window.storage) {
+        const r = await window.storage.get(reportsKey, true).catch(() => null);
+        const list = r && r.value ? JSON.parse(r.value) : [];
+        list.push(entry);
+        await window.storage.set(reportsKey, JSON.stringify(list), true);
+        setSavedReports(list);
+      }
+      setSaveMsg("✅ گزارش کار ذخیره شد.");
+      setReportText("");
+    } catch (e) {
+      setSaveMsg("خطا در ذخیره‌ی گزارش.");
+    }
+  };
+
+  return (
+    <div dir="rtl" className="pqb-root">
+      <style>{`
+        @import url('https://fonts.googleapis.com/css2?family=Vazirmatn:wght@400;500;600;700;800&display=swap');
+        .pqb-root, .pqb-root * { box-sizing: border-box; font-family: 'Vazirmatn', Tahoma, Arial, sans-serif; -webkit-tap-highlight-color: transparent; }
+        .pqb-root {
+          min-height: 100vh; min-height: 100dvh; width: 100%;
+          background: radial-gradient(1100px 550px at 18% -10%, rgba(226,98,47,0.16), transparent 60%),
+            radial-gradient(900px 500px at 100% 10%, rgba(242,197,114,0.10), transparent 55%),
+            linear-gradient(180deg, #060b1f 0%, #0b1330 45%, #0d1735 100%);
+          padding: max(20px, env(safe-area-inset-top)) max(14px, env(safe-area-inset-right)) max(28px, env(safe-area-inset-bottom)) max(14px, env(safe-area-inset-left));
+          display: flex; justify-content: center;
+        }
+        .pqb-card { width: 100%; max-width: 1080px; background: linear-gradient(180deg, #fbf7ec 0%, #f6efdc 100%); border-radius: 22px; padding: 24px 22px 28px; box-shadow: 0 20px 50px rgba(0,0,0,0.32); border: 1px solid rgba(224,168,62,0.25); min-width: 0; }
+        @media (max-width: 480px) { .pqb-card { padding: 18px 14px 22px; border-radius: 18px; } }
+        .pqb-back { background: none; border: none; color: #a8741f; font-weight: 700; font-size: 13px; cursor: pointer; padding: 0; margin-bottom: 10px; }
+        .pqb-title { color: #1c2540; font-size: clamp(18px, 4vw, 22px); font-weight: 800; margin: 0 0 4px; }
+        .pqb-kicker { color: #a8741f; font-size: 12.5px; font-weight: 700; margin: 0 0 18px; }
+        .pqb-crosslink-btn { background: none; border: 1px solid #e0a83e; color: #a8741f; font-weight: 700; font-size: 12px; cursor: pointer; padding: 8px 16px; border-radius: 10px; margin-bottom: 14px; }
+        .pqb-row { display: flex; gap: 12px; flex-wrap: wrap; margin-bottom: 14px; align-items: flex-end; }
+        .pqb-field { display: flex; flex-direction: column; gap: 6px; }
+        .pqb-label { font-size: 12px; font-weight: 700; color: #6b7399; }
+        .pqb-input, .pqb-select, .pqb-textarea { height: 42px; border-radius: 10px; border: 1.3px solid #d9c9a0; background: #fff; padding: 0 12px; font-size: 13.5px; }
+        .pqb-w-grade { width: 130px; }
+        .pqb-w-subject { width: 190px; }
+        .pqb-textarea { height: auto; min-height: 70px; padding: 10px 12px; width: 100%; resize: vertical; }
+        .pqb-section-title { font-size: 14.5px; font-weight: 800; color: #1c2540; margin: 0 0 12px; }
+        .pqb-submit-btn { height: 44px; padding: 0 22px; border: none; border-radius: 10px; background: linear-gradient(135deg, #f2c572, #c8862b); color: #241503; font-weight: 800; font-size: 13.5px; cursor: pointer; }
+        .pqb-submit-btn:disabled { opacity: 0.55; cursor: not-allowed; }
+        .pqb-save-msg { color: #2c6e3f; font-weight: 700; font-size: 12.5px; margin-top: 8px; }
+        .pqb-empty { color: #8a8060; font-size: 13px; text-align: center; padding: 20px 0; }
+        .pqb-upload-hint { color: #6b7399; font-size: 12px; line-height: 1.9; margin: 0 0 12px; }
+        .vlab-exp { display: flex; flex-direction: column; gap: 14px; }
+        .vlab-svg { width: 100%; max-width: 420px; height: auto; margin: 0 auto; background: #fbf7ec; border-radius: 12px; border: 1px solid rgba(28,37,64,0.08); }
+        .vlab-scope-circle { max-width: 260px; background: #0b1330; }
+        .vlab-controls { display: flex; gap: 18px; flex-wrap: wrap; }
+        .vlab-ctrl-col { display: flex; flex-direction: column; gap: 6px; min-width: 160px; }
+        .vlab-ctrl-label { font-size: 12px; font-weight: 700; color: #6b7399; }
+        .vlab-readout { background: #eef6f0; border: 1px solid #bfe0c8; border-radius: 10px; padding: 12px 14px; font-size: 13px; color: #2c6e3f; line-height: 1.9; }
+        .vlab-toggle-row { display: flex; gap: 8px; }
+        .vlab-toggle-btn { height: 40px; padding: 0 16px; border-radius: 10px; border: 1.3px solid #d9c9a0; background: #fff; color: #6b7399; font-weight: 700; font-size: 12.5px; cursor: pointer; }
+        .vlab-toggle-btn.active { background: linear-gradient(135deg, #f2c572, #c8862b); color: #241503; border-color: transparent; }
+        .vlab-card-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(230px, 1fr)); gap: 14px; }
+        .vlab-card { background: #fff; border: 1px solid rgba(28,37,64,0.08); border-radius: 14px; padding: 16px; cursor: pointer; text-align: right; transition: box-shadow 0.15s; }
+        .vlab-card:hover { box-shadow: 0 6px 18px rgba(0,0,0,0.1); }
+        .vlab-card-icon { font-size: 26px; }
+        .vlab-card-title { font-weight: 800; color: #1c2540; font-size: 14px; margin: 6px 0 4px; }
+        .vlab-card-meta { font-size: 11px; color: #a8741f; font-weight: 700; }
+        .vlab-card-summary { font-size: 12px; color: #6b7399; margin-top: 6px; line-height: 1.7; }
+        .vlab-intro-box { background: #fdf3e3; border: 1px solid #f0d9a8; border-radius: 12px; padding: 14px; font-size: 13px; color: #5b4636; line-height: 1.9; margin-bottom: 14px; }
+        .vlab-report-box { margin-top: 16px; background: #fffaf0; border: 1px solid rgba(28,37,64,0.08); border-radius: 14px; padding: 16px; }
+        .vlab-reports-list { display: flex; flex-direction: column; gap: 10px; margin-top: 10px; }
+        .vlab-report-item { background: #fff; border: 1px solid rgba(28,37,64,0.08); border-radius: 10px; padding: 10px 12px; font-size: 12.5px; }
+        @keyframes vlab-swing {
+          0% { transform: rotate(-22deg); }
+          50% { transform: rotate(22deg); }
+          100% { transform: rotate(-22deg); }
+        }
+        .vlab-pendulum-swing { animation-name: vlab-swing; animation-timing-function: ease-in-out; animation-iteration-count: infinite; }
+      `}</style>
+
+      <div className="pqb-card">
+        <button type="button" className="pqb-back" onClick={activeId ? () => setActiveId(null) : onBack}>
+          → {activeId ? "بازگشت به فهرست آزمایش‌ها" : "بازگشت"}
+        </button>
+        <h1 className="pqb-title">🧫 آزمایشگاه مجازی</h1>
+        <p className="pqb-kicker">فیزیک، شیمی، زیست‌شناسی و برق — آزمایش کن، مشاهده کن، گزارش کار بنویس.</p>
+
+        {!activeId ? (
+          <>
+            <div className="pqb-row">
+              <div className="pqb-field">
+                <label className="pqb-label">درس</label>
+                <select className="pqb-select pqb-w-subject" value={subjectFilter} onChange={(e) => setSubjectFilter(e.target.value)}>
+                  <option value="همه">همه</option>
+                  {VLAB_SUBJECTS.map((s) => (
+                    <option key={s} value={s}>{s}</option>
+                  ))}
+                </select>
+              </div>
+              <div className="pqb-field">
+                <label className="pqb-label">مقطع</label>
+                <select className="pqb-select pqb-w-grade" value={levelFilter} onChange={(e) => setLevelFilter(e.target.value)}>
+                  <option value="همه">همه</option>
+                  {VLAB_LEVELS.map((l) => (
+                    <option key={l} value={l}>{l}</option>
+                  ))}
+                </select>
+              </div>
+            </div>
+
+            <div className="vlab-card-grid">
+              {filtered.map((ex) => (
+                <div key={ex.id} className="vlab-card" onClick={() => openExperiment(ex.id)}>
+                  <span className="vlab-card-icon">{ex.icon}</span>
+                  <div className="vlab-card-title">{ex.title}</div>
+                  <div className="vlab-card-meta">{ex.subject} — {ex.level}</div>
+                  <div className="vlab-card-summary">{ex.intro}</div>
+                </div>
+              ))}
+              {filtered.length === 0 && <p className="pqb-empty">آزمایشی با این فیلتر یافت نشد.</p>}
+            </div>
+
+            <div className="vlab-report-box">
+              <button type="button" className="pqb-crosslink-btn" onClick={() => { setShowReports((s) => !s); if (!showReports) loadReports(); }}>
+                {showReports ? "پنهان کردن گزارش‌های من" : "📑 گزارش‌های کار قبلی من"}
+              </button>
+              {showReports && (
+                <div className="vlab-reports-list">
+                  {savedReports.length === 0 && <p className="pqb-empty">هنوز گزارش کاری ثبت نکرده‌ای.</p>}
+                  {savedReports.map((r) => (
+                    <div key={r.id} className="vlab-report-item">
+                      <b>{r.title}</b> ({r.subject}) — {r.savedAt}
+                      <br />
+                      {r.reportText}
+                    </div>
+                  ))}
+                </div>
+              )}
+            </div>
+          </>
+        ) : (
+          <>
+            <div className="vlab-intro-box">
+              <b>{activeExperiment.icon} {activeExperiment.title}</b>
+              <br />
+              {activeExperiment.intro}
+            </div>
+            {ActiveComponent && <ActiveComponent onReading={setReading} />}
+
+            <div className="vlab-report-box">
+              <h2 className="pqb-section-title" style={{ marginBottom: 8 }}>📝 گزارش کار آزمایشگاهی</h2>
+              <p className="pqb-upload-hint" style={{ marginBottom: 8 }}>چه چیزی مشاهده کردی؟ چه نتیجه‌ای گرفتی؟</p>
+              <textarea
+                className="pqb-textarea"
+                style={{ width: "100%", minHeight: 90 }}
+                value={reportText}
+                onChange={(e) => setReportText(e.target.value)}
+                placeholder="مشاهدات و نتیجه‌گیری خودت را بنویس..."
+              />
+              {saveMsg && <p className="pqb-save-msg">{saveMsg}</p>}
+              <button type="button" className="pqb-submit-btn" style={{ marginTop: 10 }} onClick={saveReport} disabled={!reportText.trim()}>
+                💾 ثبت گزارش کار
+              </button>
+            </div>
+          </>
+        )}
+      </div>
+    </div>
+  );
+}
+
+
 const PLP_TEACHING_METHODS = ["سخنرانی و توضیح", "پرسش و پاسخ", "بحث گروهی", "آزمایش عملی", "کارگاهی / کار دستی", "حل مسئله", "بازی آموزشی", "ایفای نقش"];
 
 function TeacherLessonPlanStep({ onBack, prefillSchoolCode, teacherSchools, teacherMainSubject, teacherLevel, teacherClasses, teacherPhone, onOpenQuestionBank, onOpenSuggestionBoxWithDraft }) {
@@ -19074,6 +19871,18 @@ function PhoenixApp() {
     return <StudentRecitationPracticeView onBack={() => setScreen("studentDashboard")} />;
   }
 
+  if (screen === "studentVirtualLab") {
+    const info = studentAcademicInfo || {};
+    return (
+      <StudentVirtualLabView
+        onBack={() => setScreen("studentDashboard")}
+        grade={info.grade || ""}
+        studentCode={info.studentCode || ""}
+        schoolCode={info.schoolCode || ""}
+      />
+    );
+  }
+
   if (screen === "adminQuestionBank") {
     return (
       <StudentQuestionBankView
@@ -19145,6 +19954,7 @@ function PhoenixApp() {
         onOpenQuestionBank={() => setScreen("studentQuestionBank")}
         onOpenStudyPlan={() => setScreen("studentStudyPlan")}
         onOpenRecitationPractice={() => setScreen("studentRecitation")}
+        onOpenVirtualLab={() => setScreen("studentVirtualLab")}
         onLogout={() => setScreen("welcome")}
       />
     );

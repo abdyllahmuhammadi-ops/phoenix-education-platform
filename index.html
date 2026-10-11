@@ -16069,6 +16069,133 @@ function pqbSeededShuffle(array, seedStr) {
   return arr;
 }
 
+// ============================================================
+// آزمون جبرانی ضدتقلب — جلسه‌ی شب (جبرانی) نباید دقیقاً همان سؤالات و
+// همان ترتیب جلسه‌ی صبح باشد (ریسک پیامک‌کردن جواب‌ها بین دانش‌آموزان).
+// اما همه‌ی شرکت‌کنندگانِ یک جلسه (مثلاً همه‌ی دانش‌آموزانِ جلسه‌ی جبرانی)
+// باید دقیقاً یک آزمون یکسان ببینند، و سطح دشواری دو جلسه باید یکسان بماند.
+// ============================================================
+
+const PQB_MCQ_LETTERS = ["الف", "ب", "ج", "د"];
+
+// متن سؤال تستی را به «صورت سؤال» + «۴ گزینه» تجزیه می‌کند.
+// اگر قالب گزینه‌ها استاندارد نباشد (الف/ب/ج/د با علامت ) . - : بعدش)، null برمی‌گرداند
+// تا هرگز سؤالی با گزینه‌های نامعتبر ساخته نشود.
+function pqbParseMcqText(text) {
+  if (!text || typeof text !== "string") return null;
+  const re = /(^|\s)(الف|ب|ج|د)(\s*[)\.\-:ـ])/g;
+  const marks = [];
+  let m;
+  while ((m = re.exec(text)) !== null) {
+    marks.push({ letter: m[2], letterStart: m.index + m[1].length, contentStart: m.index + m[0].length });
+  }
+  if (marks.length !== 4) return null;
+  for (let i = 0; i < 4; i++) {
+    if (marks[i].letter !== PQB_MCQ_LETTERS[i]) return null;
+  }
+  const stem = text.slice(0, marks[0].letterStart).trim();
+  if (!stem) return null;
+  const options = marks.map((mk, i) => {
+    const end = i < 3 ? marks[i + 1].letterStart : text.length;
+    return { letter: mk.letter, content: text.slice(mk.contentStart, end).trim() };
+  });
+  if (options.some((o) => !o.content)) return null;
+  return { stem, options };
+}
+
+function pqbBuildMcqText(stem, orderedOptions) {
+  const parts = orderedOptions.map((o, i) => PQB_MCQ_LETTERS[i] + ") " + o.content);
+  return stem + "\n" + parts.join("\n");
+}
+
+// در توضیح پاسخ (explanation) دنبال اشاره‌ی صریح و یکتا به یک گزینه می‌گردد
+// (مثلاً «گزینه‌ی ب درست است»). اگر چنین اشاره‌ای پیدا نشود یا بیش از یک‌بار
+// تکرار شده باشد، null برمی‌گرداند تا هرگز توضیحِ نادرست بعد از جابجایی گزینه‌ها تولید نشود.
+const PQB_EXPLANATION_LETTER_RE = /(گزینه[‌ ]?(?:ی|‌ی)?\s*["«]?)(الف|ب|ج|د)(["»]?)/;
+function pqbFindExplanationLetter(explanation) {
+  if (!explanation || typeof explanation !== "string") return null;
+  const all = explanation.match(new RegExp(PQB_EXPLANATION_LETTER_RE.source, "g")) || [];
+  if (all.length !== 1) return null;
+  const m = explanation.match(PQB_EXPLANATION_LETTER_RE);
+  return m ? m[2] : null;
+}
+
+// برای یک سؤال تستی، فقط در صورتی که بتوان هم متن گزینه‌ها و هم توضیح پاسخ را
+// با اطمینان کامل تجزیه کرد، جای گزینه‌ها را عوض می‌کند (و توضیح را هم‌راستا به‌روزرسانی می‌کند)؛
+// در غیر این صورت، سؤال را دست‌نخورده برمی‌گرداند — هرگز به‌خاطر ضدتقلب، صحت سؤال به خطر نمی‌افتد.
+function pqbShuffleMcqOptionLetters(q, seedStr) {
+  if (!q || q.type !== "تستی (چهارگزینه‌ای)") return q;
+  const parsed = pqbParseMcqText(q.text);
+  if (!parsed) return q;
+  const oldLetter = pqbFindExplanationLetter(q.explanation);
+  if (!oldLetter) return q;
+
+  let order = pqbSeededShuffle([0, 1, 2, 3], seedStr);
+  if (order.every((v, i) => v === i)) {
+    order = [order[1], order[0], order[2], order[3]];
+  }
+  const newOptions = order.map((origIdx) => parsed.options[origIdx]);
+  const newText = pqbBuildMcqText(parsed.stem, newOptions);
+
+  const oldIdx = PQB_MCQ_LETTERS.indexOf(oldLetter);
+  const newIdx = order.indexOf(oldIdx);
+  if (newIdx === -1) return q;
+  const newLetter = PQB_MCQ_LETTERS[newIdx];
+  const newExplanation = q.explanation.replace(PQB_EXPLANATION_LETTER_RE, (full, pre, letter, post) => pre + newLetter + post);
+
+  return { ...q, text: newText, explanation: newExplanation };
+}
+
+// مجموعه‌ی سؤالات آزمون الزامی را می‌سازد. جلسه‌ی صبح: انتخاب و ترتیب قطعی بر اساس seedBase.
+// جلسه‌ی جبرانی شب: همان سطح دشواری، اما ~۱۰٪ سؤالات با سؤال هم‌سطح دیگری عوض می‌شوند،
+// باقی سؤالات در جای دیگری قرار می‌گیرند و گزینه‌های سؤالات تستیِ باقی‌مانده نیز جابجا می‌شوند —
+// همه‌ی این‌ها به‌صورت seeded، یعنی هر شرکت‌کننده‌ی جلسه‌ی جبرانی دقیقاً همین یک آزمون را می‌بیند.
+function pqbBuildMandatoryExamSet(pool, seedBase, session) {
+  const morningSeed = seedBase + ":morning";
+  const morningShuffled = pqbSeededShuffle(pool, morningSeed);
+  const morningSet = morningShuffled.slice(0, Math.min(15, morningShuffled.length));
+  if (session !== "evening") return morningSet;
+
+  const nightSeed = seedBase + ":evening";
+  const n = morningSet.length;
+  const swapCount = n > 0 ? Math.max(1, Math.round(n * 0.1)) : 0;
+
+  // ترتیب بررسی سؤالات برای جایگزینی seeded است، اما جایگزینی فقط وقتی انجام می‌شود که
+  // یک سؤال «هم‌سطح» واقعاً در دسترس باشد — هرگز سؤالی با سطح دشواری متفاوت جایگزین نمی‌شود،
+  // حتی اگر یعنی کمتر از ۱۰٪ سؤالات عوض شوند.
+  const indexOrder = pqbSeededShuffle(
+    morningSet.map((_, i) => i),
+    nightSeed + ":swap-pick"
+  );
+  const usedIds = new Set(morningSet.map((q) => q.id));
+  let remainingPool = pool.filter((q) => !usedIds.has(q.id));
+  const replacementByIndex = {};
+  let swapsLeft = swapCount;
+  for (const i of indexOrder) {
+    if (swapsLeft <= 0) break;
+    const q = morningSet[i];
+    const sameDifficulty = remainingPool.filter((r) => r.difficulty === q.difficulty);
+    if (sameDifficulty.length === 0) continue;
+    const picked = pqbSeededShuffle(sameDifficulty, nightSeed + ":replace:" + q.id)[0];
+    replacementByIndex[i] = { ...picked, _pqbSwappedForCompensatory: true };
+    remainingPool = remainingPool.filter((r) => r.id !== picked.id);
+    swapsLeft -= 1;
+  }
+
+  const nightUnordered = morningSet.map((q, i) => replacementByIndex[i] || q);
+
+  let nightOrdered = pqbSeededShuffle(nightUnordered, nightSeed + ":order");
+  const sameOrderAsMorning = nightOrdered.length === morningSet.length && nightOrdered.every((q, i) => q.id === morningSet[i].id);
+  if (sameOrderAsMorning && nightOrdered.length > 1) {
+    nightOrdered = [nightOrdered[1], nightOrdered[0], ...nightOrdered.slice(2)];
+  }
+
+  return nightOrdered.map((q) => {
+    if (q._pqbSwappedForCompensatory) return q;
+    return pqbShuffleMcqOptionLetters(q, nightSeed + ":opt:" + q.id);
+  });
+}
+
 // تمرین نامحدود با رهیار — مستقل از این‌که بانک رسمی معلم خالی باشد یا نه، همیشه در دسترس دانش‌آموز است
 // (برخلاف بقیه‌ی این صفحه که فقط وقتی بانک معلم سؤال دارد نمایش داده می‌شود)
 function StudentAiPracticeBlock({ grade, subject, aiPracticeLoading, aiPracticeError, aiPracticeQuestions, aiPracticeRevealedIds, onGenerate, onToggleReveal, onAskRahyar }) {
@@ -16232,9 +16359,12 @@ function StudentQuestionBankView({ onBack, prefillSchoolCode, prefillGrade, pref
 
   const handleStartMandatoryExam = () => {
     const pool = questions.filter((q) => (q.examTypes || []).includes("آزمایشی کنکور"));
-    // با seed ثابتِ همان روز، جلسه‌ی صبح و جلسه‌ی جبرانی شب دقیقاً سطح یکسانی از سؤالات می‌گیرند
-    const shuffled = pqbSeededShuffle(pool, fridayStatus.dateKey + ":" + skey(subject) + ":" + grade);
-    setExamSet(shuffled.slice(0, Math.min(15, shuffled.length)));
+    // صبح و جبرانیِ شب سطح دشواری یکسان دارند، اما برای جلوگیری از تقلب (ارسال جواب بین دو جلسه)
+    // حدود ۱۰٪ سؤالات جلسه‌ی جبرانی با سؤال هم‌سطح دیگری عوض می‌شود، ترتیب سؤالات جابجا می‌شود،
+    // و گزینه‌های سؤالات تستیِ باقی‌مانده نیز در جای دیگری قرار می‌گیرند — همه‌چیز seeded است، پس
+    // همه‌ی شرکت‌کنندگانِ یک جلسه دقیقاً همان یک آزمون را می‌بینند.
+    const examSetBuilt = pqbBuildMandatoryExamSet(pool, fridayStatus.dateKey + ":" + skey(subject) + ":" + grade, fridayStatus.session);
+    setExamSet(examSetBuilt);
     setExamRevealedIds([]);
     setExamKnownIds([]);
     setExamScoreShown(false);
@@ -16518,7 +16648,9 @@ function StudentQuestionBankView({ onBack, prefillSchoolCode, prefillGrade, pref
                       {fridayStatus.session === "morning"
                         ? "🔴 اکنون بازه‌ی آزمون الزامی صبح است."
                         : "🔴 اکنون بازه‌ی جلسه‌ی جبرانی شب است (برای کسانی که صبح نتوانستند شرکت کنند)."}{" "}
-                      سطح سؤالات این جلسه دقیقاً با جلسه‌ی دیگر یکسان است.
+                      {fridayStatus.session === "morning"
+                        ? "سطح دشواری این آزمون با جلسه‌ی جبرانی شب یکسان است."
+                        : "سطح دشواری این جلسه دقیقاً مانند جلسه‌ی صبح است؛ اما برای جلوگیری از تقلب، حدود ۱۰٪ سؤالات با سؤال هم‌سطح دیگری عوض شده، ترتیب سؤالات جابجا شده و گزینه‌های پاسخ سؤالات تستی نیز در جای دیگری قرار گرفته‌اند."}
                     </p>
                     <button type="button" className="pqb-submit-btn" onClick={handleStartMandatoryExam} disabled={questions.length === 0}>
                       🚀 شروع آزمون الزامی {fridayStatus.session === "morning" ? "صبح" : "جبرانی شب"}

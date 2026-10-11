@@ -16196,6 +16196,52 @@ function pqbBuildMandatoryExamSet(pool, seedBase, session) {
   });
 }
 
+// استخر سؤالات آزمون الزامی کنکور را با رهیار می‌سازد — کاملاً مستقل از بانک رسمی هر معلم،
+// مدیر یا مدرسه‌ی خاص. خروجی هر سؤال دقیقاً هم‌ساختار سؤالات تستیِ بانک معلم است (متن با گزینه‌های
+// الف/ب/ج/د داخل خودش، و توضیحِ پاسخ با جمله‌ی صریح «گزینه‌ی X درست است») تا همان منطق
+// جابجاییِ گزینه‌ها و ضدتقلبِ جلسه‌ی جبرانی روی آن هم کار کند.
+async function pqbGenerateKonkurAiPool(subject, grade) {
+  const response = await fetch("https://api.anthropic.com/v1/messages", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({
+      model: "claude-sonnet-4-6",
+      max_tokens: 4000,
+      system:
+        "شما رهیار، طراح سؤالات آزمون سراسری (کنکور) هستید. این آزمون، آزمونی ملی و یکسان برای همه‌ی " +
+        "دانش‌آموزان پایه‌ی «" +
+        grade +
+        "» در درس «" +
+        subject +
+        "» است و به هیچ معلم، مدیر یا مدرسه‌ی خاصی وابسته نیست — یعنی باید کاملاً بر اساس کتاب درسی رسمی " +
+        "ایران برای این پایه و درس باشد، با پوشش متنوع از فصل‌های مختلف. ۲۴ سؤال چهارگزینه‌ای (تستی) طراحی کن، " +
+        "با ترکیبی تقریباً مساوی از سطح دشواری آسان، متوسط و سخت (هر سطح حدود ۸ سؤال). " +
+        'یک آرایه‌ی JSON به نام "items" برگردان. هر عضو دقیقاً این ساختار را داشته باشد: ' +
+        '{"chapter": "نام فصل/موضوع", ' +
+        '"text": "متن کامل سؤال، و بلافاصله بعد از آن چهار گزینه دقیقاً با همین قالب داخل همان رشته متنی: الف) ... ب) ... ج) ... د) ...", ' +
+        '"difficulty": "یکی از: آسان/متوسط/سخت", ' +
+        '"explanation": "دقیقاً با این قالب شروع شود: «گزینه‌ی X درست است» (X یکی از الف/ب/ج/د — همان حرفی که در متن سؤال گزینه‌ی درست است)، سپس استدلال یا مراحل حل کامل"}. ' +
+        "فقط همان شیء JSON را برگردان، بدون هیچ توضیح اضافه یا Markdown.",
+      messages: [{ role: "user", content: "لطفاً سؤالات آزمون الزامی کنکور را آماده کن." }],
+    }),
+  });
+  const data = await response.json();
+  const rawText = data && data.content && data.content[0] && data.content[0].text ? data.content[0].text : "";
+  const cleaned = rawText.replace(/```json|```/g, "").trim();
+  const parsed = JSON.parse(cleaned);
+  const items = parsed.items || [];
+  return items.map((item, i) => ({
+    id: "konkur-ai-" + i,
+    chapter: item.chapter || "",
+    text: item.text || "",
+    type: "تستی (چهارگزینه‌ای)",
+    difficulty: item.difficulty || "متوسط",
+    explanation: item.explanation || "",
+    examTypes: ["آزمایشی کنکور"],
+    source: "رهیار — آزمون ملی",
+  }));
+}
+
 // تمرین نامحدود با رهیار — مستقل از این‌که بانک رسمی معلم خالی باشد یا نه، همیشه در دسترس دانش‌آموز است
 // (برخلاف بقیه‌ی این صفحه که فقط وقتی بانک معلم سؤال دارد نمایش داده می‌شود)
 function StudentAiPracticeBlock({ grade, subject, aiPracticeLoading, aiPracticeError, aiPracticeQuestions, aiPracticeRevealedIds, onGenerate, onToggleReveal, onAskRahyar }) {
@@ -16270,6 +16316,11 @@ function StudentQuestionBankView({ onBack, prefillSchoolCode, prefillGrade, pref
   const [examSaving, setExamSaving] = useState(false);
   const [examKnownIds, setExamKnownIds] = useState([]);
   const [isMandatoryExam, setIsMandatoryExam] = useState(false);
+  // آزمون الزامی کنکور کاملاً مستقل از معلم/مدیر/مدرسه‌ی واقعی است — سؤالاتش از بانک رسمی معلم
+  // نمی‌آید، بلکه توسط رهیار (هوش مصنوعی) ساخته و برای همان روز، به‌صورت ملی و یکسان برای
+  // همه‌ی دانش‌آموزان آن درس/پایه (در هر مدرسه‌ای)، در حافظه‌ی مشترک ذخیره می‌شود.
+  const [mandatoryExamLoading, setMandatoryExamLoading] = useState(false);
+  const [mandatoryExamError, setMandatoryExamError] = useState("");
   const fridayStatus = pqbFridayExamStatus();
 
   // تمرین نامحدود با رهیار — وقتی بانک سؤال معلم کم یا خالی است، دانش‌آموز منتظر معلم نمی‌ماند؛
@@ -16357,20 +16408,52 @@ function StudentQuestionBankView({ onBack, prefillSchoolCode, prefillGrade, pref
     setExamMode(true);
   };
 
-  const handleStartMandatoryExam = () => {
-    const pool = questions.filter((q) => (q.examTypes || []).includes("آزمایشی کنکور"));
-    // صبح و جبرانیِ شب سطح دشواری یکسان دارند، اما برای جلوگیری از تقلب (ارسال جواب بین دو جلسه)
-    // حدود ۱۰٪ سؤالات جلسه‌ی جبرانی با سؤال هم‌سطح دیگری عوض می‌شود، ترتیب سؤالات جابجا می‌شود،
-    // و گزینه‌های سؤالات تستیِ باقی‌مانده نیز در جای دیگری قرار می‌گیرند — همه‌چیز seeded است، پس
-    // همه‌ی شرکت‌کنندگانِ یک جلسه دقیقاً همان یک آزمون را می‌بینند.
-    const examSetBuilt = pqbBuildMandatoryExamSet(pool, fridayStatus.dateKey + ":" + skey(subject) + ":" + grade, fridayStatus.session);
-    setExamSet(examSetBuilt);
-    setExamRevealedIds([]);
-    setExamKnownIds([]);
-    setExamScoreShown(false);
-    setExamAnalysis(null);
-    setIsMandatoryExam(true);
-    setExamMode(true);
+  const handleStartMandatoryExam = async () => {
+    setMandatoryExamError("");
+    setMandatoryExamLoading(true);
+    try {
+      // آزمون الزامی کنکور مستقل از بانک رسمی معلم است — سؤالات از یک «استخر ملی»ِ ساخته‌شده
+      // توسط رهیار می‌آیند که برای همان روز/درس/پایه در حافظه‌ی مشترک ذخیره می‌شود، تا هر
+      // دانش‌آموزی در هر مدرسه‌ای که وارد شود، دقیقاً همان استخر سؤال را ببیند.
+      const poolKey = "konkur-ai-pool:" + skey(subject) + ":" + grade + ":" + fridayStatus.dateKey;
+      let pool = null;
+      if (typeof window !== "undefined" && window.storage) {
+        const cached = await window.storage.get(poolKey, true).catch(() => null);
+        if (cached && cached.value) {
+          try {
+            pool = JSON.parse(cached.value);
+          } catch (e) {
+            pool = null;
+          }
+        }
+      }
+      if (!pool || pool.length === 0) {
+        pool = await pqbGenerateKonkurAiPool(subject, grade);
+        if (pool && pool.length > 0 && typeof window !== "undefined" && window.storage) {
+          await window.storage.set(poolKey, JSON.stringify(pool), true).catch(() => {});
+        }
+      }
+      if (!pool || pool.length === 0) {
+        setMandatoryExamError("در ساخت سؤالات آزمون الزامی مشکلی پیش آمد. دوباره امتحان کنید.");
+        setMandatoryExamLoading(false);
+        return;
+      }
+      // صبح و جبرانیِ شب سطح دشواری یکسان دارند، اما برای جلوگیری از تقلب (ارسال جواب بین دو جلسه)
+      // حدود ۱۰٪ سؤالات جلسه‌ی جبرانی با سؤال هم‌سطح دیگری عوض می‌شود، ترتیب سؤالات جابجا می‌شود،
+      // و گزینه‌های سؤالات تستیِ باقی‌مانده نیز در جای دیگری قرار می‌گیرند — همه‌چیز seeded است، پس
+      // همه‌ی شرکت‌کنندگانِ یک جلسه دقیقاً همان یک آزمون را می‌بینند.
+      const examSetBuilt = pqbBuildMandatoryExamSet(pool, fridayStatus.dateKey + ":" + skey(subject) + ":" + grade, fridayStatus.session);
+      setExamSet(examSetBuilt);
+      setExamRevealedIds([]);
+      setExamKnownIds([]);
+      setExamScoreShown(false);
+      setExamAnalysis(null);
+      setIsMandatoryExam(true);
+      setExamMode(true);
+    } catch (e) {
+      setMandatoryExamError("در ساخت سؤالات آزمون الزامی مشکلی پیش آمد. دوباره امتحان کنید.");
+    }
+    setMandatoryExamLoading(false);
   };
 
   const toggleExamReveal = (id) => {
@@ -16593,6 +16676,36 @@ function StudentQuestionBankView({ onBack, prefillSchoolCode, prefillGrade, pref
           </button>
         </div>
 
+        {loaded && ["دهم", "یازدهم", "دوازدهم"].includes(grade) && (
+          <div className="pqb-mandatory-box">
+            <h2 className="pqb-section-title" style={{ marginBottom: 8 }}>📅 آزمون الزامی کنکور (جمعه‌های زوج)</h2>
+            <p className="pqb-upload-hint" style={{ marginBottom: 8 }}>
+              این آزمون سراسری و ملی است و به بانک سؤال معلم یا مدرسه‌ی شما هیچ ربطی ندارد — سؤالاتش را رهیار
+              مستقیماً بر اساس کتاب درسی طراحی می‌کند، یکسان برای همه‌ی دانش‌آموزان این درس و پایه در سراسر کشور.
+            </p>
+            {!fridayStatus.isMandatoryDay ? (
+              <p className="pqb-upload-hint">امروز جمعه‌ی زوج نیست — آزمون الزامی بعدی، جمعه‌ی زوج، ساعت ۸ تا ۱۱ صبح برگزار می‌شود.</p>
+            ) : !fridayStatus.session ? (
+              <p className="pqb-upload-hint">امروز جمعه‌ی زوج است. بازه‌ی آزمون صبح (۸ تا ۱۱) یا جلسه‌ی جبرانی شب (۲۰ تا ۲۳) را صبر کنید.</p>
+            ) : (
+              <>
+                <p className="pqb-upload-hint">
+                  {fridayStatus.session === "morning"
+                    ? "🔴 اکنون بازه‌ی آزمون الزامی صبح است."
+                    : "🔴 اکنون بازه‌ی جلسه‌ی جبرانی شب است (برای کسانی که صبح نتوانستند شرکت کنند)."}{" "}
+                  {fridayStatus.session === "morning"
+                    ? "سطح دشواری این آزمون با جلسه‌ی جبرانی شب یکسان است."
+                    : "سطح دشواری این جلسه دقیقاً مانند جلسه‌ی صبح است؛ اما برای جلوگیری از تقلب، حدود ۱۰٪ سؤالات با سؤال هم‌سطح دیگری عوض شده، ترتیب سؤالات جابجا شده و گزینه‌های پاسخ سؤالات تستی نیز در جای دیگری قرار گرفته‌اند."}
+                </p>
+                {mandatoryExamError && <p className="pqb-upload-error">{mandatoryExamError}</p>}
+                <button type="button" className="pqb-submit-btn" onClick={handleStartMandatoryExam} disabled={mandatoryExamLoading || !subject || !grade}>
+                  {mandatoryExamLoading ? "در حال آماده‌سازی آزمون توسط رهیار..." : "🚀 شروع آزمون الزامی " + (fridayStatus.session === "morning" ? "صبح" : "جبرانی شب")}
+                </button>
+              </>
+            )}
+          </div>
+        )}
+
         {loading ? (
           <p className="pqb-empty">در حال بارگذاری...</p>
         ) : !loaded ? (
@@ -16634,31 +16747,6 @@ function StudentQuestionBankView({ onBack, prefillSchoolCode, prefillGrade, pref
                 </select>
               </div>
             </div>
-
-            {["دهم", "یازدهم", "دوازدهم"].includes(grade) && (
-              <div className="pqb-mandatory-box">
-                <h2 className="pqb-section-title" style={{ marginBottom: 8 }}>📅 آزمون الزامی کنکور (جمعه‌های زوج)</h2>
-                {!fridayStatus.isMandatoryDay ? (
-                  <p className="pqb-upload-hint">امروز جمعه‌ی زوج نیست — آزمون الزامی بعدی، جمعه‌ی زوج، ساعت ۸ تا ۱۱ صبح برگزار می‌شود.</p>
-                ) : !fridayStatus.session ? (
-                  <p className="pqb-upload-hint">امروز جمعه‌ی زوج است. بازه‌ی آزمون صبح (۸ تا ۱۱) یا جلسه‌ی جبرانی شب (۲۰ تا ۲۳) را صبر کنید.</p>
-                ) : (
-                  <>
-                    <p className="pqb-upload-hint">
-                      {fridayStatus.session === "morning"
-                        ? "🔴 اکنون بازه‌ی آزمون الزامی صبح است."
-                        : "🔴 اکنون بازه‌ی جلسه‌ی جبرانی شب است (برای کسانی که صبح نتوانستند شرکت کنند)."}{" "}
-                      {fridayStatus.session === "morning"
-                        ? "سطح دشواری این آزمون با جلسه‌ی جبرانی شب یکسان است."
-                        : "سطح دشواری این جلسه دقیقاً مانند جلسه‌ی صبح است؛ اما برای جلوگیری از تقلب، حدود ۱۰٪ سؤالات با سؤال هم‌سطح دیگری عوض شده، ترتیب سؤالات جابجا شده و گزینه‌های پاسخ سؤالات تستی نیز در جای دیگری قرار گرفته‌اند."}
-                    </p>
-                    <button type="button" className="pqb-submit-btn" onClick={handleStartMandatoryExam} disabled={questions.length === 0}>
-                      🚀 شروع آزمون الزامی {fridayStatus.session === "morning" ? "صبح" : "جبرانی شب"}
-                    </button>
-                  </>
-                )}
-              </div>
-            )}
 
             <div className="pqb-examgen-box">
               <h2 className="pqb-section-title" style={{ marginBottom: 10 }}>🎯 آزمون خودم را بگیرم</h2>
@@ -16759,103 +16847,104 @@ function StudentQuestionBankView({ onBack, prefillSchoolCode, prefillGrade, pref
               </>
             )}
 
-            {examMode && (
-              <div className="pqb-exam-session">
-                <div className="pqb-exam-header">
-                  <h2 className="pqb-section-title">
-                    {isMandatoryExam ? "📅 آزمون الزامی کنکور در حال اجرا" : "📝 آزمون در حال اجرا"} ({examSet.length} سؤال)
-                  </h2>
-                  <button type="button" className="pqb-export-btn" onClick={() => setExamMode(false)}>
-                    ✖️ بستن آزمون
-                  </button>
-                </div>
-                {examSet.map((q, idx) => {
-                  const answer = examKnownIds.find((a) => a.id === q.id);
-                  return (
-                    <div key={q.id} className="pqb-question-item">
-                      <div className="pqb-question-meta">
-                        <span className="pqb-tag">{q.chapter}</span>
-                        <span className="pqb-tag">{q.difficulty}</span>
-                      </div>
-                      <div className="pqb-question-text">{idx + 1}. {q.text}</div>
-                      {!examRevealedIds.includes(q.id) ? (
-                        <button type="button" className="pqb-reveal-btn" onClick={() => toggleExamReveal(q.id)}>
-                          💡 خودت جواب بده، بعد پاسخ را ببین
-                        </button>
-                      ) : (
-                        <>
-                          {q.explanation && (
-                            <div className="pqb-explanation-box">
-                              <b>پاسخ و توضیح:</b> {q.explanation}
-                            </div>
-                          )}
-                          <div className="pqb-exam-answer-row">
-                            <button
-                              type="button"
-                              className={"pqb-chip" + (answer && answer.known ? " active" : "")}
-                              onClick={() => markExamAnswer(q.id, true)}
-                            >
-                              ✅ بلد بودم
-                            </button>
-                            <button
-                              type="button"
-                              className={"pqb-chip" + (answer && answer.known === false ? " active" : "")}
-                              onClick={() => markExamAnswer(q.id, false)}
-                            >
-                              ❌ بلد نبودم
-                            </button>
-                          </div>
-                        </>
+          </div>
+        )}
+
+        {examMode && (
+          <div className="pqb-exam-session">
+            <div className="pqb-exam-header">
+              <h2 className="pqb-section-title">
+                {isMandatoryExam ? "📅 آزمون الزامی کنکور در حال اجرا" : "📝 آزمون در حال اجرا"} ({examSet.length} سؤال)
+              </h2>
+              <button type="button" className="pqb-export-btn" onClick={() => setExamMode(false)}>
+                ✖️ بستن آزمون
+              </button>
+            </div>
+            {examSet.map((q, idx) => {
+              const answer = examKnownIds.find((a) => a.id === q.id);
+              return (
+                <div key={q.id} className="pqb-question-item">
+                  <div className="pqb-question-meta">
+                    <span className="pqb-tag">{q.chapter}</span>
+                    <span className="pqb-tag">{q.difficulty}</span>
+                  </div>
+                  <div className="pqb-question-text">{idx + 1}. {q.text}</div>
+                  {!examRevealedIds.includes(q.id) ? (
+                    <button type="button" className="pqb-reveal-btn" onClick={() => toggleExamReveal(q.id)}>
+                      💡 خودت جواب بده، بعد پاسخ را ببین
+                    </button>
+                  ) : (
+                    <>
+                      {q.explanation && (
+                        <div className="pqb-explanation-box">
+                          <b>پاسخ و توضیح:</b> {q.explanation}
+                        </div>
                       )}
-                    </div>
-                  );
-                })}
+                      <div className="pqb-exam-answer-row">
+                        <button
+                          type="button"
+                          className={"pqb-chip" + (answer && answer.known ? " active" : "")}
+                          onClick={() => markExamAnswer(q.id, true)}
+                        >
+                          ✅ بلد بودم
+                        </button>
+                        <button
+                          type="button"
+                          className={"pqb-chip" + (answer && answer.known === false ? " active" : "")}
+                          onClick={() => markExamAnswer(q.id, false)}
+                        >
+                          ❌ بلد نبودم
+                        </button>
+                      </div>
+                    </>
+                  )}
+                </div>
+              );
+            })}
 
-                {examKnownIds.length === examSet.length && examSet.length > 0 && !examScoreShown && (
-                  <button type="button" className="pqb-submit-btn" onClick={handleFinishExam} disabled={examSaving}>
-                    {examSaving ? "در حال تحلیل..." : "🏁 پایان آزمون و مشاهده‌ی نتیجه"}
-                  </button>
-                )}
+            {examKnownIds.length === examSet.length && examSet.length > 0 && !examScoreShown && (
+              <button type="button" className="pqb-submit-btn" onClick={handleFinishExam} disabled={examSaving}>
+                {examSaving ? "در حال تحلیل..." : "🏁 پایان آزمون و مشاهده‌ی نتیجه"}
+              </button>
+            )}
 
-                {examScoreShown && examAnalysis && (
-                  <div className="pqb-exam-score" style={{ textAlign: "right" }}>
-                    <p style={{ textAlign: "center", fontSize: 15 }}>
-                      نتیجه: از {examAnalysis.totalCount} سؤال، {examAnalysis.totalKnown} تا رو بلد بودی 🎉
-                    </p>
+            {examScoreShown && examAnalysis && (
+              <div className="pqb-exam-score" style={{ textAlign: "right" }}>
+                <p style={{ textAlign: "center", fontSize: 15 }}>
+                  نتیجه: از {examAnalysis.totalCount} سؤال، {examAnalysis.totalKnown} تا رو بلد بودی 🎉
+                </p>
 
-                    <p style={{ fontWeight: 800, marginTop: 12, marginBottom: 6 }}>📊 آنالیز کامل بر اساس فصل:</p>
-                    {Object.entries(examAnalysis.byChapter).map(([chapter, v]) => (
-                      <div key={chapter} style={{ fontSize: 12.5, marginBottom: 4 }}>
-                        {chapter}: {v.known} از {v.total} ({Math.round((v.known / v.total) * 100)}٪)
-                        {examAnalysis.weakChapters.includes(chapter) && <span style={{ color: "#c0392b" }}> — نیاز به تمرین بیشتر</span>}
+                <p style={{ fontWeight: 800, marginTop: 12, marginBottom: 6 }}>📊 آنالیز کامل بر اساس فصل:</p>
+                {Object.entries(examAnalysis.byChapter).map(([chapter, v]) => (
+                  <div key={chapter} style={{ fontSize: 12.5, marginBottom: 4 }}>
+                    {chapter}: {v.known} از {v.total} ({Math.round((v.known / v.total) * 100)}٪)
+                    {examAnalysis.weakChapters.includes(chapter) && <span style={{ color: "#c0392b" }}> — نیاز به تمرین بیشتر</span>}
+                  </div>
+                ))}
+
+                {examAnalysis.progressNotes.length > 0 && (
+                  <>
+                    <p style={{ fontWeight: 800, marginTop: 12, marginBottom: 6 }}>📈 نقاط پیشرفت و افت (نسبت به آزمون قبلی):</p>
+                    {examAnalysis.progressNotes.map((p, i) => (
+                      <div key={i} style={{ fontSize: 12.5, marginBottom: 4, color: p.direction === "up" ? "#2c6e3f" : "#c0392b" }}>
+                        {p.direction === "up" ? "📈 پیشرفت در " : "📉 افت در "}
+                        {p.chapter}: از {Math.round(p.from * 100)}٪ به {Math.round(p.to * 100)}٪
                       </div>
                     ))}
-
-                    {examAnalysis.progressNotes.length > 0 && (
-                      <>
-                        <p style={{ fontWeight: 800, marginTop: 12, marginBottom: 6 }}>📈 نقاط پیشرفت و افت (نسبت به آزمون قبلی):</p>
-                        {examAnalysis.progressNotes.map((p, i) => (
-                          <div key={i} style={{ fontSize: 12.5, marginBottom: 4, color: p.direction === "up" ? "#2c6e3f" : "#c0392b" }}>
-                            {p.direction === "up" ? "📈 پیشرفت در " : "📉 افت در "}
-                            {p.chapter}: از {Math.round(p.from * 100)}٪ به {Math.round(p.to * 100)}٪
-                          </div>
-                        ))}
-                      </>
-                    )}
-
-                    {examAnalysis.weakChapters.length > 0 && (
-                      <p style={{ fontSize: 12, color: "#a8741f", marginTop: 12 }}>
-                        💡 رهیار از این نتیجه باخبر شد و در جلسه‌ی بعدی، برای تعمیق این مباحث با تو کار می‌کند.
-                      </p>
-                    )}
-
-                    <div style={{ textAlign: "center" }}>
-                      <button type="button" className="pqb-export-btn" style={{ marginTop: 10 }} onClick={handleStartExam}>
-                        🔁 آزمون تصادفی جدید بگیر
-                      </button>
-                    </div>
-                  </div>
+                  </>
                 )}
+
+                {examAnalysis.weakChapters.length > 0 && (
+                  <p style={{ fontSize: 12, color: "#a8741f", marginTop: 12 }}>
+                    💡 رهیار از این نتیجه باخبر شد و در جلسه‌ی بعدی، برای تعمیق این مباحث با تو کار می‌کند.
+                  </p>
+                )}
+
+                <div style={{ textAlign: "center" }}>
+                  <button type="button" className="pqb-export-btn" style={{ marginTop: 10 }} onClick={handleStartExam}>
+                    🔁 آزمون تصادفی جدید بگیر
+                  </button>
+                </div>
               </div>
             )}
           </div>

@@ -17436,6 +17436,38 @@ const VLAB_EXPERIMENTS = [
     icon: "🔬",
     intro: "یک نمونه را زیر میکروسکوپ انتخاب کن، بزرگ‌نمایی را تنظیم کن و با تنظیم فوکوس، تصویر را واضح کن.",
   },
+  {
+    id: "free-fall",
+    subject: "فیزیک",
+    level: "متوسطه دوم",
+    title: "سقوط آزاد و شتاب گرانش",
+    icon: "🪐",
+    intro: "ارتفاع رهاسازی و سیاره را تغییر بده و ببین زمان سقوط و سرعت برخورد جسم چطور تغییر می‌کند.",
+  },
+  {
+    id: "simple-switch",
+    subject: "برق و الکترونیک",
+    level: "ابتدایی",
+    title: "مدار روشنایی ساده با کلید",
+    icon: "💡",
+    intro: "کلید را باز و بسته کن و ببین چرا لامپ فقط وقتی مدار کامل (بسته) باشد روشن می‌شود.",
+  },
+  {
+    id: "dissolving",
+    subject: "شیمی",
+    level: "ابتدایی",
+    title: "حل شدن مواد در آب",
+    icon: "🥛",
+    intro: "مواد مختلف (شکر، نمک، شن، روغن) را در آب بریز و هم بزن — ببین کدام‌ها حل می‌شوند و کدام‌ها نه.",
+  },
+  {
+    id: "photosynthesis",
+    subject: "زیست‌شناسی",
+    level: "متوسطه اول",
+    title: "فتوسنتز و نور",
+    icon: "🌿",
+    intro: "شدت نور تابیده‌شده به گیاه آبزی را تغییر بده و نرخ تولید حباب‌های اکسیژن (سرعت فتوسنتز) را مشاهده کن.",
+  },
 ];
 
 function vlabClamp(v, min, max) {
@@ -17925,6 +17957,213 @@ function VlabMicroscopeExperiment({ onReading }) {
   );
 }
 
+/* ---------- ۹. سقوط آزاد و شتاب گرانش (فیزیک — متوسطه دوم) ---------- */
+function VlabFreeFallExperiment({ onReading }) {
+  const [height, setHeight] = useState(20);
+  const [planet, setPlanet] = useState("زمین");
+  const G_BY_PLANET = { "زمین": 9.8, "ماه": 1.6, "مشتری": 24.8 };
+  const g = G_BY_PLANET[planet];
+  const time = Math.sqrt((2 * height) / g);
+  const finalVelocity = g * time;
+  const animDuration = vlabClamp(time, 0.4, 4);
+
+  useEffect(() => {
+    if (onReading) onReading(`ارتفاع: ${height} متر | سیاره: ${planet} (g=${g}) | زمان سقوط = √(۲h/g) = ${time.toFixed(2)} ثانیه | سرعت لحظه‌ی برخورد = ${finalVelocity.toFixed(1)} متر بر ثانیه`);
+    // eslint-disable-next-line
+  }, [height, planet]);
+
+  return (
+    <div className="vlab-exp">
+      <svg viewBox="0 0 320 200" className="vlab-svg">
+        <line x1="40" y1="20" x2="40" y2="180" stroke="#d9c9a0" strokeWidth="2" strokeDasharray="4 4" />
+        <rect x="20" y="180" width="280" height="10" fill="#8a6d3b" />
+        <circle cx="40" cy="30" r="12" fill="#e2622f">
+          <animate attributeName="cy" from="30" to="170" dur={`${animDuration}s`} repeatCount="indefinite" />
+        </circle>
+      </svg>
+      <div className="vlab-controls">
+        <div className="vlab-ctrl-col" style={{ flex: 1 }}>
+          <label className="vlab-ctrl-label">ارتفاع رهاسازی (متر): {height}</label>
+          <input type="range" min="2" max="80" value={height} onChange={(e) => setHeight(+e.target.value)} />
+        </div>
+        <div className="vlab-ctrl-col">
+          <label className="vlab-ctrl-label">سیاره / جرم آسمانی</label>
+          <div className="vlab-toggle-row">
+            {Object.keys(G_BY_PLANET).map((p) => (
+              <button key={p} type="button" className={"vlab-toggle-btn" + (planet === p ? " active" : "")} onClick={() => setPlanet(p)}>
+                {p}
+              </button>
+            ))}
+          </div>
+        </div>
+      </div>
+      <div className="vlab-readout">
+        زمان سقوط (t) = √(۲h ÷ g) = <b>{time.toFixed(2)} ثانیه</b> | سرعت برخورد (v) = g × t = <b>{finalVelocity.toFixed(1)} متر بر ثانیه</b>
+        <br />
+        هرچه g (شتاب گرانش آن سیاره) بیشتر باشد، جسم سریع‌تر سقوط می‌کند.
+      </div>
+    </div>
+  );
+}
+
+/* ---------- ۱۰. مدار روشنایی ساده با کلید (برق و الکترونیک — ابتدایی) ---------- */
+function VlabSimpleSwitchExperiment({ onReading }) {
+  const [closed, setClosed] = useState(false);
+
+  useEffect(() => {
+    if (onReading) onReading(`وضعیت کلید: ${closed ? "بسته (مدار کامل)" : "باز (مدار قطع)"} | لامپ: ${closed ? "روشن" : "خاموش"}`);
+    // eslint-disable-next-line
+  }, [closed]);
+
+  return (
+    <div className="vlab-exp">
+      <svg viewBox="0 0 320 170" className="vlab-svg">
+        <rect x="30" y="60" width="26" height="50" fill="#5b4636" />
+        <text x="43" y="90" fontSize="11" fill="#fff" textAnchor="middle">+/−</text>
+        <line x1="56" y1="70" x2="150" y2="70" stroke="#5b4636" strokeWidth="3" />
+        {closed ? (
+          <line x1="150" y1="70" x2="200" y2="70" stroke="#5b4636" strokeWidth="3" />
+        ) : (
+          <line x1="150" y1="70" x2="185" y2="45" stroke="#5b4636" strokeWidth="3" />
+        )}
+        <circle cx="150" cy="70" r="3" fill="#5b4636" />
+        <circle cx="200" cy="70" r="3" fill="#5b4636" />
+        <line x1="200" y1="70" x2="260" y2="70" stroke="#5b4636" strokeWidth="3" />
+        <line x1="30" y1="110" x2="30" y2="70" stroke="#5b4636" strokeWidth="3" />
+        <line x1="30" y1="110" x2="260" y2="110" stroke="#5b4636" strokeWidth="3" />
+        <line x1="260" y1="70" x2="260" y2="110" stroke="#5b4636" strokeWidth="3" />
+        <circle cx="230" cy="90" r="18" fill={closed ? "rgba(242,197,72,0.95)" : "rgba(242,197,72,0.08)"} stroke="#c8862b" strokeWidth="2" />
+      </svg>
+      <div className="vlab-controls">
+        <div className="vlab-ctrl-col">
+          <div className="vlab-toggle-row">
+            <button type="button" className={"vlab-toggle-btn" + (!closed ? " active" : "")} onClick={() => setClosed(false)}>🔓 کلید باز</button>
+            <button type="button" className={"vlab-toggle-btn" + (closed ? " active" : "")} onClick={() => setClosed(true)}>🔒 کلید بسته</button>
+          </div>
+        </div>
+      </div>
+      <div className="vlab-readout">
+        {closed
+          ? "✅ وقتی کلید بسته باشد، مسیر مدار کامل می‌شود و جریان برق از باتری تا لامپ می‌رسد — لامپ روشن می‌شود."
+          : "⬜ وقتی کلید باز باشد، مسیر مدار قطع است و جریان برق به لامپ نمی‌رسد — لامپ خاموش می‌ماند."}
+      </div>
+    </div>
+  );
+}
+
+/* ---------- ۱۱. حل شدن مواد در آب (شیمی — ابتدایی) ---------- */
+function VlabDissolvingExperiment({ onReading }) {
+  const [material, setMaterial] = useState("شکر");
+  const [stirCount, setStirCount] = useState(0);
+  const DISSOLVES = { "شکر": true, "نمک": true, "شن": false, "روغن": false };
+  const dissolves = DISSOLVES[material];
+  const dissolved = dissolves && stirCount >= 3;
+
+  useEffect(() => {
+    if (onReading) onReading(`ماده: ${material} | تعداد هم‌زدن: ${stirCount} | نتیجه: ${dissolves ? (dissolved ? "کاملاً حل شد (محلول شفاف)" : "در حال حل شدن...") : "حل نشد (ته‌نشین/شناور باقی ماند)"}`);
+    // eslint-disable-next-line
+  }, [material, stirCount]);
+
+  return (
+    <div className="vlab-exp">
+      <svg viewBox="0 0 320 170" className="vlab-svg">
+        <rect x="100" y="30" width="120" height="120" rx="8" fill="#dff0ff" stroke="#5b4636" strokeWidth="3" />
+        {!dissolves && material === "شن" && (
+          <g>
+            <circle cx="140" cy="135" r="4" fill="#8a6d3b" />
+            <circle cx="160" cy="138" r="5" fill="#8a6d3b" />
+            <circle cx="180" cy="135" r="4" fill="#8a6d3b" />
+          </g>
+        )}
+        {!dissolves && material === "روغن" && <ellipse cx="160" cy="48" rx="45" ry="8" fill="#e8c35a" opacity="0.8" />}
+        {dissolves && !dissolved && (
+          <g opacity={0.6}>
+            <circle cx="140" cy="90" r="3" fill="#fff" />
+            <circle cx="170" cy="100" r="3" fill="#fff" />
+            <circle cx="155" cy="70" r="3" fill="#fff" />
+          </g>
+        )}
+        {dissolved && <rect x="100" y="30" width="120" height="120" rx="8" fill="#eef6f0" opacity="0.4" />}
+      </svg>
+      <div className="vlab-controls">
+        <div className="vlab-ctrl-col">
+          <label className="vlab-ctrl-label">ماده‌ی مورد آزمایش</label>
+          <div className="vlab-toggle-row">
+            {Object.keys(DISSOLVES).map((m) => (
+              <button
+                key={m}
+                type="button"
+                className={"vlab-toggle-btn" + (material === m ? " active" : "")}
+                onClick={() => {
+                  setMaterial(m);
+                  setStirCount(0);
+                }}
+              >
+                {m}
+              </button>
+            ))}
+          </div>
+        </div>
+        <div className="vlab-ctrl-col">
+          <button type="button" className="pqb-submit-btn" onClick={() => setStirCount((c) => c + 1)}>
+            🥄 هم بزن ({stirCount})
+          </button>
+        </div>
+      </div>
+      <div className="vlab-readout">
+        {dissolves
+          ? dissolved
+            ? "✅ " + material + " کاملاً در آب حل شد — دیگر ذره‌ای از آن دیده نمی‌شود (محلول)."
+            : "🥄 بیشتر هم بزن تا کاملاً حل شود..."
+          : "⬜ " + material + " در آب حل نمی‌شود — چون ماده‌ای نامحلول است، همیشه جدا از آب باقی می‌ماند (مخلوط ناهمگن)."}
+      </div>
+    </div>
+  );
+}
+
+/* ---------- ۱۲. فتوسنتز و نور (زیست‌شناسی — متوسطه اول) ---------- */
+function VlabPhotosynthesisExperiment({ onReading }) {
+  const [light, setLight] = useState(50);
+  const bubbleRate = Math.round(light / 12);
+  const bubbleDuration = vlabClamp(2.2 - light / 60, 0.3, 2.2);
+
+  useEffect(() => {
+    if (onReading) onReading(`شدت نور: ${light}٪ | نرخ تولید حباب اکسیژن: حدود ${bubbleRate} حباب در دقیقه`);
+    // eslint-disable-next-line
+  }, [light]);
+
+  const bubbles = Array.from({ length: Math.max(1, Math.round(light / 20)) });
+
+  return (
+    <div className="vlab-exp">
+      <svg viewBox="0 0 320 190" className="vlab-svg">
+        <rect x="0" y="0" width="320" height="190" fill={`rgba(242,197,72,${light / 180})`} />
+        <rect x="110" y="60" width="100" height="110" rx="6" fill="#dff0ff" stroke="#5b4636" strokeWidth="2" />
+        <ellipse cx="160" cy="130" rx="30" ry="10" fill="#2c6e3f" />
+        <path d="M160,130 C150,100 130,90 120,70" stroke="#2c6e3f" strokeWidth="4" fill="none" />
+        <path d="M160,130 C170,95 190,85 200,65" stroke="#2c6e3f" strokeWidth="4" fill="none" />
+        {bubbles.map((_, i) => (
+          <circle key={i} cx={140 + i * 12} cy="150" r="3" fill="#fff" opacity="0.8">
+            <animate attributeName="cy" from="150" to="65" dur={`${bubbleDuration}s`} begin={`${i * 0.3}s`} repeatCount="indefinite" />
+            <animate attributeName="opacity" from="0.8" to="0" dur={`${bubbleDuration}s`} begin={`${i * 0.3}s`} repeatCount="indefinite" />
+          </circle>
+        ))}
+      </svg>
+      <div className="vlab-controls">
+        <div className="vlab-ctrl-col" style={{ flex: 1 }}>
+          <label className="vlab-ctrl-label">شدت نور: {light}٪</label>
+          <input type="range" min="0" max="100" value={light} onChange={(e) => setLight(+e.target.value)} />
+        </div>
+      </div>
+      <div className="vlab-readout">
+        نرخ تولید حباب اکسیژن (نشانه‌ی سرعت فتوسنتز) ≈ <b>{bubbleRate} حباب در دقیقه</b>
+        <br />
+        هرچه نور بیشتر باشد، گیاه فتوسنتز بیشتری انجام می‌دهد و اکسیژن بیشتری تولید می‌کند — تا جایی که عوامل دیگر (مثل دی‌اکسید کربن) محدودکننده شوند.
+      </div>
+    </div>
+  );
+}
+
 const VLAB_COMPONENTS = {
   lever: VlabLeverExperiment,
   pendulum: VlabPendulumExperiment,
@@ -17934,6 +18173,10 @@ const VLAB_COMPONENTS = {
   "acid-base": VlabAcidBaseExperiment,
   "plant-growth": VlabPlantGrowthExperiment,
   microscope: VlabMicroscopeExperiment,
+  "free-fall": VlabFreeFallExperiment,
+  "simple-switch": VlabSimpleSwitchExperiment,
+  dissolving: VlabDissolvingExperiment,
+  photosynthesis: VlabPhotosynthesisExperiment,
 };
 
 function StudentVirtualLabView({ onBack, grade, studentCode, schoolCode }) {

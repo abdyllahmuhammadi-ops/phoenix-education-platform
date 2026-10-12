@@ -17379,6 +17379,7 @@ const VLAB_EXPERIMENTS = [
     title: "اهرم‌ها و تعادل",
     icon: "⚖️",
     intro: "با تغییر وزن و فاصله‌ی دو طرف اهرم از تکیه‌گاه، ببین چه زمانی اهرم تعادل پیدا می‌کند. قانون: گشتاور = وزن × فاصله.",
+    tools: ["اهرم (میله‌ی تعادل)", "تکیه‌گاه", "وزنه‌های مختلف", "خط‌کش برای اندازه‌گیری فاصله"],
   },
   {
     id: "pendulum",
@@ -17387,6 +17388,7 @@ const VLAB_EXPERIMENTS = [
     title: "آونگ ساده",
     icon: "🕰️",
     intro: "طول آونگ را تغییر بده و ببین دوره‌ی تناوب (زمان یک رفت‌وبرگشت کامل) چطور تغییر می‌کند.",
+    tools: ["نخ یا ریسمان", "وزنه‌ی کوچک (گلوله‌ی آونگ)", "پایه‌ی آویز", "کرنومتر"],
   },
   {
     id: "ohm",
@@ -17395,6 +17397,7 @@ const VLAB_EXPERIMENTS = [
     title: "مدار ساده و قانون اهم",
     icon: "🔋",
     intro: "با تغییر ولتاژ باتری و مقاومت، ببین جریان مدار و روشنایی لامپ چطور تغییر می‌کند. قانون اهم: جریان = ولتاژ ÷ مقاومت.",
+    tools: ["باتری", "مقاومت متغیر (رئوستا)", "لامپ کوچک", "سیم رابط", "آمپرمتر"],
   },
   {
     id: "series-parallel",
@@ -17403,6 +17406,7 @@ const VLAB_EXPERIMENTS = [
     title: "مدار سری و موازی",
     icon: "🔌",
     intro: "دو مقاومت را یک‌بار به‌صورت سری و یک‌بار به‌صورت موازی به مدار وصل کن و تفاوت روشنایی لامپ‌ها و جریان مدار را ببین.",
+    tools: ["باتری", "دو مقاومت (یا دو لامپ)", "سیم رابط", "کلید قطع و وصل"],
   },
   {
     id: "states-of-matter",
@@ -17411,6 +17415,7 @@ const VLAB_EXPERIMENTS = [
     title: "تغییر حالت ماده",
     icon: "🧊",
     intro: "دمای ظرف آب را از یخ تا بخار تغییر بده و ببین در هر دما ماده در چه حالتی است (جامد، مایع یا گاز).",
+    tools: ["ظرف نسوز", "یخ", "منبع حرارتی (چراغ الکلی)", "دماسنج"],
   },
   {
     id: "acid-base",
@@ -17419,6 +17424,7 @@ const VLAB_EXPERIMENTS = [
     title: "واکنش اسید و باز",
     icon: "🧪",
     intro: "با افزودن قطره‌های اسید یا باز، pH محلول را تغییر بده و با شناساگر رنگی، اسیدی یا بازی بودن محلول را تشخیص بده.",
+    tools: ["محلول اسید رقیق", "محلول باز رقیق", "شناساگر (کاغذ تورنسل یا فنل‌فتالئین)", "لوله‌ی آزمایش", "قطره‌چکان"],
   },
   {
     id: "plant-growth",
@@ -17427,6 +17433,7 @@ const VLAB_EXPERIMENTS = [
     title: "رشد گیاه",
     icon: "🌱",
     intro: "میزان نور و آب گیاه را تنظیم کن و روز به روز ببین گیاه چطور رشد می‌کند.",
+    tools: ["گلدان و خاک", "بذر یا نشاء", "آب‌پاش", "منبع نور (نور خورشید یا لامپ رشد)"],
   },
   {
     id: "microscope",
@@ -17435,6 +17442,7 @@ const VLAB_EXPERIMENTS = [
     title: "میکروسکوپ مجازی",
     icon: "🔬",
     intro: "یک نمونه را زیر میکروسکوپ انتخاب کن، بزرگ‌نمایی را تنظیم کن و با تنظیم فوکوس، تصویر را واضح کن.",
+    tools: ["میکروسکوپ نوری", "لام و لامل", "نمونه‌ی زیستی (برگ، پیاز، سلول گونه‌ی گیاهی)", "پنس", "قطره‌چکان"],
   },
   {
     id: "free-fall",
@@ -17443,6 +17451,7 @@ const VLAB_EXPERIMENTS = [
     title: "سقوط آزاد و شتاب گرانش",
     icon: "🪐",
     intro: "ارتفاع رهاسازی و سیاره را تغییر بده و ببین زمان سقوط و سرعت برخورد جسم چطور تغییر می‌کند.",
+    tools: ["جسم آزمایشی (توپ کوچک)", "متر یا ارتفاع‌سنج", "کرنومتر"],
   },
   {
     id: "simple-switch",
@@ -17451,6 +17460,7 @@ const VLAB_EXPERIMENTS = [
     title: "مدار روشنایی ساده با کلید",
     icon: "💡",
     intro: "کلید را باز و بسته کن و ببین چرا لامپ فقط وقتی مدار کامل (بسته) باشد روشن می‌شود.",
+    tools: ["باتری", "لامپ کوچک (یا LED)", "کلید قطع و وصل", "سیم رابط"],
   },
   {
     id: "dissolving",
@@ -17459,6 +17469,7 @@ const VLAB_EXPERIMENTS = [
     title: "حل شدن مواد در آب",
     icon: "🥛",
     intro: "مواد مختلف (شکر، نمک، شن، روغن) را در آب بریز و هم بزن — ببین کدام‌ها حل می‌شوند و کدام‌ها نه.",
+    tools: ["لیوان شفاف", "آب", "شکر، نمک، شن و روغن", "قاشق برای هم‌زدن"],
   },
   {
     id: "photosynthesis",
@@ -17467,6 +17478,7 @@ const VLAB_EXPERIMENTS = [
     title: "فتوسنتز و نور",
     icon: "🌿",
     intro: "شدت نور تابیده‌شده به گیاه آبزی را تغییر بده و نرخ تولید حباب‌های اکسیژن (سرعت فتوسنتز) را مشاهده کن.",
+    tools: ["گیاه آبزی (مثل والیسنریا یا اُدوگونیوم)", "ظرف شیشه‌ای پر از آب", "منبع نور", "استوانه‌ی مدرج برای شمارش حباب"],
   },
 ];
 
@@ -18293,6 +18305,10 @@ function StudentVirtualLabView({ onBack, grade, studentCode, schoolCode }) {
         .vlab-card-meta { font-size: 11px; color: #a8741f; font-weight: 700; }
         .vlab-card-summary { font-size: 12px; color: #6b7399; margin-top: 6px; line-height: 1.7; }
         .vlab-intro-box { background: #fdf3e3; border: 1px solid #f0d9a8; border-radius: 12px; padding: 14px; font-size: 13px; color: #5b4636; line-height: 1.9; margin-bottom: 14px; }
+        .vlab-tools-box { background: #fff; border: 1px solid rgba(28,37,64,0.08); border-radius: 12px; padding: 14px; margin-bottom: 14px; }
+        .vlab-tools-chip-row { display: flex; flex-wrap: wrap; gap: 8px; }
+        .vlab-tool-chip { background: #eef3fb; border: 1px solid #c9d9f0; color: #27406b; font-size: 12px; font-weight: 700; padding: 6px 12px; border-radius: 999px; }
+        .vlab-tools-note { font-size: 11.5px; color: #8a8060; line-height: 1.8; margin: 10px 0 0; }
         .vlab-report-box { margin-top: 16px; background: #fffaf0; border: 1px solid rgba(28,37,64,0.08); border-radius: 14px; padding: 16px; }
         .vlab-reports-list { display: flex; flex-direction: column; gap: 10px; margin-top: 10px; }
         .vlab-report-item { background: #fff; border: 1px solid rgba(28,37,64,0.08); border-radius: 10px; padding: 10px 12px; font-size: 12.5px; }
@@ -18371,6 +18387,19 @@ function StudentVirtualLabView({ onBack, grade, studentCode, schoolCode }) {
               <br />
               {activeExperiment.intro}
             </div>
+
+            {activeExperiment.tools && activeExperiment.tools.length > 0 && (
+              <div className="vlab-tools-box">
+                <h2 className="pqb-section-title" style={{ marginBottom: 8 }}>🧰 ابزار و وسایل این آزمایش</h2>
+                <div className="vlab-tools-chip-row">
+                  {activeExperiment.tools.map((tool, idx) => (
+                    <span key={idx} className="vlab-tool-chip">{tool}</span>
+                  ))}
+                </div>
+                <p className="vlab-tools-note">این آزمایش در واقعیت با همین وسایل در کلاس یا آزمایشگاه مدرسه قابل انجام است؛ نسخه‌ی مجازی اینجا کمک می‌کند قبل یا بعد از انجام واقعی آن، رفتار آزمایش را بهتر بفهمی.</p>
+              </div>
+            )}
+
             {ActiveComponent && <ActiveComponent onReading={setReading} />}
 
             <div className="vlab-report-box">

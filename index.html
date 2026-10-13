@@ -19087,6 +19087,28 @@ function RahyarTeachingLibraryView({ onBack, grade, studentCode, schoolCode }) {
     <div dir="rtl" className="pqb-root">
       <style>{`
         @import url('https://fonts.googleapis.com/css2?family=Vazirmatn:wght@400;500;600;700;800&display=swap');
+        .pqb-root, .pqb-root * { box-sizing: border-box; font-family: 'Vazirmatn', Tahoma, Arial, sans-serif; -webkit-tap-highlight-color: transparent; }
+        .pqb-root {
+          min-height: 100vh; min-height: 100dvh; width: 100%;
+          background: radial-gradient(1100px 550px at 18% -10%, rgba(226,98,47,0.16), transparent 60%),
+            radial-gradient(900px 500px at 100% 10%, rgba(242,197,114,0.10), transparent 55%),
+            linear-gradient(180deg, #060b1f 0%, #0b1330 45%, #0d1735 100%);
+          padding: max(20px, env(safe-area-inset-top)) max(14px, env(safe-area-inset-right)) max(28px, env(safe-area-inset-bottom)) max(14px, env(safe-area-inset-left));
+          display: flex; justify-content: center;
+        }
+        .pqb-card { width: 100%; max-width: 1080px; background: linear-gradient(180deg, #fbf7ec 0%, #f6efdc 100%); border-radius: 22px; padding: 24px 22px 28px; box-shadow: 0 20px 50px rgba(0,0,0,0.32); border: 1px solid rgba(224,168,62,0.25); min-width: 0; }
+        @media (max-width: 480px) { .pqb-card { padding: 18px 14px 22px; border-radius: 18px; } }
+        .pqb-back { background: none; border: none; color: #a8741f; font-weight: 700; font-size: 13px; cursor: pointer; padding: 0; margin-bottom: 10px; }
+        .pqb-title { color: #1c2540; font-size: clamp(18px, 4vw, 22px); font-weight: 800; margin: 0 0 4px; }
+        .pqb-kicker { color: #a8741f; font-size: 12.5px; font-weight: 700; margin: 0 0 18px; }
+        .pqb-field { display: flex; flex-direction: column; gap: 6px; }
+        .pqb-label { font-size: 12px; font-weight: 700; color: #6b7399; }
+        .pqb-input, .pqb-select, .pqb-textarea { height: 42px; border-radius: 10px; border: 1.3px solid #d9c9a0; background: #fff; padding: 0 12px; font-size: 13.5px; }
+        .pqb-w-grade { width: 130px; }
+        .pqb-w-subject { width: 190px; }
+        .pqb-submit-btn { height: 44px; padding: 0 22px; border: none; border-radius: 10px; background: linear-gradient(135deg, #f2c572, #c8862b); color: #241503; font-weight: 800; font-size: 13.5px; cursor: pointer; }
+        .pqb-submit-btn:disabled { opacity: 0.55; cursor: not-allowed; }
+        .pqb-upload-error { color: #c0392b; font-size: 12.5px; font-weight: 700; margin: 8px 0 0; }
         .rtl-avatar-wrap { display: flex; flex-direction: column; align-items: center; gap: 8px; margin-bottom: 10px; }
         .rtl-avatar-svg { width: 120px; height: 120px; }
         .rtl-avatar-badge { background: #eef6f0; color: #2c6e3f; font-weight: 800; font-size: 12px; padding: 4px 14px; border-radius: 999px; border: 1px solid #bfe0c8; }

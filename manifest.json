@@ -1,0 +1,33 @@
+{
+  "name": "ققنوس — آموزش برای فردا",
+  "short_name": "ققنوس",
+  "description": "سامانه‌ی آموزشی ققنوس — ثبت‌نام، برنامه‌ی هفتگی، دفتر نمره، رهیار هوشمند و آزمایشگاه مجازی",
+  "start_url": "./index.html",
+  "scope": "./",
+  "display": "standalone",
+  "orientation": "any",
+  "background_color": "#0b1330",
+  "theme_color": "#c8862b",
+  "lang": "fa",
+  "dir": "rtl",
+  "icons": [
+    {
+      "src": "icon-192.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "any"
+    },
+    {
+      "src": "icon-512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any"
+    },
+    {
+      "src": "icon-maskable-512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "maskable"
+    }
+  ]
+}

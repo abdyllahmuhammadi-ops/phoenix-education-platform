@@ -2,8 +2,17 @@
 <html lang="fa" dir="rtl">
 <head>
 <meta charset="UTF-8" />
-<meta name="viewport" content="width=device-width, initial-scale=1" />
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
 <title>ققنوس — آموزش برای فردا</title>
+<meta name="description" content="سامانه‌ی آموزشی ققنوس — ثبت‌نام، برنامه‌ی هفتگی، دفتر نمره، رهیار هوشمند و آزمایشگاه مجازی" />
+<meta name="theme-color" content="#0b1330" />
+<meta name="mobile-web-app-capable" content="yes" />
+<meta name="apple-mobile-web-app-capable" content="yes" />
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+<meta name="apple-mobile-web-app-title" content="ققنوس" />
+<link rel="manifest" href="manifest.json" />
+<link rel="icon" href="icon-192.png" type="image/png" />
+<link rel="apple-touch-icon" href="apple-touch-icon.png" />
 <link href="https://fonts.googleapis.com/css2?family=Vazirmatn:wght@400;500;600;700;800&display=swap" rel="stylesheet">
 <script src="https://cdnjs.cloudflare.com/ajax/libs/react/18.2.0/umd/react.production.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/react-dom/18.2.0/umd/react-dom.production.min.js"></script>
@@ -11,6 +20,20 @@
 <style>
 html, body { margin: 0; padding: 0; }
 </style>
+<script>
+/* ثبت Service Worker — فقط اگر فایل‌های مربوطه (manifest.json, sw.js, icon-*.png) کنار همین index.html
+   روی هاست واقعی (مثل گیت‌هاب‌پیجز) وجود داشته باشند معنا دارد؛ داخل پیش‌نمایش Artifact معمولاً
+   service worker مجاز نیست، پس خطای احتمالی را بی‌صدا نادیده می‌گیریم. */
+(function () {
+  if ("serviceWorker" in navigator) {
+    window.addEventListener("load", function () {
+      navigator.serviceWorker.register("sw.js").catch(function () {
+        // داخل محیط‌هایی مثل پیش‌نمایش Artifact، ثبت Service Worker مجاز نیست — مشکلی نیست، نادیده می‌گیریم
+      });
+    });
+  }
+})();
+</script>
 <script>
 /* اگر مرورگر window.storage نداشت (مثل صفحه‌ی منتشرشده)، یک نسخه‌ی ساده روی localStorage همین مرورگر می‌سازیم */
 (function () {
@@ -117,6 +140,58 @@ async function authStorageGet(key, shared) {
     // نادیده گرفته می‌شود
   }
   return null;
+}
+
+// تعداد پیام‌های نخوانده‌ی دانش‌آموز (نشان قرمز روی دکمه‌ی پیام‌ها در داشبورد) — با شمارش ساده‌ی
+// «تعداد کل پیام‌ها منهای تعداد پیام‌هایی که آخرین بار دیده شده» کار می‌کند، بدون نیاز به شناسه یا
+// برچسب خواندن/نخوانده روی تک‌تک پیام‌ها.
+async function pxUnseenMessageCount(schoolCode, className, studentCode) {
+  if (!schoolCode || !className || !studentCode) return 0;
+  try {
+    const keys = [
+      "messages:studentTeacherThread:" + schoolCode + ":" + skey(className) + ":" + studentCode,
+      "messages:studentPrivate:" + schoolCode + ":" + studentCode,
+    ];
+    let total = 0;
+    for (const k of keys) {
+      const raw = await authStorageGet(k, true);
+      if (raw) {
+        try {
+          total += JSON.parse(raw).length;
+        } catch (e) {}
+      }
+    }
+    const seenKey = "inbox-last-seen:" + schoolCode + ":" + skey(className) + ":" + studentCode;
+    const seenRaw = await authStorageGet(seenKey, true);
+    const seen = seenRaw ? parseInt(seenRaw, 10) || 0 : 0;
+    return Math.max(0, total - seen);
+  } catch (e) {
+    return 0;
+  }
+}
+
+// وقتی دانش‌آموز صندوق پیام‌هایش را باز می‌کند، همین تابع صدا زده می‌شود تا نشان قرمز پاک شود
+async function pxMarkMessagesSeen(schoolCode, className, studentCode) {
+  if (!schoolCode || !className || !studentCode) return;
+  try {
+    const keys = [
+      "messages:studentTeacherThread:" + schoolCode + ":" + skey(className) + ":" + studentCode,
+      "messages:studentPrivate:" + schoolCode + ":" + studentCode,
+    ];
+    let total = 0;
+    for (const k of keys) {
+      const raw = await authStorageGet(k, true);
+      if (raw) {
+        try {
+          total += JSON.parse(raw).length;
+        } catch (e) {}
+      }
+    }
+    const seenKey = "inbox-last-seen:" + schoolCode + ":" + skey(className) + ":" + studentCode;
+    await authStorageSet(seenKey, String(total), true);
+  } catch (e) {
+    // تلاش‌محور — اگر ذخیره نشد، دفعه‌ی بعد دوباره امتحان می‌شود
+  }
 }
 
 // جدول رسمی مواد درسی و ساعات کار هفتگی دوره‌ی ابتدایی (جدول ۲ — سند وزارت آموزش‌وپرورش)
@@ -13808,6 +13883,10 @@ function MessagingStep({ onBack, initialInboxMode, initialGuardianPhone, initial
         }
       }
       setInboxMessages(combined);
+      if (inboxRole === "student") {
+        // صندوق باز شد — نشان قرمز پیام‌های نخوانده را پاک کن
+        pxMarkMessagesSeen(inboxSchoolCode, inboxClassName, inboxStudentCode);
+      }
     } catch (e) {
       setInboxMessages([]);
     }
@@ -14528,6 +14607,7 @@ function StudentDashboard({
   );
   const [subjectFilter, setSubjectFilter] = useState("");
   const [deadlineHomework, setDeadlineHomework] = useState([]);
+  const [unreadMessageCount, setUnreadMessageCount] = useState(0);
 
   const dayNames = ["شنبه", "یکشنبه", "دوشنبه", "سه‌شنبه", "چهارشنبه", "پنجشنبه", "جمعه"];
   const dayOfYear = Math.floor((Date.now() - new Date(new Date().getFullYear(), 0, 0)) / 86400000);
@@ -14638,6 +14718,14 @@ function StudentDashboard({
           }
         }
         if (!cancelled) setHomeworkItems(combined.slice(-5).reverse());
+
+        // نشان پیام‌های نخوانده روی دکمه‌ی پیام‌ها
+        try {
+          const unseen = await pxUnseenMessageCount(schoolCode, className, studentCode);
+          if (!cancelled) setUnreadMessageCount(unseen);
+        } catch (e) {
+          /* موردی نبود */
+        }
       } catch (e) {
         /* بدون تکلیف */
       }
@@ -14940,6 +15028,18 @@ function StudentDashboard({
         .sdb-quick-icon { font-size: 18px; }
         .sdb-quick-label { color: #1c2540; font-weight: 700; font-size: 12.5px; }
 
+        /* نشان قرمز اعلان (پیام نخوانده / تکلیف باقی‌مانده) */
+        .sdb-badge-dot {
+          position: absolute; top: -6px; left: -6px; min-width: 18px; height: 18px; padding: 0 4px;
+          border-radius: 999px; background: #e0463f; color: #fff; font-size: 10.5px; font-weight: 800;
+          display: flex; align-items: center; justify-content: center; box-shadow: 0 2px 6px rgba(224,70,63,0.4);
+          line-height: 1;
+        }
+        .sdb-badge-dot-inline {
+          position: static; display: inline-flex; margin-inline-start: 6px; top: 0; left: 0;
+          vertical-align: middle;
+        }
+
         @media (max-width: 400px) {
           .sdb-stats-row, .sdb-badges-grid { grid-template-columns: repeat(3, 1fr); }
         }
@@ -15112,7 +15212,14 @@ function StudentDashboard({
         {deadlineHomework.length > 0 && (
           <div className="sdb-section">
             <div className="sdb-section-head">
-              <span className="sdb-section-title">📝 تکالیف با مهلت</span>
+              <span className="sdb-section-title">
+                📝 تکالیف با مهلت
+                {deadlineHomework.filter((h) => !(h.completedBy || []).includes(studentCode)).length > 0 && (
+                  <span className="sdb-badge-dot sdb-badge-dot-inline">
+                    {deadlineHomework.filter((h) => !(h.completedBy || []).includes(studentCode)).length}
+                  </span>
+                )}
+              </span>
             </div>
             <div className="sdb-card">
               <div className="sdb-hw-list">
@@ -15187,9 +15294,14 @@ function StudentDashboard({
               <span className="sdb-quick-icon">📊</span>
               <span className="sdb-quick-label">کارنامه و نمرات</span>
             </button>
-            <button type="button" className="sdb-quick-btn" onClick={onOpenMessaging}>
+            <button type="button" className="sdb-quick-btn" onClick={onOpenMessaging} style={{ position: "relative" }}>
               <span className="sdb-quick-icon">✉️</span>
               <span className="sdb-quick-label">پیام به معلم/مدیر</span>
+              {unreadMessageCount > 0 && (
+                <span className="sdb-badge-dot" title={unreadMessageCount + " پیام نخوانده"}>
+                  {unreadMessageCount > 9 ? "9+" : unreadMessageCount}
+                </span>
+              )}
             </button>
             {onOpenQuestionBank && (
               <button type="button" className="sdb-quick-btn" onClick={onOpenQuestionBank}>

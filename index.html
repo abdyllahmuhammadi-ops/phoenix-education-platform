@@ -1146,7 +1146,7 @@ const PHOENIX_LOGO = "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAN8AAADYCAYA
    صفحه ورود / ثبت‌نام (پیش از صفحه ثبت‌نام دانش‌آموز)
    ============================================================ */
 
-function AuthLanding({ language, onLanguageChange, onContinue, onViewPerformance, onSecretAdminAccess, onOpenMessaging, onTestMasterAccess, onLoginSuccess }) {
+function AuthLanding({ language, onLanguageChange, onContinue, onViewPerformance, onSecretAdminAccess, onOpenMessaging, onTestMasterAccess, onLoginSuccess, onOpenDemo, onOpenTrustInfo }) {
   const t = T[language] || T["فارسی"];
 
   const roles = [
@@ -1572,6 +1572,11 @@ function AuthLanding({ language, onLanguageChange, onContinue, onViewPerformance
 
         .pal-title { color: #1c2540; font-size: clamp(19px, 4vw, 22px); font-weight: 800; margin: 0 0 4px; }
         .pal-subtitle { color: #6b7399; font-size: 13.5px; margin: 0 0 20px; }
+        .pal-highlight-row { display: flex; flex-wrap: wrap; gap: 8px; margin: -8px 0 18px; }
+        .pal-highlight-chip {
+          background: linear-gradient(135deg, #fff6e6, #ffecc7); color: #7a5412; border: 1px solid rgba(224,168,62,0.35);
+          border-radius: 999px; padding: 6px 12px; font-size: 11.5px; font-weight: 700; white-space: nowrap;
+        }
 
         .pal-role-grid {
           display: grid;
@@ -1886,6 +1891,14 @@ function AuthLanding({ language, onLanguageChange, onContinue, onViewPerformance
             {mode === "login" ? t.welcomeSubLogin : t.welcomeSubRegister}
           </p>
 
+          {mode === "login" && (
+            <div className="pal-highlight-row">
+              <span className="pal-highlight-chip">🤖 رهیار هوشمند — دستیار شخصی هر دانش‌آموز</span>
+              <span className="pal-highlight-chip">🧪 آزمایشگاه مجازی تعاملی</span>
+              <span className="pal-highlight-chip">🏅 یادگیری با امتیاز و نشان</span>
+            </div>
+          )}
+
           <div className="pal-role-grid">
             {roles.map((role) => (
               <div
@@ -2066,6 +2079,22 @@ function AuthLanding({ language, onLanguageChange, onContinue, onViewPerformance
               ✉️ ارتباط با معلم یا مدیر مدرسه (ویژه دانش‌آموز و ولی)
             </button>
           </div>
+
+          {onOpenDemo && (
+            <div className="pal-perfview-row">
+              <button type="button" className="pal-perfview-link" onClick={onOpenDemo}>
+                ✨ امتحان رایگان رهیار و آزمایشگاه مجازی — بدون نیاز به ثبت‌نام
+              </button>
+            </div>
+          )}
+
+          {onOpenTrustInfo && (
+            <div className="pal-perfview-row">
+              <button type="button" className="pal-perfview-link" onClick={onOpenTrustInfo}>
+                🔒 چرا به ققنوس اعتماد کنیم؟
+              </button>
+            </div>
+          )}
         </div>
       </div>
 
@@ -2169,6 +2198,145 @@ function AuthLanding({ language, onLanguageChange, onContinue, onViewPerformance
           </div>
         </div>
       )}
+    </div>
+  );
+}
+
+/* ============================================================
+   صفحه‌ی اعتماد و حریم خصوصی — قابل‌دسترس از صفحه‌ی ورود، بدون نیاز به ثبت‌نام
+   ============================================================ */
+
+function TrustInfoView({ onBack }) {
+  const points = [
+    {
+      icon: "🔐",
+      title: "رمز عبور شما نزد شما می‌ماند",
+      text: "رمز فقط یک‌بار، در لحظه‌ی ثبت‌نام، روی صفحه‌ی خودتان نمایش داده می‌شود. هیچ پیامک یا ایمیلی حاوی رمز برای کسی ارسال نمی‌شود.",
+    },
+    {
+      icon: "📵",
+      title: "بدون آگهی، بدون فروش اطلاعات",
+      text: "اطلاعات دانش‌آموزان و اولیا هرگز به شرکت تبلیغاتی یا شخص ثالثی فروخته یا اجاره داده نمی‌شود.",
+    },
+    {
+      icon: "👨‍👩‍👧",
+      title: "دسترسی اولیا فقط به فرزند خودشان",
+      text: "هر ولی فقط با شماره‌تلفن و اطلاعات دقیق فرزندش می‌تواند کارنامه و پیام‌های او را ببیند — نه هیچ دانش‌آموز دیگری.",
+    },
+    {
+      icon: "🧑‍🏫",
+      title: "دسترسی معلم محدود به کلاس خودش",
+      text: "هر معلم فقط به نمره، حضور و غیاب و پیام‌های دانش‌آموزان همان کلاس/درسی که تدریس می‌کند دسترسی دارد.",
+    },
+    {
+      icon: "🤖",
+      title: "گفت‌وگو با رهیار هوشمند، شخصی و خصوصی",
+      text: "سؤال‌ها و تمرین‌های هر دانش‌آموز با رهیار فقط برای خودش و معلم/مدیر مدرسه‌اش قابل‌مشاهده است.",
+    },
+    {
+      icon: "🛠️",
+      title: "در حال بهبود مستمر و شفاف",
+      text: "این سامانه هنوز در مرحله‌ی تکمیل امنیتی است؛ پیش از انتشار عمومی نهایی، بازبینی کامل امنیتی انجام می‌شود.",
+    },
+  ];
+  return (
+    <div dir="rtl" className="pal-root">
+      <div className="pal-card" style={{ maxWidth: 640, width: "100%" }}>
+        <button
+          type="button"
+          onClick={onBack}
+          style={{ marginBottom: 14, background: "none", border: "none", color: "#a8741f", fontWeight: 700, fontSize: 13, cursor: "pointer", padding: 0 }}
+        >
+          ← بازگشت
+        </button>
+        <h1 className="pal-title">چرا به ققنوس اعتماد کنیم؟</h1>
+        <p className="pal-subtitle">شفافیت درباره‌ی نحوه‌ی حفاظت از اطلاعات دانش‌آموزان، اولیا و معلمان</p>
+        <div style={{ display: "flex", flexDirection: "column", gap: 14, marginTop: 10 }}>
+          {points.map((p, i) => (
+            <div
+              key={i}
+              style={{
+                display: "flex", gap: 12, alignItems: "flex-start", background: "#fbfaf6",
+                border: "1px solid rgba(28,37,64,0.08)", borderRadius: 14, padding: "14px 16px",
+              }}
+            >
+              <div style={{ fontSize: 22 }}>{p.icon}</div>
+              <div>
+                <div style={{ fontWeight: 800, color: "#1c2540", fontSize: 14, marginBottom: 3 }}>{p.title}</div>
+                <div style={{ color: "#6b7399", fontSize: 12.5, lineHeight: 1.8 }}>{p.text}</div>
+              </div>
+            </div>
+          ))}
+        </div>
+      </div>
+    </div>
+  );
+}
+
+/* ============================================================
+   حالت نمایشی (دمو) — امتحان رهیار و آزمایشگاه مجازی بدون ثبت‌نام واقعی
+   داده‌های این حالت کاملاً جدا و زیر کد دانش‌آموزی «DEMO» ذخیره می‌شود،
+   هیچ ارتباطی با مدرسه یا دانش‌آموز واقعی ندارد.
+   ============================================================ */
+
+function DemoPreviewView({ onBack }) {
+  const [demoScreen, setDemoScreen] = useState("menu"); // "menu" | "lab" | "rahyar"
+
+  if (demoScreen === "lab") {
+    return <StudentVirtualLabView onBack={() => setDemoScreen("menu")} grade="" studentCode="DEMO-VISITOR" schoolCode="DEMOMODE" />;
+  }
+  if (demoScreen === "rahyar") {
+    return <RahyarTeachingLibraryView onBack={() => setDemoScreen("menu")} grade="" studentCode="DEMO-VISITOR" schoolCode="DEMOMODE" />;
+  }
+
+  return (
+    <div dir="rtl" className="pal-root">
+      <div className="pal-card" style={{ maxWidth: 640, width: "100%" }}>
+        <button
+          type="button"
+          onClick={onBack}
+          style={{ marginBottom: 14, background: "none", border: "none", color: "#a8741f", fontWeight: 700, fontSize: 13, cursor: "pointer", padding: 0 }}
+        >
+          ← بازگشت
+        </button>
+        <h1 className="pal-title">امتحان رایگان — بدون ثبت‌نام</h1>
+        <p className="pal-subtitle">
+          یک نمونه‌ی واقعی از امکانات ققنوس را همین حالا امتحان کنید. این حالت فقط برای آشنایی است؛ هیچ اطلاعاتی
+          از شما ذخیره یا به حساب واقعی‌ای متصل نمی‌شود.
+        </p>
+        <div style={{ display: "flex", flexDirection: "column", gap: 14, marginTop: 10 }}>
+          <div
+            onClick={() => setDemoScreen("rahyar")}
+            style={{
+              cursor: "pointer", background: "linear-gradient(135deg, #fff6e6, #ffecc7)", border: "1px solid rgba(224,168,62,0.35)",
+              borderRadius: 16, padding: "18px 20px", display: "flex", gap: 14, alignItems: "center",
+            }}
+          >
+            <div style={{ fontSize: 30 }}>🤖</div>
+            <div>
+              <div style={{ fontWeight: 800, color: "#7a5412", fontSize: 15 }}>رهیار هوشمند را امتحان کنید</div>
+              <div style={{ color: "#8a7340", fontSize: 12.5, marginTop: 2 }}>
+                یک تدریس زنده (صوت + نمودار متحرک) از رهیار ببینید
+              </div>
+            </div>
+          </div>
+          <div
+            onClick={() => setDemoScreen("lab")}
+            style={{
+              cursor: "pointer", background: "#fbfaf6", border: "1px solid rgba(28,37,64,0.1)",
+              borderRadius: 16, padding: "18px 20px", display: "flex", gap: 14, alignItems: "center",
+            }}
+          >
+            <div style={{ fontSize: 30 }}>🧪</div>
+            <div>
+              <div style={{ fontWeight: 800, color: "#1c2540", fontSize: 15 }}>آزمایشگاه مجازی را امتحان کنید</div>
+              <div style={{ color: "#6b7399", fontSize: 12.5, marginTop: 2 }}>
+                یکی از ۱۲ آزمایش تعاملی فیزیک، شیمی، زیست و برق را اجرا کنید
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
     </div>
   );
 }
@@ -14608,6 +14776,28 @@ function StudentDashboard({
   const [subjectFilter, setSubjectFilter] = useState("");
   const [deadlineHomework, setDeadlineHomework] = useState([]);
   const [unreadMessageCount, setUnreadMessageCount] = useState(0);
+  const [showWelcomeNudge, setShowWelcomeNudge] = useState(false);
+
+  // لحظه‌ی خوشامد — فقط همان اولین باری که دانش‌آموز بعد از ثبت‌نام وارد داشبورد می‌شود نشان داده می‌شود
+  useEffect(() => {
+    if (!schoolCode || !className || !studentCode) return;
+    let cancelled = false;
+    (async () => {
+      try {
+        const seenKey = "dashboard-welcomed:" + schoolCode + ":" + skey(className) + ":" + studentCode;
+        const already = await authStorageGet(seenKey, true);
+        if (!already && !cancelled) {
+          setShowWelcomeNudge(true);
+          await authStorageSet(seenKey, "1", true);
+        }
+      } catch (e) {
+        // مشکلی نیست — فقط به‌معنای عدم نمایش این بار است
+      }
+    })();
+    return () => {
+      cancelled = true;
+    };
+  }, [schoolCode, className, studentCode]);
 
   const dayNames = ["شنبه", "یکشنبه", "دوشنبه", "سه‌شنبه", "چهارشنبه", "پنجشنبه", "جمعه"];
   const dayOfYear = Math.floor((Date.now() - new Date(new Date().getFullYear(), 0, 0)) / 86400000);
@@ -15028,6 +15218,25 @@ function StudentDashboard({
         .sdb-quick-icon { font-size: 18px; }
         .sdb-quick-label { color: #1c2540; font-weight: 700; font-size: 12.5px; }
 
+        /* لحظه‌ی خوشامد — فقط اولین بار بعد از ثبت‌نام */
+        .sdb-welcome-nudge {
+          position: relative; background: linear-gradient(135deg, #2a2560, #4a3a9c); border-radius: 18px;
+          padding: 18px 20px; margin-bottom: 16px; color: #fff; box-shadow: 0 10px 28px rgba(42,37,96,0.3);
+        }
+        .sdb-welcome-close {
+          position: absolute; top: 10px; left: 12px; background: rgba(255,255,255,0.15); border: none; color: #fff;
+          width: 26px; height: 26px; border-radius: 50%; font-size: 16px; cursor: pointer; line-height: 1;
+        }
+        .sdb-welcome-icon { font-size: 26px; margin-bottom: 6px; }
+        .sdb-welcome-title { font-weight: 800; font-size: 16px; margin-bottom: 4px; }
+        .sdb-welcome-sub { font-size: 12.5px; opacity: 0.85; margin-bottom: 12px; }
+        .sdb-welcome-actions { display: flex; gap: 10px; flex-wrap: wrap; }
+        .sdb-welcome-btn {
+          background: #f2c572; color: #241503; border: none; border-radius: 12px; padding: 10px 16px;
+          font-weight: 800; font-size: 12.5px; cursor: pointer; font-family: inherit;
+        }
+        .sdb-welcome-btn.secondary { background: rgba(255,255,255,0.12); color: #fff; border: 1px solid rgba(255,255,255,0.3); }
+
         /* نشان قرمز اعلان (پیام نخوانده / تکلیف باقی‌مانده) */
         .sdb-badge-dot {
           position: absolute; top: -6px; left: -6px; min-width: 18px; height: 18px; padding: 0 4px;
@@ -15088,6 +15297,30 @@ function StudentDashboard({
 
       {/* ---------- بدنه ---------- */}
       <div className="sdb-body">
+        {showWelcomeNudge && (
+          <div className="sdb-welcome-nudge">
+            <button type="button" className="sdb-welcome-close" onClick={() => setShowWelcomeNudge(false)} aria-label="بستن">
+              ×
+            </button>
+            <div className="sdb-welcome-icon">🎉</div>
+            <div className="sdb-welcome-text">
+              <div className="sdb-welcome-title">خوش اومدی به ققنوس، {studentName}!</div>
+              <div className="sdb-welcome-sub">همین الان یکی از این‌ها رو امتحان کن تا با امکانات آشنا بشی:</div>
+            </div>
+            <div className="sdb-welcome-actions">
+              {onOpenTeachingLibrary && (
+                <button type="button" className="sdb-welcome-btn" onClick={() => { setShowWelcomeNudge(false); onOpenTeachingLibrary(); }}>
+                  🤖 یک تدریس زنده از رهیار ببین
+                </button>
+              )}
+              {onOpenQuestionBank && (
+                <button type="button" className="sdb-welcome-btn secondary" onClick={() => { setShowWelcomeNudge(false); onOpenQuestionBank(); }}>
+                  🗂️ یک سؤال تمرینی بگیر
+                </button>
+              )}
+            </div>
+          </div>
+        )}
         <div className="sdb-stats-row">
           <div className="sdb-stat-card">
             <div className="sdb-stat-num good">{avgGrade !== null ? avgGrade.toFixed(1) : "—"}</div>
@@ -20833,6 +21066,14 @@ function PhoenixApp() {
     );
   }
 
+  if (screen === "trustInfo") {
+    return <TrustInfoView onBack={() => setScreen("welcome")} />;
+  }
+
+  if (screen === "demoPreview") {
+    return <DemoPreviewView onBack={() => setScreen("welcome")} />;
+  }
+
   if (screen === "messaging") {
     return (
       <MessagingStep
@@ -21165,6 +21406,8 @@ function PhoenixApp() {
       onOpenMessaging={() => setScreen("messaging")}
       onSecretAdminAccess={() => setScreen("systemAdminRegistration")}
       onTestMasterAccess={() => setScreen("testMasterAccess")}
+      onOpenDemo={() => setScreen("demoPreview")}
+      onOpenTrustInfo={() => setScreen("trustInfo")}
       onLoginSuccess={(role, profile, phone) => {
         if (role === "student") {
           setStudentAcademicInfo(profile || {});

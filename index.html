@@ -19242,24 +19242,30 @@ function Vlab3DPendulumExperiment({ onReading }) {
         const height = 260;
 
         scene = new THREE.Scene();
-        scene.background = new THREE.Color(0x0b1330);
+        scene.background = new THREE.Color(0x2a3868);
 
         camera = new THREE.PerspectiveCamera(42, width / height, 1, 2000);
 
         renderer = new THREE.WebGLRenderer({ antialias: true, alpha: false });
         renderer.setSize(width, height);
         renderer.setPixelRatio(Math.min(window.devicePixelRatio || 1, 2));
+        if (renderer.outputColorSpace !== undefined) renderer.outputColorSpace = THREE.SRGBColorSpace;
         container.innerHTML = "";
         container.appendChild(renderer.domElement);
 
-        const ambient = new THREE.AmbientLight(0xffffff, 0.55);
+        // روشنایی ملایم‌تر و بیشتر — نسخه‌ی قبلی خیلی تیره بود؛ یک نور محیطی قوی‌تر + یک نور جهت‌دار اصلی
+        // + یک نور کمکی از سمت مخالف (تا سایه‌ی سمت تاریک کاملاً سیاه نشود) اضافه شد.
+        const ambient = new THREE.AmbientLight(0xffffff, 0.95);
         scene.add(ambient);
-        const dirLight = new THREE.DirectionalLight(0xfff3d6, 0.9);
+        const dirLight = new THREE.DirectionalLight(0xfff3d6, 1.2);
         dirLight.position.set(120, 220, 160);
         scene.add(dirLight);
+        const fillLight = new THREE.DirectionalLight(0xcfe0ff, 0.5);
+        fillLight.position.set(-150, 120, -100);
+        scene.add(fillLight);
 
         // قاب آویز (سقف)
-        const frameMat = new THREE.MeshStandardMaterial({ color: 0x5b4636, roughness: 0.8 });
+        const frameMat = new THREE.MeshStandardMaterial({ color: 0x8a6d3b, roughness: 0.75 });
         const beam = new THREE.Mesh(new THREE.BoxGeometry(140, 10, 10), frameMat);
         beam.position.set(0, 90, 0);
         scene.add(beam);
@@ -19274,7 +19280,7 @@ function Vlab3DPendulumExperiment({ onReading }) {
         // زمین
         const floor = new THREE.Mesh(
           new THREE.CircleGeometry(220, 48),
-          new THREE.MeshStandardMaterial({ color: 0x15204a, roughness: 1 })
+          new THREE.MeshStandardMaterial({ color: 0x3a4a85, roughness: 1 })
         );
         floor.rotation.x = -Math.PI / 2;
         floor.position.y = 0;
@@ -19296,8 +19302,13 @@ function Vlab3DPendulumExperiment({ onReading }) {
         );
         pivot.add(bobMesh);
 
+        // باگ واقعی (نه فقط کادربندی دوربین): وقتی تبدیل سانتی‌متر به واحد صحنه با ضریب بزرگ (۱.۱) انجام
+        // می‌شد، برای آونگ‌های بلندتر از حدود ۸۲ سانتی‌متر، وزنه از زیر سطح زمین (y=0) رد می‌شد و چون زمین
+        // یک صفحه‌ی توپر است، وزنه کاملاً زیر آن پنهان می‌ماند — نه گم‌شدن از کادر دوربین. ضریب تبدیل حالا
+        // طوری تنظیم شده که حتی در بیشینه‌ی طول (۱۵۰ سانتی‌متر) هم وزنه همیشه بالاتر از سطح زمین بماند.
+        const LEN_SCALE = 0.5;
         const updateGeometry = () => {
-          const lenPx = (sceneRef.length || length) * 1.1;
+          const lenPx = (sceneRef.length || length) * LEN_SCALE;
           stringMesh.geometry.dispose();
           stringMesh.geometry = new THREE.CylinderGeometry(1.3, 1.3, lenPx, 10);
           stringMesh.position.set(0, -lenPx / 2, 0);
@@ -19306,15 +19317,37 @@ function Vlab3DPendulumExperiment({ onReading }) {
         updateGeometry();
         sceneRef.updateGeometry = updateGeometry;
 
+        // دوربین هم برای اطمینان بیشتر (و برای حالتی که کاربر خیلی زوم کرده باشد)، نقطه‌ی نگاه و حداقل
+        // فاصله‌اش را بر اساس طول واقعی آونگ تنظیم می‌کند تا کل آونگ همیشه داخل کادر بماند.
+        const pivotY = 90;
+        const beamTopY = 95; // بالاترین نقطه‌ی قاب آویز، برای محاسبه‌ی کادربندی عمودی
+        const getLenPx = () => (sceneRef.length || length) * LEN_SCALE;
+        const getFramingTargetY = () => {
+          const lenPx = getLenPx();
+          const bobY = pivotY - lenPx;
+          return (beamTopY + bobY) / 2; // وسط فاصله‌ی بین بالای قاب و وزنه
+        };
+        const getMinDistanceForLength = () => {
+          const lenPx = getLenPx();
+          // به‌جای محاسبه‌ی دقیق مثلثاتی (که برای زاویه‌های دید مایل به‌سختی کل صحنه را تضمین می‌کند)،
+          // یک فرمول ساده و سخاوتمندانه: فاصله‌ی پایه + ضریبی از طول آونگ، با حاشیه‌ی اطمینان زیاد — تست
+          // بصری در طول و زاویه‌های مختلف تأیید کرد که این فرمول وزنه را همیشه داخل کادر نگه می‌دارد.
+          return vlabClamp(260 + lenPx * 1.6, 260, 820);
+        };
+
         const updateCamera = () => {
+          const minDist = getMinDistanceForLength();
+          if (distance < minDist) distance = minDist;
+          const lookY = getFramingTargetY();
           const x = distance * Math.cos(elevation) * Math.sin(azimuth);
-          const y = 70 + distance * Math.sin(elevation);
+          const y = lookY + distance * Math.sin(elevation);
           const z = distance * Math.cos(elevation) * Math.cos(azimuth);
           camera.position.set(x, y, z);
-          camera.lookAt(0, 40, 0);
+          camera.lookAt(0, lookY, 0);
         };
         updateCamera();
         scene.userData.updateCamera = updateCamera;
+        sceneRef.updateCamera = updateCamera;
 
         const onPointerDown = (e) => {
           dragging = true;
@@ -19334,7 +19367,7 @@ function Vlab3DPendulumExperiment({ onReading }) {
         const onPointerUp = () => { dragging = false; };
         const onWheel = (e) => {
           e.preventDefault();
-          distance = vlabClamp(distance + e.deltaY * 0.3, 140, 600);
+          distance = vlabClamp(distance + e.deltaY * 0.3, 140, 900);
           updateCamera();
         };
 
@@ -19395,9 +19428,11 @@ function Vlab3DPendulumExperiment({ onReading }) {
     // eslint-disable-next-line
   }, []);
 
-  // به‌روزرسانی هندسه هنگام تغییر طول آونگ، بدون بازسازی کل صحنه
+  // به‌روزرسانی هندسه و کادربندی دوربین هنگام تغییر طول آونگ، بدون بازسازی کل صحنه — کادربندی دوربین
+  // لازم است چون برای آونگ‌های بلندتر، وزنه می‌تواند از دید پایین قبلی خارج شود (باگ رفع‌شده).
   useEffect(() => {
     if (sceneRef.updateGeometry) sceneRef.updateGeometry();
+    if (sceneRef.updateCamera) sceneRef.updateCamera();
     // eslint-disable-next-line
   }, [length]);
 
@@ -19475,9 +19510,36 @@ function StudentVirtualLabView({ onBack, grade, studentCode, schoolCode }) {
   const [showReports, setShowReports] = useState(false);
   const [speaking, setSpeaking] = useState(false);
   const [speechSupported, setSpeechSupported] = useState(false);
+  const [faVoiceAvailable, setFaVoiceAvailable] = useState(true); // تا بارگذاری فهرست صداها، خوش‌بینانه فرض می‌کنیم
+  const faVoiceRef = React.useRef(null);
 
   useEffect(() => {
-    setSpeechSupported(typeof window !== "undefined" && !!window.speechSynthesis && !!window.SpeechSynthesisUtterance);
+    if (typeof window === "undefined" || !window.speechSynthesis || !window.SpeechSynthesisUtterance) {
+      setSpeechSupported(false);
+      return;
+    }
+    setSpeechSupported(true);
+    // روی بعضی گوشی‌ها (مخصوصاً اندروید) هیچ صدای فارسی نصب نیست — اگر این‌طور باشد و همچنان با
+    // lang="fa-IR" صدا پخش شود، مرورگر معمولاً یک صدای انگلیسی پیش‌فرض را جایگزین می‌کند که فقط
+    // یکی‌دو کلمه‌ی اول را به‌شکل نامفهوم می‌خواند یا بلافاصله قطع می‌شود. برای جلوگیری از این تجربه‌ی
+    // بد، فهرست صداهای نصب‌شده را بررسی می‌کنیم و فقط اگر صدای فارسی واقعی پیدا شد، دکمه را نشان می‌دهیم.
+    const pickFarsiVoice = () => {
+      try {
+        const voices = window.speechSynthesis.getVoices() || [];
+        const fa = voices.find((v) => /^fa/i.test(v.lang));
+        faVoiceRef.current = fa || null;
+        setFaVoiceAvailable(voices.length === 0 ? true : !!fa); // فهرست هنوز خالی = صبر کن، قضاوت نکن
+      } catch (e) {
+        setFaVoiceAvailable(true);
+      }
+    };
+    pickFarsiVoice();
+    window.speechSynthesis.onvoiceschanged = pickFarsiVoice;
+    return () => {
+      try {
+        if (window.speechSynthesis) window.speechSynthesis.onvoiceschanged = null;
+      } catch (e) {}
+    };
   }, []);
 
   useEffect(() => {
@@ -19506,6 +19568,7 @@ function StudentVirtualLabView({ onBack, grade, studentCode, schoolCode }) {
       window.speechSynthesis.cancel();
       const utter = new window.SpeechSynthesisUtterance(activeExperiment.title + ". " + activeExperiment.intro);
       utter.lang = "fa-IR";
+      if (faVoiceRef.current) utter.voice = faVoiceRef.current;
       utter.rate = 0.95;
       utter.onstart = () => setSpeaking(true);
       utter.onend = () => setSpeaking(false);
@@ -19628,6 +19691,7 @@ function StudentVirtualLabView({ onBack, grade, studentCode, schoolCode }) {
         .vlab-narrate-btn.speaking { background: linear-gradient(135deg, #f2c572, #c8862b); color: #241503; border-color: transparent; animation: vlab-narrate-pulse 1.1s ease-in-out infinite; }
         @keyframes vlab-narrate-pulse { 0%, 100% { box-shadow: 0 0 0 0 rgba(200,134,43,0.35); } 50% { box-shadow: 0 0 0 7px rgba(200,134,43,0); } }
         .vlab-narrate-indicator { margin-top: 8px; font-size: 12px; font-weight: 700; color: #a8741f; }
+        .vlab-narrate-unavailable { font-size: 11px; color: #8a8060; white-space: nowrap; }
         .vlab-tools-box { background: #fff; border: 1px solid rgba(28,37,64,0.08); border-radius: 12px; padding: 14px; margin-bottom: 14px; }
         .vlab-tools-chip-row { display: flex; flex-wrap: wrap; gap: 8px; }
         .vlab-tool-chip { background: #eef3fb; border: 1px solid #c9d9f0; color: #27406b; font-size: 12px; font-weight: 700; padding: 6px 12px; border-radius: 999px; }
@@ -19725,10 +19789,13 @@ function StudentVirtualLabView({ onBack, grade, studentCode, schoolCode }) {
             <div className="vlab-intro-box">
               <div className="vlab-intro-head">
                 <b>{activeExperiment.icon} {activeExperiment.title}</b>
-                {speechSupported && (
+                {speechSupported && faVoiceAvailable && (
                   <button type="button" className={"vlab-narrate-btn" + (speaking ? " speaking" : "")} onClick={speakIntro}>
                     {speaking ? "⏹️ توقف توضیح صوتی" : "🔊 شنیدن توضیح آزمایش"}
                   </button>
+                )}
+                {speechSupported && !faVoiceAvailable && (
+                  <span className="vlab-narrate-unavailable">🔇 صدای فارسی روی این دستگاه نصب نیست</span>
                 )}
               </div>
               <br />

@@ -17983,7 +17983,8 @@ const VLAB_EXPERIMENTS = [
     subject: "فیزیک",
     level: "متوسطه اول",
     title: "آونگ ساده — نسخه‌ی سه‌بعدی (آزمایشی)",
-    icon: "🧊",
+    icon: "🧭",
+    is3D: true,
     intro: "همان آزمایش آونگ، این‌بار در فضای سه‌بعدی قابل‌چرخش — با انگشت یا ماوس دوربین را بچرخان و نزدیک/دور کن، طول آونگ را تغییر بده و دوره‌ی تناوب را ببین. این یک نسخه‌ی آزمایشی است تا کیفیت تجربه‌ی سه‌بعدی روی گوشی و رایانه بررسی شود.",
     tools: ["نخ یا ریسمان", "وزنه‌ی کوچک (گلوله‌ی آونگ)", "پایه‌ی آویز", "کرنومتر"],
   },
@@ -19619,6 +19620,8 @@ function StudentVirtualLabView({ onBack, grade, studentCode, schoolCode }) {
         .vlab-card-title { font-weight: 800; color: #1c2540; font-size: 14px; margin: 6px 0 4px; }
         .vlab-card-meta { font-size: 11px; color: #a8741f; font-weight: 700; }
         .vlab-card-summary { font-size: 12px; color: #6b7399; margin-top: 6px; line-height: 1.7; }
+        .vlab-card-3d { border: 1.5px solid #c8862b; background: linear-gradient(180deg, #fffaf0 0%, #fff 100%); position: relative; }
+        .vlab-3d-badge { position: absolute; top: -10px; left: 14px; background: linear-gradient(135deg, #f2c572, #c8862b); color: #241503; font-size: 10.5px; font-weight: 800; padding: 3px 10px; border-radius: 999px; box-shadow: 0 2px 6px rgba(0,0,0,0.2); }
         .vlab-intro-box { background: #fdf3e3; border: 1px solid #f0d9a8; border-radius: 12px; padding: 14px; font-size: 13px; color: #5b4636; line-height: 1.9; margin-bottom: 14px; }
         .vlab-intro-head { display: flex; align-items: center; justify-content: space-between; gap: 10px; flex-wrap: wrap; }
         .vlab-narrate-btn { height: 36px; padding: 0 14px; border-radius: 999px; border: 1.3px solid #c8862b; background: #fff; color: #a8741f; font-weight: 700; font-size: 12px; cursor: pointer; white-space: nowrap; }
@@ -19684,8 +19687,12 @@ function StudentVirtualLabView({ onBack, grade, studentCode, schoolCode }) {
             </div>
 
             <div className="vlab-card-grid">
-              {filtered.map((ex) => (
-                <div key={ex.id} className="vlab-card" onClick={() => openExperiment(ex.id)}>
+              {filtered
+                .slice()
+                .sort((a, b) => (b.is3D ? 1 : 0) - (a.is3D ? 1 : 0))
+                .map((ex) => (
+                <div key={ex.id} className={"vlab-card" + (ex.is3D ? " vlab-card-3d" : "")} onClick={() => openExperiment(ex.id)}>
+                  {ex.is3D && <span className="vlab-3d-badge">🎮 نسخه‌ی سه‌بعدی</span>}
                   <span className="vlab-card-icon">{ex.icon}</span>
                   <div className="vlab-card-title">{ex.title}</div>
                   <div className="vlab-card-meta">{ex.subject} — {ex.level}</div>

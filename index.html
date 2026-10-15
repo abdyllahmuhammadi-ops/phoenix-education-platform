@@ -18128,7 +18128,7 @@ function VlabOhmExperiment({ onReading }) {
   const current = voltage / resistance; // آمپر
   const brightness = vlabClamp((current / 1.2) * 100, 4, 100);
   const t = brightness / 100; // 0..1 برای درخشش لامپ
-  const filamentColor = vlabMixHexColor("#3a1f12", "#fff6c8", t);
+  const filamentColor = vlabMixHexColor("#2a2a30", "#ffffff", t);
 
   useEffect(() => {
     if (onReading) onReading(`ولتاژ: ${voltage} ولت | مقاومت: ${resistance} اهم | جریان = V/R = ${current.toFixed(2)} آمپر`);
@@ -18137,14 +18137,14 @@ function VlabOhmExperiment({ onReading }) {
 
   return (
     <div className="vlab-exp">
-      {/* طراحی واقعی‌تر: لامپ روی زمینه‌ی تیره که با افزایش جریان، شدت نور زرد آن زیاد می‌شود؛ قطب‌های
+      {/* طراحی واقعی‌تر: لامپ روی زمینه‌ی تیره که با افزایش جریان، شدت نور سفید آن زیاد می‌شود؛ قطب‌های
           باتری با رنگ و برچسب +/- جدا از هم مشخص‌اند؛ هیچ نماد مقاومتی که ضرورتی نداشته باشد کشیده نشده. */}
       <svg viewBox="0 0 320 190" className="vlab-svg" style={{ background: "#0b1330" }}>
         <rect x="0" y="0" width="320" height="190" rx="12" fill="#0b1330" />
 
         {/* هاله‌ی نور — با افزایش جریان بزرگ‌تر و پررنگ‌تر می‌شود */}
-        <circle cx="222" cy="82" r={32 + t * 30} fill="#f2c548" opacity={0.08 + t * 0.22} />
-        <circle cx="222" cy="82" r={20 + t * 18} fill="#f2c548" opacity={0.14 + t * 0.36} />
+        <circle cx="222" cy="82" r={32 + t * 30} fill="#f3f6ff" opacity={0.08 + t * 0.22} />
+        <circle cx="222" cy="82" r={20 + t * 18} fill="#f3f6ff" opacity={0.14 + t * 0.36} />
 
         {/* باتری — بدنه با دو سر رنگی و برچسب‌دار تا قطب مثبت و منفی کاملاً مشخص باشد */}
         <rect x="20" y="72" width="64" height="30" rx="4" fill="#2b2f3a" stroke="#6b7390" strokeWidth="1.5" />
@@ -18169,12 +18169,12 @@ function VlabOhmExperiment({ onReading }) {
         {/* حباب شیشه‌ای لامپ */}
         <circle cx="222" cy="80" r="26" fill="rgba(255,255,255,0.08)" stroke="#cfd8e8" strokeWidth="1.5" />
 
-        {/* رشته‌ی داغ (فیلامان) — رنگش از قرمز تیره‌ی خاموش تا زرد-سفید درخشان تغییر می‌کند */}
+        {/* رشته‌ی داغ (فیلامان) — رنگش از خاکستری تیره‌ی خاموش تا سفید درخشان تغییر می‌کند */}
         <path d="M 213,88 L 213,72 L 222,82 L 231,72 L 231,88" fill="none" stroke={filamentColor} strokeWidth="2.4" strokeLinecap="round" />
-        <circle cx="222" cy="80" r={4 + t * 7} fill="#fff6d8" opacity={0.25 + t * 0.7} />
+        <circle cx="222" cy="80" r={4 + t * 7} fill="#ffffff" opacity={0.25 + t * 0.7} />
 
         {/* پرتوهای نور — فقط وقتی لامپ روشن است دیده می‌شوند */}
-        <g stroke="#f2c548" strokeWidth="2" strokeLinecap="round" opacity={t * 0.8}>
+        <g stroke="#f3f6ff" strokeWidth="2" strokeLinecap="round" opacity={t * 0.8}>
           <line x1="222" y1="40" x2="222" y2="30" />
           <line x1="254" y1="80" x2="264" y2="80" />
           <line x1="246" y1="56" x2="253" y2="49" />

@@ -18126,8 +18126,14 @@ function VlabOhmExperiment({ onReading }) {
   const [voltage, setVoltage] = useState(6);
   const [resistance, setResistance] = useState(20);
   const current = voltage / resistance; // آمپر
-  const brightness = vlabClamp((current / 1.2) * 100, 4, 100);
-  const t = brightness / 100; // 0..1 برای درخشش لامپ
+  // روشنایی بصری لامپ: با جریان واقعی (I=V/R) تغییر می‌کند، اما نه به‌صورت خطی مستقیم — چشم انسان تفاوت
+  // روشنایی را به‌صورت غیرخطی حس می‌کند، و قبلاً با مرجع ۱.۲ آمپر، در مقاومت‌های معمولی (مثلاً ۲۰ اهم) کل
+  // بازه‌ی ۴ تا ۱۲ ولت خیلی زود به سقف می‌رسید و عملاً فرقی دیده نمی‌شد. حالا مرجع جریان بزرگ‌تر شد (۱.۵
+  // آمپر) و یک توان ریشه‌ی دوم روی نسبت اعمال می‌شود تا تغییرات در روشنایی‌های کم و متوسط هم به‌وضوح دیده
+  // شوند، نه فقط نزدیک به حداکثر.
+  const CURRENT_REF = 1.5;
+  const brightnessRatio = vlabClamp(current / CURRENT_REF, 0, 1);
+  const t = Math.pow(brightnessRatio, 0.5); // 0..1 برای درخشش لامپ
   const filamentColor = vlabMixHexColor("#2a2a30", "#ffffff", t);
 
   useEffect(() => {
@@ -18147,8 +18153,8 @@ function VlabOhmExperiment({ onReading }) {
         <rect x="0" y="0" width="320" height="205" rx="12" fill="#0b1330" />
 
         {/* هاله‌ی نور — با افزایش جریان بزرگ‌تر و پررنگ‌تر می‌شود */}
-        <circle cx="222" cy="55" r={34 + t * 30} fill="#f3f6ff" opacity={0.08 + t * 0.22} />
-        <circle cx="222" cy="55" r={22 + t * 18} fill="#f3f6ff" opacity={0.14 + t * 0.36} />
+        <circle cx="222" cy="55" r={30 + t * 34} fill="#f3f6ff" opacity={0.03 + t * 0.32} />
+        <circle cx="222" cy="55" r={18 + t * 22} fill="#f3f6ff" opacity={0.06 + t * 0.5} />
 
         {/* باتری — بدنه با دو سر رنگی و برچسب‌دار تا قطب مثبت و منفی کاملاً مشخص باشد */}
         <rect x="20" y="72" width="64" height="30" rx="4" fill="#2b2f3a" stroke="#6b7390" strokeWidth="1.5" />
@@ -18181,7 +18187,7 @@ function VlabOhmExperiment({ onReading }) {
 
         {/* رشته‌ی داغ (فیلامان) — رنگش از خاکستری تیره‌ی خاموش تا سفید درخشان تغییر می‌کند */}
         <path d="M 214,94 L 214,58 L 222,73 L 230,58 L 230,94" fill="none" stroke={filamentColor} strokeWidth="2.4" strokeLinecap="round" />
-        <circle cx="222" cy="55" r={4 + t * 7} fill="#ffffff" opacity={0.25 + t * 0.7} />
+        <circle cx="222" cy="55" r={3 + t * 8} fill="#ffffff" opacity={0.1 + t * 0.85} />
 
         {/* پرتوهای نور — فقط وقتی لامپ روشن است دیده می‌شوند */}
         <g stroke="#f3f6ff" strokeWidth="2" strokeLinecap="round" opacity={t * 0.8}>

@@ -18113,11 +18113,22 @@ function VlabPendulumExperiment({ onReading }) {
 }
 
 /* ---------- ۳. مدار ساده و قانون اهم ---------- */
+function vlabMixHexColor(c1, c2, t) {
+  const p1 = parseInt(c1.slice(1), 16);
+  const p2 = parseInt(c2.slice(1), 16);
+  const r = Math.round(((p1 >> 16) & 255) * (1 - t) + ((p2 >> 16) & 255) * t);
+  const g = Math.round(((p1 >> 8) & 255) * (1 - t) + ((p2 >> 8) & 255) * t);
+  const b = Math.round((p1 & 255) * (1 - t) + (p2 & 255) * t);
+  return `rgb(${r},${g},${b})`;
+}
+
 function VlabOhmExperiment({ onReading }) {
   const [voltage, setVoltage] = useState(6);
   const [resistance, setResistance] = useState(20);
   const current = voltage / resistance; // آمپر
   const brightness = vlabClamp((current / 1.2) * 100, 4, 100);
+  const t = brightness / 100; // 0..1 برای درخشش لامپ
+  const filamentColor = vlabMixHexColor("#3a1f12", "#fff6c8", t);
 
   useEffect(() => {
     if (onReading) onReading(`ولتاژ: ${voltage} ولت | مقاومت: ${resistance} اهم | جریان = V/R = ${current.toFixed(2)} آمپر`);
@@ -18126,15 +18137,49 @@ function VlabOhmExperiment({ onReading }) {
 
   return (
     <div className="vlab-exp">
-      <svg viewBox="0 0 320 170" className="vlab-svg">
-        <rect x="30" y="60" width="26" height="50" fill="#5b4636" />
-        <text x="43" y="90" fontSize="11" fill="#fff" textAnchor="middle">+/−</text>
-        <line x1="56" y1="70" x2="260" y2="70" stroke="#5b4636" strokeWidth="3" />
-        <line x1="30" y1="110" x2="30" y2="70" stroke="#5b4636" strokeWidth="3" />
-        <line x1="30" y1="110" x2="260" y2="110" stroke="#5b4636" strokeWidth="3" />
-        <line x1="260" y1="70" x2="260" y2="110" stroke="#5b4636" strokeWidth="3" />
-        <polyline points="150,70 158,55 168,85 178,55 188,85 198,55 206,70" fill="none" stroke="#5b4636" strokeWidth="3" />
-        <circle cx="90" cy="90" r="18" fill={`rgba(242,197,72,${brightness / 100})`} stroke="#c8862b" strokeWidth="2" />
+      {/* طراحی واقعی‌تر: لامپ روی زمینه‌ی تیره که با افزایش جریان، شدت نور زرد آن زیاد می‌شود؛ قطب‌های
+          باتری با رنگ و برچسب +/- جدا از هم مشخص‌اند؛ هیچ نماد مقاومتی که ضرورتی نداشته باشد کشیده نشده. */}
+      <svg viewBox="0 0 320 190" className="vlab-svg" style={{ background: "#0b1330" }}>
+        <rect x="0" y="0" width="320" height="190" rx="12" fill="#0b1330" />
+
+        {/* هاله‌ی نور — با افزایش جریان بزرگ‌تر و پررنگ‌تر می‌شود */}
+        <circle cx="222" cy="82" r={32 + t * 30} fill="#f2c548" opacity={0.08 + t * 0.22} />
+        <circle cx="222" cy="82" r={20 + t * 18} fill="#f2c548" opacity={0.14 + t * 0.36} />
+
+        {/* باتری — بدنه با دو سر رنگی و برچسب‌دار تا قطب مثبت و منفی کاملاً مشخص باشد */}
+        <rect x="20" y="72" width="64" height="30" rx="4" fill="#2b2f3a" stroke="#6b7390" strokeWidth="1.5" />
+        <rect x="18" y="78" width="6" height="18" rx="2" fill="#5b7fb8" />
+        <rect x="84" y="80" width="10" height="14" rx="2" fill="#f2c548" />
+        <text x="36" y="93" fontSize="18" fontWeight="bold" fill="#9fc0f2" textAnchor="middle">−</text>
+        <text x="70" y="93" fontSize="18" fontWeight="bold" fill="#f2c548" textAnchor="middle">+</text>
+        <text x="52" y="118" fontSize="10" fill="#aab3cc" textAnchor="middle">باتری {voltage} ولت</text>
+
+        {/* سیم از قطب مثبت (طلایی) به پایه‌ی بالای لامپ */}
+        <path d="M 94,87 L 110,87 L 110,40 L 222,40 L 222,55" fill="none" stroke="#f2c548" strokeWidth="3" strokeLinecap="round" />
+        {/* سیم از قطب منفی (آبی) به پایه‌ی پایین لامپ */}
+        <path d="M 18,87 L 10,87 L 10,160 L 222,160 L 222,132" fill="none" stroke="#5b7fb8" strokeWidth="3" strokeLinecap="round" />
+
+        {/* پایه‌ی پیچی فلزی لامپ */}
+        <rect x="212" y="108" width="20" height="24" fill="#9aa3b0" stroke="#5b6472" strokeWidth="1" />
+        <line x1="212" y1="113" x2="232" y2="113" stroke="#5b6472" strokeWidth="1" />
+        <line x1="212" y1="119" x2="232" y2="119" stroke="#5b6472" strokeWidth="1" />
+        <line x1="212" y1="125" x2="232" y2="125" stroke="#5b6472" strokeWidth="1" />
+        <polygon points="212,108 232,108 226,96 218,96" fill="#9aa3b0" stroke="#5b6472" strokeWidth="1" />
+
+        {/* حباب شیشه‌ای لامپ */}
+        <circle cx="222" cy="80" r="26" fill="rgba(255,255,255,0.08)" stroke="#cfd8e8" strokeWidth="1.5" />
+
+        {/* رشته‌ی داغ (فیلامان) — رنگش از قرمز تیره‌ی خاموش تا زرد-سفید درخشان تغییر می‌کند */}
+        <path d="M 213,88 L 213,72 L 222,82 L 231,72 L 231,88" fill="none" stroke={filamentColor} strokeWidth="2.4" strokeLinecap="round" />
+        <circle cx="222" cy="80" r={4 + t * 7} fill="#fff6d8" opacity={0.25 + t * 0.7} />
+
+        {/* پرتوهای نور — فقط وقتی لامپ روشن است دیده می‌شوند */}
+        <g stroke="#f2c548" strokeWidth="2" strokeLinecap="round" opacity={t * 0.8}>
+          <line x1="222" y1="40" x2="222" y2="30" />
+          <line x1="254" y1="80" x2="264" y2="80" />
+          <line x1="246" y1="56" x2="253" y2="49" />
+          <line x1="246" y1="104" x2="253" y2="111" />
+        </g>
       </svg>
       <div className="vlab-controls">
         <div className="vlab-ctrl-col" style={{ flex: 1 }}>

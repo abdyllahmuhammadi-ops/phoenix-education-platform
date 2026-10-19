@@ -18040,11 +18040,30 @@ function VlabLeverExperiment({ onReading }) {
   return (
     <div className="vlab-exp">
       <svg viewBox="0 0 320 170" className="vlab-svg">
+        {/* خط تراز — یک مرجع افقی ثابت (خارج از چرخش بازو) تا تعادل اهرم با آن سنجیده شود. عمداً کم‌رنگ،
+            نازک و نقطه‌چین است و زیر بازو کشیده می‌شود تا دیده شود اما توجه دانش‌آموز را از خود اهرم نگیرد. */}
+        <line x1="18" y1="120" x2="302" y2="120" stroke="#b9bfce" strokeWidth="1" strokeDasharray="4 4" opacity="0.55" />
         <polygon points="150,150 170,150 160,120" fill="#8a6d3b" />
         <g transform={`rotate(${tiltDeg} 160 120)`}>
           <rect x="30" y="116" width="260" height="8" rx="4" fill="#5b4636" />
+
+          {/* فاصله‌ی هر وزنه از تکیه‌گاه — روی خود بازو، تا با چرخش بازو همراه باشد */}
+          <text x={(160 + (30 + (10 - leftDist) * 8)) / 2} y="112" fontSize="10" fontWeight="700" fill="#8a6d3b" textAnchor="middle">
+            {leftDist}
+          </text>
+          <text x={(160 + (290 - (10 - rightDist) * 8)) / 2} y="112" fontSize="10" fontWeight="700" fill="#8a6d3b" textAnchor="middle">
+            {rightDist}
+          </text>
+
           <circle cx={30 + (10 - leftDist) * 8} cy="120" r={8 + leftMass} fill="#e2622f" />
+          <text x={30 + (10 - leftDist) * 8} y={120 - (8 + leftMass) - 6} fontSize="11" fontWeight="700" fill="#e2622f" textAnchor="middle">
+            {leftMass} kg
+          </text>
+
           <circle cx={290 - (10 - rightDist) * 8} cy="120" r={8 + rightMass} fill="#2f6fe2" />
+          <text x={290 - (10 - rightDist) * 8} y={120 - (8 + rightMass) - 6} fontSize="11" fontWeight="700" fill="#2f6fe2" textAnchor="middle">
+            {rightMass} kg
+          </text>
         </g>
       </svg>
       <div className="vlab-controls">

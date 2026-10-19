@@ -18200,9 +18200,31 @@ function VlabOhmExperiment({ onReading }) {
       <div className="vlab-controls">
         <div className="vlab-ctrl-col" style={{ flex: 1 }}>
           <label className="vlab-ctrl-label">ولتاژ باتری (ولت): {voltage}</label>
-          <input type="range" min="1" max="12" value={voltage} onChange={(e) => setVoltage(+e.target.value)} />
+          <div className="vlab-num-row">
+            {[1, 2, 4, 6, 8, 10, 12].map((v) => (
+              <button
+                key={v}
+                type="button"
+                className={"vlab-num-btn" + (voltage === v ? " active" : "")}
+                onClick={() => setVoltage(v)}
+              >
+                {v}
+              </button>
+            ))}
+          </div>
           <label className="vlab-ctrl-label">مقاومت (اهم): {resistance}</label>
-          <input type="range" min="2" max="100" value={resistance} onChange={(e) => setResistance(+e.target.value)} />
+          <div className="vlab-num-row">
+            {[2, 5, 10, 20, 50, 100].map((r) => (
+              <button
+                key={r}
+                type="button"
+                className={"vlab-num-btn" + (resistance === r ? " active" : "")}
+                onClick={() => setResistance(r)}
+              >
+                {r}
+              </button>
+            ))}
+          </div>
         </div>
       </div>
       <div className="vlab-readout">
@@ -19737,6 +19759,9 @@ function StudentVirtualLabView({ onBack, grade, studentCode, schoolCode }) {
         .vlab-toggle-row { display: flex; gap: 8px; }
         .vlab-toggle-btn { height: 40px; padding: 0 16px; border-radius: 10px; border: 1.3px solid #d9c9a0; background: #fff; color: #6b7399; font-weight: 700; font-size: 12.5px; cursor: pointer; }
         .vlab-toggle-btn.active { background: linear-gradient(135deg, #f2c572, #c8862b); color: #241503; border-color: transparent; }
+        .vlab-num-row { display: flex; gap: 6px; flex-wrap: wrap; }
+        .vlab-num-btn { height: 38px; min-width: 42px; padding: 0 8px; border-radius: 9px; border: 1.3px solid #d9c9a0; background: #fff; color: #6b7399; font-weight: 700; font-size: 13.5px; cursor: pointer; }
+        .vlab-num-btn.active { background: linear-gradient(135deg, #f2c572, #c8862b); color: #241503; border-color: transparent; box-shadow: 0 2px 8px rgba(200,134,43,0.35); }
         .vlab-card-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(230px, 1fr)); gap: 14px; }
         .vlab-card { background: #fff; border: 1px solid rgba(28,37,64,0.08); border-radius: 14px; padding: 16px; cursor: pointer; text-align: right; transition: box-shadow 0.15s; }
         .vlab-card:hover { box-shadow: 0 6px 18px rgba(0,0,0,0.1); }

@@ -18253,6 +18253,43 @@ function VlabOhmExperiment({ onReading }) {
 }
 
 /* ---------- ۴. مدار سری و موازی ---------- */
+// یک «پایه و تماس» برای مینی‌لامپ‌های این آزمایش — نوک تماس زیر پایه (برای سیم مثبت/ادامه‌ی جریان)
+// و تماس بدنه‌ی پیچی کنار پایه (برای سیم منفی/برگشت) — دقیقاً مثل لامپ واقعی آزمایش قانون اهم.
+function vlabMiniBulbContacts(cx, baseTopY) {
+  return { tipX: cx, tipY: baseTopY + 19, shellX: cx - 10, shellY: baseTopY + 10 };
+}
+
+// یک لامپ واقعی کوچک (حباب رشته‌ای روی زمینه‌ی تیره) برای استفاده‌ی مشترک در حالت سری و موازی —
+// درخشش سفیدش از جریان واقعی عبوری از آن (t: صفر تا یک) به‌دست می‌آید، دقیقاً مثل آزمایش قانون اهم.
+function VlabMiniBulb({ cx, baseTopY, t }) {
+  const filamentColor = vlabMixHexColor("#2a2a30", "#ffffff", t);
+  const glowY = baseTopY - 28;
+  return (
+    <g>
+      <circle cx={cx} cy={glowY} r={16 + t * 18} fill="#f3f6ff" opacity={0.03 + t * 0.3} />
+      <circle cx={cx} cy={glowY} r={10 + t * 11} fill="#f3f6ff" opacity={0.06 + t * 0.48} />
+      <path
+        d={`M ${cx - 10},${baseTopY} C ${cx - 10},${baseTopY - 14} ${cx - 17},${baseTopY - 20} ${cx - 17},${baseTopY - 34} C ${cx - 17},${baseTopY - 48} ${cx - 10},${baseTopY - 50} ${cx},${baseTopY - 50} C ${cx + 10},${baseTopY - 50} ${cx + 17},${baseTopY - 48} ${cx + 17},${baseTopY - 34} C ${cx + 17},${baseTopY - 20} ${cx + 10},${baseTopY - 14} ${cx + 10},${baseTopY} Z`}
+        fill="rgba(255,255,255,0.08)"
+        stroke="#cfd8e8"
+        strokeWidth="1.2"
+      />
+      <rect x={cx - 10} y={baseTopY} width="20" height="15" fill="#9aa3b0" stroke="#5b6472" strokeWidth="0.8" />
+      <line x1={cx - 10} y1={baseTopY + 5} x2={cx + 10} y2={baseTopY + 5} stroke="#5b6472" strokeWidth="0.8" />
+      <line x1={cx - 10} y1={baseTopY + 10} x2={cx + 10} y2={baseTopY + 10} stroke="#5b6472" strokeWidth="0.8" />
+      <circle cx={cx} cy={baseTopY + 19} r="4" fill="#c9d1de" stroke="#5b6472" strokeWidth="0.8" />
+      <path
+        d={`M ${cx - 4},${baseTopY - 6} L ${cx - 4},${baseTopY - 26} L ${cx},${baseTopY - 16} L ${cx + 4},${baseTopY - 26} L ${cx + 4},${baseTopY - 6}`}
+        fill="none"
+        stroke={filamentColor}
+        strokeWidth="1.6"
+        strokeLinecap="round"
+      />
+      <circle cx={cx} cy={glowY} r={2 + t * 4.5} fill="#ffffff" opacity={0.1 + t * 0.85} />
+    </g>
+  );
+}
+
 function VlabSeriesParallelExperiment({ onReading }) {
   const [mode, setMode] = useState("سری");
   const [r1, setR1] = useState(10);
@@ -18270,39 +18307,62 @@ function VlabSeriesParallelExperiment({ onReading }) {
     i2 = voltage / r2;
     iTotal = i1 + i2;
   }
-  const b1 = vlabClamp((i1 / 1.2) * 100, 4, 100);
-  const b2 = vlabClamp((i2 / 1.2) * 100, 4, 100);
+  // همان مقیاس بصری غیرخطی (ریشه‌ی دوم) آزمایش قانون اهم — تا تفاوت روشنایی در جریان‌های کم و متوسط هم
+  // به‌وضوح دیده شود، نه فقط نزدیک به حداکثر جریان.
+  const CURRENT_REF = 1.5;
+  const t1 = Math.pow(vlabClamp(i1 / CURRENT_REF, 0, 1), 0.5);
+  const t2 = Math.pow(vlabClamp(i2 / CURRENT_REF, 0, 1), 0.5);
 
   useEffect(() => {
     if (onReading) onReading(`حالت: ${mode} | R1=${r1} R2=${r2} | مقاومت کل=${totalR.toFixed(1)} اهم | جریان کل=${iTotal.toFixed(2)} آمپر`);
     // eslint-disable-next-line
   }, [mode, r1, r2]);
 
+  // مختصات دو لامپ در هر حالت — پایه (baseTopY) یکسان، فقط cx فرق می‌کند
+  const baseTopY = 150;
+  const bulb1Cx = mode === "سری" ? 170 : 160;
+  const bulb2Cx = 260;
+  const c1 = vlabMiniBulbContacts(bulb1Cx, baseTopY);
+  const c2 = vlabMiniBulbContacts(bulb2Cx, baseTopY);
+
   return (
     <div className="vlab-exp">
-      <svg viewBox="0 0 320 170" className="vlab-svg">
-        <rect x="20" y="70" width="24" height="40" fill="#5b4636" />
+      {/* همان زبان بصری آزمایش قانون اهم: زمینه‌ی تیره، باتری با قطب‌های رنگی و برچسب‌دار، سیم مثبت
+          طلایی و سیم منفی آبی (دو رنگ جدا برای دنبال‌کردن مسیر جریان)، و لامپ‌های واقعی به‌جای دایره. */}
+      <svg viewBox="0 0 320 240" className="vlab-svg" style={{ background: "#0b1330" }}>
+        <rect x="0" y="0" width="320" height="240" rx="12" fill="#0b1330" />
+
+        {/* باتری */}
+        <rect x="20" y="72" width="64" height="30" rx="4" fill="#2b2f3a" stroke="#6b7390" strokeWidth="1.5" />
+        <rect x="18" y="78" width="6" height="18" rx="2" fill="#5b7fb8" />
+        <rect x="84" y="80" width="10" height="14" rx="2" fill="#f2c548" />
+        <text x="36" y="93" fontSize="18" fontWeight="bold" fill="#9fc0f2" textAnchor="middle">−</text>
+        <text x="70" y="93" fontSize="18" fontWeight="bold" fill="#f2c548" textAnchor="middle">+</text>
+        <text x="52" y="118" fontSize="10" fill="#aab3cc" textAnchor="middle">باتری {voltage} ولت</text>
+
         {mode === "سری" ? (
           <g>
-            <line x1="44" y1="90" x2="300" y2="90" stroke="#5b4636" strokeWidth="3" />
-            <line x1="20" y1="110" x2="20" y2="90" stroke="#5b4636" strokeWidth="3" />
-            <line x1="20" y1="110" x2="300" y2="110" stroke="#5b4636" strokeWidth="3" />
-            <line x1="300" y1="90" x2="300" y2="110" stroke="#5b4636" strokeWidth="3" />
-            <circle cx="120" cy="90" r="16" fill={`rgba(242,197,72,${b1 / 100})`} stroke="#c8862b" strokeWidth="2" />
-            <circle cx="220" cy="90" r="16" fill={`rgba(242,197,72,${b2 / 100})`} stroke="#c8862b" strokeWidth="2" />
+            {/* سیم طلایی: از قطب مثبت تا نوک تماس لامپ ۱، سپس از بدنه‌ی لامپ ۱ تا نوک لامپ ۲ (مسیر پیوسته‌ی جریان) */}
+            <path d={`M 94,87 L 110,87 L 110,205 L ${c1.tipX},205 L ${c1.tipX},${c1.tipY}`} fill="none" stroke="#f2c548" strokeWidth="3" strokeLinecap="round" />
+            <path d={`M ${c1.shellX},${c1.shellY} L ${c1.shellX},215 L ${c2.tipX},215 L ${c2.tipX},${c2.tipY}`} fill="none" stroke="#f2c548" strokeWidth="3" strokeLinecap="round" />
+            {/* سیم آبی: از بدنه‌ی لامپ ۲ تا قطب منفی */}
+            <path d={`M ${c2.shellX},${c2.shellY} L ${c2.shellX},225 L 10,225 L 10,87 L 18,87`} fill="none" stroke="#5b7fb8" strokeWidth="3" strokeLinecap="round" />
           </g>
         ) : (
           <g>
-            <line x1="44" y1="80" x2="300" y2="80" stroke="#5b4636" strokeWidth="3" />
-            <line x1="20" y1="130" x2="20" y2="80" stroke="#5b4636" strokeWidth="3" />
-            <line x1="20" y1="130" x2="300" y2="130" stroke="#5b4636" strokeWidth="3" />
-            <line x1="300" y1="80" x2="300" y2="130" stroke="#5b4636" strokeWidth="3" />
-            <line x1="140" y1="80" x2="140" y2="130" stroke="#5b4636" strokeWidth="3" />
-            <line x1="200" y1="80" x2="200" y2="130" stroke="#5b4636" strokeWidth="3" />
-            <circle cx="140" cy="105" r="15" fill={`rgba(242,197,72,${b1 / 100})`} stroke="#c8862b" strokeWidth="2" />
-            <circle cx="200" cy="105" r="15" fill={`rgba(242,197,72,${b2 / 100})`} stroke="#c8862b" strokeWidth="2" />
+            {/* سیم طلایی: یک شینه‌ی مشترک که قطب مثبت را به نوک تماس هر دو لامپ وصل می‌کند */}
+            <path d={`M 94,87 L 110,87 L 110,205 L ${c2.tipX},205`} fill="none" stroke="#f2c548" strokeWidth="3" strokeLinecap="round" />
+            <line x1={c1.tipX} y1="205" x2={c1.tipX} y2={c1.tipY} stroke="#f2c548" strokeWidth="3" strokeLinecap="round" />
+            <line x1={c2.tipX} y1="205" x2={c2.tipX} y2={c2.tipY} stroke="#f2c548" strokeWidth="3" strokeLinecap="round" />
+            {/* سیم آبی: یک شینه‌ی مشترک که قطب منفی را به بدنه‌ی هر دو لامپ وصل می‌کند */}
+            <path d={`M 18,87 L 10,87 L 10,225 L ${c2.shellX},225`} fill="none" stroke="#5b7fb8" strokeWidth="3" strokeLinecap="round" />
+            <line x1={c1.shellX} y1="225" x2={c1.shellX} y2={c1.shellY} stroke="#5b7fb8" strokeWidth="3" strokeLinecap="round" />
+            <line x1={c2.shellX} y1="225" x2={c2.shellX} y2={c2.shellY} stroke="#5b7fb8" strokeWidth="3" strokeLinecap="round" />
           </g>
         )}
+
+        <VlabMiniBulb cx={bulb1Cx} baseTopY={baseTopY} t={t1} />
+        <VlabMiniBulb cx={bulb2Cx} baseTopY={baseTopY} t={t2} />
       </svg>
       <div className="vlab-controls">
         <div className="vlab-ctrl-col">

@@ -18397,8 +18397,13 @@ function VlabSeriesParallelExperiment({ onReading }) {
 const VLAB_SOM_CONTAINER_LEFT = 62;
 const VLAB_SOM_CONTAINER_RIGHT = 218;
 const VLAB_SOM_CONTAINER_BOTTOM = 163;
-const VLAB_SOM_LIQUID_TOP = 82;
 const VLAB_SOM_N = 20;
+
+// ارتفاع آب داخل ظرف، به‌تدریج و پیوسته با دما کم می‌شود — نه این‌که ناگهان در ۱۰۰°C ناپدید شود.
+// از دمای ۵۰ به بعد، سطح آب کم‌کم پایین می‌آید تا درست در ۱۰۰°C (نقطه‌ی جوش) به صفر برسد.
+function vlabSomFillHeight(temp) {
+  return vlabClamp(90 * (1 - vlabClamp((temp - 50) / 50, 0, 1)), 0, 90);
+}
 
 function VlabStatesOfMatterExperiment({ onReading }) {
   const [temp, setTemp] = useState(-10);
@@ -18460,9 +18465,12 @@ function VlabStatesOfMatterExperiment({ onReading }) {
           m.vy = vlabClamp(m.vy, -maxV, maxV);
           m.x += m.vx * dt;
           m.y += m.vy * dt;
+          // سطح بالای ناحیه‌ی مجاز حرکت مولکول‌های مایع همراه با افت تدریجی سطح آب (vlabSomFillHeight) پایین‌تر می‌آید —
+          // یعنی هرچه آب کمتر می‌شود، فضای مولکول‌های مایع هم کوچک‌تر می‌شود، نه این‌که ثابت بماند.
+          const liquidTopNow = Math.min(170 - vlabSomFillHeight(temp), VLAB_SOM_CONTAINER_BOTTOM - 6);
           if (m.x < VLAB_SOM_CONTAINER_LEFT) { m.x = VLAB_SOM_CONTAINER_LEFT; m.vx *= -1; }
           if (m.x > VLAB_SOM_CONTAINER_RIGHT) { m.x = VLAB_SOM_CONTAINER_RIGHT; m.vx *= -1; }
-          if (m.y < VLAB_SOM_LIQUID_TOP) { m.y = VLAB_SOM_LIQUID_TOP; m.vy *= -1; }
+          if (m.y < liquidTopNow) { m.y = liquidTopNow; m.vy *= -1; }
           if (m.y > VLAB_SOM_CONTAINER_BOTTOM) { m.y = VLAB_SOM_CONTAINER_BOTTOM; m.vy *= -1; }
         } else {
           // گاز: هر مولکول جداگانه و با زاویه‌ی تصادفی خودش از نزدیکی سطح مایع بلند می‌شود، از دهانه‌ی باز ظرف
@@ -18488,7 +18496,7 @@ function VlabStatesOfMatterExperiment({ onReading }) {
     return () => cancelAnimationFrame(raf);
   }, [temp]);
 
-  const fillHeight = 90;
+  const fillHeight = vlabSomFillHeight(temp);
   const dots = molsRef.current.map((m, i) => (
     <circle
       key={i}
@@ -18501,8 +18509,8 @@ function VlabStatesOfMatterExperiment({ onReading }) {
   ));
 
   const thermoTicks = [];
-  for (let v = -20; v <= 120; v += 20) {
-    const ty = 170 - vlabClamp((v + 20) / 140, 0, 1) * 148;
+  for (let v = -20; v <= 100; v += 20) {
+    const ty = 170 - vlabClamp((v + 20) / 120, 0, 1) * 148;
     const isFreezeOrBoil = v === 0 || v === 100;
     thermoTicks.push(
       <g key={"tick" + v}>
@@ -18516,35 +18524,59 @@ function VlabStatesOfMatterExperiment({ onReading }) {
 
   const mercuryColor = temp < 0 ? "#3a7bd5" : temp < 100 ? "#f2a65a" : "#e2622f";
 
+  // چراغ الکلی (منبع حرارتی) زیر ظرف — شعله فقط وقتی روشن دیده می‌شود که دما بالای صفر رفته باشد (یعنی
+  // گرما خورده است)؛ هرچه دما بیشتر، شعله کمی بلندتر می‌شود؛ یک لرزش کوچک (flicker) هم بر پایه‌ی زمان واقعی
+  // دارد تا شعله زنده و متحرک به نظر برسد، نه یک شکل ثابت.
+  const flameFlicker = Math.sin(Date.now() / 140) * 1.4;
+  const flameHeight = 14 + (temp / 100) * 9;
+  const flameTipY = 173 - flameHeight + flameFlicker;
+  const flameInnerTipY = 171 - flameHeight * 0.6 + flameFlicker;
+
   return (
     <div className="vlab-exp">
-      <svg viewBox="0 -40 320 230" className="vlab-svg">
+      <svg viewBox="0 -40 320 250" className="vlab-svg">
         {/* زمینه‌ی تیره تا وجود آب/یخ داخل ظرف بهتر معلوم باشد (همان زبان بصری ظرف‌های تیره‌ی سایر آزمایش‌ها) */}
-        <rect x="0" y="-40" width="320" height="230" fill="#0b1330" />
+        <rect x="0" y="-40" width="320" height="250" fill="#0b1330" />
         {temp <= 0 && (
           <g>
             <text x="140" y="-4" textAnchor="middle" fontSize="34">🧊</text>
             <text x="140" y="14" textAnchor="middle" fontSize="11" fill="#aeb8d6">یخ</text>
           </g>
         )}
+        {/* چراغ الکلی زیر ظرف — بدنه/فتیله قبل از ظرف رسم می‌شوند؛ خود شعله را پایین‌تر، بعد از آب/مولکول‌ها رسم می‌کنیم
+            تا رنگ آبی‌کم‌رنگ آب روی شعله نیفتد و همیشه دیده شود. */}
+        <g>
+          <ellipse cx="140" cy="196" rx="20" ry="10" fill="#dce8f5" stroke="#8fa3c4" strokeWidth="1.5" opacity="0.92" />
+          <ellipse cx="140" cy="198" rx="14" ry="6" fill="#bcdfff" opacity="0.7" />
+          <rect x="134" y="180" width="12" height="8" fill="#6b7280" stroke="#3d4450" strokeWidth="1" />
+          <line x1="140" y1="180" x2="140" y2="172" stroke="#3a2e22" strokeWidth="2" strokeLinecap="round" />
+          <text x="168" y="200" textAnchor="start" fontSize="9" fill="#aeb8d6">چراغ الکلی</text>
+        </g>
         {temp >= 100 ? (
           // در حالت گاز، درِ بالای ظرف رسم نمی‌شود تا بخار واقعاً از دهانه‌ی باز بیرون بزند و در هوا پخش شود.
           <path d="M50,20 L50,170 L230,170 L230,20" fill="none" stroke="#cfd8e8" strokeWidth="3" />
         ) : (
           <rect x="50" y="20" width="180" height="150" fill="none" stroke="#cfd8e8" strokeWidth="3" />
         )}
-        {temp < 100 && <rect x="53" y={170 - fillHeight} width="174" height={fillHeight} fill="#5b9bff" opacity="0.5" />}
+        {fillHeight > 0 && <rect x="53" y={170 - fillHeight} width="174" height={fillHeight} fill="#5b9bff" opacity="0.5" />}
         {dots}
+        {temp > 0 && (
+          <g>
+            <path d={`M140,173 C133,166 134,158 140,${flameTipY} C146,158 147,166 140,173 Z`} fill="#ff8a3d" opacity="0.9" />
+            <path d={`M140,171 C136,166 136,161 140,${flameInnerTipY} C144,161 144,166 140,171 Z`} fill="#ffe27a" opacity="0.95" />
+          </g>
+        )}
         <rect x="250" y="20" width="18" height="150" fill="#1a2444" stroke="#cfd8e8" strokeWidth="2" />
         <circle cx="259" cy="182" r="15" fill="#1a2444" stroke="#cfd8e8" strokeWidth="2" />
         {thermoTicks}
-        <rect x="252" y={170 - vlabClamp((temp + 20) / 140, 0, 1) * 148} width="14" height={vlabClamp((temp + 20) / 140, 0, 1) * 148} fill={mercuryColor} />
+        <rect x="252" y={170 - vlabClamp((temp + 20) / 120, 0, 1) * 148} width="14" height={vlabClamp((temp + 20) / 120, 0, 1) * 148} fill={mercuryColor} />
         <circle cx="259" cy="182" r="12" fill={mercuryColor} />
       </svg>
       <div className="vlab-controls">
         <div className="vlab-ctrl-col" style={{ flex: 1 }}>
           <label className="vlab-ctrl-label">دما (درجه‌ی سانتی‌گراد): {temp}</label>
-          <input type="range" min="-20" max="120" value={temp} onChange={(e) => setTemp(+e.target.value)} />
+          {/* برای آب، دمای بیش از ۱۰۰°C در این آزمایش معنی ندارد — در ۱۰۰°C کل آب به‌تدریج تبدیل به بخار شده است. */}
+          <input type="range" min="-20" max="100" value={temp} onChange={(e) => setTemp(+e.target.value)} />
         </div>
       </div>
       <div className="vlab-readout">

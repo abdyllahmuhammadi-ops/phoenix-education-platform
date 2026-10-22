@@ -18310,8 +18310,13 @@ function VlabSeriesParallelExperiment({ onReading }) {
   // همان مقیاس بصری غیرخطی (ریشه‌ی دوم) آزمایش قانون اهم — تا تفاوت روشنایی در جریان‌های کم و متوسط هم
   // به‌وضوح دیده شود، نه فقط نزدیک به حداکثر جریان.
   const CURRENT_REF = 1.5;
-  const t1 = Math.pow(vlabClamp(i1 / CURRENT_REF, 0, 1), 0.5);
-  const t2 = Math.pow(vlabClamp(i2 / CURRENT_REF, 0, 1), 0.5);
+  // در حالت موازی، صاحب پروژه خواست شدت نور هر دو لامپ هم‌زمان کم/زیاد شود (نه هرکدام جدا بر اساس
+  // مقاومت خودش) — چون تغییر هر اسلایدر باید روی کل مدار مشترک دیده شود. برای همین در این حالت، هر دو
+  // لامپ یک روشنایی مشترک (بر اساس میانگین دو جریان) می‌گیرند؛ در حالت سری چون جریان دو لامپ از قبل با
+  // هم برابر است، هیچ تغییری لازم نیست.
+  const sharedParallelT = Math.pow(vlabClamp((i1 + i2) / 2 / CURRENT_REF, 0, 1), 0.5);
+  const t1 = mode === "موازی" ? sharedParallelT : Math.pow(vlabClamp(i1 / CURRENT_REF, 0, 1), 0.5);
+  const t2 = mode === "موازی" ? sharedParallelT : Math.pow(vlabClamp(i2 / CURRENT_REF, 0, 1), 0.5);
 
   useEffect(() => {
     if (onReading) onReading(`حالت: ${mode} | R1=${r1} R2=${r2} | مقاومت کل=${totalR.toFixed(1)} اهم | جریان کل=${iTotal.toFixed(2)} آمپر`);

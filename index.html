@@ -18594,6 +18594,9 @@ function VlabStatesOfMatterExperiment({ onReading }) {
 /* ---------- ۶. واکنش اسید و باز ---------- */
 function VlabAcidBaseExperiment({ onReading }) {
   const [ph, setPh] = useState(7);
+  const [dropAnim, setDropAnim] = React.useState(null); // { side: "acid" | "base", t0 }
+  const [, vlabAbForceTick] = useState(0);
+
   const colors = ["#e2231a", "#e75a1a", "#f2a30f", "#f2d60f", "#c7e21a", "#6fcf3a", "#2fae4e", "#1f9e8c", "#1f8ee2", "#2f6fe2", "#4a4ae2", "#6a2fe2", "#8a1fc8", "#6a0f99", "#4a0870"];
   const color = colors[vlabClamp(Math.round(ph), 0, 14)];
   let label = "خنثی";
@@ -18608,21 +18611,99 @@ function VlabAcidBaseExperiment({ onReading }) {
     // eslint-disable-next-line
   }, [ph]);
 
+  const DROP_DURATION = 550;
+  const addDrop = (side) => {
+    setPh((p) => vlabClamp(side === "acid" ? p - 1 : p + 1, 0, 14));
+    setDropAnim({ side, t0: performance.now() });
+  };
+
+  // یک قطره‌ی واقعی از نوک قطره‌چکان تا سطح مایع داخل بالن حرکت می‌کند — تا دانش‌آموز ببیند
+  // که اسید/باز واقعاً «چکانده» می‌شود، نه فقط عددی که تغییر می‌کند.
+  useEffect(() => {
+    if (!dropAnim) return;
+    let raf;
+    const step = (now) => {
+      if (now - dropAnim.t0 >= DROP_DURATION) {
+        setDropAnim(null);
+        return;
+      }
+      vlabAbForceTick((t) => t + 1);
+      raf = requestAnimationFrame(step);
+    };
+    raf = requestAnimationFrame(step);
+    return () => cancelAnimationFrame(raf);
+    // eslint-disable-next-line
+  }, [dropAnim]);
+
+  const ACID_TIP = { x: 68, y: 67 };
+  const BASE_TIP = { x: 252, y: 67 };
+  const LIQUID_TARGET = { x: 160, y: 100 };
+
+  let drop = null;
+  if (dropAnim) {
+    const t = vlabClamp((performance.now() - dropAnim.t0) / DROP_DURATION, 0, 1);
+    const from = dropAnim.side === "acid" ? ACID_TIP : BASE_TIP;
+    drop = {
+      x: from.x + (LIQUID_TARGET.x - from.x) * t,
+      y: from.y + (LIQUID_TARGET.y - from.y) * t,
+      color: dropAnim.side === "acid" ? "#ff6a52" : "#4ab0ff",
+      opacity: t > 0.88 ? 1 - (t - 0.88) / 0.12 : 1,
+      landed: t > 0.88,
+      rippleR: t > 0.88 ? (t - 0.88) / 0.12 * 14 : 0,
+    };
+  }
+
   return (
     <div className="vlab-exp">
-      <svg viewBox="0 0 320 170" className="vlab-svg">
-        <path d="M110,30 L110,90 L85,150 Q100,165 160,165 Q220,165 235,150 L210,90 L210,30 Z" fill="none" stroke="#5b4636" strokeWidth="3" />
-        <path d="M112,95 L87,148 Q101,161 159,161 Q219,161 233,148 L208,95 Z" fill={color} opacity="0.75" />
+      <svg viewBox="0 0 320 190" className="vlab-svg">
+        {/* زمینه‌ی تیره‌ی آزمایشگاهی — همان زبان بصری سایر آزمایش‌های شیشه‌آلات */}
+        <rect x="0" y="0" width="320" height="190" fill="#0b1330" />
+        {/* میز آزمایشگاه */}
+        <line x1="15" y1="172" x2="305" y2="172" stroke="#2a3658" strokeWidth="2" />
+
+        {/* قطره‌چکان اسید — سمت چپ، مایل به سمت بالن */}
+        <g transform="translate(90,20) rotate(25)">
+          <ellipse cx="0" cy="0" rx="9" ry="12" fill="#e0908f" stroke="#8a3a3a" strokeWidth="1.2" />
+          <rect x="-5" y="10" width="10" height="32" fill="#dce8f5" stroke="#8fa3c4" strokeWidth="1.2" opacity="0.85" />
+          <rect x="-3.3" y="16" width="6.6" height="22" fill="#ff8a7a" opacity="0.55" />
+          <path d="M-5,42 L5,42 L0,52 Z" fill="#dce8f5" stroke="#8fa3c4" strokeWidth="1" opacity="0.85" />
+        </g>
+        <text x="68" y="86" textAnchor="middle" fontSize="10" fontWeight="700" fill="#ff8a7a">اسید</text>
+
+        {/* قطره‌چکان باز — سمت راست، مایل به سمت بالن */}
+        <g transform="translate(230,20) rotate(-25)">
+          <ellipse cx="0" cy="0" rx="9" ry="12" fill="#8fb8d9" stroke="#3a5a7a" strokeWidth="1.2" />
+          <rect x="-5" y="10" width="10" height="32" fill="#dce8f5" stroke="#8fa3c4" strokeWidth="1.2" opacity="0.85" />
+          <rect x="-3.3" y="16" width="6.6" height="22" fill="#7ac2ff" opacity="0.55" />
+          <path d="M-5,42 L5,42 L0,52 Z" fill="#dce8f5" stroke="#8fa3c4" strokeWidth="1" opacity="0.85" />
+        </g>
+        <text x="252" y="86" textAnchor="middle" fontSize="10" fontWeight="700" fill="#7ac2ff">باز</text>
+
+        {/* بالن ارلن (Erlenmeyer) — ظرف اصلی محلول */}
+        <path d="M110,30 L110,90 L85,150 Q100,165 160,165 Q220,165 235,150 L210,90 L210,30 Z" fill="none" stroke="#cfd8e8" strokeWidth="3" />
+        <path d="M112,95 L87,148 Q101,161 159,161 Q219,161 233,148 L208,95 Z" fill={color} opacity="0.82" />
+        {/* خط‌های درجه‌بندی روی بدنه‌ی بالن، مثل شیشه‌آلات واقعی */}
+        <line x1="98" y1="120" x2="106" y2="120" stroke="#8fa3c4" strokeWidth="1" />
+        <line x1="93" y1="140" x2="103" y2="140" stroke="#8fa3c4" strokeWidth="1" />
+        {/* درخشش شیشه */}
+        <path d="M118,35 L118,88 L104,118" fill="none" stroke="#ffffff" strokeWidth="2" opacity="0.12" strokeLinecap="round" />
+
+        {drop && (
+          <g>
+            <circle cx={drop.x} cy={drop.y} r="3.2" fill={drop.color} opacity={drop.opacity} />
+            {drop.landed && <circle cx={LIQUID_TARGET.x} cy={LIQUID_TARGET.y} r={drop.rippleR} fill="none" stroke={drop.color} strokeWidth="1.2" opacity={1 - drop.rippleR / 14} />}
+          </g>
+        )}
       </svg>
       <div className="vlab-controls">
         <div className="vlab-ctrl-col">
-          <button type="button" className="pqb-submit-btn" style={{ background: "linear-gradient(135deg,#e2622f,#c8862b)" }} onClick={() => setPh((p) => vlabClamp(p - 1, 0, 14))}>
-            🧪 افزودن قطره‌ی اسید
+          <button type="button" className="pqb-submit-btn" style={{ background: "linear-gradient(135deg,#e2622f,#c8862b)" }} onClick={() => addDrop("acid")}>
+            💧 چکاندن قطره‌ی اسید
           </button>
         </div>
         <div className="vlab-ctrl-col">
-          <button type="button" className="pqb-submit-btn" onClick={() => setPh((p) => vlabClamp(p + 1, 0, 14))}>
-            🧪 افزودن قطره‌ی باز
+          <button type="button" className="pqb-submit-btn" style={{ background: "linear-gradient(135deg,#2f6fd6,#1f9e8c)" }} onClick={() => addDrop("base")}>
+            💧 چکاندن قطره‌ی باز
           </button>
         </div>
         <div className="vlab-ctrl-col">

@@ -18393,8 +18393,31 @@ function VlabSeriesParallelExperiment({ onReading }) {
 }
 
 /* ---------- ۵. تغییر حالت ماده ---------- */
+// هندسه‌ی ظرف و ناحیه‌ی مجاز حرکت مولکول‌ها — هم در شبیه‌سازی (داخل افکت) و هم در رسم (JSX) استفاده می‌شود.
+const VLAB_SOM_CONTAINER_LEFT = 62;
+const VLAB_SOM_CONTAINER_RIGHT = 218;
+const VLAB_SOM_CONTAINER_BOTTOM = 163;
+const VLAB_SOM_LIQUID_TOP = 82;
+const VLAB_SOM_N = 20;
+
 function VlabStatesOfMatterExperiment({ onReading }) {
   const [temp, setTemp] = useState(-10);
+  const [, vlabSomForceTick] = useState(0);
+  const molsRef = React.useRef(null);
+  const frameCountRef = React.useRef(0);
+
+  // موقعیت هر مولکول در یک شیء ref نگه‌داری می‌شود (نه state) تا انیمیشن بدون رندر اضافی روی هر فریم اجرا شود؛
+  // فقط هر چند فریم یک‌بار (پایین‌تر) با forceTick یک رندر گرفته می‌شود.
+  if (!molsRef.current) {
+    molsRef.current = Array.from({ length: VLAB_SOM_N }, (_, i) => {
+      const col = i % 5;
+      const row = Math.floor(i / 5);
+      const lx = 78 + col * 32;
+      const ly = 52 + row * 26;
+      return { lx, ly, x: lx, y: ly, vx: 0, vy: 0, seed: i * 0.77 + Math.random() * 3 };
+    });
+  }
+
   let phase = "مایع (آب)";
   if (temp <= 0) phase = "جامد (یخ)";
   else if (temp >= 100) phase = "گاز (بخار آب)";
@@ -18406,32 +18429,106 @@ function VlabStatesOfMatterExperiment({ onReading }) {
     // eslint-disable-next-line
   }, [temp]);
 
+  // حلقه‌ی انیمیشن: هر مولکول بر اساس حالت فعلی ماده (جامد/مایع/گاز) و دما حرکت می‌کند —
+  // در جامد فقط لرزش کوچک حول جای ثابت شبکه‌ای، در مایع حرکت آزاد با سرعتی که با دما زیاد می‌شود،
+  // در گاز هر مولکول با زاویه و سرعت مستقل از خودش از سطح مایع بلند می‌شود و از ظرف (که دیگر درِ بالا ندارد) خارج و در هوا پخش می‌شود.
+  useEffect(() => {
+    let raf;
+    let last = performance.now();
+    const step = (now) => {
+      const dt = Math.min(now - last, 48) / 16.6;
+      last = now;
+      const mols = molsRef.current;
+
+      for (const m of mols) {
+        if (temp <= 0) {
+          m.x = m.lx + Math.sin(now / 160 + m.seed) * 1.6;
+          m.y = m.ly + Math.cos(now / 140 + m.seed * 1.3) * 1.6;
+          m.vx = 0;
+          m.vy = 0;
+        } else if (temp < 100) {
+          // هرچه دما از ۱ تا نزدیک ۱۰۰ درجه بالاتر برود، سرعت و دامنه‌ی حرکت مولکول‌ها به‌صورت پیوسته بیشتر می‌شود —
+          // نه یک حالت ثابت یکسان در کل بازه.
+          const speed = 0.4 + (temp / 100) * 2.8;
+          m.vx += (Math.random() - 0.5) * 0.5 * speed * dt;
+          m.vy += (Math.random() - 0.5) * 0.5 * speed * dt;
+          const maxV = speed * 1.3;
+          m.vx = vlabClamp(m.vx, -maxV, maxV);
+          m.vy = vlabClamp(m.vy, -maxV, maxV);
+          m.x += m.vx * dt;
+          m.y += m.vy * dt;
+          if (m.x < VLAB_SOM_CONTAINER_LEFT) { m.x = VLAB_SOM_CONTAINER_LEFT; m.vx *= -1; }
+          if (m.x > VLAB_SOM_CONTAINER_RIGHT) { m.x = VLAB_SOM_CONTAINER_RIGHT; m.vx *= -1; }
+          if (m.y < VLAB_SOM_LIQUID_TOP) { m.y = VLAB_SOM_LIQUID_TOP; m.vy *= -1; }
+          if (m.y > VLAB_SOM_CONTAINER_BOTTOM) { m.y = VLAB_SOM_CONTAINER_BOTTOM; m.vy *= -1; }
+        } else {
+          // گاز: هر مولکول جداگانه و با زاویه‌ی تصادفی خودش از نزدیکی سطح مایع بلند می‌شود، از دهانه‌ی باز ظرف
+          // خارج می‌شود، در هوا محو می‌شود و دوباره از پایین شروع می‌کند — نه سه‌تاسه‌تا و نه فقط در یک جهت.
+          if ((m.vx === 0 && m.vy === 0) || m.y < -38) {
+            m.x = VLAB_SOM_CONTAINER_LEFT + 12 + Math.random() * (VLAB_SOM_CONTAINER_RIGHT - VLAB_SOM_CONTAINER_LEFT - 24);
+            m.y = VLAB_SOM_CONTAINER_BOTTOM - Math.random() * 18;
+            m.vx = (Math.random() - 0.5) * 2.6;
+            m.vy = -1.1 - Math.random() * 2.0;
+          }
+          m.vx += (Math.random() - 0.5) * 0.3 * dt;
+          m.x += m.vx * dt;
+          m.y += m.vy * dt;
+          if (m.x < VLAB_SOM_CONTAINER_LEFT - 25 || m.x > VLAB_SOM_CONTAINER_RIGHT + 25) m.vx *= -1;
+        }
+      }
+
+      frameCountRef.current += 1;
+      if (frameCountRef.current % 2 === 0) vlabSomForceTick((t) => t + 1);
+      raf = requestAnimationFrame(step);
+    };
+    raf = requestAnimationFrame(step);
+    return () => cancelAnimationFrame(raf);
+  }, [temp]);
+
   const fillHeight = 90;
-  const dots = [];
-  const n = 18;
-  for (let i = 0; i < n; i++) {
-    let cx, cy;
-    if (temp <= 0) {
-      cx = 60 + (i % 6) * 22;
-      cy = 95 + Math.floor(i / 6) * 22;
-    } else if (temp < 100) {
-      cx = 60 + ((i * 37) % 160);
-      cy = 90 + ((i * 53) % 70);
-    } else {
-      cx = 60 + ((i * 41) % 170);
-      cy = 20 + ((i * 29) % 110);
-    }
-    dots.push(<circle key={i} cx={cx} cy={cy} r={temp >= 100 ? 3 : 5} fill="#3a7bd5" opacity={temp >= 100 ? 0.6 : 0.85} />);
+  const dots = molsRef.current.map((m, i) => (
+    <circle
+      key={i}
+      cx={m.x}
+      cy={m.y}
+      r={temp >= 100 ? 2.6 : 5}
+      fill="#3a7bd5"
+      opacity={temp >= 100 ? vlabClamp(1 - (VLAB_SOM_CONTAINER_BOTTOM - m.y) / 190, 0.08, 0.8) : 0.85}
+    />
+  ));
+
+  const thermoTicks = [];
+  for (let v = -20; v <= 120; v += 20) {
+    const ty = 170 - vlabClamp((v + 20) / 140, 0, 1) * 148;
+    const isFreezeOrBoil = v === 0 || v === 100;
+    thermoTicks.push(
+      <g key={"tick" + v}>
+        <line x1="246" y1={ty} x2="252" y2={ty} stroke={isFreezeOrBoil ? (v === 0 ? "#2f6fd6" : "#c8422a") : "#8a7a63"} strokeWidth={isFreezeOrBoil ? 2 : 1} />
+        <text x="243" y={ty + 3} textAnchor="end" fontSize={isFreezeOrBoil ? 9.5 : 8} fontWeight={isFreezeOrBoil ? 700 : 400} fill={isFreezeOrBoil ? (v === 0 ? "#2f6fd6" : "#c8422a") : "#6b6050"}>
+          {v}
+        </text>
+      </g>
+    );
   }
+
+  const mercuryColor = temp < 0 ? "#3a7bd5" : temp < 100 ? "#f2a65a" : "#e2622f";
 
   return (
     <div className="vlab-exp">
-      <svg viewBox="0 0 320 190" className="vlab-svg">
-        <rect x="50" y="20" width="180" height="150" fill="none" stroke="#5b4636" strokeWidth="3" />
+      <svg viewBox="0 -40 320 230" className="vlab-svg">
+        {temp >= 100 ? (
+          // در حالت گاز، درِ بالای ظرف رسم نمی‌شود تا بخار واقعاً از دهانه‌ی باز بیرون بزند و در هوا پخش شود.
+          <path d="M50,20 L50,170 L230,170 L230,20" fill="none" stroke="#5b4636" strokeWidth="3" />
+        ) : (
+          <rect x="50" y="20" width="180" height="150" fill="none" stroke="#5b4636" strokeWidth="3" />
+        )}
         {temp < 100 && <rect x="53" y={170 - fillHeight} width="174" height={fillHeight} fill="#cfe4fb" opacity="0.6" />}
         {dots}
         <rect x="250" y="20" width="18" height="150" fill="#eee" stroke="#5b4636" strokeWidth="2" />
-        <rect x="252" y={170 - vlabClamp((temp + 20) / 140, 0, 1) * 148} width="14" height={vlabClamp((temp + 20) / 140, 0, 1) * 148} fill={temp < 0 ? "#3a7bd5" : temp < 100 ? "#f2a65a" : "#e2622f"} />
+        <circle cx="259" cy="182" r="15" fill="#eee" stroke="#5b4636" strokeWidth="2" />
+        {thermoTicks}
+        <rect x="252" y={170 - vlabClamp((temp + 20) / 140, 0, 1) * 148} width="14" height={vlabClamp((temp + 20) / 140, 0, 1) * 148} fill={mercuryColor} />
+        <circle cx="259" cy="182" r="12" fill={mercuryColor} />
       </svg>
       <div className="vlab-controls">
         <div className="vlab-ctrl-col" style={{ flex: 1 }}>

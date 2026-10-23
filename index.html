@@ -19226,8 +19226,25 @@ function VlabFreeFallExperiment({ onReading }) {
   return (
     <div className="vlab-exp">
       {/* خط‌چین قبلی فقط مسیر سقوط را نشان می‌داد ولی «متر یا ارتفاع‌سنج» و «کرنومتر» که در فهرست وسایل بودند
-          هیچ‌وقت دیده نمی‌شدند — یک متر واقعی با خط‌کشیِ درجه‌بندی‌شده کنار مسیر و یک کرنومتر با عدد زمان سقوط اضافه شد. */}
+          هیچ‌وقت دیده نمی‌شدند — یک متر واقعی با خط‌کشیِ درجه‌بندی‌شده کنار مسیر و یک کرنومتر با عدد زمان سقوط اضافه شد.
+          بازطراحی بعدی (به‌خواست کاربر): به‌جای دایره‌ی تخت قرمز، یک «گوی فلزی کروی» واقعی (با گرادیان
+          نور/سایه‌ی فلزی و یک برجستگیِ نور بالا-چپ) رسم شد؛ افت آن هم دیگر با سرعت ثابت نیست — با
+          calcMode="spline" (شتاب‌گیری واقعی، شبیه y∝t²) حرکت می‌کند تا اختلاف سرعتِ شروع/پایانِ سقوط
+          واقعاً حس شود؛ یک سایه‌ی بیضی‌شکل روی زمین هم هم‌زمان با افت گوی کوچک/بزرگ و کم‌رنگ/پررنگ
+          می‌شود (هرچه گوی نزدیک‌تر به زمین، سایه تیره‌تر و بزرگ‌تر) تا عمق صحنه بهتر دیده شود. */}
       <svg viewBox="0 0 320 200" className="vlab-svg">
+        <defs>
+          <radialGradient id="vlabMetalBallGrad" cx="35%" cy="28%" r="75%">
+            <stop offset="0%" stopColor="#f4f8fc" />
+            <stop offset="30%" stopColor="#c7d2dd" />
+            <stop offset="70%" stopColor="#7c8899" />
+            <stop offset="100%" stopColor="#3a4150" />
+          </radialGradient>
+          <linearGradient id="vlabFreeFallGround" x1="0" y1="0" x2="0" y2="1">
+            <stop offset="0%" stopColor="#9c7d4a" />
+            <stop offset="100%" stopColor="#6e5633" />
+          </linearGradient>
+        </defs>
         <rect x="58" y="16" width="10" height="164" rx="2" fill="#f2c572" stroke="#c8862b" strokeWidth="1" />
         {Array.from({ length: 9 }).map((_, i) => (
           <g key={i}>
@@ -19236,9 +19253,16 @@ function VlabFreeFallExperiment({ onReading }) {
           </g>
         ))}
         <line x1="40" y1="20" x2="40" y2="180" stroke="#d9c9a0" strokeWidth="2" strokeDasharray="4 4" />
-        <rect x="20" y="180" width="280" height="10" fill="#8a6d3b" />
-        <circle cx="40" cy="30" r="12" fill="#e2622f">
-          <animate attributeName="cy" from="30" to="170" dur={`${animDuration}s`} repeatCount="indefinite" />
+        {/* تکیه‌گاه/گیره‌ی رهاسازی بالای مسیر */}
+        <rect x="32" y="16" width="16" height="5" rx="1.5" fill="#5b4636" />
+        <rect x="20" y="180" width="280" height="10" fill="url(#vlabFreeFallGround)" />
+        {/* سایه‌ی گوی روی زمین: هم‌زمان با سقوط، بزرگ‌تر/تیره‌تر می‌شود */}
+        <ellipse cx="40" cy="183" rx="4" ry="2" fill="#2c2410" opacity="0.15">
+          <animate attributeName="rx" values="4;14" keyTimes="0;1" calcMode="spline" keySplines="0.42 0 1 1" dur={`${animDuration}s`} repeatCount="indefinite" />
+          <animate attributeName="opacity" values="0.1;0.4" keyTimes="0;1" calcMode="spline" keySplines="0.42 0 1 1" dur={`${animDuration}s`} repeatCount="indefinite" />
+        </ellipse>
+        <circle cx="40" cy="30" r="13" fill="url(#vlabMetalBallGrad)" stroke="#1c2540" strokeWidth="0.6">
+          <animate attributeName="cy" values="30;170" keyTimes="0;1" calcMode="spline" keySplines="0.42 0 1 1" dur={`${animDuration}s`} repeatCount="indefinite" />
         </circle>
         <VlabStopwatchIcon x={270} y={50} readout={`${time.toFixed(2)}s`} />
       </svg>

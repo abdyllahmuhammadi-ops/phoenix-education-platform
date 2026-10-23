@@ -17290,40 +17290,128 @@ function pqbBuildMandatoryExamSet(pool, seedBase, session, examSize) {
 // بودجه‌بندی واقعیِ کنکور سراسری: تعداد دقیق سؤالات هر فصل، برای هر پایه/کتاب، طوری که
 // جمعِ هر پایه با تعداد واقعیِ سؤالاتِ آن کتاب در کنکور یکی باشد. این اعداد از کنکور سراسری
 // ۱۴۰۰ (آخرین سالی که داده‌ی فصل‌به‌فصلِ کامل و قابل‌اطمینان برایش در دسترس بود) گرفته شده‌اند.
-// وقتی بودجه‌ای برای یک درس/پایه در این جدول نباشد، رهیار طبق روش قبلی (پوشش متنوع، بدون
+// چون بودجه‌ی برخی دروس (شیمی، فیزیک، ریاضی) بین رشته‌های مختلف فرق دارد، ساختار این جدول
+// ابتدا بر اساس «رشته» (دقیقاً همان رشته‌هایی که در ثبت‌نام دانش‌آموز/معلم استفاده می‌شود:
+// «علوم تجربی»، «ریاضی و فیزیک»، «انسانی»)، سپس «درس»، سپس «پایه» است.
+// وقتی بودجه‌ای برای یک رشته/درس/پایه در این جدول نباشد، رهیار طبق روش قبلی (پوشش متنوع، بدون
 // بودجه‌ی فصلی دقیق) عمل می‌کند — یعنی نبودِ داده هرگز ساختِ سؤال را متوقف نمی‌کند.
 const PQB_KONKUR_BUDGET = {
-  "زیست‌شناسی": {
-    // زیست‌شناسی ۱ — مجموع ۱۵ سؤال در کنکور ۱۴۰۰
-    "دهم": [
-      { chapter: "گردش مواد در بدن", count: 5 },
-      { chapter: "گوارش و جذب مواد", count: 4 },
-      { chapter: "تبادلات گازی", count: 4 },
-      { chapter: "تنظیم اسمزی و دفع مواد زائد", count: 2 },
-    ],
-    // زیست‌شناسی ۲ — مجموع ۲۰ سؤال در کنکور ۱۴۰۰
-    "یازدهم": [
-      { chapter: "تولید مثل", count: 4 },
-      { chapter: "تنظیم شیمیایی", count: 3 },
-      { chapter: "ایمنی", count: 3 },
-      { chapter: "تنظیم عصبی", count: 2 },
-      { chapter: "حواس", count: 2 },
-      { chapter: "دستگاه حرکتی", count: 2 },
-      { chapter: "تولید مثل نهان‌دانگان", count: 2 },
-      { chapter: "تقسیم یاخته", count: 1 },
-      { chapter: "پاسخ گیاهان به محرک‌ها", count: 1 },
-    ],
-    // زیست‌شناسی ۳ — مجموع ۱۵ سؤال در کنکور ۱۴۰۰
-    "دوازدهم": [
-      { chapter: "انتقال اطلاعات در نسل‌ها", count: 4 },
-      { chapter: "مولکول‌های اطلاعاتی", count: 2 },
-      { chapter: "تغییر در اطلاعات وراثتی", count: 2 },
-      { chapter: "از ماده به انرژی", count: 2 },
-      { chapter: "از انرژی به ماده", count: 2 },
-      { chapter: "جریان اطلاعات در یاخته‌ها", count: 1 },
-      { chapter: "فناوری‌های نوین زیستی", count: 1 },
-      { chapter: "رفتارهای جانوران", count: 1 },
-    ],
+  "علوم تجربی": {
+    "زیست‌شناسی": {
+      // زیست‌شناسی ۱ — مجموع ۱۵ سؤال در کنکور ۱۴۰۰
+      "دهم": [
+        { chapter: "گردش مواد در بدن", count: 5 },
+        { chapter: "گوارش و جذب مواد", count: 4 },
+        { chapter: "تبادلات گازی", count: 4 },
+        { chapter: "تنظیم اسمزی و دفع مواد زائد", count: 2 },
+      ],
+      // زیست‌شناسی ۲ — مجموع ۲۰ سؤال در کنکور ۱۴۰۰
+      "یازدهم": [
+        { chapter: "تولید مثل", count: 4 },
+        { chapter: "تنظیم شیمیایی", count: 3 },
+        { chapter: "ایمنی", count: 3 },
+        { chapter: "تنظیم عصبی", count: 2 },
+        { chapter: "حواس", count: 2 },
+        { chapter: "دستگاه حرکتی", count: 2 },
+        { chapter: "تولید مثل نهان‌دانگان", count: 2 },
+        { chapter: "تقسیم یاخته", count: 1 },
+        { chapter: "پاسخ گیاهان به محرک‌ها", count: 1 },
+      ],
+      // زیست‌شناسی ۳ — مجموع ۱۵ سؤال در کنکور ۱۴۰۰
+      "دوازدهم": [
+        { chapter: "انتقال اطلاعات در نسل‌ها", count: 4 },
+        { chapter: "مولکول‌های اطلاعاتی", count: 2 },
+        { chapter: "تغییر در اطلاعات وراثتی", count: 2 },
+        { chapter: "از ماده به انرژی", count: 2 },
+        { chapter: "از انرژی به ماده", count: 2 },
+        { chapter: "جریان اطلاعات در یاخته‌ها", count: 1 },
+        { chapter: "فناوری‌های نوین زیستی", count: 1 },
+        { chapter: "رفتارهای جانوران", count: 1 },
+      ],
+    },
+    // شیمی رشته‌ی تجربی — کنکور ۱۴۰۰، مجموع ۳۵ سؤال (دهم ۹، یازدهم ۱۴، دوازدهم ۱۲)
+    "شیمی": {
+      "دهم": [
+        { chapter: "کیهان، زادگاه الفبای هستی", count: 3 },
+        { chapter: "ردپای گازها در زندگی", count: 3 },
+        { chapter: "آب، آهنگ زندگی", count: 3 },
+      ],
+      "یازدهم": [
+        { chapter: "قدر هدایای زمین را بدانیم", count: 6 },
+        { chapter: "در پی غذای سالم", count: 5 },
+        { chapter: "پوشاک، نیازی پایان‌ناپذیر", count: 3 },
+      ],
+      "دوازدهم": [
+        { chapter: "مولکول‌ها در خدمت سلامت", count: 4 },
+        { chapter: "آسایش و رفاه در سایه‌ی شیمی", count: 4 },
+        { chapter: "شیمی، هنر، زیبایی و دوام", count: 2 },
+        { chapter: "شیمی و فردای روشن‌تر", count: 2 },
+      ],
+    },
+    // فیزیک رشته‌ی تجربی — کنکور ۱۴۰۰، مجموع ۳۰ سؤال (دهم ۶، یازدهم ۱۰، دوازدهم ۱۴)
+    "فیزیک": {
+      "دهم": [
+        { chapter: "فیزیک و اندازه‌گیری", count: 1 },
+        { chapter: "کار، انرژی و توان", count: 1 },
+        { chapter: "ویژگی‌های فیزیکی مواد", count: 2 },
+        { chapter: "دما و گرما", count: 2 },
+      ],
+      "یازدهم": [
+        { chapter: "الکتریسیته ساکن", count: 4 },
+        { chapter: "جریان الکتریکی و مدارهای جریان مستقیم", count: 4 },
+        { chapter: "مغناطیس و القای مغناطیسی", count: 2 },
+      ],
+      "دوازدهم": [
+        { chapter: "حرکت بر خط راست", count: 4 },
+        { chapter: "دینامیک", count: 3 },
+        { chapter: "نوسان و موج", count: 4 },
+        { chapter: "آشنایی با فیزیک اتمی و هسته‌ای", count: 3 },
+      ],
+    },
+  },
+  "ریاضی و فیزیک": {
+    // شیمی رشته‌ی ریاضی — کنکور ۱۴۰۰، مجموع ۳۴ سؤال (دهم ۱۱، یازدهم ۱۳، دوازدهم ۱۰)
+    "شیمی": {
+      "دهم": [
+        { chapter: "کیهان، زادگاه الفبای هستی", count: 2 },
+        { chapter: "ردپای گازها در زندگی", count: 3 },
+        { chapter: "آب، آهنگ زندگی", count: 6 },
+      ],
+      "یازدهم": [
+        { chapter: "قدر هدایای زمین را بدانیم", count: 4 },
+        { chapter: "در پی غذای سالم", count: 5 },
+        { chapter: "پوشاک، نیازی پایان‌ناپذیر", count: 4 },
+      ],
+      "دوازدهم": [
+        { chapter: "مولکول‌ها در خدمت سلامت", count: 3 },
+        { chapter: "آسایش و رفاه در سایه‌ی شیمی", count: 3 },
+        { chapter: "شیمی، هنر، زیبایی و دوام", count: 2 },
+        { chapter: "شیمی و فردای روشن‌تر", count: 2 },
+      ],
+    },
+    // فیزیک رشته‌ی ریاضی — کنکور ۱۴۰۰، مجموع ۴۵ سؤال (دهم ۱۲، یازدهم ۱۳، دوازدهم ۲۰)
+    "فیزیک": {
+      "دهم": [
+        { chapter: "کار، انرژی و توان", count: 3 },
+        { chapter: "ویژگی‌های مواد", count: 2 },
+        { chapter: "دما و گرما", count: 3 },
+        { chapter: "ترمودینامیک", count: 4 },
+      ],
+      "یازدهم": [
+        { chapter: "الکتریسیته ساکن (شامل خازن)", count: 5 },
+        { chapter: "جریان الکتریکی", count: 4 },
+        { chapter: "مغناطیس", count: 2 },
+        { chapter: "القای مغناطیسی", count: 2 },
+      ],
+      "دوازدهم": [
+        { chapter: "حرکت بر خط راست", count: 4 },
+        { chapter: "دینامیک", count: 6 },
+        { chapter: "نوسان و موج", count: 4 },
+        { chapter: "برهم‌کنش‌های موج", count: 2 },
+        { chapter: "آشنایی با فیزیک اتمی", count: 2 },
+        { chapter: "آشنایی با فیزیک هسته‌ای", count: 2 },
+      ],
+    },
   },
 };
 
@@ -17331,8 +17419,9 @@ const PQB_KONKUR_BUDGET = {
 // مدیر یا مدرسه‌ی خاص. خروجی هر سؤال دقیقاً هم‌ساختار سؤالات تستیِ بانک معلم است (متن با گزینه‌های
 // الف/ب/ج/د داخل خودش، و توضیحِ پاسخ با جمله‌ی صریح «گزینه‌ی X درست است») تا همان منطق
 // جابجاییِ گزینه‌ها و ضدتقلبِ جلسه‌ی جبرانی روی آن هم کار کند.
-async function pqbGenerateKonkurAiPool(subject, grade) {
-  const budget = PQB_KONKUR_BUDGET[subject] && PQB_KONKUR_BUDGET[subject][grade];
+async function pqbGenerateKonkurAiPool(subject, grade, field) {
+  const fieldBudgets = field && PQB_KONKUR_BUDGET[field];
+  const budget = fieldBudgets && fieldBudgets[subject] && fieldBudgets[subject][grade];
   const totalFromBudget = budget ? budget.reduce((sum, b) => sum + b.count, 0) : null;
   const budgetInstruction = budget
     ? "تعداد و درصد سؤالات باید دقیقاً مطابق بودجه‌بندیِ واقعیِ کنکور سراسری برای همین پایه و درس باشد — " +
@@ -17565,11 +17654,14 @@ function StudentAiPracticeBlock({ grade, subject, aiPracticeLoading, aiPracticeE
   );
 }
 
-function StudentQuestionBankView({ onBack, prefillSchoolCode, prefillGrade, prefillSubject, prefillClassName, studentCode, onAskRahyar }) {
+function StudentQuestionBankView({ onBack, prefillSchoolCode, prefillGrade, prefillSubject, prefillClassName, prefillField, studentCode, onAskRahyar }) {
   const [schoolCode, setSchoolCode] = useState(prefillSchoolCode || "");
   const [grade, setGrade] = useState(prefillGrade || "");
   const [subject, setSubject] = useState(prefillSubject || "");
   const [className, setClassName] = useState(prefillClassName || "");
+  // رشته‌ی تحصیلی دانش‌آموز — چون بودجه‌بندیِ واقعیِ کنکور (شیمی/فیزیک/ریاضی) بین رشته‌ها فرق دارد،
+  // لازم است جدا از پایه و درس، رشته هم مشخص باشد تا جدولِ بودجه‌ی درستش انتخاب شود.
+  const [studentField] = useState(prefillField || "");
   const [questions, setQuestions] = useState([]);
   const [loading, setLoading] = useState(false);
   const [loaded, setLoaded] = useState(false);
@@ -17699,7 +17791,7 @@ function StudentQuestionBankView({ onBack, prefillSchoolCode, prefillGrade, pref
       // آزمون الزامی کنکور مستقل از بانک رسمی معلم است — سؤالات از یک «استخر ملی»ِ ساخته‌شده
       // توسط رهیار می‌آیند که برای همان روز/درس/پایه در حافظه‌ی مشترک ذخیره می‌شود، تا هر
       // دانش‌آموزی در هر مدرسه‌ای که وارد شود، دقیقاً همان استخر سؤال را ببیند.
-      const poolKey = "konkur-ai-pool:" + skey(subject) + ":" + grade + ":" + fridayStatus.dateKey;
+      const poolKey = "konkur-ai-pool:" + skey(subject) + ":" + grade + ":" + skey(studentField) + ":" + fridayStatus.dateKey;
       let pool = null;
       if (typeof window !== "undefined" && window.storage) {
         const cached = await window.storage.get(poolKey, true).catch(() => null);
@@ -17712,7 +17804,7 @@ function StudentQuestionBankView({ onBack, prefillSchoolCode, prefillGrade, pref
         }
       }
       if (!pool || pool.length === 0) {
-        pool = await pqbGenerateKonkurAiPool(subject, grade);
+        pool = await pqbGenerateKonkurAiPool(subject, grade, studentField);
         if (pool && pool.length > 0 && typeof window !== "undefined" && window.storage) {
           await window.storage.set(poolKey, JSON.stringify(pool), true).catch(() => {});
         }
@@ -17726,9 +17818,10 @@ function StudentQuestionBankView({ onBack, prefillSchoolCode, prefillGrade, pref
       // حدود ۱۰٪ سؤالات جلسه‌ی جبرانی با سؤال هم‌سطح دیگری عوض می‌شود، ترتیب سؤالات جابجا می‌شود،
       // و گزینه‌های سؤالات تستیِ باقی‌مانده نیز در جای دیگری قرار می‌گیرند — همه‌چیز seeded است، پس
       // همه‌ی شرکت‌کنندگانِ یک جلسه دقیقاً همان یک آزمون را می‌بینند.
-      const subjectBudget = PQB_KONKUR_BUDGET[subject] && PQB_KONKUR_BUDGET[subject][grade];
+      const fieldBudgetsForExam = studentField && PQB_KONKUR_BUDGET[studentField];
+      const subjectBudget = fieldBudgetsForExam && fieldBudgetsForExam[subject] && fieldBudgetsForExam[subject][grade];
       const budgetExamSize = subjectBudget ? subjectBudget.reduce((sum, b) => sum + b.count, 0) : null;
-      const examSetBuilt = pqbBuildMandatoryExamSet(pool, fridayStatus.dateKey + ":" + skey(subject) + ":" + grade, fridayStatus.session, budgetExamSize);
+      const examSetBuilt = pqbBuildMandatoryExamSet(pool, fridayStatus.dateKey + ":" + skey(subject) + ":" + grade + ":" + skey(studentField), fridayStatus.session, budgetExamSize);
       // آزمون الزامی کنکور دقیقاً مثل خودِ کنکور سراسری نمره‌گذاری می‌شود (درصد، با نمره‌ی منفی
       // یک‌سومی) نه «از ۲۰ نمره» — نمره‌دهی اینجا لازم نیست، چون نتیجه از خودِ پاسخ‌های واقعی
       // دانش‌آموز در پایان آزمون محاسبه می‌شود (نگاه کنید به handleFinishExam/pqbComputeKonkurPercent)
@@ -26608,6 +26701,7 @@ function PhoenixApp() {
         prefillSchoolCode={info.schoolCode || ""}
         prefillGrade={info.grade || ""}
         prefillClassName={info.className || ""}
+        prefillField={info.fieldOfStudy || ""}
         studentCode={info.studentCode || ""}
         onAskRahyar={(questionText) => {
           setMessagingInitialRole("student");

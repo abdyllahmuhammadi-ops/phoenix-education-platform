@@ -6623,8 +6623,17 @@ function GuardianRegistration({ onBack, onContinue, onOpenMessages, prefillPhone
   const handleSubmit = async () => {
     const code = String(Math.floor(100000 + Math.random() * 900000));
     setIssueError("");
-    if (!mobile) {
-      setIssueError("شماره موبایل نامعتبر است.");
+    const missing = [];
+    const natEl = document.getElementById("pgr-nationalcode");
+    if (!natEl || !natEl.value.trim()) missing.push("کد ملی");
+    const relEl = document.getElementById("pgr-relation");
+    if (!relEl || relEl.selectedIndex === 0) missing.push("نسبت با دانش‌آموز");
+    const stuEl = document.getElementById("pgr-studentcode1");
+    if (!stuEl || !stuEl.value.trim()) missing.push("کد ملی دانش‌آموز اول");
+    if (!mobile) missing.push("شماره موبایل");
+    if (!termsAccepted) missing.push("پذیرش قوانین و سطح دسترسی");
+    if (missing.length > 0) {
+      setIssueError("لطفاً این فیلدهای اجباری را تکمیل کنید:\n• " + missing.join("\n• "));
       return;
     }
     setIssueSaving(true);
@@ -6871,7 +6880,7 @@ function GuardianRegistration({ onBack, onContinue, onOpenMessages, prefillPhone
             <div className="pgr-row">
               <div className="pgr-field">
                 <label className="pgr-label">کد ملی <span className="pgr-star">*</span></label>
-                <input className="pgr-input pgr-w-national" placeholder="۱۰ رقم" inputMode="numeric" maxLength={10} />
+                <input id="pgr-nationalcode" className="pgr-input pgr-w-national" placeholder="۱۰ رقم" inputMode="numeric" maxLength={10} />
               </div>
             </div>
 
@@ -6908,7 +6917,7 @@ function GuardianRegistration({ onBack, onContinue, onOpenMessages, prefillPhone
             <div className="pgr-row">
               <div className="pgr-field">
                 <label className="pgr-label">نسبت با دانش‌آموز <span className="pgr-star">*</span></label>
-                <select className="pgr-select pgr-w-relation" defaultValue="">
+                <select id="pgr-relation" className="pgr-select pgr-w-relation" defaultValue="">
                   <option value="" disabled>انتخاب کنید</option>
                   <option>پدر</option>
                   <option>مادر</option>
@@ -6920,7 +6929,7 @@ function GuardianRegistration({ onBack, onContinue, onOpenMessages, prefillPhone
             <div className="pgr-row">
               <div className="pgr-field">
                 <label className="pgr-label">کد ملی دانش‌آموز اول <span className="pgr-star">*</span></label>
-                <input className="pgr-input pgr-w-national" placeholder="۱۰ رقم" inputMode="numeric" maxLength={10} />
+                <input id="pgr-studentcode1" className="pgr-input pgr-w-national" placeholder="۱۰ رقم" inputMode="numeric" maxLength={10} />
               </div>
               <div className="pgr-field">
                 <label className="pgr-label">کد ملی دانش‌آموز دوم</label>
@@ -7048,7 +7057,7 @@ function GuardianRegistration({ onBack, onContinue, onOpenMessages, prefillPhone
 
           {!issued ? (
             <>
-              {issueError && <p style={{ color: "#c0392b", fontSize: 12.5, textAlign: "center", margin: "0 0 10px" }}>{issueError}</p>}
+              {issueError && <p style={{ color: "#c0392b", fontSize: 12.5, textAlign: "center", margin: "0 0 10px", whiteSpace: "pre-line" }}>{issueError}</p>}
               <button type="button" className="pgr-submit" onClick={handleSubmit} disabled={issueSaving}>
               {issueSaving ? "در حال ثبت رمز ورود..." : "تکمیل ثبت‌نام و دریافت رمز ورود"}
               <span style={{ fontSize: 20 }}>←</span>
@@ -7745,8 +7754,29 @@ function AdminRegistration({ onBack, onContinue, prefillPhone }) {
   const handleSubmit = async () => {
     const code = String(Math.floor(100000 + Math.random() * 900000));
     setIssueError("");
-    if (!mobile) {
-      setIssueError("شماره موبایل نامعتبر است.");
+    const missing = [];
+    const natEl = document.getElementById("pad-nationalcode");
+    if (!natEl || !natEl.value.trim()) missing.push("کد ملی");
+    const genderEl = document.getElementById("pad-gender");
+    if (!genderEl || genderEl.selectedIndex === 0) missing.push("جنسیت");
+    const fnEl = document.getElementById("pad-firstname");
+    if (!fnEl || !fnEl.value.trim()) missing.push("نام");
+    const lnEl = document.getElementById("pad-lastname");
+    if (!lnEl || !lnEl.value.trim()) missing.push("نام خانوادگی");
+    const degEl = document.getElementById("pad-degree");
+    if (!degEl || degEl.selectedIndex === 0) missing.push("آخرین مدرک تحصیلی");
+    const roleEl = document.getElementById("pad-role");
+    if (!roleEl || roleEl.selectedIndex === 0) missing.push("سمت");
+    const yearsEl = document.getElementById("pad-years");
+    if (!yearsEl || yearsEl.selectedIndex === 0) missing.push("سابقه‌ی مدیریت");
+    if (!adminSchoolCode.trim()) missing.push("کد مدرسه");
+    if (!adminSchoolName.trim()) missing.push("نام کامل مدرسه");
+    const schoolTypeEl = document.getElementById("pad-schooltype");
+    if (!schoolTypeEl || schoolTypeEl.selectedIndex === 0) missing.push("نوع مدرسه");
+    if (!mobile) missing.push("شماره موبایل");
+    if (!termsAccepted) missing.push("پذیرش قوانین و سطح دسترسی");
+    if (missing.length > 0) {
+      setIssueError("لطفاً این فیلدهای اجباری را تکمیل کنید:\n• " + missing.join("\n• "));
       return;
     }
     setIssueSaving(true);
@@ -7992,11 +8022,11 @@ function AdminRegistration({ onBack, onContinue, prefillPhone }) {
             <div className="pad-row">
               <div className="pad-field">
                 <label className="pad-label">کد ملی <span className="pad-star">*</span></label>
-                <input className="pad-input pad-w-national" placeholder="۱۰ رقم" inputMode="numeric" maxLength={10} />
+                <input id="pad-nationalcode" className="pad-input pad-w-national" placeholder="۱۰ رقم" inputMode="numeric" maxLength={10} />
               </div>
               <div className="pad-field">
                 <label className="pad-label">جنسیت <span className="pad-star">*</span></label>
-                <select className="pad-select pad-w-gender" defaultValue="">
+                <select id="pad-gender" className="pad-select pad-w-gender" defaultValue="">
                   <option value="" disabled>انتخاب کنید</option>
                   <option>مرد</option>
                   <option>زن</option>
@@ -8004,11 +8034,11 @@ function AdminRegistration({ onBack, onContinue, prefillPhone }) {
               </div>
               <div className="pad-field">
                 <label className="pad-label">نام <span className="pad-star">*</span></label>
-                <input className="pad-input pad-w-name" placeholder="نام" />
+                <input id="pad-firstname" className="pad-input pad-w-name" placeholder="نام" />
               </div>
               <div className="pad-field">
                 <label className="pad-label">نام خانوادگی <span className="pad-star">*</span></label>
-                <input className="pad-input pad-w-name" placeholder="نام خانوادگی" />
+                <input id="pad-lastname" className="pad-input pad-w-name" placeholder="نام خانوادگی" />
               </div>
             </div>
           </div>
@@ -8024,7 +8054,7 @@ function AdminRegistration({ onBack, onContinue, prefillPhone }) {
             <div className="pad-row">
               <div className="pad-field">
                 <label className="pad-label">آخرین مدرک تحصیلی <span className="pad-star">*</span></label>
-                <select className="pad-select pad-w-degree" defaultValue="">
+                <select id="pad-degree" className="pad-select pad-w-degree" defaultValue="">
                   <option value="" disabled>انتخاب کنید</option>
                   <option>لیسانس</option>
                   <option>فوق لیسانس</option>
@@ -8037,7 +8067,7 @@ function AdminRegistration({ onBack, onContinue, prefillPhone }) {
               </div>
               <div className="pad-field">
                 <label className="pad-label">سمت <span className="pad-star">*</span></label>
-                <select className="pad-select pad-w-role" defaultValue="">
+                <select id="pad-role" className="pad-select pad-w-role" defaultValue="">
                   <option value="" disabled>انتخاب کنید</option>
                   <option>مدیر</option>
                   <option>معاون آموزشی</option>
@@ -8047,7 +8077,7 @@ function AdminRegistration({ onBack, onContinue, prefillPhone }) {
               </div>
               <div className="pad-field">
                 <label className="pad-label">سابقه‌ی مدیریت (سال) <span className="pad-star">*</span></label>
-                <select className="pad-select pad-w-years" defaultValue="">
+                <select id="pad-years" className="pad-select pad-w-years" defaultValue="">
                   <option value="" disabled>انتخاب کنید</option>
                   {Array.from({ length: 41 }, (_, i) => i).map((y) => (
                     <option key={y}>{y}</option>
@@ -8076,7 +8106,7 @@ function AdminRegistration({ onBack, onContinue, prefillPhone }) {
               </div>
               <div className="pad-field">
                 <label className="pad-label">نوع مدرسه <span className="pad-star">*</span></label>
-                <select className="pad-select pad-w-schooltype" defaultValue="">
+                <select id="pad-schooltype" className="pad-select pad-w-schooltype" defaultValue="">
                   <option value="" disabled>انتخاب کنید</option>
                   <option>دولتی</option>
                   <option>غیردولتی</option>
@@ -8150,7 +8180,7 @@ function AdminRegistration({ onBack, onContinue, prefillPhone }) {
 
           {!issued ? (
             <>
-              {issueError && <p style={{ color: "#c0392b", fontSize: 12.5, textAlign: "center", margin: "0 0 10px" }}>{issueError}</p>}
+              {issueError && <p style={{ color: "#c0392b", fontSize: 12.5, textAlign: "center", margin: "0 0 10px", whiteSpace: "pre-line" }}>{issueError}</p>}
               <button type="button" className="pad-submit" onClick={handleSubmit} disabled={issueSaving}>
               {issueSaving ? "در حال ثبت رمز ورود..." : "تکمیل ثبت‌نام و دریافت رمز ورود"}
               <span style={{ fontSize: 20 }}>←</span>
@@ -11443,8 +11473,27 @@ function HealthInstructorRegistration({ onBack, onContinue, prefillPhone }) {
   const handleSubmit = async () => {
     const code = String(Math.floor(100000 + Math.random() * 900000));
     setIssueError("");
-    if (!mobile) {
-      setIssueError("شماره موبایل نامعتبر است.");
+    const missing = [];
+    const natEl = document.getElementById("phi-nationalcode");
+    if (!natEl || !natEl.value.trim()) missing.push("کد ملی");
+    const persEl = document.getElementById("phi-personnelcode");
+    if (!persEl || !persEl.value.trim()) missing.push("کد پرسنلی");
+    const genderEl = document.getElementById("phi-gender");
+    if (!genderEl || genderEl.selectedIndex === 0) missing.push("جنسیت");
+    const fnEl = document.getElementById("phi-firstname");
+    if (!fnEl || !fnEl.value.trim()) missing.push("نام");
+    const lnEl = document.getElementById("phi-lastname");
+    if (!lnEl || !lnEl.value.trim()) missing.push("نام خانوادگی");
+    const degEl = document.getElementById("phi-degree");
+    if (!degEl || degEl.selectedIndex === 0) missing.push("آخرین مدرک تحصیلی");
+    const schoolCodeEl = document.getElementById("phi-schoolcode");
+    if (!schoolCodeEl || !schoolCodeEl.value.trim()) missing.push("کد مدرسه");
+    const schoolNameEl = document.getElementById("phi-schoolname");
+    if (!schoolNameEl || !schoolNameEl.value.trim()) missing.push("نام کامل مدرسه");
+    if (!mobile) missing.push("شماره موبایل");
+    if (!termsAccepted) missing.push("پذیرش قوانین و سطح دسترسی");
+    if (missing.length > 0) {
+      setIssueError("لطفاً این فیلدهای اجباری را تکمیل کنید:\n• " + missing.join("\n• "));
       return;
     }
     setIssueSaving(true);
@@ -11661,15 +11710,15 @@ function HealthInstructorRegistration({ onBack, onContinue, prefillPhone }) {
             <div className="phi-row">
               <div className="phi-field">
                 <label className="phi-label">کد ملی <span className="phi-star">*</span></label>
-                <input className="phi-input phi-w-national" placeholder="۱۰ رقم" inputMode="numeric" maxLength={10} />
+                <input id="phi-nationalcode" className="phi-input phi-w-national" placeholder="۱۰ رقم" inputMode="numeric" maxLength={10} />
               </div>
               <div className="phi-field">
                 <label className="phi-label">کد پرسنلی <span className="phi-star">*</span></label>
-                <input className="phi-input phi-w-national" placeholder="۸ رقم" inputMode="numeric" maxLength={8} />
+                <input id="phi-personnelcode" className="phi-input phi-w-national" placeholder="۸ رقم" inputMode="numeric" maxLength={8} />
               </div>
               <div className="phi-field">
                 <label className="phi-label">جنسیت <span className="phi-star">*</span></label>
-                <select className="phi-select phi-w-gender" defaultValue="">
+                <select id="phi-gender" className="phi-select phi-w-gender" defaultValue="">
                   <option value="" disabled>انتخاب کنید</option>
                   <option>مرد</option>
                   <option>زن</option>
@@ -11677,11 +11726,11 @@ function HealthInstructorRegistration({ onBack, onContinue, prefillPhone }) {
               </div>
               <div className="phi-field">
                 <label className="phi-label">نام <span className="phi-star">*</span></label>
-                <input className="phi-input phi-w-name" placeholder="نام" />
+                <input id="phi-firstname" className="phi-input phi-w-name" placeholder="نام" />
               </div>
               <div className="phi-field">
                 <label className="phi-label">نام خانوادگی <span className="phi-star">*</span></label>
-                <input className="phi-input phi-w-name" placeholder="نام خانوادگی" />
+                <input id="phi-lastname" className="phi-input phi-w-name" placeholder="نام خانوادگی" />
               </div>
             </div>
           </div>
@@ -11695,7 +11744,7 @@ function HealthInstructorRegistration({ onBack, onContinue, prefillPhone }) {
             <div className="phi-row">
               <div className="phi-field">
                 <label className="phi-label">آخرین مدرک تحصیلی <span className="phi-star">*</span></label>
-                <select className="phi-select phi-w-degree" defaultValue="">
+                <select id="phi-degree" className="phi-select phi-w-degree" defaultValue="">
                   <option value="" disabled>انتخاب کنید</option>
                   <option>فوق دیپلم بهداشت عمومی</option>
                   <option>لیسانس بهداشت عمومی</option>
@@ -11719,11 +11768,11 @@ function HealthInstructorRegistration({ onBack, onContinue, prefillPhone }) {
             <div className="phi-row">
               <div className="phi-field">
                 <label className="phi-label">کد مدرسه <span className="phi-star">*</span></label>
-                <input className="phi-input phi-w-national" placeholder="۸ رقم" inputMode="numeric" maxLength={8} />
+                <input id="phi-schoolcode" className="phi-input phi-w-national" placeholder="۸ رقم" inputMode="numeric" maxLength={8} />
               </div>
               <div className="phi-field">
                 <label className="phi-label">نام کامل مدرسه <span className="phi-star">*</span></label>
-                <input className="phi-input phi-w-school" placeholder="نام مدرسه" />
+                <input id="phi-schoolname" className="phi-input phi-w-school" placeholder="نام مدرسه" />
               </div>
             </div>
           </div>
@@ -11787,7 +11836,7 @@ function HealthInstructorRegistration({ onBack, onContinue, prefillPhone }) {
 
           {!issued ? (
             <>
-              {issueError && <p style={{ color: "#c0392b", fontSize: 12.5, textAlign: "center", margin: "0 0 10px" }}>{issueError}</p>}
+              {issueError && <p style={{ color: "#c0392b", fontSize: 12.5, textAlign: "center", margin: "0 0 10px", whiteSpace: "pre-line" }}>{issueError}</p>}
               <button type="button" className="phi-submit" onClick={handleSubmit} disabled={issueSaving}>
               {issueSaving ? "در حال ثبت رمز ورود..." : "تکمیل ثبت‌نام و دریافت رمز ورود"}
               <span style={{ fontSize: 20 }}>←</span>
@@ -11842,8 +11891,29 @@ function HealthMonitorRegistration({ onBack, onContinue, prefillPhone }) {
   const handleSubmit = async () => {
     const code = String(Math.floor(100000 + Math.random() * 900000));
     setIssueError("");
-    if (!mobile) {
-      setIssueError("شماره موبایل نامعتبر است.");
+    const missing = [];
+    const natEl = document.getElementById("phm-nationalcode");
+    if (!natEl || !natEl.value.trim()) missing.push("کد ملی");
+    const persEl = document.getElementById("phm-personnelcode");
+    if (!persEl || !persEl.value.trim()) missing.push("کد پرسنلی");
+    const genderEl = document.getElementById("phm-gender");
+    if (!genderEl || genderEl.selectedIndex === 0) missing.push("جنسیت");
+    const fnEl = document.getElementById("phm-firstname");
+    if (!fnEl || !fnEl.value.trim()) missing.push("نام");
+    const lnEl = document.getElementById("phm-lastname");
+    if (!lnEl || !lnEl.value.trim()) missing.push("نام خانوادگی");
+    const degEl = document.getElementById("phm-degree");
+    if (!degEl || degEl.selectedIndex === 0) missing.push("آخرین مدرک تحصیلی");
+    const centerEl = document.getElementById("phm-center");
+    if (!centerEl || !centerEl.value.trim()) missing.push("نام مرکز یا خانه‌ی بهداشت");
+    const provinceEl = document.getElementById("phm-province");
+    if (!provinceEl || provinceEl.selectedIndex === 0) missing.push("استان تحت پوشش");
+    const countyEl = document.getElementById("phm-county");
+    if (!countyEl || !countyEl.value.trim()) missing.push("شهرستان تحت پوشش");
+    if (!mobile) missing.push("شماره موبایل");
+    if (!termsAccepted) missing.push("پذیرش قوانین و سطح دسترسی");
+    if (missing.length > 0) {
+      setIssueError("لطفاً این فیلدهای اجباری را تکمیل کنید:\n• " + missing.join("\n• "));
       return;
     }
     setIssueSaving(true);
@@ -12062,15 +12132,15 @@ function HealthMonitorRegistration({ onBack, onContinue, prefillPhone }) {
             <div className="phm-row">
               <div className="phm-field">
                 <label className="phm-label">کد ملی <span className="phm-star">*</span></label>
-                <input className="phm-input phm-w-national" placeholder="۱۰ رقم" inputMode="numeric" maxLength={10} />
+                <input id="phm-nationalcode" className="phm-input phm-w-national" placeholder="۱۰ رقم" inputMode="numeric" maxLength={10} />
               </div>
               <div className="phm-field">
                 <label className="phm-label">کد پرسنلی <span className="phm-star">*</span></label>
-                <input className="phm-input phm-w-national" placeholder="۸ رقم" inputMode="numeric" maxLength={8} />
+                <input id="phm-personnelcode" className="phm-input phm-w-national" placeholder="۸ رقم" inputMode="numeric" maxLength={8} />
               </div>
               <div className="phm-field">
                 <label className="phm-label">جنسیت <span className="phm-star">*</span></label>
-                <select className="phm-select phm-w-gender" defaultValue="">
+                <select id="phm-gender" className="phm-select phm-w-gender" defaultValue="">
                   <option value="" disabled>انتخاب کنید</option>
                   <option>مرد</option>
                   <option>زن</option>
@@ -12078,11 +12148,11 @@ function HealthMonitorRegistration({ onBack, onContinue, prefillPhone }) {
               </div>
               <div className="phm-field">
                 <label className="phm-label">نام <span className="phm-star">*</span></label>
-                <input className="phm-input phm-w-name" placeholder="نام" />
+                <input id="phm-firstname" className="phm-input phm-w-name" placeholder="نام" />
               </div>
               <div className="phm-field">
                 <label className="phm-label">نام خانوادگی <span className="phm-star">*</span></label>
-                <input className="phm-input phm-w-name" placeholder="نام خانوادگی" />
+                <input id="phm-lastname" className="phm-input phm-w-name" placeholder="نام خانوادگی" />
               </div>
             </div>
           </div>
@@ -12096,7 +12166,7 @@ function HealthMonitorRegistration({ onBack, onContinue, prefillPhone }) {
             <div className="phm-row">
               <div className="phm-field">
                 <label className="phm-label">آخرین مدرک تحصیلی <span className="phm-star">*</span></label>
-                <select className="phm-select phm-w-degree" defaultValue="">
+                <select id="phm-degree" className="phm-select phm-w-degree" defaultValue="">
                   <option value="" disabled>انتخاب کنید</option>
                   <option>فوق دیپلم بهورزی</option>
                   <option>لیسانس پرستاری</option>
@@ -12117,11 +12187,11 @@ function HealthMonitorRegistration({ onBack, onContinue, prefillPhone }) {
             <div className="phm-row">
               <div className="phm-field">
                 <label className="phm-label">نام مرکز یا خانه‌ی بهداشت <span className="phm-star">*</span></label>
-                <input className="phm-input phm-w-center" placeholder="نام مرکز بهداشت" />
+                <input id="phm-center" className="phm-input phm-w-center" placeholder="نام مرکز بهداشت" />
               </div>
               <div className="phm-field">
                 <label className="phm-label">استان تحت پوشش <span className="phm-star">*</span></label>
-                <select className="phm-select phm-w-province" defaultValue="">
+                <select id="phm-province" className="phm-select phm-w-province" defaultValue="">
                   <option value="" disabled>انتخاب کنید</option>
                   {provinces.map((p) => (
                     <option key={p}>{p}</option>
@@ -12130,7 +12200,7 @@ function HealthMonitorRegistration({ onBack, onContinue, prefillPhone }) {
               </div>
               <div className="phm-field">
                 <label className="phm-label">شهرستان تحت پوشش <span className="phm-star">*</span></label>
-                <input className="phm-input phm-w-county" placeholder="شهرستان" />
+                <input id="phm-county" className="phm-input phm-w-county" placeholder="شهرستان" />
               </div>
             </div>
           </div>
@@ -12194,7 +12264,7 @@ function HealthMonitorRegistration({ onBack, onContinue, prefillPhone }) {
 
           {!issued ? (
             <>
-              {issueError && <p style={{ color: "#c0392b", fontSize: 12.5, textAlign: "center", margin: "0 0 10px" }}>{issueError}</p>}
+              {issueError && <p style={{ color: "#c0392b", fontSize: 12.5, textAlign: "center", margin: "0 0 10px", whiteSpace: "pre-line" }}>{issueError}</p>}
               <button type="button" className="phm-submit" onClick={handleSubmit} disabled={issueSaving}>
               {issueSaving ? "در حال ثبت رمز ورود..." : "تکمیل ثبت‌نام و دریافت رمز ورود"}
               <span style={{ fontSize: 20 }}>←</span>
@@ -12240,8 +12310,21 @@ function SystemAdminRegistration({ onBack, onContinue }) {
   const handleSubmit = async () => {
     const code = String(Math.floor(100000 + Math.random() * 900000));
     setIssueError("");
-    if (!mobile) {
-      setIssueError("شماره موبایل نامعتبر است.");
+    const missing = [];
+    const natEl = document.getElementById("psa-nationalcode");
+    if (!natEl || !natEl.value.trim()) missing.push("کد ملی");
+    const empEl = document.getElementById("psa-employeecode");
+    if (!empEl || !empEl.value.trim()) missing.push("کد کارمندی سامانه");
+    const genderEl = document.getElementById("psa-gender");
+    if (!genderEl || genderEl.selectedIndex === 0) missing.push("جنسیت");
+    const fnEl = document.getElementById("psa-firstname");
+    if (!fnEl || !fnEl.value.trim()) missing.push("نام");
+    const lnEl = document.getElementById("psa-lastname");
+    if (!lnEl || !lnEl.value.trim()) missing.push("نام خانوادگی");
+    if (!mobile) missing.push("شماره موبایل");
+    if (!termsAccepted) missing.push("پذیرش قوانین و سطح دسترسی");
+    if (missing.length > 0) {
+      setIssueError("لطفاً این فیلدهای اجباری را تکمیل کنید:\n• " + missing.join("\n• "));
       return;
     }
     setIssueSaving(true);
@@ -12446,15 +12529,15 @@ function SystemAdminRegistration({ onBack, onContinue }) {
             <div className="psa-row">
               <div className="psa-field">
                 <label className="psa-label">کد ملی <span className="psa-star">*</span></label>
-                <input className="psa-input psa-w-national" placeholder="۱۰ رقم" inputMode="numeric" maxLength={10} />
+                <input id="psa-nationalcode" className="psa-input psa-w-national" placeholder="۱۰ رقم" inputMode="numeric" maxLength={10} />
               </div>
               <div className="psa-field">
                 <label className="psa-label">کد کارمندی سامانه <span className="psa-star">*</span></label>
-                <input className="psa-input psa-w-national" placeholder="۸ رقم" inputMode="numeric" maxLength={8} />
+                <input id="psa-employeecode" className="psa-input psa-w-national" placeholder="۸ رقم" inputMode="numeric" maxLength={8} />
               </div>
               <div className="psa-field">
                 <label className="psa-label">جنسیت <span className="psa-star">*</span></label>
-                <select className="psa-select psa-w-gender" defaultValue="">
+                <select id="psa-gender" className="psa-select psa-w-gender" defaultValue="">
                   <option value="" disabled>انتخاب کنید</option>
                   <option>مرد</option>
                   <option>زن</option>
@@ -12462,11 +12545,11 @@ function SystemAdminRegistration({ onBack, onContinue }) {
               </div>
               <div className="psa-field">
                 <label className="psa-label">نام <span className="psa-star">*</span></label>
-                <input className="psa-input psa-w-name" placeholder="نام" />
+                <input id="psa-firstname" className="psa-input psa-w-name" placeholder="نام" />
               </div>
               <div className="psa-field">
                 <label className="psa-label">نام خانوادگی <span className="psa-star">*</span></label>
-                <input className="psa-input psa-w-name" placeholder="نام خانوادگی" />
+                <input id="psa-lastname" className="psa-input psa-w-name" placeholder="نام خانوادگی" />
               </div>
             </div>
           </div>
@@ -12530,7 +12613,7 @@ function SystemAdminRegistration({ onBack, onContinue }) {
 
           {!issued ? (
             <>
-              {issueError && <p style={{ color: "#c0392b", fontSize: 12.5, textAlign: "center", margin: "0 0 10px" }}>{issueError}</p>}
+              {issueError && <p style={{ color: "#c0392b", fontSize: 12.5, textAlign: "center", margin: "0 0 10px", whiteSpace: "pre-line" }}>{issueError}</p>}
               <button type="button" className="psa-submit" onClick={handleSubmit} disabled={issueSaving}>
               {issueSaving ? "در حال ثبت رمز ورود..." : "تکمیل ثبت‌نام و دریافت رمز ورود"}
               <span style={{ fontSize: 20 }}>←</span>

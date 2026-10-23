@@ -21665,51 +21665,53 @@ function VlabDiffusionExperiment({ onReading }) {
   // کلمپ‌شدنِ زودهنگام (۷ تا ۲۲) در بازه‌ی بزرگی از دما/زمانِ کم عملاً «ثابت» به‌نظر می‌رسید.
   const coreR = vlabClamp(5 + diffusionRadius * 0.28, 5, 28);
 
-  // هر ۲ ثانیه قطره به دو نیمِ نامنظم/نامتقارن تقسیم می‌شود — یک درختِ دودوییِ کم‌عمق (حداکثر ۳
-  // نسل، یعنی حداکثر ۸ تکه) که دترمینیستیک است (نه state)، تا هر رندر با همان elapsedِ واقعی
-  // دوباره محاسبه شود. هر گره بچه را با یک offsetِ seeded نسبت به والدش می‌سازیم (نه فقط دوبرابر
-  // یک نقطه‌ی قرینه)، تا نیمه‌ها واقعاً نامتقارن باشند. برایِ «نامحسوس»بودنِ لحظه‌ی تقسیم، به‌جایِ
-  // پرشِ ناگهانی، همیشه نسلِ «بعدی» را رسم می‌کنیم ولی از موقعیت/اندازه‌ی والدش به سمتِ موقعیت/
-  // اندازه‌ی خودش با یک smoothstep دو ثانیه‌ای حرکت می‌کند — در شروعِ هر بازه دقیقاً روی والد
-  // منطبق است (یعنی مثلِ قبل یک لکه‌ی واحد دیده می‌شود) و در پایانِ بازه کاملاً جدا شده است.
+  // کاربر گفت تقسیم‌شدن فقط در چند ثانیه‌ی اول اتفاق می‌افتد و بعد متوقف می‌شود (چون نسخه‌ی قبلی
+  // یک درختِ دودوییِ محدود به ۳ نسل بود) و نیمه‌ها بعد از جداشدن خیلی به هم نزدیک می‌مانند. حالا
+  // به‌جایِ یک درختِ رو‌به‌رشدِ نمایی (که بعد از چند دقیقه میلیون‌ها تکه می‌شد)، تعدادِ ثابتی «خطِ
+  // نسلی» مستقل (SPLIT_LINEAGES) داریم که هرکدام تا ابد، هر ۲ ثانیه یک‌بار، دوباره می‌شکافند —
+  // مرکزِ هر خط با یک random-walkِ تجمعیِ دترمینیستیک (بر اساسِ شماره‌ی خط و شماره‌ی چرخه) آرام‌آرام
+  // جابه‌جا می‌شود، اندازه‌اش هر چرخه کمی کوچک‌تر می‌شود، و در هر چرخه با همان smoothstepِ قبلی
+  // (شروعِ هر بازه = منطبق بر مرکز، یعنی نامحسوس) به دو نیمه با فاصله‌ی ژرف‌تر (offMag نزدیکِ خودِ
+  // شعاع، نه فقط حدودِ نصفش) باز می‌شود — پس هم برایِ همیشه ادامه دارد، هم تعدادِ شکل‌ها همیشه
+  // همان ۲×SPLIT_LINEAGES می‌ماند (بارِ محاسباتی/بصری محدود).
   const SPLIT_PERIOD = 2;
-  const SPLIT_MAX_DEPTH = 3;
-  const splitLevels = (() => {
-    let level = [{ x: 160, y: 90, r: coreR, salt: 11, px: 160, py: 90, pr: coreR }];
-    const levels = [level];
-    for (let d = 1; d <= SPLIT_MAX_DEPTH; d++) {
-      const next = [];
-      level.forEach((parent, pi) => {
-        for (let side = 0; side < 2; side++) {
-          const key = pi * 2 + side + d * 101;
-          const ang = seeded(key, 81) * Math.PI * 2;
-          const off = parent.r * (0.55 + seeded(key, 82) * 0.35);
-          const sgn = side === 0 ? 1 : -1;
-          const cx = parent.x + Math.cos(ang) * off * sgn + (seeded(key, 84) - 0.5) * parent.r * 0.3;
-          const cy = parent.y + Math.sin(ang) * off * 0.85 * sgn + (seeded(key, 85) - 0.5) * parent.r * 0.3;
-          const cr = parent.r * (0.56 + seeded(key, 83) * 0.2);
-          next.push({ x: cx, y: cy, r: cr, salt: 11 + key * 3.7, px: parent.x, py: parent.y, pr: parent.r });
-        }
-      });
-      levels.push(next);
-      level = next;
-    }
-    return levels; // levels[d] = گره‌های نسلِ d (طولِ 2^d)، هرکدام با px/py/pr والدش برایِ لرپ
-  })();
-  const splitCycle = elapsed / SPLIT_PERIOD;
-  const splitCurDepth = Math.min(Math.floor(splitCycle), SPLIT_MAX_DEPTH);
-  const splitActiveDepth = Math.min(splitCurDepth + (splitCurDepth < SPLIT_MAX_DEPTH ? 1 : 0), SPLIT_MAX_DEPTH);
-  const splitTRaw = splitCurDepth >= SPLIT_MAX_DEPTH ? 1 : splitCycle - splitCurDepth;
+  const SPLIT_LINEAGES = 6;
+  const splitCycleF = elapsed / SPLIT_PERIOD;
+  const splitCycleIdx = Math.floor(splitCycleF);
+  const splitTRaw = splitCycleF - splitCycleIdx;
   const splitT = splitTRaw * splitTRaw * (3 - 2 * splitTRaw);
-  const splitFragments = splitLevels[splitActiveDepth].map((n, i) => ({
-    x: n.px + (n.x - n.px) * splitT,
-    y: n.py + (n.y - n.py) * splitT,
-    r: n.pr + (n.r - n.pr) * splitT,
-    salt: n.salt,
-    key: splitActiveDepth + "-" + i,
-  }));
-  // هرچه نسل بالاتر برود، تکه‌ها کمی کم‌رنگ‌تر هم می‌شوند — دقیقاً حسِ «آهسته‌آهسته پخش و محو شدن»
-  const splitFadeByGen = Math.pow(0.88, splitActiveDepth);
+  const splitFragments = [];
+  for (let i = 0; i < SPLIT_LINEAGES; i++) {
+    let cx = 160;
+    let cy = 90;
+    for (let c = 0; c <= splitCycleIdx; c++) {
+      const wk = i * 97 + c * 131;
+      const ang = seeded(wk, 81) * Math.PI * 2;
+      const step = 2.5 + seeded(wk, 82) * 3.5;
+      cx += Math.cos(ang) * step;
+      cy += Math.sin(ang) * step * 0.85;
+    }
+    const baseR = Math.max(coreR * Math.pow(0.82, splitCycleIdx), 1.3);
+    const wk2 = i * 97 + splitCycleIdx * 131;
+    const ang2 = seeded(wk2, 91) * Math.PI * 2;
+    const offMag = baseR * (0.95 + seeded(wk2, 92) * 0.45);
+    for (let side = 0; side < 2; side++) {
+      const sgn = side === 0 ? 1 : -1;
+      const jit = (seeded(wk2 + side * 7, 93) - 0.5) * 0.5;
+      const tx = cx + Math.cos(ang2 + jit) * offMag * sgn;
+      const ty = cy + Math.sin(ang2 + jit) * offMag * 0.85 * sgn;
+      const trKey = wk2 + side * 541;
+      const tr = baseR * (0.55 + seeded(trKey, 94) * 0.3);
+      splitFragments.push({
+        x: cx + (tx - cx) * splitT,
+        y: cy + (ty - cy) * splitT,
+        r: baseR + (tr - baseR) * splitT,
+        salt: 11 + trKey * 3.1,
+        op: vlabClamp((baseR + (tr - baseR) * splitT) / 2.6, 0.12, 1),
+        key: i + "-" + splitCycleIdx + "-" + side,
+      });
+    }
+  }
   // روبان‌ها نباید از همان ابتدا ظاهر شوند؛ اول لکه به‌تنهایی آهسته‌آهسته بزرگ می‌شود و فقط پس از
   // آن‌که اندکی رشد کرد (شعاعِ پخش از ~۱۵ عبور کند) روبان‌های نامنظم شروع به بیرون‌زدن و درازشدن
   // می‌کنند — یک smoothstep ساده برایِ گذارِ نرم (نه پرش ناگهانی).
@@ -21896,20 +21898,21 @@ function VlabDiffusionExperiment({ onReading }) {
               />
             ))}
           </g>
-          {/* به‌جایِ یک لکه‌ی واحد، حالا تکه‌هایِ حاصل از تقسیم‌شدنِ تدریجیِ قطره (splitFragments) —
-              هر ۲ ثانیه یک نسلِ جدید، هرکدام با شکلِ نامنظم/نامتقارنِ خودش و کمی محوتر از نسلِ قبل */}
+          {/* به‌جایِ یک لکه‌ی واحد، حالا تکه‌هایِ حاصل از تقسیم‌شدنِ پیوسته‌ی قطره (splitFragments) —
+              هر ۲ ثانیه، هر خطِ نسلی دوباره می‌شکافد (برایِ همیشه ادامه دارد)، با فاصله‌ی روشنِ
+              بینِ نیمه‌ها، و هرچه کوچک‌تر شوند خودبه‌خود کم‌رنگ‌تر هم می‌شوند (f.op) */}
           {splitFragments.map((f) => (
             <g key={f.key}>
               <path
                 d={blobPath(f.x, f.y, f.r, f.salt, 1, 1, elapsed + f.salt)}
                 fill="url(#diffusionCoreGrad)"
-                opacity={patternOpacity * splitFadeByGen}
+                opacity={patternOpacity * f.op}
                 style={{ transition: "d 0.2s linear" }}
               />
               <path
                 d={blobPath(f.x, f.y, f.r * 0.55, f.salt + 2, 1, 1, elapsed + f.salt)}
                 fill="#5fa8e0"
-                opacity={0.55 * patternOpacity * splitFadeByGen}
+                opacity={0.55 * patternOpacity * f.op}
                 style={{ transition: "d 0.2s linear" }}
               />
             </g>

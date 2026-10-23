@@ -21594,18 +21594,13 @@ function VlabDiffusionExperiment({ onReading }) {
   // ثانیه تمام شود». برایِ دقیقِ واقعی‌بودن (نه شبیه‌سازیِ تقریبی با +۱ در هر تیک که عملاً پنج‌برابرِ
   // زمانِ واقعی حرکت می‌کرد)، حالا زمانِ سپری‌شده مستقیماً از ساعتِ واقعیِ مرورگر (Date.now) محاسبه
   // می‌شود — یک ثانیه‌ی نمایشی دقیقاً یک ثانیه‌ی واقعی است، نه بیشتر و نه کمتر.
+  // کاربر گفت کرونومتر نباید هیچ‌وقت متوقف شود — فقط خودِ تصویرِ پخش (که با clampِ diffusionRadius
+  // در پایین‌تر به‌طورِ طبیعی ثابت می‌ماند) باید در حالتِ «کاملاً مخلوط» بماند، نه ساعت. برایِ همین
+  // دیگر هیچ‌وقت intervalِ ساعت را متوقف نمی‌کنیم؛ elapsed تا ابد با زمانِ واقعی جلو می‌رود.
   useEffect(() => {
     const startedAt = Date.now();
-    let stopped = false;
     const iv = setInterval(() => {
-      if (stopped) return;
-      const realSec = (Date.now() - startedAt) / 1000;
-      const rad = Math.sqrt(tempRef.current * realSec) * 1.1;
-      if (rad >= 93) {
-        stopped = true; // قطره کاملاً پخش و ناپدید شده — فیلم (و کرونومتر) تا «چکاندنِ دوباره» متوقف می‌ماند
-        clearInterval(iv);
-      }
-      setElapsed(realSec);
+      setElapsed((Date.now() - startedAt) / 1000);
     }, 200);
     return () => clearInterval(iv);
     // eslint-disable-next-line
@@ -21669,6 +21664,52 @@ function VlabDiffusionExperiment({ onReading }) {
   // لکه‌ی مرکزی باید همیشه و به‌طورِ کاملاً محسوس با شعاعِ پخش بزرگ‌تر شود — نسخه‌ی قبلی به‌خاطرِ
   // کلمپ‌شدنِ زودهنگام (۷ تا ۲۲) در بازه‌ی بزرگی از دما/زمانِ کم عملاً «ثابت» به‌نظر می‌رسید.
   const coreR = vlabClamp(5 + diffusionRadius * 0.28, 5, 28);
+
+  // هر ۲ ثانیه قطره به دو نیمِ نامنظم/نامتقارن تقسیم می‌شود — یک درختِ دودوییِ کم‌عمق (حداکثر ۳
+  // نسل، یعنی حداکثر ۸ تکه) که دترمینیستیک است (نه state)، تا هر رندر با همان elapsedِ واقعی
+  // دوباره محاسبه شود. هر گره بچه را با یک offsetِ seeded نسبت به والدش می‌سازیم (نه فقط دوبرابر
+  // یک نقطه‌ی قرینه)، تا نیمه‌ها واقعاً نامتقارن باشند. برایِ «نامحسوس»بودنِ لحظه‌ی تقسیم، به‌جایِ
+  // پرشِ ناگهانی، همیشه نسلِ «بعدی» را رسم می‌کنیم ولی از موقعیت/اندازه‌ی والدش به سمتِ موقعیت/
+  // اندازه‌ی خودش با یک smoothstep دو ثانیه‌ای حرکت می‌کند — در شروعِ هر بازه دقیقاً روی والد
+  // منطبق است (یعنی مثلِ قبل یک لکه‌ی واحد دیده می‌شود) و در پایانِ بازه کاملاً جدا شده است.
+  const SPLIT_PERIOD = 2;
+  const SPLIT_MAX_DEPTH = 3;
+  const splitLevels = (() => {
+    let level = [{ x: 160, y: 90, r: coreR, salt: 11, px: 160, py: 90, pr: coreR }];
+    const levels = [level];
+    for (let d = 1; d <= SPLIT_MAX_DEPTH; d++) {
+      const next = [];
+      level.forEach((parent, pi) => {
+        for (let side = 0; side < 2; side++) {
+          const key = pi * 2 + side + d * 101;
+          const ang = seeded(key, 81) * Math.PI * 2;
+          const off = parent.r * (0.55 + seeded(key, 82) * 0.35);
+          const sgn = side === 0 ? 1 : -1;
+          const cx = parent.x + Math.cos(ang) * off * sgn + (seeded(key, 84) - 0.5) * parent.r * 0.3;
+          const cy = parent.y + Math.sin(ang) * off * 0.85 * sgn + (seeded(key, 85) - 0.5) * parent.r * 0.3;
+          const cr = parent.r * (0.56 + seeded(key, 83) * 0.2);
+          next.push({ x: cx, y: cy, r: cr, salt: 11 + key * 3.7, px: parent.x, py: parent.y, pr: parent.r });
+        }
+      });
+      levels.push(next);
+      level = next;
+    }
+    return levels; // levels[d] = گره‌های نسلِ d (طولِ 2^d)، هرکدام با px/py/pr والدش برایِ لرپ
+  })();
+  const splitCycle = elapsed / SPLIT_PERIOD;
+  const splitCurDepth = Math.min(Math.floor(splitCycle), SPLIT_MAX_DEPTH);
+  const splitActiveDepth = Math.min(splitCurDepth + (splitCurDepth < SPLIT_MAX_DEPTH ? 1 : 0), SPLIT_MAX_DEPTH);
+  const splitTRaw = splitCurDepth >= SPLIT_MAX_DEPTH ? 1 : splitCycle - splitCurDepth;
+  const splitT = splitTRaw * splitTRaw * (3 - 2 * splitTRaw);
+  const splitFragments = splitLevels[splitActiveDepth].map((n, i) => ({
+    x: n.px + (n.x - n.px) * splitT,
+    y: n.py + (n.y - n.py) * splitT,
+    r: n.pr + (n.r - n.pr) * splitT,
+    salt: n.salt,
+    key: splitActiveDepth + "-" + i,
+  }));
+  // هرچه نسل بالاتر برود، تکه‌ها کمی کم‌رنگ‌تر هم می‌شوند — دقیقاً حسِ «آهسته‌آهسته پخش و محو شدن»
+  const splitFadeByGen = Math.pow(0.88, splitActiveDepth);
   // روبان‌ها نباید از همان ابتدا ظاهر شوند؛ اول لکه به‌تنهایی آهسته‌آهسته بزرگ می‌شود و فقط پس از
   // آن‌که اندکی رشد کرد (شعاعِ پخش از ~۱۵ عبور کند) روبان‌های نامنظم شروع به بیرون‌زدن و درازشدن
   // می‌کنند — یک smoothstep ساده برایِ گذارِ نرم (نه پرش ناگهانی).
@@ -21855,8 +21896,24 @@ function VlabDiffusionExperiment({ onReading }) {
               />
             ))}
           </g>
-          <path d={blobPath(160, 90, coreR, 11, 1, 1, elapsed)} fill="url(#diffusionCoreGrad)" opacity={patternOpacity} style={{ transition: "d 0.2s linear" }} />
-          <path d={blobPath(160, 90, coreR * 0.55, 13, 1, 1, elapsed)} fill="#5fa8e0" opacity={0.55 * patternOpacity} style={{ transition: "d 0.2s linear" }} />
+          {/* به‌جایِ یک لکه‌ی واحد، حالا تکه‌هایِ حاصل از تقسیم‌شدنِ تدریجیِ قطره (splitFragments) —
+              هر ۲ ثانیه یک نسلِ جدید، هرکدام با شکلِ نامنظم/نامتقارنِ خودش و کمی محوتر از نسلِ قبل */}
+          {splitFragments.map((f) => (
+            <g key={f.key}>
+              <path
+                d={blobPath(f.x, f.y, f.r, f.salt, 1, 1, elapsed + f.salt)}
+                fill="url(#diffusionCoreGrad)"
+                opacity={patternOpacity * splitFadeByGen}
+                style={{ transition: "d 0.2s linear" }}
+              />
+              <path
+                d={blobPath(f.x, f.y, f.r * 0.55, f.salt + 2, 1, 1, elapsed + f.salt)}
+                fill="#5fa8e0"
+                opacity={0.55 * patternOpacity * splitFadeByGen}
+                style={{ transition: "d 0.2s linear" }}
+              />
+            </g>
+          ))}
           {/* مرحله‌ی نهایی: محلولِ کاملاً یک‌نواخت — کلِ ظرف را به‌طورِ یک‌دست آبی می‌کند */}
           <rect x="0" y="0" width="320" height="186" fill="#2f6fe2" opacity={mixFrac * 0.58} />
 

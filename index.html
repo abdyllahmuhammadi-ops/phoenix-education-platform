@@ -16037,6 +16037,8 @@ function TeacherQuestionBankStep({ onBack, prefillSchoolCode, teacherSchools, te
   const [fieldOfStudy, setFieldOfStudy] = useState("");
   const [questions, setQuestions] = useState([]);
   const [loading, setLoading] = useState(false);
+  const [autoBuilding, setAutoBuilding] = useState(false);
+  const [autoBuildMsg, setAutoBuildMsg] = useState("");
 
   const [chapter, setChapter] = useState("");
   const [lessonTopic, setLessonTopic] = useState("");
@@ -16175,15 +16177,30 @@ function TeacherQuestionBankStep({ onBack, prefillSchoolCode, teacherSchools, te
   const loadQuestions = async () => {
     if (!schoolCode || schoolCode.length !== 8 || !grade) return;
     setLoading(true);
+    setAutoBuildMsg("");
+    let list = [];
     try {
       if (typeof window !== "undefined" && window.storage) {
         const r = await window.storage.get(bankKey(), true);
-        setQuestions(r && r.value ? JSON.parse(r.value) : []);
+        list = r && r.value ? JSON.parse(r.value) : [];
       }
     } catch (e) {
-      setQuestions([]);
+      list = [];
     }
+    setQuestions(list);
     setLoading(false);
+
+    // اگر بانکِ این درس/پایه هنوز خالی است (مثلاً چون معلمِ واقعی هنوز ثبت‌نام نکرده)، رهیار
+    // خودش یک بانکِ اولیه می‌سازد تا معلم از همان لحظه‌ی اول بتواند آزمون بسازد و دانش‌آموز تمرین کند.
+    if (list.length === 0 && subject && subject.trim()) {
+      setAutoBuilding(true);
+      const built = await pqbEnsureBankPopulated(schoolCode, subject, grade);
+      setAutoBuilding(false);
+      if (built && built.length > 0) {
+        setQuestions(built);
+        setAutoBuildMsg("🤖 چون بانک این درس خالی بود، رهیار یک بانکِ اولیه با " + built.length + " سؤال ساخت — پیش از استفاده‌ی رسمی، لطفاً هرکدام را مرور و تأیید کنید.");
+      }
+    }
   };
 
   useEffect(() => {
@@ -16391,6 +16408,7 @@ function TeacherQuestionBankStep({ onBack, prefillSchoolCode, teacherSchools, te
         .pqb-question-text { color: #1c2540; font-size: 13.5px; line-height: 1.8; }
         .pqb-delete-btn { background: none; border: none; color: #c0392b; font-size: 11.5px; font-weight: 700; cursor: pointer; margin-top: 8px; }
         .pqb-tag-cognitive { background: #e6effc; color: #1f4e8c; }
+        .pqb-tag-ai { background: #fdf0d5; color: #8a5a12; }
         .pqb-explanation-box { background: #eef6f0; border: 1px solid #bfe0c8; border-radius: 10px; padding: 10px 12px; margin-top: 8px; color: #2c6e3f; font-size: 12.5px; line-height: 1.9; }
         .pqb-reveal-btn { background: none; border: 1px solid #e0a83e; color: #a8741f; font-size: 11.5px; font-weight: 700; cursor: pointer; margin-top: 10px; padding: 6px 12px; border-radius: 999px; }
         .pqb-empty { color: #8a8060; font-size: 13px; text-align: center; padding: 20px 0; }
@@ -16731,9 +16749,14 @@ function TeacherQuestionBankStep({ onBack, prefillSchoolCode, teacherSchools, te
                       <p style={{ fontWeight: 800, color: "#2c6e3f", margin: "12px 0 8px" }}>
                         {generatedSet.length} سؤال
                       </p>
+                      {generatedSet.some((q) => q.aiGenerated) && (
+                        <p className="pqb-upload-hint" style={{ color: "#8a5a12", fontWeight: 700 }}>
+                          🤖 این آزمون شامل سؤالاتِ تولید خودکار (بازبینی‌نشده) هم هست — پیش از چاپ یا استفاده‌ی رسمی، آن‌ها را مرور کنید.
+                        </p>
+                      )}
                       {generatedSet.map((q, idx) => (
                         <div key={q.id} className="pqb-generated-item">
-                          <b>{idx + 1}.</b> {q.text}
+                          <b>{idx + 1}.</b> {q.aiGenerated && <span className="pqb-tag pqb-tag-ai" style={{ marginLeft: 6 }}>🤖</span>} {q.text}
                           {q.sourceGrade && <span style={{ color: "#a8741f", fontSize: 11, marginRight: 6 }}>(پایه‌ی {q.sourceGrade})</span>}
                         </div>
                       ))}
@@ -16755,15 +16778,20 @@ function TeacherQuestionBankStep({ onBack, prefillSchoolCode, teacherSchools, te
                   </button>
                 </div>
               )}
+              {autoBuilding && (
+                <p className="pqb-empty">🤖 بانک این درس خالی بود — رهیار در حال آماده‌سازیِ یک بانکِ اولیه است...</p>
+              )}
+              {autoBuildMsg && <p className="pqb-save-msg" style={{ marginBottom: 10 }}>{autoBuildMsg}</p>}
               {loading ? (
                 <p className="pqb-empty">در حال بارگذاری...</p>
               ) : questions.length === 0 ? (
-                <p className="pqb-empty">هنوز هیچ سؤالی برای این پایه و درس ثبت نشده است.</p>
+                !autoBuilding && <p className="pqb-empty">هنوز هیچ سؤالی برای این پایه و درس ثبت نشده است.</p>
               ) : (
                 <div id="pqb-teacher-printable-questions" className="pqb-question-list">
                   {questions.map((q) => (
                     <div key={q.id} className="pqb-question-item">
                       <div className="pqb-question-meta">
+                        {q.aiGenerated && <span className="pqb-tag pqb-tag-ai">🤖 تولید خودکار — بازبینی‌نشده</span>}
                         <span className="pqb-tag">{q.chapter}</span>
                         {q.lessonTopic && <span className="pqb-tag">{q.lessonTopic}</span>}
                         {q.type && <span className="pqb-tag">{q.type}</span>}
@@ -17017,6 +17045,77 @@ async function pqbGenerateKonkurAiPool(subject, grade) {
   }));
 }
 
+// بانکِ اولیه‌ی خودکار — چون نباید وابسته به ثبت‌نام و فعالیتِ معلم واقعی باشیم (خصوصاً در سال‌های اول)،
+// رهیار به‌محض این‌که بانکِ رسمیِ یک مدرسه/درس/پایه را خالی ببیند، خودش یک بانکِ کامل و متنوع می‌سازد —
+// دقیقاً در همان کلید ذخیره‌سازیِ رسمی (نه یک مسیر جدا)، تا تمام امکانات موجود (ساخت آزمون، چاپ،
+// تحلیل نقاط ضعف) از همان لحظه کار کنند. هر سؤال با source:"تولید خودکار رهیار" و aiGenerated:true
+// علامت‌گذاری می‌شود تا وقتی معلم واقعی بعداً ثبت‌نام کرد، بداند کدام سؤالات هنوز بازبینی نشده‌اند.
+async function pqbGenerateStarterBank(subject, grade) {
+  const response = await fetch("https://api.anthropic.com/v1/messages", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({
+      model: "claude-sonnet-4-6",
+      max_tokens: 4000,
+      system:
+        "شما رهیار، دستیار طراحی سؤال هستید. چون ممکن است معلم واقعیِ این مدرسه هنوز در سامانه ثبت‌نام نکرده " +
+        "باشد، باید خودتان یک بانکِ اولیه و کامل از سؤالات درس «" + subject + "» پایه‌ی «" + grade + "» " +
+        "بر اساس کتاب درسی رسمی ایران بسازید، تا دانش‌آموزان بدون معطلی بتوانند تمرین و آزمون بگیرند. " +
+        "حدود ۵ تا ۶ فصل/موضوع اصلی و پرتکرار این درس و پایه را خودتان انتخاب کنید و برای هر فصل ۳ سؤال " +
+        "بسازید (در مجموع حدود ۱۵ تا ۱۸ سؤال)، با ترکیبی از سطح دشواری آسان/متوسط/سخت و عمدتاً نوع تستی " +
+        "چهارگزینه‌ای (می‌توانید گاهی تشریحی هم بسازید). دقت و صحت علمی در اولویت است — این سؤالات تا " +
+        "پیش از بازبینی یک معلم واقعی، به‌عنوان «تولید خودکار» به دانش‌آموز نشان داده می‌شوند. " +
+        'یک آرایه‌ی JSON به نام "items" برگردان. هر عضو دقیقاً این ساختار را داشته باشد: ' +
+        '{"chapter": "نام فصل/موضوع", "type": "تستی (چهارگزینه‌ای)" یا "تشریحی", ' +
+        '"text": "متن کامل سؤال — اگر تستی است، چهار گزینه را هم با علامت الف/ب/ج/د داخل همین متن بیاور", ' +
+        '"cognitiveLevel": "یکی از: به‌خاطرسپاری/درک مفهومی/کاربرد/تحلیل/ارزیابی و قضاوت/خلق و ترکیب", ' +
+        '"difficulty": "یکی از: آسان/متوسط/سخت", ' +
+        '"explanation": "پاسخ درست، همراه با استدلال یا مراحل حل کامل"}. ' +
+        "فقط همان شیء JSON را برگردان، بدون هیچ توضیح اضافه یا Markdown.",
+      messages: [{ role: "user", content: "لطفاً بانک اولیه‌ی سؤالات را آماده کن." }],
+    }),
+  });
+  const data = await response.json();
+  const rawText = data && data.content && data.content[0] && data.content[0].text ? data.content[0].text : "";
+  const cleaned = rawText.replace(/```json|```/g, "").trim();
+  const parsed = JSON.parse(cleaned);
+  const items = parsed.items || [];
+  return items.map((item, i) => ({
+    id: "starter-ai-" + Date.now() + "-" + i,
+    chapter: item.chapter || "",
+    lessonTopic: "",
+    text: item.text || "",
+    type: item.type || "تستی (چهارگزینه‌ای)",
+    cognitiveLevel: item.cognitiveLevel || "",
+    difficulty: item.difficulty || "متوسط",
+    explanation: item.explanation || "",
+    examTypes: ["نوبت اول", "نوبت دوم"],
+    createdAt: new Date().toLocaleDateString("fa-IR"),
+    source: "تولید خودکار رهیار",
+    aiGenerated: true,
+  }));
+}
+
+// اگر بانکِ رسمیِ یک مدرسه/درس/پایه خالی باشد، همین‌جا رهیار بانک اولیه را می‌سازد و دقیقاً در همان
+// کلیدِ رسمی ذخیره می‌کند. درست پیش از نوشتن، یک‌بار دیگر می‌خواند تا اگر هم‌زمان معلمی سؤالی اضافه
+// کرده بود، رویش بازنویسی نشود (race-guard ساده).
+async function pqbEnsureBankPopulated(schoolCode, subject, grade) {
+  if (!schoolCode || schoolCode.length !== 8 || !grade || !subject || !subject.trim()) return null;
+  if (typeof window === "undefined" || !window.storage) return null;
+  const key = "question-bank:" + schoolCode + ":" + skey(subject.trim()) + ":" + grade;
+  try {
+    const generated = await pqbGenerateStarterBank(subject.trim(), grade);
+    if (!generated || generated.length === 0) return null;
+    const fresh = await window.storage.get(key, true).catch(() => null);
+    const freshList = fresh && fresh.value ? JSON.parse(fresh.value) : [];
+    if (freshList.length > 0) return freshList; // کسی زودتر از ما پر کرده — دست نمی‌زنیم
+    await window.storage.set(key, JSON.stringify(generated), true);
+    return generated;
+  } catch (e) {
+    return null;
+  }
+}
+
 // تمرین نامحدود با رهیار — مستقل از این‌که بانک رسمی معلم خالی باشد یا نه، همیشه در دسترس دانش‌آموز است
 // (برخلاف بقیه‌ی این صفحه که فقط وقتی بانک معلم سؤال دارد نمایش داده می‌شود)
 function StudentAiPracticeBlock({ grade, subject, aiPracticeLoading, aiPracticeError, aiPracticeQuestions, aiPracticeRevealedIds, onGenerate, onToggleReveal, onAskRahyar }) {
@@ -17076,6 +17175,8 @@ function StudentQuestionBankView({ onBack, prefillSchoolCode, prefillGrade, pref
   const [questions, setQuestions] = useState([]);
   const [loading, setLoading] = useState(false);
   const [loaded, setLoaded] = useState(false);
+  const [autoBuilding, setAutoBuilding] = useState(false);
+  const [autoBuildMsg, setAutoBuildMsg] = useState("");
   const [filterChapter, setFilterChapter] = useState("");
   const [filterExamType, setFilterExamType] = useState("");
   const [revealedIds, setRevealedIds] = useState([]);
@@ -17334,16 +17435,31 @@ function StudentQuestionBankView({ onBack, prefillSchoolCode, prefillGrade, pref
   const handleLoad = async () => {
     if (!schoolCode || schoolCode.length !== 8 || !grade || !subject.trim()) return;
     setLoading(true);
+    setAutoBuildMsg("");
+    let list = [];
     try {
       if (typeof window !== "undefined" && window.storage) {
         const r = await window.storage.get("question-bank:" + schoolCode + ":" + skey(subject.trim()) + ":" + grade, true);
-        setQuestions(r && r.value ? JSON.parse(r.value) : []);
+        list = r && r.value ? JSON.parse(r.value) : [];
       }
     } catch (e) {
-      setQuestions([]);
+      list = [];
     }
+    setQuestions(list);
     setLoaded(true);
     setLoading(false);
+
+    // اگر بانک این درس/پایه خالی است (مثلاً معلم واقعی هنوز ثبت‌نام نکرده)، رهیار خودش یک بانک
+    // اولیه می‌سازد — تا دانش‌آموز منتظر معلم نماند و بتواند همین حالا آزمون واقعی بگیرد.
+    if (list.length === 0) {
+      setAutoBuilding(true);
+      const built = await pqbEnsureBankPopulated(schoolCode, subject, grade);
+      setAutoBuilding(false);
+      if (built && built.length > 0) {
+        setQuestions(built);
+        setAutoBuildMsg("🤖 رهیار یک بانکِ اولیه با " + built.length + " سؤال برای این درس آماده کرد.");
+      }
+    }
   };
 
   const chapters = Array.from(new Set(questions.map((q) => q.chapter)));
@@ -17390,6 +17506,7 @@ function StudentQuestionBankView({ onBack, prefillSchoolCode, prefillGrade, pref
         .pqb-empty { color: #8a8060; font-size: 13px; text-align: center; padding: 20px 0; }
         .pqb-ask-rahyar-btn { background: none; border: none; color: #a8741f; font-size: 11.5px; font-weight: 700; cursor: pointer; margin-top: 8px; }
         .pqb-tag-cognitive { background: #e6effc; color: #1f4e8c; }
+        .pqb-tag-ai { background: #fdf0d5; color: #8a5a12; }
         .pqb-export-row { display: flex; gap: 10px; margin-bottom: 14px; }
         .pqb-examgen-box { background: #f0e5ff; border: 1px solid #d8c2f0; border-radius: 14px; padding: 16px; margin-bottom: 16px; }
         .pqb-mandatory-box { background: #fdf3e3; border: 1px solid #f0d9a8; border-radius: 14px; padding: 16px; margin-bottom: 16px; }
@@ -17481,8 +17598,9 @@ function StudentQuestionBankView({ onBack, prefillSchoolCode, prefillGrade, pref
           </div>
         )}
 
-        {loading ? (
-          <p className="pqb-empty">در حال بارگذاری...</p>
+        {autoBuildMsg && <p className="pqb-save-msg" style={{ marginBottom: 10 }}>{autoBuildMsg}</p>}
+        {loading || autoBuilding ? (
+          <p className="pqb-empty">{autoBuilding ? "🤖 بانک این درس خالی بود — رهیار در حال آماده‌سازیِ یک بانکِ اولیه است..." : "در حال بارگذاری..."}</p>
         ) : !loaded ? (
           <p className="pqb-empty">برای مشاهده‌ی سؤالات، کد مدرسه، پایه و درس را وارد کنید.</p>
         ) : questions.length === 0 ? (
@@ -17580,6 +17698,7 @@ function StudentQuestionBankView({ onBack, prefillSchoolCode, prefillGrade, pref
                   {filtered.map((q, idx) => (
                     <div key={q.id} className="pqb-question-item">
                       <div className="pqb-question-meta">
+                        {q.aiGenerated && <span className="pqb-tag pqb-tag-ai">🤖 تولید خودکار — بازبینی‌نشده</span>}
                         <span className="pqb-tag">{q.chapter}</span>
                         {q.type && <span className="pqb-tag">{q.type}</span>}
                         {q.cognitiveLevel && <span className="pqb-tag pqb-tag-cognitive">{q.cognitiveLevel}</span>}
@@ -17640,6 +17759,7 @@ function StudentQuestionBankView({ onBack, prefillSchoolCode, prefillGrade, pref
               return (
                 <div key={q.id} className="pqb-question-item">
                   <div className="pqb-question-meta">
+                    {q.aiGenerated && <span className="pqb-tag pqb-tag-ai">🤖 تولید خودکار</span>}
                     <span className="pqb-tag">{q.chapter}</span>
                     <span className="pqb-tag">{q.difficulty}</span>
                   </div>

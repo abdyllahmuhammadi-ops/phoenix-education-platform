@@ -84,6 +84,29 @@ function skey(value) {
     .replace(/["']/g, "");
 }
 
+// اصل ثابت سامانه: هر نمونه‌برگِ امتحانی که ساخته می‌شود، مگر معلم واقعی یا دانش‌آموز
+// صریحاً نمره‌ی کل دیگری بخواهد، باید جمعاً از ۲۰ نمره طرح شود. این تابع نمره‌ی کل را
+// بین سؤالات انتخاب‌شده (به‌صورت مساوی، با دقت دو رقم اعشار) تقسیم می‌کند؛ باقی‌مانده‌ی
+// تقسیم به آخرین سؤال اضافه می‌شود تا جمعِ دقیق «نمره‌ی کل» حفظ شود.
+const PQB_DEFAULT_EXAM_TOTAL_SCORE = 20;
+function pqbDistributeScores(list, totalScore) {
+  const n = list.length;
+  if (!n) return list;
+  const total = typeof totalScore === "number" && totalScore > 0 ? totalScore : PQB_DEFAULT_EXAM_TOTAL_SCORE;
+  const base = Math.floor((total / n) * 100) / 100;
+  let assigned = 0;
+  return list.map((q, idx) => {
+    let s;
+    if (idx === n - 1) {
+      s = Math.round((total - assigned) * 100) / 100;
+    } else {
+      s = base;
+      assigned = Math.round((assigned + base) * 100) / 100;
+    }
+    return { ...q, score: s };
+  });
+}
+
 // گاهی window.storage درست همان لحظه‌ی بارگذاری صفحه هنوز کاملاً آماده نشده — قبل از اعلام «در دسترس نیست»،
 // چند بار با فاصله‌ی کوتاه دوباره چک می‌کنیم تا اگر مشکل فقط زمان‌بندی بود، خودش برطرف شود.
 async function waitForStorage(maxWaitMs) {
@@ -16170,6 +16193,8 @@ function TeacherQuestionBankStep({ onBack, prefillSchoolCode, teacherSchools, te
   const [genChapter, setGenChapter] = useState("");
   const [genExamType, setGenExamType] = useState("نوبت اول");
   const [genCount, setGenCount] = useState(5);
+  // طبق اصل سامانه، نمره‌ی کل آزمون پیش‌فرض ۲۰ است؛ معلم هر وقت لازم بداند می‌تواند آن را تغییر دهد
+  const [genTotalScore, setGenTotalScore] = useState(PQB_DEFAULT_EXAM_TOTAL_SCORE);
   const [generatedSet, setGeneratedSet] = useState(null);
 
   const bankKey = () => "question-bank:" + schoolCode + ":" + skey(subject) + ":" + grade;
@@ -16351,7 +16376,8 @@ function TeacherQuestionBankStep({ onBack, prefillSchoolCode, teacherSchools, te
     if (genChapter) pool = pool.filter((q) => q.chapter === genChapter);
     // مخلوط‌کردن تصادفی
     const shuffled = [...pool].sort(() => Math.random() - 0.5);
-    setGeneratedSet(shuffled.slice(0, Math.min(genCount, shuffled.length)));
+    const picked = shuffled.slice(0, Math.min(genCount, shuffled.length));
+    setGeneratedSet(pqbDistributeScores(picked, genTotalScore));
   };
 
   const schoolOptions = teacherSchools && teacherSchools.length > 0 ? teacherSchools : [{ code: prefillSchoolCode || "", name: "" }];
@@ -16718,7 +16744,22 @@ function TeacherQuestionBankStep({ onBack, prefillSchoolCode, teacherSchools, te
                   <label className="pqb-label">تعداد سؤال</label>
                   <input className="pqb-input" style={{ width: 90 }} type="number" min="1" max="50" value={genCount} onChange={(e) => setGenCount(parseInt(e.target.value, 10) || 1)} />
                 </div>
+                <div className="pqb-field">
+                  <label className="pqb-label">نمره‌ی کل آزمون</label>
+                  <input
+                    className="pqb-input"
+                    style={{ width: 90 }}
+                    type="number"
+                    min="1"
+                    max="100"
+                    value={genTotalScore}
+                    onChange={(e) => setGenTotalScore(parseFloat(e.target.value) || PQB_DEFAULT_EXAM_TOTAL_SCORE)}
+                  />
+                </div>
               </div>
+              <p className="pqb-upload-hint" style={{ marginTop: -4 }}>
+                طبق استاندارد سامانه، نمره‌ی کل هر آزمون پیش‌فرض ۲۰ است و رهیار آن را بین سؤالات تقسیم می‌کند؛ هر وقت لازم بود همین‌جا عوضش کنید.
+              </p>
               <button type="button" className="pqb-submit-btn" onClick={handleGenerate}>
                 🎲 ساخت آزمون تصادفی
               </button>
@@ -16747,7 +16788,7 @@ function TeacherQuestionBankStep({ onBack, prefillSchoolCode, teacherSchools, te
                         <span>تاریخ: {new Date().toLocaleDateString("fa-IR")}</span>
                       </div>
                       <p style={{ fontWeight: 800, color: "#2c6e3f", margin: "12px 0 8px" }}>
-                        {generatedSet.length} سؤال
+                        {generatedSet.length} سؤال — نمره‌ی کل: از {genTotalScore}
                       </p>
                       {generatedSet.some((q) => q.aiGenerated) && (
                         <p className="pqb-upload-hint" style={{ color: "#8a5a12", fontWeight: 700 }}>
@@ -16758,6 +16799,7 @@ function TeacherQuestionBankStep({ onBack, prefillSchoolCode, teacherSchools, te
                         <div key={q.id} className="pqb-generated-item">
                           <b>{idx + 1}.</b> {q.aiGenerated && <span className="pqb-tag pqb-tag-ai" style={{ marginLeft: 6 }}>🤖</span>} {q.text}
                           {q.sourceGrade && <span style={{ color: "#a8741f", fontSize: 11, marginRight: 6 }}>(پایه‌ی {q.sourceGrade})</span>}
+                          <span style={{ color: "#2c6e3f", fontWeight: 700, fontSize: 12, marginRight: 8 }}>({q.score} نمره)</span>
                         </div>
                       ))}
                     </>
@@ -17185,6 +17227,7 @@ function StudentQuestionBankView({ onBack, prefillSchoolCode, prefillGrade, pref
   const [examType, setExamType] = useState("");
   const [examChapter, setExamChapter] = useState("");
   const [examCount, setExamCount] = useState(10);
+  const [examTotalScore, setExamTotalScore] = useState(PQB_DEFAULT_EXAM_TOTAL_SCORE);
   const [examSet, setExamSet] = useState([]);
   const [examRevealedIds, setExamRevealedIds] = useState([]);
   const [examScoreShown, setExamScoreShown] = useState(false);
@@ -17275,7 +17318,8 @@ function StudentQuestionBankView({ onBack, prefillSchoolCode, prefillGrade, pref
     if (examType) pool = pool.filter((q) => (q.examTypes || []).includes(examType));
     if (examChapter) pool = pool.filter((q) => q.chapter === examChapter);
     const shuffled = [...pool].sort(() => Math.random() - 0.5);
-    setExamSet(shuffled.slice(0, Math.min(examCount, shuffled.length)));
+    const picked = shuffled.slice(0, Math.min(examCount, shuffled.length));
+    setExamSet(pqbDistributeScores(picked, examTotalScore));
     setExamRevealedIds([]);
     setExamKnownIds([]);
     setExamScoreShown(false);
@@ -17319,7 +17363,8 @@ function StudentQuestionBankView({ onBack, prefillSchoolCode, prefillGrade, pref
       // و گزینه‌های سؤالات تستیِ باقی‌مانده نیز در جای دیگری قرار می‌گیرند — همه‌چیز seeded است، پس
       // همه‌ی شرکت‌کنندگانِ یک جلسه دقیقاً همان یک آزمون را می‌بینند.
       const examSetBuilt = pqbBuildMandatoryExamSet(pool, fridayStatus.dateKey + ":" + skey(subject) + ":" + grade, fridayStatus.session);
-      setExamSet(examSetBuilt);
+      // آزمون الزامی کنکور هم یک آزمون رسمی است؛ طبق اصل سامانه، جمعاً از ۲۰ نمره طرح می‌شود
+      setExamSet(pqbDistributeScores(examSetBuilt, PQB_DEFAULT_EXAM_TOTAL_SCORE));
       setExamRevealedIds([]);
       setExamKnownIds([]);
       setExamScoreShown(false);
@@ -17675,7 +17720,22 @@ function StudentQuestionBankView({ onBack, prefillSchoolCode, prefillGrade, pref
                     onChange={(e) => setExamCount(Math.max(1, parseInt(e.target.value, 10) || 1))}
                   />
                 </div>
+                <div className="pqb-field">
+                  <label className="pqb-label">نمره‌ی کل آزمون</label>
+                  <input
+                    type="number"
+                    className="pqb-input"
+                    style={{ width: 90 }}
+                    min={1}
+                    max={100}
+                    value={examTotalScore}
+                    onChange={(e) => setExamTotalScore(parseFloat(e.target.value) || PQB_DEFAULT_EXAM_TOTAL_SCORE)}
+                  />
+                </div>
               </div>
+              <p className="pqb-upload-hint" style={{ marginTop: -4 }}>
+                نمره‌ی کل پیش‌فرض آزمون ۲۰ است؛ اگر خواستی عددِ دیگری بگذاری، همین‌جا تغییرش بده.
+              </p>
               <button type="button" className="pqb-submit-btn" onClick={handleStartExam} disabled={questions.length === 0}>
                 🚀 شروع آزمون
               </button>
@@ -17748,7 +17808,7 @@ function StudentQuestionBankView({ onBack, prefillSchoolCode, prefillGrade, pref
           <div className="pqb-exam-session">
             <div className="pqb-exam-header">
               <h2 className="pqb-section-title">
-                {isMandatoryExam ? "📅 آزمون الزامی کنکور در حال اجرا" : "📝 آزمون در حال اجرا"} ({examSet.length} سؤال)
+                {isMandatoryExam ? "📅 آزمون الزامی کنکور در حال اجرا" : "📝 آزمون در حال اجرا"} ({examSet.length} سؤال — از {examSet.reduce((sum, q) => sum + (q.score || 0), 0)} نمره)
               </h2>
               <button type="button" className="pqb-export-btn" onClick={() => setExamMode(false)}>
                 ✖️ بستن آزمون
@@ -17762,6 +17822,7 @@ function StudentQuestionBankView({ onBack, prefillSchoolCode, prefillGrade, pref
                     {q.aiGenerated && <span className="pqb-tag pqb-tag-ai">🤖 تولید خودکار</span>}
                     <span className="pqb-tag">{q.chapter}</span>
                     <span className="pqb-tag">{q.difficulty}</span>
+                    {typeof q.score === "number" && <span className="pqb-tag">{q.score} نمره</span>}
                   </div>
                   <div className="pqb-question-text">{idx + 1}. {q.text}</div>
                   {!examRevealedIds.includes(q.id) ? (

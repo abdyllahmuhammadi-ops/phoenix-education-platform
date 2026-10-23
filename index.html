@@ -19091,35 +19091,60 @@ function VlabMicroscopeExperiment({ onReading }) {
 
   return (
     <div className="vlab-exp">
-      {/* بدنه‌ی واقعی میکروسکوپ (لوله‌ی چشمی، بازو، صفحه‌ی نمونه، پایه) دور دایره‌ی دیدِ قبلی کشیده شد تا این
-          آزمایش فقط یک دایره‌ی انتزاعی نباشد؛ لام‌ولامل، پنس و قطره‌چکان هم که در فهرست «ابزار و وسایل» بودند
-          ولی هیچ‌وقت دیده نمی‌شدند، کنار صفحه‌ی نمونه قرار گرفتند — دقیقاً وسایلی که برای آماده‌کردن لام لازم‌اند. */}
-      <svg viewBox="0 0 240 280" className="vlab-svg">
-        <rect x="0" y="0" width="240" height="280" fill="#f4efe0" />
-        <rect x="70" y="240" width="100" height="14" rx="4" fill="#5b4636" />
-        <rect x="112" y="150" width="16" height="92" fill="#8a93a8" />
-        <path d="M120,150 C120,110 150,95 150,70" fill="none" stroke="#8a93a8" strokeWidth="16" strokeLinecap="round" />
-        <circle cx="150" cy="60" r="20" fill="#5b4636" />
-        <rect x="100" y="180" width="60" height="10" rx="2" fill="#c7cedd" stroke="#8a93a8" strokeWidth="1" />
-        <rect x="108" y="183" width="44" height="4" fill="#dff0ff" opacity="0.8" />
-        <g transform="translate(60,215)">
-          <line x1="0" y1="0" x2="10" y2="-26" stroke="#8a93a8" strokeWidth="2.4" strokeLinecap="round" />
-          <line x1="10" y1="0" x2="0" y2="-26" stroke="#8a93a8" strokeWidth="2.4" strokeLinecap="round" />
-          <text x="5" y="16" fontSize="8" fill="#6b7399" textAnchor="middle">پنس</text>
+      {/* بازطراحی کامل: صاحب پروژه گفت شبیه میکروسکوپ نیست، کاربرد لام/لامل و پنس مشخص نیست (پنس قبلی
+          شبیه علامت ضرب بود)، و سلول‌ها در دایره‌ی کوچک قبلی به‌وضوح دیده نمی‌شدند. حالا: (۱) بدنه‌ی
+          میکروسکوپ واقعی با پایه، بازوی C‑شکل، لوله‌ی چشمی و عدسی شیئی که دقیقاً بالای لام قرار گرفته؛
+          (۲) لام (مستطیل بزرگ شیشه‌ای) و لامل (مستطیل کوچک‌تر روی آن، با برچسب جدا) به‌وضوح روی صفحه‌ی
+          نمونه نشان داده شده؛ (۳) پنس واقعی (دو تیغه‌ی خمیده که در نوک به‌هم نزدیک می‌شوند، نه ضربدر) در
+          حال گرفتنِ لبه‌ی لامل کشیده شده تا کاربردش روشن باشد؛ (۴) دایره‌ی دیدِ چشمی حالا جدا و بزرگ (شعاع
+          ۵۵ به‌جای ۱۹) در سمت راست رسم شده تا سلول‌ها واقعاً واضح دیده شوند. */}
+      <svg viewBox="0 0 320 230" className="vlab-svg">
+        <rect x="0" y="0" width="320" height="230" fill="#f4efe0" />
+        {/* --- بدنه‌ی میکروسکوپ --- */}
+        <rect x="20" y="186" width="110" height="14" rx="5" fill="#5b4636" />
+        <rect x="68" y="150" width="14" height="40" fill="#8a93a8" />
+        <path d="M75,150 C75,100 110,80 110,45" fill="none" stroke="#8a93a8" strokeWidth="15" strokeLinecap="round" />
+        <rect x="100" y="38" width="22" height="16" rx="3" fill="#5b4636" />
+        <circle cx="111" cy="33" r="9" fill="#2c2f3a" stroke="#1c2540" strokeWidth="1.5" />
+        <text x="111" y="20" fontSize="7" fill="#6b7399" textAnchor="middle">چشمی</text>
+        <rect x="104" y="60" width="14" height="30" fill="#8a93a8" />
+        <polygon points="104,90 118,90 115,104 107,104" fill="#5b4636" />
+        <text x="134" y="76" fontSize="7" fill="#6b7399">عدسی شیئی</text>
+        {/* صفحه‌ی نمونه + لام + لامل */}
+        <rect x="55" y="150" width="90" height="12" rx="2" fill="#c7cedd" stroke="#8a93a8" strokeWidth="1" />
+        <rect x="68" y="139" width="56" height="9" fill="#dff0ff" stroke="#8fa3c4" strokeWidth="1" opacity="0.9" />
+        <rect x="80" y="135" width="28" height="7" fill="#aee0f5" stroke="#5a9bbf" strokeWidth="1" opacity="0.85" />
+        <text x="96" y="178" fontSize="7.5" fill="#1c2540" textAnchor="middle">لام (شیشه‌ی زیرین)</text>
+        <line x1="94" y1="132" x2="94" y2="118" stroke="#6b7399" strokeWidth="0.8" />
+        <text x="94" y="113" fontSize="7" fill="#1c2540" textAnchor="middle">لامل (پوشش نازک روی نمونه)</text>
+        {/* پنس واقعی: دو تیغه که از یک دسته‌ی مشترک بالا باز می‌شوند و در نوک — دقیقاً جایی که لبه‌ی لامل
+            را می‌گیرند — به هم نزدیک می‌شوند. از سمت راستِ لامل نزدیک می‌شود (نه از وسط بازوی میکروسکوپ،
+            تا با آن هم‌رنگ/هم‌پوشان نشود) و رنگش هم برنزی-متفاوت از خاکستریِ بدنه‌ی دستگاه است. */}
+        <g transform="translate(130,135) rotate(35)">
+          <path d="M-2,-46 Q0,-51 2,-46 C9,-32 9,-16 1,0" stroke="#9c7a4a" strokeWidth="3" fill="none" strokeLinecap="round" strokeLinejoin="round" />
+          <path d="M-2,-46 C-9,-32 -9,-16 -1,0" stroke="#9c7a4a" strokeWidth="3" fill="none" strokeLinecap="round" strokeLinejoin="round" />
         </g>
-        <VlabDropperMini x={190} y={235} rotate={25} color="#6fae52" />
-        <text x="190" y="216" fontSize="8" fill="#6b7399" textAnchor="middle">قطره‌چکان</text>
-        <defs>
-          <clipPath id="vlabScopeClip">
-            <circle cx="150" cy="60" r="19" />
-          </clipPath>
-        </defs>
-        <g clipPath="url(#vlabScopeClip)" style={{ filter: `blur(${blurAmount}px)` }}>
-          <g transform="translate(50,-40)">
-            <VlabSlideSvg slideId={slideId} zoomScale={zoom} />
+        <text x="150" y="165" fontSize="7" fill="#1c2540" textAnchor="middle">پنس (برای گذاشتن</text>
+        <text x="150" y="174" fontSize="7" fill="#1c2540" textAnchor="middle">لامل روی نمونه)</text>
+        <VlabDropperMini x={48} y={65} rotate={-15} color="#6fae52" />
+        <text x="30" y="48" fontSize="7" fill="#6b7399" textAnchor="middle">قطره‌چکان</text>
+        {/* --- دایره‌ی دیدِ چشمی: جدا و بزرگ، تا سلول‌ها واقعاً واضح دیده شوند --- */}
+        <g transform="translate(235,115)">
+          <circle cx="0" cy="0" r="58" fill="#2c2f3a" />
+          <defs>
+            <clipPath id="vlabScopeClip">
+              <circle cx="0" cy="0" r="55" />
+            </clipPath>
+          </defs>
+          <g clipPath="url(#vlabScopeClip)" style={{ filter: `blur(${blurAmount}px)` }}>
+            <rect x="-55" y="-55" width="110" height="110" fill="#eef6f0" />
+            <g transform={`translate(${-55},${-55}) scale(1.1)`}>
+              <VlabSlideSvg slideId={slideId} zoomScale={zoom} />
+            </g>
           </g>
+          <circle cx="0" cy="0" r="55" fill="none" stroke="#1c2540" strokeWidth="4" />
+          <text x="0" y="-70" fontSize="8" fill="#6b7399" textAnchor="middle">دید از چشمی میکروسکوپ</text>
         </g>
-        <circle cx="150" cy="60" r="19" fill="none" stroke="#2c2f3a" strokeWidth="3" />
       </svg>
       <div className="vlab-controls">
         <div className="vlab-ctrl-col">

@@ -20882,27 +20882,58 @@ function VlabDensityFloatingExperiment({ onReading }) {
   }, [material]);
 
   const objY = floats ? 55 - (1 - density) * 25 : 95;
-  // به‌جای یک مستطیل قهوه‌ای ثابت برای همه‌ی مواد، هر ماده رنگ/بافت واقعی‌تر خودش را می‌گیرد
-  const MATERIAL_LOOK = {
-    "چوب": { fill: "#c8862b", stroke: "#8a5a1c" },
-    "یخ": { fill: "#d7f0fb", stroke: "#8fc6e0" },
-    "پلاستیک": { fill: "#5fb0e0", stroke: "#2f6f97" },
-    "فلز": { fill: "#9aa3b0", stroke: "#5b6472" },
-    "سنگ": { fill: "#8a7a6a", stroke: "#5b4d40" },
-  };
-  const look = MATERIAL_LOOK[material];
 
   return (
     <div className="vlab-exp">
-      <svg viewBox="0 0 320 160" className="vlab-svg">
-        <rect x="60" y="40" width="200" height="110" rx="6" fill="#dff0ff" stroke="#5b4636" strokeWidth="2" />
-        <rect x="62" y={95} width="196" height="53" fill="#9fd3f5" opacity="0.7" />
-        {material === "سنگ" ? (
-          <path d={`M${160 - 22},${objY + 28} L${160 - 18},${objY + 4} L${160 - 2},${objY} L${160 + 20},${objY + 10} L${160 + 18},${objY + 28} Z`} fill={look.fill} stroke={look.stroke} strokeWidth="1.5" />
-        ) : (
-          <rect x="140" y={objY} width="40" height="28" rx="5" fill={look.fill} stroke={look.stroke} strokeWidth="1.5" />
+      {/* زمینه‌ی تیره + مخزنِ شیشه‌ایِ واقعی (به‌جایِ مستطیلِ تخت)، و برایِ هر ماده یک شکلِ واقعیِ
+          مخصوصِ خودش (نه یک جعبه‌ی قهوه‌ایِ یکسان با فقط برچسبِ متنی): تخته‌ی چوبِ راه‌راه، مکعبِ یخِ
+          نیمه‌شفاف با درخشش، بطریِ پلاستیکیِ رنگی، شمشِ فلزیِ آینه‌ای با خطِ نور، و تکه‌سنگِ ناهموار. */}
+      <svg viewBox="0 0 320 170" className="vlab-svg" style={{ background: "#0b1330", borderRadius: "10px" }}>
+        <defs>
+          <linearGradient id="densMetalGrad" x1="0" y1="0" x2="1" y2="0">
+            <stop offset="0%" stopColor="#6b7280" />
+            <stop offset="45%" stopColor="#dfe3ea" />
+            <stop offset="60%" stopColor="#9aa3b0" />
+            <stop offset="100%" stopColor="#4a5160" />
+          </linearGradient>
+        </defs>
+        <path d="M60,42 L60,152 Q60,160 68,160 L252,160 Q260,160 260,152 L260,42" fill="none" stroke="#8fb4e0" strokeWidth="2" />
+        <path d="M62,98 L62,152 Q62,158 68,158 L252,158 Q258,158 258,152 L258,98 Z" fill="#2f6fe2" opacity="0.28" />
+        <path d="M62,98 Q90,93 120,98 T180,98 T240,98 T258,98" fill="none" stroke="#8fb4e0" strokeWidth="1.2" opacity="0.55" />
+        <line x1="70" y1="46" x2="70" y2="152" stroke="#eaf3ff" strokeWidth="3" opacity="0.15" />
+
+        {material === "سنگ" && (
+          <path d={`M${160 - 22},${objY + 28} L${160 - 18},${objY + 4} L${160 - 2},${objY} L${160 + 20},${objY + 10} L${160 + 18},${objY + 28} Z`} fill="#8a7a6a" stroke="#5b4d40" strokeWidth="1.5" />
         )}
-        <text x="160" y={objY + 18} fontSize="10" fill="#1c2540" textAnchor="middle" fontWeight="700">{material}</text>
+        {material === "چوب" && (
+          <g>
+            <rect x="138" y={objY} width="44" height="26" rx="3" fill="#c8862b" stroke="#8a5a1c" strokeWidth="1.5" />
+            {[6, 13, 19].map((dy) => (
+              <path key={dy} d={`M140,${objY + dy} Q160,${objY + dy - 2} 180,${objY + dy}`} fill="none" stroke="#9a6a1e" strokeWidth="1" opacity="0.6" />
+            ))}
+          </g>
+        )}
+        {material === "یخ" && (
+          <g>
+            <path d={`M138,${objY} L182,${objY} L178,${objY + 26} L142,${objY + 26} Z`} fill="#cdeaf9" stroke="#8fc6e0" strokeWidth="1.5" opacity="0.85" />
+            <path d={`M144,${objY + 3} L150,${objY + 22}`} stroke="#fff" strokeWidth="2" opacity="0.6" />
+            <path d={`M160,${objY + 2} L156,${objY + 23}`} stroke="#fff" strokeWidth="1.4" opacity="0.4" />
+          </g>
+        )}
+        {material === "پلاستیک" && (
+          <g>
+            <rect x="144" y={objY - 4} width="32" height="34" rx="9" fill="#5fb0e0" stroke="#2f6f97" strokeWidth="1.5" />
+            <rect x="152" y={objY - 10} width="16" height="8" rx="3" fill="#2f6f97" />
+            <rect x="148" y={objY + 2} width="8" height="18" rx="2" fill="#eaf6ff" opacity="0.5" />
+          </g>
+        )}
+        {material === "فلز" && (
+          <g>
+            <rect x="136" y={objY} width="48" height="24" rx="2" fill="url(#densMetalGrad)" stroke="#4a5160" strokeWidth="1.5" />
+            <line x1="140" y1={objY + 5} x2="180" y2={objY + 5} stroke="#fff" strokeWidth="1.2" opacity="0.5" />
+          </g>
+        )}
+        <text x="160" y={objY + 42} fontSize="9" fill="#cfd8e8" textAnchor="middle" fontWeight="700">{material}</text>
       </svg>
       <div className="vlab-controls">
         <div className="vlab-toggle-row">
@@ -20941,13 +20972,38 @@ function VlabDissolveTemperatureExperiment({ onReading }) {
     if (stirring) setSpinTick((t) => t + 1);
   }, [stirring]);
 
+  // به‌جایِ یک مکعبِ سفیدِ ثابت، چند دانه‌ی قندِ کوچک که هرچه زمانِ حل‌شدن کمتر (یعنی سریع‌تر حل
+  // می‌شود) باشد، سریع‌تر محو/کوچک می‌شوند — تصویری از خودِ فرایندِ حل‌شدن، نه فقط یک عدد.
+  const dissolveFrac = vlabClamp(1 - (150 - dissolveTime) / 150, 0.1, 1);
+  const grains = [
+    { x: -9, y: -6 }, { x: 4, y: -8 }, { x: 10, y: 2 }, { x: -4, y: 6 }, { x: -10, y: 8 }, { x: 8, y: 9 },
+  ];
+
   return (
     <div className="vlab-exp">
-      {/* قاشق هم‌زدن و دماسنج که در فهرست وسایل بودند، اضافه شدند */}
-      <svg viewBox="0 0 320 150" className="vlab-svg">
-        <rect x="110" y="40" width="100" height="90" rx="8" fill="#dff0ff" stroke="#5b4636" strokeWidth="2" />
-        <rect x="113" y={60 - temp / 5} width="94" height={90 - (60 - temp / 5) + 38} fill={`rgba(226,98,47,${0.15 + temp / 250})`} />
-        <rect x="150" y="60" width="20" height="20" fill="#fff" opacity={vlabClamp(1 - (150 - dissolveTime) / 150, 0.15, 1)} />
+      {/* قاشق هم‌زدن و دماسنج که در فهرست وسایل بودند، اضافه شدند؛ زمینه‌ی تیره و لیوانِ شیشه‌ایِ
+          واقعی (با خطِ برجستگیِ نور) جایگزینِ مستطیلِ تختِ قبلی شد */}
+      <svg viewBox="0 0 320 150" className="vlab-svg" style={{ background: "#0b1330", borderRadius: "10px" }}>
+        <path d="M112,42 L116,128 Q117,136 125,136 L195,136 Q203,136 204,128 L208,42" fill="none" stroke="#8fb4e0" strokeWidth="2" />
+        <path
+          d="M114,66 L117,128 Q118,134 125,134 L195,134 Q202,134 203,128 L206,66 Z"
+          fill="#2f6fe2"
+          opacity={0.22 + temp / 400}
+        />
+        <line x1="120" y1="46" x2="117" y2="128" stroke="#eaf3ff" strokeWidth="3" opacity="0.18" />
+        <g transform="translate(160,82)">
+          {grains.map((g, i) => (
+            <rect
+              key={i}
+              x={g.x * dissolveFrac}
+              y={g.y * dissolveFrac}
+              width={5 * dissolveFrac}
+              height={5 * dissolveFrac}
+              fill="#fff"
+              opacity={vlabClamp(dissolveFrac, 0.12, 1)}
+            />
+          ))}
+        </g>
         <VlabThermometerMini x={225} y={45} temp={temp} minT={0} maxT={100} h={60} />
         <VlabStirSpoonMini x={160} y={55} reach={75} stirKey={spinTick} />
       </svg>
@@ -20982,17 +21038,32 @@ function VlabReactionRateExperiment({ onReading }) {
   }, [concentration, temp]);
 
   const colorProgress = vlabClamp(1 - reactionTime / 60, 0.08, 1);
+  // هرچه واکنش سریع‌تر (reactionTime کمتر)، حباب‌های بیشتر و سریع‌تر نشان‌دهنده‌ی برخوردِ بیشترِ
+  // مولکول‌هاست — قبلاً هیچ انیمیشنی برایِ «درحالِ واکنش‌بودن» وجود نداشت، فقط یک رنگِ ثابت.
+  const fizzCount = Math.round(vlabClamp(14 - reactionTime / 10, 2, 12));
+  const fizzDur = vlabClamp(reactionTime / 40, 0.5, 2.4);
 
   return (
     <div className="vlab-exp">
-      {/* دو محلول واکنش‌گر، کرنومتر و دماسنج که در فهرست وسایل بودند، اضافه شدند */}
-      <svg viewBox="0 0 320 150" className="vlab-svg">
-        <path d="M140,30 L140,80 L110,135 L210,135 L180,80 L180,30 Z" fill="none" stroke="#5b4636" strokeWidth="3" />
+      {/* دو محلول واکنش‌گر، کرنومتر و دماسنج که در فهرست وسایل بودند، اضافه شدند؛ زمینه‌ی تیره و
+          ارلن‌مایرِ شیشه‌ایِ واقعی (با خطِ برجستگیِ نور) جایگزینِ طرحِ تختِ قبلی شد، و حباب‌های جوشش
+          با سرعتی متناسب با سرعتِ واکنش اضافه شدند. */}
+      <svg viewBox="0 0 320 150" className="vlab-svg" style={{ background: "#0b1330", borderRadius: "10px" }}>
+        <path d="M140,30 L140,80 L110,135 L210,135 L180,80 L180,30 Z" fill="rgba(170,200,230,0.1)" stroke="#8fb4e0" strokeWidth="2" />
         <path d="M140,80 L117,130 L203,130 L180,80 Z" fill={`rgba(226,98,47,${colorProgress})`} />
+        <path d="M144,33 L144,78" stroke="#eaf3ff" strokeWidth="2" opacity="0.22" />
+        <g clipPath="none">
+          {Array.from({ length: fizzCount }).map((_, i) => (
+            <circle key={i} cx={125 + ((i * 37) % 70)} cy="125" r={1.6 + (i % 3) * 0.6} fill="#ffd9a8" opacity="0.8">
+              <animate attributeName="cy" from="125" to="85" dur={`${fizzDur}s`} begin={`${i * 0.15}s`} repeatCount="indefinite" />
+              <animate attributeName="opacity" from="0.8" to="0" dur={`${fizzDur}s`} begin={`${i * 0.15}s`} repeatCount="indefinite" />
+            </circle>
+          ))}
+        </g>
         <VlabDropperMini x={100} y={55} rotate={-20} color="#2f6fe2" />
         <VlabDropperMini x={222} y={55} rotate={20} color="#e2622f" />
-        <text x="88" y="30" fontSize="7" fill="#6b7399" textAnchor="middle">واکنش‌گر ۱</text>
-        <text x="232" y="30" fontSize="7" fill="#6b7399" textAnchor="middle">واکنش‌گر ۲</text>
+        <text x="88" y="30" fontSize="7" fill="#9aa3c0" textAnchor="middle">واکنش‌گر ۱</text>
+        <text x="232" y="30" fontSize="7" fill="#9aa3c0" textAnchor="middle">واکنش‌گر ۲</text>
         <VlabThermometerMini x={255} y={85} temp={temp} minT={0} maxT={80} h={46} />
         <VlabStopwatchIcon x={270} y={25} readout={`${reactionTime.toFixed(0)}s`} />
       </svg>
@@ -21025,22 +21096,69 @@ function VlabHeartRateExperiment({ onReading }) {
     // eslint-disable-next-line
   }, [activity]);
 
+  // یک موج ECG واقعی (خط صاف + یک کمپلکس QRS تیز) چندبار پشتِ‌سرِهم تکرار می‌شود تا شکلِ صفحه‌ی
+  // دستگاهِ ضربان‌سنجِ واقعی را بسازد؛ با strokeDasharray/strokeDashoffset به چپ می‌لغزد — سرعتِ
+  // لغزش به pulseDuration (یعنی به ضربانِ قلب) وابسته است.
+  const ecgUnit = "l10,0 l4,0 l3,-7 l4,16 l3,-22 l3,13 l4,0 l10,0";
+  const ecgPath = `M0,30 ${Array.from({ length: 10 }).map(() => ecgUnit).join(" ")}`;
+
   return (
     <div className="vlab-exp">
-      {/* «ساعت یا کرنومتر» و «انگشت برای حس ضربان» که در فهرست وسایل بودند، اضافه شدند */}
-      <svg viewBox="0 0 320 150" className="vlab-svg">
-        <g style={{ transformOrigin: "160px 75px", animation: `vlabHeartbeat ${pulseDuration}s ease-in-out infinite` }}>
+      {/* «ساعت یا کرنومتر» و «انگشت برای حس ضربان» که در فهرست وسایل بودند، اضافه شدند؛ به‌جایِ یک
+          قلبِ تختِ تک‌رنگ، حالا یک دستگاهِ ضربان‌سنجِ واقعیِ بیمارستانی (صفحه‌ی سیاه با خطِ ECGِ سبزِ
+          متحرک) و یک قلبِ با گرادیانِ سه‌بعدی و رگ‌های خروجی کشیده شد. */}
+      <svg viewBox="0 0 320 180" className="vlab-svg" style={{ background: "#0b1330", borderRadius: "10px" }}>
+        <defs>
+          <radialGradient id="heartGrad" cx="35%" cy="30%" r="75%">
+            <stop offset="0%" stopColor="#ff7a5c" />
+            <stop offset="55%" stopColor="#e2432f" />
+            <stop offset="100%" stopColor="#9c1f1f" />
+          </radialGradient>
+          <clipPath id="ecgScreenClip">
+            <rect x="14" y="16" width="150" height="56" rx="4" />
+          </clipPath>
+        </defs>
+
+        {/* قلب: گرادیانِ سه‌بعدی + دو رگِ خروجی از بالا، با انیمیشنِ تپش هم‌زمان با ضربان واقعی */}
+        <g transform="translate(220,95)" style={{ transformOrigin: "0px 0px", animation: `vlabHeartbeat ${pulseDuration}s ease-in-out infinite` }}>
+          <path d="M-8,-38 Q-6,-50 4,-48 L4,-30 Z" fill="#b23a3a" stroke="#7a1f1f" strokeWidth="1" />
+          <path d="M8,-38 Q14,-52 22,-46 L14,-28 Z" fill="#b23a3a" stroke="#7a1f1f" strokeWidth="1" />
           <path
-            d="M160,105 C110,70 110,35 140,30 C152,28 160,40 160,45 C160,40 168,28 180,30 C210,35 210,70 160,105 Z"
-            fill="#e2622f"
+            d="M0,45 C-55,5 -52,-38 -18,-42 C0,-44 8,-26 8,-18 C8,-26 20,-46 40,-42 C72,-36 72,5 0,45 Z"
+            fill="url(#heartGrad)"
+            stroke="#7a1f1f"
+            strokeWidth="1.4"
+          />
+          <path d="M-18,-20 C-8,-10 -4,8 4,26" fill="none" stroke="#ff9d85" strokeWidth="2.2" opacity="0.55" strokeLinecap="round" />
+        </g>
+
+        {/* دستگاهِ ضربان‌سنج: بدنه‌ی فلزیِ خاکستری + صفحه‌ی سیاهِ ECG با موجِ سبزِ متحرک + عددِ دیجیتال */}
+        <rect x="8" y="8" width="164" height="94" rx="8" fill="#232a44" stroke="#4a5280" strokeWidth="2" />
+        <rect x="14" y="16" width="150" height="56" rx="4" fill="#061309" />
+        <g clipPath="url(#ecgScreenClip)">
+          <path
+            d={ecgPath}
+            fill="none"
+            stroke="#3ddc6f"
+            strokeWidth="2"
+            transform="translate(14,44)"
+            style={{ animation: `vlabEcgScroll ${pulseDuration * 2}s linear infinite` }}
           />
         </g>
-        <g transform="translate(245,95)">
-          <path d="M-6,20 Q-9,0 -5,-18 Q-2,-26 3,-24 Q7,-22 6,-10 L6,10 Q6,20 0,22 Z" fill="#e8c3a0" stroke="#c8926a" strokeWidth="1" />
-          <circle cx="0" cy="-20" r="3" fill="#e2622f" style={{ animation: `vlabHeartbeat ${pulseDuration}s ease-in-out infinite` }} />
-          <text x="0" y="36" fontSize="7" fill="#6b7399" textAnchor="middle">حس ضربان</text>
+        <rect x="14" y="78" width="150" height="18" rx="3" fill="#061309" />
+        <text x="89" y="92" fontSize="13" fill="#3ddc6f" textAnchor="middle" fontWeight="700" style={{ direction: "ltr", unicodeBidi: "isolate" }}>
+          {heartRate} BPM
+        </text>
+
+        {/* انگشت با کلیپسِ قرمزِ پالس‌اکسیمتر — همان «انگشت برای حسِ ضربان» در فهرستِ وسایل */}
+        <g transform="translate(205,130)">
+          <path d="M-6,22 Q-9,0 -5,-20 Q-2,-29 3,-27 Q7,-25 6,-11 L6,11 Q6,22 0,24 Z" fill="#e8c3a0" stroke="#c8926a" strokeWidth="1" />
+          <rect x="-9" y="-16" width="18" height="20" rx="4" fill="#d3384a" stroke="#8a1f2b" strokeWidth="1" />
+          <circle cx="0" cy="-6" r="2.4" fill="#ff8f9c" style={{ animation: `vlabHeartbeat ${pulseDuration}s ease-in-out infinite` }} />
+          <text x="0" y="40" fontSize="7" fill="#9aa3c0" textAnchor="middle">حسگرِ ضربان (انگشت)</text>
         </g>
-        <VlabStopwatchIcon x={60} y={100} readout={`${heartRate} bpm`} />
+
+        <text x="90" y="118" fontSize="8" fill="#9aa3c0" textAnchor="middle">دستگاهِ ضربان‌سنج</text>
       </svg>
       <div className="vlab-controls">
         <div className="vlab-ctrl-col" style={{ flex: 1 }}>
@@ -21053,7 +21171,10 @@ function VlabHeartRateExperiment({ onReading }) {
         <br />
         هرچه فعالیت بدنی شدیدتر باشد، بدن برای رساندن اکسیژن بیشتر، قلب را سریع‌تر می‌تپاند.
       </div>
-      <style>{`@keyframes vlabHeartbeat { 0%, 100% { transform: scale(1); } 30% { transform: scale(1.18); } 50% { transform: scale(1); } 70% { transform: scale(1.1); } }`}</style>
+      <style>{`
+        @keyframes vlabHeartbeat { 0%, 100% { transform: scale(1); } 30% { transform: scale(1.18); } 50% { transform: scale(1); } 70% { transform: scale(1.1); } }
+        @keyframes vlabEcgScroll { from { transform: translate(14px,44px); } to { transform: translate(-136px,44px); } }
+      `}</style>
     </div>
   );
 }
@@ -21069,13 +21190,39 @@ function VlabDiffusionExperiment({ onReading }) {
     // eslint-disable-next-line
   }, [temp, elapsed]);
 
+  // به‌جایِ یک دایره‌ی تخت و یک مستطیلِ ساده، حالا یک بشرِ شیشه‌ایِ واقعی (با خطِ‌برجسته‌ی نور و
+  // خط‌های مدرج) و دانه‌های پراکنده‌ی رنگ (به‌جایِ یک لکه‌ی یک‌دست) که هرچه شعاعِ پخش بیشتر شود،
+  // پراکنده‌تر و کم‌رنگ‌تر می‌شوند — دقیقاً شبیهِ تصویرِ واقعیِ قطره‌چکانِ رنگ در آب.
+  const seeded = (i, salt) => {
+    const x = Math.sin(i * 12.9898 + salt) * 43758.5453;
+    return x - Math.floor(x);
+  };
+  const dyeDots = Array.from({ length: 26 }).map((_, i) => {
+    const ang = seeded(i, 1) * Math.PI * 2;
+    const dist = seeded(i, 2) * diffusionRadius;
+    return { x: 160 + Math.cos(ang) * dist, y: 90 + Math.sin(ang) * dist * 0.85, r: vlabClamp(3.2 - dist / 40, 0.6, 3.2), o: vlabClamp(1 - dist / (diffusionRadius + 8), 0.12, 0.9) };
+  });
+
   return (
     <div className="vlab-exp">
       {/* قطره‌چکان (برای چکاندن رنگ خوراکی) و دماسنج که در فهرست وسایل بودند، اضافه شدند */}
-      <svg viewBox="0 -16 320 186" className="vlab-svg">
-        <rect x="60" y="30" width="200" height="120" rx="8" fill="#dff0ff" stroke="#5b4636" strokeWidth="2" />
-        <circle cx="160" cy="90" r={diffusionRadius} fill="rgba(47,111,226,0.5)" />
+      <svg viewBox="0 -16 320 186" className="vlab-svg" style={{ background: "#0b1330", borderRadius: "10px" }}>
+        {/* بشرِ شیشه‌ای: بدنه‌ی شفاف با خطِ برجستگیِ نور و خط‌های مدرج، به‌جایِ یک مستطیلِ تخت */}
+        <path d="M58,30 L58,150 Q58,158 66,158 L254,158 Q262,158 262,150 L262,30" fill="#16335c" opacity="0.4" stroke="#8fb4e0" strokeWidth="2" />
+        <path d="M58,30 L58,150 Q58,158 66,158 L254,158 Q262,158 262,150 L262,30" fill="none" stroke="#8fb4e0" strokeWidth="2" />
+        {[50, 80, 110, 140].map((gy) => (
+          <line key={gy} x1="58" y1={gy} x2="66" y2={gy} stroke="#8fb4e0" strokeWidth="1" opacity="0.6" />
+        ))}
+        <line x1="68" y1="34" x2="68" y2="150" stroke="#eaf3ff" strokeWidth="4" opacity="0.18" />
+
+        {/* ابرِ نرمِ رنگ (مرکز پررنگ، لبه‌ها محو) + دانه‌های پراکنده‌ی رنگ */}
+        <circle cx="160" cy="90" r={diffusionRadius} fill="rgba(47,111,226,0.22)" />
+        <circle cx="160" cy="90" r={diffusionRadius * 0.55} fill="rgba(47,111,226,0.32)" />
+        {dyeDots.map((d, i) => (
+          <circle key={i} cx={d.x} cy={d.y} r={d.r} fill="#2f6fe2" opacity={d.o} />
+        ))}
         <circle cx="160" cy="90" r="5" fill="#1a3fa0" />
+
         <VlabDropperMini x={160} y={16} rotate={0} color="#1a3fa0" />
         <VlabThermometerMini x={275} y={40} temp={temp} minT={0} maxT={90} h={60} />
       </svg>
@@ -21109,20 +21256,41 @@ function VlabEnzymeActivityExperiment({ onReading }) {
 
   return (
     <div className="vlab-exp">
-      {/* حمام آب با دماهای مختلف و نمونه‌ی حاوی کاتالاز (جگر/سیب‌زمینی) که در فهرست وسایل بودند، اضافه شدند */}
-      <svg viewBox="0 0 320 170" className="vlab-svg">
-        <rect x="70" y="55" width="180" height="95" rx="10" fill={vlabMixHexColor("#3a9bd5", "#e2622f", vlabClamp(temp / 90, 0, 1))} opacity="0.25" stroke="#8a93a8" strokeWidth="1.5" />
-        <text x="160" y="160" fontSize="7.5" fill="#6b7399" textAnchor="middle">حمام آب (دمای قابل‌تنظیم)</text>
-        <path d="M130,40 L130,90 L105,140 L215,140 L190,90 L190,40 Z" fill="none" stroke="#5b4636" strokeWidth="3" />
-        <path d="M130,90 L108,135 L212,135 L190,90 Z" fill="rgba(47,160,111,0.35)" />
-        <ellipse cx="160" cy="120" rx="16" ry="9" fill="#a85a3f" stroke="#7a3f2a" strokeWidth="1" />
-        <text x="160" y="29" fontSize="7" fill="#6b7399" textAnchor="middle">نمونه‌ی کاتالاز (جگر/سیب‌زمینی) در لوله‌ی آزمایش</text>
-        {Array.from({ length: bubbleCount }).map((_, i) => (
-          <circle key={i} cx={130 + (i % 5) * 14} cy={125 - Math.floor(i / 5) * 16} r="3.5" fill="#fff" opacity="0.85">
-            <animate attributeName="cy" from="125" to="45" dur="1.4s" begin={`${i * 0.18}s`} repeatCount="indefinite" />
-            <animate attributeName="opacity" from="0.85" to="0" dur="1.4s" begin={`${i * 0.18}s`} repeatCount="indefinite" />
-          </circle>
-        ))}
+      {/* حمام آب با دماهای مختلف و نمونه‌ی حاوی کاتالاز (جگر/سیب‌زمینی) که در فهرست وسایل بودند، اضافه شدند؛
+          به‌جایِ یک مستطیلِ تخت و یک لوله‌ی بدونِ قفل‌شدگی، حالا یک حمام‌ِآبِ شیشه‌ایِ واقعی با دماسنج،
+          یک پایه‌ی گیره‌دارِ آزمایشگاهی که لوله را نگه می‌دارد، و زمینه‌ی تیره‌ی هماهنگ با بقیه‌ی آزمایش‌ها. */}
+      <svg viewBox="0 0 320 185" className="vlab-svg" style={{ background: "#0b1330", borderRadius: "10px" }}>
+        {/* حمامِ آب: ظرفِ شیشه‌ای با آبِ رنگ‌متغیر (آبی سرد → نارنجیِ گرم) و خطوطِ موج */}
+        <path d="M68,58 L68,150 Q68,158 76,158 L244,158 Q252,158 252,150 L252,58" fill="none" stroke="#8fb4e0" strokeWidth="2" />
+        <path
+          d="M70,95 L70,150 Q70,156 76,156 L244,156 Q250,156 250,150 L250,95 Z"
+          fill={vlabMixHexColor("#2f6fe2", "#e2622f", vlabClamp(temp / 90, 0, 1))}
+          opacity="0.35"
+        />
+        <path d="M70,95 Q90,90 110,95 T150,95 T190,95 T230,95 T250,95" fill="none" stroke="#8fb4e0" strokeWidth="1.2" opacity="0.5" />
+        <line x1="76" y1="62" x2="76" y2="150" stroke="#eaf3ff" strokeWidth="3" opacity="0.15" />
+        <text x="160" y="172" fontSize="7.5" fill="#9aa3c0" textAnchor="middle">حمام آب (دمای قابل‌تنظیم)</text>
+        <VlabThermometerMini x={224} y={66} temp={temp} minT={0} maxT={90} h={70} />
+
+        {/* پایه‌ی گیره‌دارِ آزمایشگاهی: ستونِ فلزی + بازوی گیره که لوله‌ی آزمایش را مایل نگه می‌دارد */}
+        <rect x="118" y="18" width="4" height="100" fill="#8a93a8" />
+        <rect x="104" y="110" width="32" height="6" rx="2" fill="#6b7399" />
+        <rect x="118" y="34" width="26" height="6" rx="2" fill="#aab3cc" transform="rotate(18 118 37)" />
+
+        {/* لوله‌ی آزمایش (شیشه‌ی واقعی، مایل، درون حمام) با نمونه‌ی کاتالاز */}
+        <g transform="rotate(12 160 40)">
+          <path d="M148,20 L148,118 Q148,132 160,132 Q172,132 172,118 L172,20 Z" fill="rgba(170,200,230,0.18)" stroke="#8fb4e0" strokeWidth="1.6" />
+          <path d="M150,20 L150,116 Q150,126 160,128" fill="none" stroke="#eaf3ff" strokeWidth="2" opacity="0.3" />
+          <path d="M149,70 L171,70 Q171,118 160,122 Q149,118 149,70 Z" fill="rgba(47,160,111,0.4)" />
+          <ellipse cx="160" cy="100" rx="13" ry="7" fill="#a85a3f" stroke="#7a3f2a" strokeWidth="1" />
+          {Array.from({ length: bubbleCount }).map((_, i) => (
+            <circle key={i} cx={154 + (i % 3) * 7} cy={100 - Math.floor(i / 3) * 12} r="2.6" fill="#fff" opacity="0.85">
+              <animate attributeName="cy" from="100" to="28" dur="1.4s" begin={`${i * 0.18}s`} repeatCount="indefinite" />
+              <animate attributeName="opacity" from="0.85" to="0" dur="1.4s" begin={`${i * 0.18}s`} repeatCount="indefinite" />
+            </circle>
+          ))}
+        </g>
+        <text x="160" y="12" fontSize="7" fill="#9aa3c0" textAnchor="middle">نمونه‌ی کاتالاز (جگر/سیب‌زمینی) در لوله‌ی آزمایش</text>
       </svg>
       <div className="vlab-controls">
         <div className="vlab-ctrl-col" style={{ flex: 1 }}>

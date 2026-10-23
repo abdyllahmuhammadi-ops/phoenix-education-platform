@@ -21222,17 +21222,38 @@ function VlabDissolveTemperatureExperiment({ onReading }) {
   if (stirring) dissolveTime = dissolveTime / 2;
   dissolveTime = vlabClamp(dissolveTime, 5, 150);
 
-  useEffect(() => {
-    if (onReading) onReading(`دمای آب: ${temp}°C | هم‌زدن: ${stirring ? "بله" : "خیر"} | زمان تقریبی حل‌شدن کامل: ${dissolveTime.toFixed(0)} ثانیه`);
-    // eslint-disable-next-line
-  }, [temp, stirring]);
+  // قبلاً اندازه‌ی دانه‌ها فقط یک «عکسِ لحظه‌ای» از تنظیماتِ فعلی بود (نه نتیجه‌ی واقعیِ گذشتِ
+  // زمان)، به همین خاطر هم هیچ‌وقت کاملاً از بین نمی‌رفت (سقفِ پایین ۰٫۳۵) و هم با چرخاندنِ
+  // اسلایدر فوراً عوض می‌شد. حالا طبقِ خواسته‌ی کاربر («بعد از چند بار هم‌زدن متناسب با دما باید
+  // از بین برود») یک پیشرفتِ واقعی و تجمعی با زمانِ واقعی (setInterval) دنبال می‌شود: هر tick به
+  // نسبتِ ۱/dissolveTime پیش می‌رود، یعنی اگر دما/هم‌زدن ثابت بماند، دقیقاً پس از dissolveTime
+  // ثانیه‌ی واقعی ماده کاملاً حل می‌شود؛ دمای بالاتر و هم‌زدن (که dissolveTime را کم می‌کنند)
+  // این فرایند را سریع‌تر می‌کنند. وقتی تمام شد، دکمه‌ی «ریختنِ دوباره‌ی قند» ظاهر می‌شود.
+  const [progress, setProgress] = useState(0);
+  const dissolveTimeRef = React.useRef(dissolveTime);
+  dissolveTimeRef.current = dissolveTime;
 
-  // به‌جایِ یک مکعبِ سفیدِ ثابت، چند دانه‌ی قندِ کوچک که هرچه زمانِ حل‌شدن کمتر (یعنی سریع‌تر حل
-  // می‌شود) باشد، کوچک‌تر/کم‌رنگ‌تر می‌شوند — اما سقفِ پایینِ آن بالا برده شد (0.1→0.35) و تعدادِ
-  // دانه‌ها بیشتر شد تا حتی در سریع‌ترین حالت، توده‌ای قابلِ‌دیدن از ماده روی کفِ ظرف بماند و حسِ
-  // «همین الان همه‌چیز حل شد» ندهد — طبقِ خواسته‌ی کاربر. دانه‌ها به‌شکلِ یک توده‌ی کپه‌ای روی خودِ
-  // کفِ لیوان (نه معلق در وسط) چیده شده‌اند.
-  const dissolveFrac = vlabClamp(1 - (150 - dissolveTime) / 130, 0.35, 1);
+  useEffect(() => {
+    const iv = setInterval(() => {
+      setProgress((p) => (p >= 1 ? 1 : vlabClamp(p + 0.2 / dissolveTimeRef.current, 0, 1)));
+    }, 200);
+    return () => clearInterval(iv);
+  }, []);
+
+  const dissolved = progress >= 0.999;
+
+  useEffect(() => {
+    if (onReading) {
+      onReading(
+        dissolved
+          ? `دمای آب: ${temp}°C | ماده به‌طورِ کامل حل شد`
+          : `دمای آب: ${temp}°C | هم‌زدن: ${stirring ? "بله" : "خیر"} | زمان تقریبی حل‌شدن کامل: ${dissolveTime.toFixed(0)} ثانیه | پیشرفت: ${Math.round(progress * 100)}٪`
+      );
+    }
+    // eslint-disable-next-line
+  }, [temp, stirring, progress]);
+
+  const dissolveFrac = vlabClamp(1 - progress, 0, 1);
   const grains = [
     { x: -12, y: 2 }, { x: -6, y: 5 }, { x: 0, y: 1 }, { x: 6, y: 5 }, { x: 12, y: 2 },
     { x: -9, y: 7 }, { x: -2, y: 8 }, { x: 4, y: 8 }, { x: 10, y: 7 }, { x: 0, y: 10 },
@@ -21287,7 +21308,7 @@ function VlabDissolveTemperatureExperiment({ onReading }) {
               width={5 * dissolveFrac}
               height={5 * dissolveFrac}
               fill="#fff"
-              opacity={vlabClamp(dissolveFrac, 0.35, 1)}
+              opacity={vlabClamp(dissolveFrac, 0, 1)}
             />
           ))}
         </g>
@@ -21304,14 +21325,36 @@ function VlabDissolveTemperatureExperiment({ onReading }) {
           <label className="vlab-ctrl-label">دمای آب (°C): {temp}</label>
           <input type="range" min="0" max="100" value={temp} onChange={(e) => setTemp(+e.target.value)} />
         </div>
-        <button type="button" className={"vlab-toggle-btn" + (stirring ? " active" : "")} onClick={() => setStirring((s) => !s)}>
+        <button type="button" className={"vlab-toggle-btn" + (stirring ? " active" : "")} onClick={() => setStirring((s) => !s)} disabled={dissolved}>
           🥄 هم‌زدن {stirring ? "فعال" : "غیرفعال"}
         </button>
+        {dissolved && (
+          <button
+            type="button"
+            className="vlab-toggle-btn"
+            onClick={() => {
+              setProgress(0);
+              setStirring(false);
+            }}
+          >
+            🧂 ریختنِ دوباره‌ی قند
+          </button>
+        )}
       </div>
       <div className="vlab-readout">
-        زمان تقریبی حل‌شدن کامل ≈ <b>{dissolveTime.toFixed(0)} ثانیه</b>
-        <br />
-        دمای بالاتر و هم‌زدن، سرعت حل‌شدن را بیشتر می‌کنند.
+        {dissolved ? (
+          <>
+            ✅ ماده به‌طورِ کامل در آب حل شد.
+            <br />
+            برای تکرارِ آزمایش با دما/هم‌زدنِ دیگر، «ریختنِ دوباره‌ی قند» را بزنید.
+          </>
+        ) : (
+          <>
+            زمان تقریبی حل‌شدن کامل ≈ <b>{dissolveTime.toFixed(0)} ثانیه</b> (پیشرفت: {Math.round(progress * 100)}٪)
+            <br />
+            دمای بالاتر و هم‌زدن، سرعتِ حل‌شدن را بیشتر می‌کنند — با گذشتِ همین زمانِ واقعی، ماده کم‌کم و کاملاً محو می‌شود.
+          </>
+        )}
       </div>
       <style>{`
         @keyframes vlabDissolveStirCircle {

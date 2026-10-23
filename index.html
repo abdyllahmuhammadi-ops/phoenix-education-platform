@@ -18044,16 +18044,61 @@ function VlabSpringScale({ x, y, force, maxForce, label, unit, textColor, labelC
   );
 }
 
-// کرنومتر: بدنه‌ی گرد ساعت + دکمه‌ی بالا + عقربه، برای آزمایش‌هایی که زمان‌سنجی بخشی از روش کارشان است
-function VlabStopwatchIcon({ x, y, readout }) {
+// کرنومتر: بدنه‌ی گرد ساعت + دکمه‌ی بالا + عقربه، برای آزمایش‌هایی که زمان‌سنجی بخشی از روش کارشان است.
+// پراپ‌های اختیاریِ scale/seconds/maxSeconds/extra اضافه شدند (بدون تغییر در فراخوانی‌های قبلی):
+// scale برای بزرگ‌تر کردنِ کلِ ساعت، seconds/maxSeconds برای یک عقربه‌ی ثانیه‌شمارِ واقعاً چرخان و
+// دقیق (به‌جای زاویه‌ی ثابتِ تزئینی)، خط‌های درجه‌ی دورِ صفحه (مثل نیروسنجِ عقربه‌ای)، و extra برای
+// نمایشِ یک مقدارِ دوم (مثلاً فاصله‌ی جابجایی) زیرِ عددِ زمان.
+function VlabStopwatchIcon({ x, y, readout, scale, seconds, maxSeconds, extra }) {
+  const s = scale || 1;
+  const secAngle = seconds != null ? (seconds / (maxSeconds || 60)) * 360 : null;
   return (
-    <g transform={`translate(${x},${y})`}>
-      <rect x="-3" y="-15" width="6" height="5" rx="1.5" fill="#5b4636" />
-      <circle cx="0" cy="0" r="15" fill="#f4f1e6" stroke="#5b4636" strokeWidth="2.4" />
-      <circle cx="0" cy="0" r="1.6" fill="#5b4636" />
-      <line x1="0" y1="0" x2="0" y2="-10" stroke="#5b4636" strokeWidth="1.6" strokeLinecap="round" />
-      <line x1="0" y1="0" x2="7" y2="4" stroke="#e2622f" strokeWidth="1.4" strokeLinecap="round" />
-      {readout && <text x="0" y="28" fontSize="9" fill="#1c2540" textAnchor="middle" fontWeight="700">{readout}</text>}
+    <g transform={`translate(${x},${y}) scale(${s})`}>
+      <rect x="-3" y="-17" width="6" height="5" rx="1.5" fill="#5b4636" />
+      <circle cx="0" cy="0" r="17" fill="#efe6d0" stroke="#5b4636" strokeWidth="2.6" />
+      <circle cx="0" cy="0" r="14.5" fill="#faf6ea" stroke="#c8a35a" strokeWidth="1" />
+      {Array.from({ length: 12 }).map((_, i) => {
+        const ang = (i * 30 * Math.PI) / 180;
+        const major = i % 3 === 0;
+        const rOuter = 14.5;
+        const rInner = major ? 11 : 12.6;
+        return (
+          <line
+            key={i}
+            x1={Math.sin(ang) * rInner}
+            y1={-Math.cos(ang) * rInner}
+            x2={Math.sin(ang) * rOuter}
+            y2={-Math.cos(ang) * rOuter}
+            stroke="#5b4636"
+            strokeWidth={major ? 1.3 : 0.8}
+          />
+        );
+      })}
+      {secAngle != null ? (
+        <line
+          x1="0"
+          y1="0"
+          x2="0"
+          y2="-11"
+          stroke="#e2622f"
+          strokeWidth="1.6"
+          strokeLinecap="round"
+          style={{ transformOrigin: "0px 0px", transform: `rotate(${secAngle}deg)`, transition: seconds < 0.1 ? "none" : "transform 0.12s linear" }}
+        />
+      ) : (
+        <line x1="0" y1="0" x2="7" y2="4" stroke="#e2622f" strokeWidth="1.4" strokeLinecap="round" />
+      )}
+      <circle cx="0" cy="0" r="1.8" fill="#3a2f22" />
+      {readout && (
+        <text x="0" y="30" fontSize="9.5" fill="#1c2540" textAnchor="middle" fontWeight="700" style={{ direction: "ltr", unicodeBidi: "isolate" }}>
+          {readout}
+        </text>
+      )}
+      {extra && (
+        <text x="0" y="42" fontSize="8.5" fill="#2f6fe2" textAnchor="middle" fontWeight="700" style={{ direction: "ltr", unicodeBidi: "isolate" }}>
+          {extra}
+        </text>
+      )}
     </g>
   );
 }
@@ -20143,34 +20188,137 @@ function VlabFrictionExperiment({ onReading }) {
 function VlabNewtonSecondLawExperiment({ onReading }) {
   const [force, setForce] = useState(20);
   const [mass, setMass] = useState(5);
+  const [pulled, setPulled] = useState(false);
+  const [elapsed, setElapsed] = useState(0);
   const acceleration = force / mass;
+  // کاربر خواست همان اصولی که در اصطکاک و قرقره پیاده شد، اینجا هم اجرا شود: گاری واقعاً حرکت کند،
+  // چرخ‌هایش بچرخند، نیروی F همراه گاری جابجا شود، یک خط‌کشِ بزرگ با مقیاسِ تصویریِ مستقل (مثل قرقره)
+  // فاصله را دقیق نشان دهد، نیروسنج به‌صورت صفحه‌ی عقربه‌ایِ واقعی (همان کامپوننتِ تازه‌بازطراحی‌شده)
+  // دیده شود، و ردیاب حرکت واقعاً زمان را بشمارد — این دو وسیله در فهرستِ ابزارها بودند ولی تا الان کار
+  // نمی‌کردند.
+  const TRAVEL_M = vlabClamp(0.15 + Math.sqrt(acceleration) * 0.2, 0.15, 1.8);
+  const TRAVEL_PX = vlabClamp(TRAVEL_M * 70, 20, 150);
+  const RULER_MAX_M = 2;
+  const RULER_W = 260;
+  const DEMO_MS = 1400;
+  const wheelSpinDeg = pulled ? 620 : 0;
+  const arrowLen = vlabClamp(force * 1.6, 16, 60);
 
   useEffect(() => {
-    if (onReading) onReading(`نیرو: ${force} نیوتن | جرم: ${mass} کیلوگرم | شتاب = F/m = ${acceleration.toFixed(2)} متر بر مجذور ثانیه`);
-    // eslint-disable-next-line
+    setPulled(false);
+    setElapsed(0);
   }, [force, mass]);
 
-  const arrowLen = vlabClamp(acceleration * 18, 10, 150);
+  useEffect(() => {
+    if (!pulled) {
+      setElapsed(0);
+      return;
+    }
+    const t0 = Date.now();
+    const id = setInterval(() => {
+      const dt = Math.min(DEMO_MS, Date.now() - t0);
+      setElapsed(dt / 1000);
+      if (dt >= DEMO_MS) clearInterval(id);
+    }, 60);
+    return () => clearInterval(id);
+  }, [pulled]);
+
+  useEffect(() => {
+    if (onReading)
+      onReading(
+        `نیرو: ${force} نیوتن | جرم: ${mass} کیلوگرم | شتاب = F/m = ${acceleration.toFixed(2)} متر بر مجذور ثانیه | جابجایی گاری: ${pulled ? TRAVEL_M.toFixed(2) : "0.00"} متر | زمان: ${elapsed.toFixed(1)} ثانیه`
+      );
+    // eslint-disable-next-line
+  }, [force, mass, pulled, elapsed]);
+
+  const cartWheel = (cx, cy, r, spin) => (
+    <g style={{ transform: `rotate(${spin}deg)`, transformOrigin: `${cx}px ${cy}px`, transition: "transform 1.4s cubic-bezier(.3,.6,.4,1)" }}>
+      <circle cx={cx} cy={cy} r={r} fill="#1c2540" stroke="#4a4f60" strokeWidth="1.6" />
+      {[0, 45, 90, 135].map((ang) => (
+        <line
+          key={ang}
+          x1={cx - (r - 2) * Math.cos((ang * Math.PI) / 180)}
+          y1={cy - (r - 2) * Math.sin((ang * Math.PI) / 180)}
+          x2={cx + (r - 2) * Math.cos((ang * Math.PI) / 180)}
+          y2={cy + (r - 2) * Math.sin((ang * Math.PI) / 180)}
+          stroke="#6b7399"
+          strokeWidth="1.1"
+        />
+      ))}
+      <circle cx={cx + (r - 2.5)} cy={cy} r="1.8" fill="#e2404f" />
+    </g>
+  );
 
   return (
     <div className="vlab-exp">
-      {/* قبلاً فقط اندازه‌ی خودِ گاری با جرم بزرگ‌تر می‌شد؛ حالا «وزنه‌های مختلف» واقعاً به‌صورت بلوک‌های
-          جداگانه روی گاری چیده می‌شوند (یکی از وسایل فهرست‌شده که دیده نمی‌شد) و یک ردیاب حرکت/کرنومتر هم اضافه شد. */}
-      <svg viewBox="0 -10 320 160" className="vlab-svg">
-        <line x1="0" y1="120" x2="320" y2="120" stroke="#5b4636" strokeWidth="3" />
-        <rect x="65" y="100" width="55" height="20" rx="5" fill="#c8862b" />
-        {Array.from({ length: vlabClamp(Math.ceil(mass / 2), 1, 8) }).map((_, i) => (
-          <rect key={i} x={70 + i * 11} y={96 - Math.min(i, 3) * 9} width="9" height="9" fill="#2f6fe2" stroke="#1c2540" strokeWidth="0.6" />
-        ))}
-        <circle cx="78" cy="122" r="7" fill="#1c2540" />
-        <circle cx="107" cy="122" r="7" fill="#1c2540" />
-        <line x1="126" y1={106} x2={126 + arrowLen} y2={106} stroke="#2f6fe2" strokeWidth="4" />
-        <polygon
-          points={`${126 + arrowLen},100 ${126 + arrowLen},112 ${126 + arrowLen + 10},106`}
-          fill="#2f6fe2"
+      <svg viewBox="0 0 400 230" className="vlab-svg" style={{ background: "#0b1330", borderRadius: "10px" }}>
+        <line x1="0" y1="150" x2="400" y2="150" stroke="#5b4636" strokeWidth="3" />
+        {/* نیروسنجِ عقربه‌ای، نزدیکِ نقطه‌ی شروع، همان‌طور که دست یک نفر گاری را می‌کشد */}
+        <VlabSpringScale x={40} y={30} force={force} maxForce={50} unit="N" label="نیروسنج" textColor="#eaf0fb" labelColor="#9fb0d6" />
+        <VlabStopwatchIcon
+          x={352}
+          y={52}
+          scale={2}
+          seconds={elapsed}
+          maxSeconds={DEMO_MS / 1000}
+          readout={`${elapsed.toFixed(1)}s`}
+          extra={`${(pulled ? TRAVEL_M : 0).toFixed(2)} m`}
         />
-        <text x={126 + arrowLen / 2} y="94" fontSize="11" fill="#2f6fe2" textAnchor="middle">F</text>
-        <VlabStopwatchIcon x={270} y={30} readout="ردیاب حرکت" />
+        {/* گاری + چرخ‌ها + فلشِ نیرو + وزنه‌ها، همگی در یک گروهِ متحرک تا دقیقاً با هم جابجا شوند */}
+        <g style={{ transform: `translateX(${pulled ? TRAVEL_PX : 0}px)`, transition: "transform 1.4s cubic-bezier(.3,.6,.4,1)" }}>
+          {cartWheel(93, 156, 9, wheelSpinDeg)}
+          {cartWheel(122, 156, 9, wheelSpinDeg)}
+          <rect x="65" y="118" width="65" height="30" rx="5" fill="#c8862b" stroke="#8a6d3b" strokeWidth="1.4" />
+          {Array.from({ length: vlabClamp(Math.ceil(mass / 2), 1, 8) }).map((_, i) => (
+            <rect key={i} x={70 + i * 11} y={114 - Math.min(i, 3) * 9} width="9" height="9" fill="#2f6fe2" stroke="#1c2540" strokeWidth="0.6" />
+          ))}
+          <line x1="130" y1="124" x2={130 + arrowLen} y2="124" stroke="#2f6fe2" strokeWidth="4" />
+          <polygon points={`${130 + arrowLen},118 ${130 + arrowLen},130 ${130 + arrowLen + 10},124`} fill="#2f6fe2" />
+          <text x={130 + arrowLen / 2} y="112" fontSize="11" fill="#2f6fe2" textAnchor="middle" fontWeight="700">F</text>
+        </g>
+        {/* خط‌کشِ افقیِ بزرگ با مقیاسِ تصویریِ مستقل (همان روشِ اثبات‌شده در آزمایش قرقره): اعداد
+            (برحسب متر) روی خودِ بدنه، فونتِ ریزِ آبی، خط‌های درجه‌ی فرعی، و یک برچسبِ عددیِ دقیق کنارِ
+            نشانگر. */}
+        <g>
+          <text x={65 + RULER_W / 2} y="170" fontSize="14" fill="#f2e3b8" textAnchor="middle" fontWeight="700">متر</text>
+          <rect x="65" y="178" width={RULER_W} height="34" rx="7" fill="#f2e3b8" stroke="#c8a35a" strokeWidth="3" />
+          {Array.from({ length: 21 }).map((_, j) =>
+            j % 5 === 0 ? null : (
+              <line
+                key={`m${j}`}
+                x1={65 + (RULER_W / 20) * j}
+                y1="178"
+                x2={65 + (RULER_W / 20) * j}
+                y2="188"
+                stroke="#8a6d3b"
+                strokeWidth="1.4"
+              />
+            )
+          )}
+          {Array.from({ length: 5 }).map((_, i) => {
+            const xv = 65 + (RULER_W / 4) * i;
+            const mv = ((RULER_MAX_M / 4) * i).toFixed(2);
+            return (
+              <g key={i}>
+                <line x1={xv} y1="178" x2={xv} y2="196" stroke="#6b4e24" strokeWidth="4" />
+                <text x={xv} y="206" fontSize="12" fill="#2f6fe2" textAnchor="middle" fontWeight="700" style={{ direction: "ltr", unicodeBidi: "isolate" }}>{`${mv}m`}</text>
+              </g>
+            );
+          })}
+          <g
+            style={{
+              transform: `translateX(${pulled ? vlabClamp(TRAVEL_M / RULER_MAX_M, 0, 1) * RULER_W : 0}px)`,
+              transition: "transform 1.4s cubic-bezier(.3,.6,.4,1)",
+            }}
+          >
+            <line x1="65" y1="178" x2="65" y2="150" stroke="#2f6fe2" strokeWidth="9" strokeLinecap="round" />
+            <polygon points={`59,150 71,150 65,138`} fill="#2f6fe2" />
+            <rect x="34" y="112" width="62" height="24" rx="6" fill="#0b1330" stroke="#2f6fe2" strokeWidth="1.6" />
+            <text x="65" y="129" fontSize="13" fill="#eaf0fb" textAnchor="middle" fontWeight="700" style={{ direction: "ltr", unicodeBidi: "isolate" }}>
+              {`${(pulled ? TRAVEL_M : 0).toFixed(3)} m`}
+            </text>
+          </g>
+        </g>
       </svg>
       <div className="vlab-controls">
         <div className="vlab-ctrl-col" style={{ flex: 1 }}>
@@ -20179,11 +20327,14 @@ function VlabNewtonSecondLawExperiment({ onReading }) {
           <label className="vlab-ctrl-label">جرم گاری (کیلوگرم): {mass}</label>
           <input type="range" min="1" max="15" value={mass} onChange={(e) => setMass(+e.target.value)} />
         </div>
+        <button type="button" className="vlab-toggle-btn" onClick={() => setPulled((p) => !p)}>
+          {pulled ? "⟲ بازگرداندن گاری" : "➜ اعمال نیرو"}
+        </button>
       </div>
       <div className="vlab-readout">
         شتاب (a) = نیرو ÷ جرم = {force} ÷ {mass} ≈ <b>{acceleration.toFixed(2)} m/s²</b>
         <br />
-        با نیروی ثابت، هرچه جرم بیشتر باشد، شتاب کمتر است.
+        جابجایی گاری (روی خط‌کش): <b>{pulled ? TRAVEL_M.toFixed(2) : "0.00"} متر</b> در <b>{elapsed.toFixed(1)} ثانیه</b> — با نیروی ثابت، هرچه جرم بیشتر باشد، شتاب و جابجایی کمتر است.
       </div>
     </div>
   );

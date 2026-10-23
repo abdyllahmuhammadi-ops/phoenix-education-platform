@@ -17889,6 +17889,15 @@ const VLAB_EXPERIMENTS = [
     tools: ["جسم آزمایشی (بلوک چوبی)", "نیروسنج", "سطوح مختلف (شیشه، چوب، سیمان، شن)", "خط‌کش برای اندازه‌گیری فاصله‌ی جابجایی"],
   },
   {
+    id: "newton-first-law",
+    subject: "فیزیک",
+    level: "متوسطه دوم",
+    title: "قانون اول نیوتن (اینرسی)",
+    icon: "☕",
+    intro: "پارچه‌ی زیرِ لیوان را با سرعت‌های مختلف بکش و ببین چرا کشیدنِ سریع، لیوان را تقریباً سرِ جایش نگه می‌دارد اما کشیدنِ آهسته آن را همراهِ پارچه می‌کشد.",
+    tools: ["میز", "رومیزی (پارچه)", "لیوان", "کرنومتر برای سنجش مدتِ کشیده‌شدن"],
+  },
+  {
     id: "newton-second-law",
     subject: "فیزیک",
     level: "متوسطه دوم",
@@ -17896,6 +17905,15 @@ const VLAB_EXPERIMENTS = [
     icon: "🛒",
     intro: "نیروی وارد و جرم جسم را تغییر بده و ببین شتاب حاصل چطور تغییر می‌کند. قانون: نیرو = جرم × شتاب.",
     tools: ["گاری آزمایشگاهی", "وزنه‌های مختلف", "نیروسنج", "ردیاب حرکت یا کرنومتر"],
+  },
+  {
+    id: "newton-third-law",
+    subject: "فیزیک",
+    level: "متوسطه دوم",
+    title: "قانون سوم نیوتن (کنش و واکنش)",
+    icon: "↔️",
+    intro: "دو گاری با جرم‌های متفاوت را از هم دور کن و ببین با اینکه نیروی وارد به هر دو برابر است، گاریِ سبک‌تر بیشتر جابجا می‌شود.",
+    tools: ["دو گاری با جرم‌های متفاوت", "فنر بین دو گاری", "خط‌کش برای اندازه‌گیری جابجایی هر گاری"],
   },
   {
     id: "led-voltage",
@@ -20192,6 +20210,76 @@ function VlabFrictionExperiment({ onReading }) {
   );
 }
 
+/* ---------- قانون اول نیوتن (اینرسی) ---------- */
+function VlabNewtonFirstLawExperiment({ onReading }) {
+  const [pullSpeed, setPullSpeed] = useState(5);
+  const [pulled, setPulled] = useState(false);
+  // کلاسیک‌ترین نمایشِ قانونِ اول نیوتن: ترفندِ کشیدنِ ناگهانیِ رومیزی زیرِ لیوان. هرچه پارچه سریع‌تر
+  // کشیده شود، مدتِ زمانی که نیروی اصطکاک روی لیوان اثر می‌کند کوتاه‌تر است، پس تکانه‌ی کمتری به لیوان
+  // می‌رسد و لیوان به دلیلِ اینرسی تقریباً سرِ جایش می‌ماند؛ کشیدنِ آهسته برعکس، لیوان را تقریباً هم‌راه
+  // با پارچه می‌کشد.
+  const CLOTH_TRAVEL = 230;
+  const pullSpeedPxPerSec = pullSpeed * 90;
+  const pullDuration = vlabClamp(CLOTH_TRAVEL / pullSpeedPxPerSec, 0.18, 4);
+  const CUP_ACCEL = 230;
+  const cupTravelRaw = 0.5 * CUP_ACCEL * pullDuration * pullDuration;
+  const cupTravel = vlabClamp(cupTravelRaw, 0, CLOTH_TRAVEL);
+  const cupPercent = (cupTravel / CLOTH_TRAVEL) * 100;
+  const handLen = vlabClamp(pullSpeed * 3, 8, 32);
+
+  useEffect(() => {
+    setPulled(false);
+  }, [pullSpeed]);
+
+  useEffect(() => {
+    if (onReading)
+      onReading(
+        `سرعتِ کشیدنِ پارچه: ${pullSpeed} | مدتِ اثرِ اصطکاک روی لیوان: ${pullDuration.toFixed(2)} ثانیه | جابجاییِ لیوان: ${pulled ? cupPercent.toFixed(0) : 0}٪ مسیرِ پارچه`
+      );
+    // eslint-disable-next-line
+  }, [pullSpeed, pulled]);
+
+  return (
+    <div className="vlab-exp">
+      <svg viewBox="0 0 400 230" className="vlab-svg" style={{ background: "#0b1330", borderRadius: "10px" }}>
+        <rect x="55" y="170" width="10" height="40" fill="#5b4636" />
+        <rect x="335" y="170" width="10" height="40" fill="#5b4636" />
+        <rect x="35" y="155" width="330" height="16" rx="2" fill="#8a6d3b" stroke="#5b4636" strokeWidth="1.6" />
+        {/* پارچه‌ی رومیزی، متحرک؛ مدتِ انیمیشن دقیقاً برابرِ pullDuration محاسبه‌شده است */}
+        <g style={{ transform: `translateX(${pulled ? CLOTH_TRAVEL : 0}px)`, transition: `transform ${pullDuration}s linear` }}>
+          <rect x="70" y="140" width="230" height="14" rx="2" fill="#f6f1e0" stroke="#c8a35a" strokeWidth="1.6" />
+          {Array.from({ length: 11 }).map((_, i) => (
+            <line key={i} x1={78 + i * 20} y1="140" x2={78 + i * 20} y2="154" stroke="#dcc794" strokeWidth="1" />
+          ))}
+          <line x1="300" y1="147" x2={300 + handLen} y2="147" stroke="#e2622f" strokeWidth="3.4" strokeLinecap="round" />
+          <polygon points={`${300 + handLen},141 ${300 + handLen},153 ${300 + handLen + 9},147`} fill="#e2622f" />
+        </g>
+        {/* لیوان، جابجاییِ مستقل از پارچه بر اساسِ فیزیکِ تکانه محاسبه و رسم می‌شود */}
+        <g style={{ transform: `translateX(${pulled ? cupTravel : 0}px)`, transition: `transform ${pullDuration}s ease-out` }}>
+          <path d="M 178 100 L 222 100 L 216 140 L 184 140 Z" fill="#eaf0fb" stroke="#9fb0d6" strokeWidth="1.8" />
+          <ellipse cx="200" cy="100" rx="22" ry="5" fill="#f4f8ff" stroke="#9fb0d6" strokeWidth="1.6" />
+          <path d="M 222 108 q 14 2 14 14 q 0 12 -14 12" fill="none" stroke="#9fb0d6" strokeWidth="3" />
+        </g>
+        <text x="200" y="196" fontSize="12" fill="#f2e3b8" textAnchor="middle" fontWeight="700">میز</text>
+      </svg>
+      <div className="vlab-controls">
+        <div className="vlab-ctrl-col" style={{ flex: 1 }}>
+          <label className="vlab-ctrl-label">سرعتِ کشیدنِ پارچه: {pullSpeed}</label>
+          <input type="range" min="1" max="10" value={pullSpeed} onChange={(e) => setPullSpeed(+e.target.value)} />
+        </div>
+        <button type="button" className="vlab-toggle-btn" onClick={() => setPulled((p) => !p)}>
+          {pulled ? "⟲ بازگرداندنِ پارچه" : "➜ کشیدنِ پارچه"}
+        </button>
+      </div>
+      <div className="vlab-readout">
+        مدتِ زمانی که اصطکاکِ پارچه روی لیوان اثر می‌کند ≈ <b>{pullDuration.toFixed(2)} ثانیه</b>
+        <br />
+        جابجاییِ لیوان: <b>{pulled ? cupPercent.toFixed(0) : 0}٪</b> مسیرِ پارچه — طبقِ قانونِ اول نیوتن، لیوان به دلیلِ اینرسی تمایل دارد در حالتِ سکون بماند؛ هرچه پارچه سریع‌تر کشیده شود، نیروی اصطکاک فرصتِ کمتری برایِ تغییرِ سرعتِ لیوان دارد.
+      </div>
+    </div>
+  );
+}
+
 /* ---------- ۱۵. قانون دوم نیوتن (F=ma) ---------- */
 function VlabNewtonSecondLawExperiment({ onReading }) {
   const [force, setForce] = useState(20);
@@ -20343,6 +20431,108 @@ function VlabNewtonSecondLawExperiment({ onReading }) {
         شتاب (a) = نیرو ÷ جرم = {force} ÷ {mass} ≈ <b>{acceleration.toFixed(2)} m/s²</b>
         <br />
         جابجایی گاری (روی خط‌کش): <b>{pulled ? TRAVEL_M.toFixed(2) : "0.00"} متر</b> در <b>{elapsed.toFixed(1)} ثانیه</b> — با نیروی ثابت، هرچه جرم بیشتر باشد، شتاب و جابجایی کمتر است.
+      </div>
+    </div>
+  );
+}
+
+/* ---------- قانون سوم نیوتن (کنش و واکنش) ---------- */
+function VlabNewtonThirdLawExperiment({ onReading }) {
+  const [mass1, setMass1] = useState(3);
+  const [mass2, setMass2] = useState(6);
+  const [pushed, setPushed] = useState(false);
+  // دو گاری با یک فنرِ فشرده از هم دور می‌شوند. نیرویی که فنر به هر گاری وارد می‌کند دقیقاً برابر و در
+  // خلافِ جهتِ هم است (کنش و واکنش) — پس طولِ دو فلشِ نیرو همیشه با هم برابر است، صرفِ‌نظر از جرمِ
+  // گاری‌ها. اما چون شتاب = نیرو ÷ جرم، گاریِ سبک‌تر شتابِ بیشتری می‌گیرد و در مدتِ یکسان بیشتر جابجا
+  // می‌شود؛ این تفاوتِ ظریفِ بینِ قانونِ دوم (اثرِ نیرو بر هر جسم) و قانونِ سوم (رابطه‌ی خودِ نیروها) را
+  // به‌صورتِ دیداری نشان می‌دهد.
+  const PUSH_T = 1.3;
+  // جابجاییِ هر گاری متناسب با عکسِ جرمش است (d ∝ v ∝ 1/m، چون تکانه‌ی وارد به هر دو گاری برابر است)
+  const DISPLACEMENT_K = 150;
+  const d1 = vlabClamp(DISPLACEMENT_K / mass1, 14, 150);
+  const d2 = vlabClamp(DISPLACEMENT_K / mass2, 14, 150);
+  const wheelSpin1 = pushed ? -520 : 0;
+  const wheelSpin2 = pushed ? 520 : 0;
+
+  useEffect(() => {
+    setPushed(false);
+  }, [mass1, mass2]);
+
+  useEffect(() => {
+    if (onReading)
+      onReading(
+        `جرمِ گاری ۱: ${mass1} کیلوگرم | جرمِ گاری ۲: ${mass2} کیلوگرم | نیروی وارد بر هر دو گاری برابر است | جابجاییِ گاری ۱: ${pushed ? d1.toFixed(0) : 0} | جابجاییِ گاری ۲: ${pushed ? d2.toFixed(0) : 0}`
+      );
+    // eslint-disable-next-line
+  }, [mass1, mass2, pushed]);
+
+  const cartWheel = (cx, cy, r, spin) => (
+    <g style={{ transform: `rotate(${spin}deg)`, transformOrigin: `${cx}px ${cy}px`, transition: "transform 1.3s cubic-bezier(.3,.6,.4,1)" }}>
+      <circle cx={cx} cy={cy} r={r} fill="#1c2540" stroke="#4a4f60" strokeWidth="1.6" />
+      {[0, 45, 90, 135].map((ang) => (
+        <line
+          key={ang}
+          x1={cx - (r - 2) * Math.cos((ang * Math.PI) / 180)}
+          y1={cy - (r - 2) * Math.sin((ang * Math.PI) / 180)}
+          x2={cx + (r - 2) * Math.cos((ang * Math.PI) / 180)}
+          y2={cy + (r - 2) * Math.sin((ang * Math.PI) / 180)}
+          stroke="#6b7399"
+          strokeWidth="1.1"
+        />
+      ))}
+      <circle cx={cx + (r - 2.5)} cy={cy} r="1.8" fill="#e2404f" />
+    </g>
+  );
+
+  const cart = (baseX, spin, color) => (
+    <>
+      {cartWheel(baseX + 14, 156, 9, spin)}
+      {cartWheel(baseX + 43, 156, 9, spin)}
+      <rect x={baseX} y="118" width="57" height="30" rx="5" fill={color} stroke="#8a6d3b" strokeWidth="1.4" />
+    </>
+  );
+
+  return (
+    <div className="vlab-exp">
+      <svg viewBox="0 0 400 230" className="vlab-svg" style={{ background: "#0b1330", borderRadius: "10px" }}>
+        <line x1="0" y1="150" x2="400" y2="150" stroke="#5b4636" strokeWidth="3" />
+        <g style={{ opacity: pushed ? 0 : 1, transition: "opacity 0.3s" }}>
+          {Array.from({ length: 5 }).map((_, i) => (
+            <line key={i} x1={190 + i * 4} y1={126 + (i % 2 === 0 ? -4 : 4)} x2={194 + i * 4} y2={126 + (i % 2 === 0 ? 4 : -4)} stroke="#9fb0d6" strokeWidth="2" />
+          ))}
+        </g>
+        <g style={{ transform: `translateX(${pushed ? -d1 : 0}px)`, transition: `transform ${PUSH_T}s cubic-bezier(.2,.7,.3,1)` }}>
+          {cart(143, wheelSpin1, "#2f6fe2")}
+          <line x1="200" y1="124" x2="174" y2="124" stroke="#2f6fe2" strokeWidth="4" style={{ opacity: pushed ? 1 : 0, transition: "opacity 0.3s" }} />
+          <polygon points="174,118 174,130 164,124" fill="#2f6fe2" style={{ opacity: pushed ? 1 : 0, transition: "opacity 0.3s" }} />
+          <text x="187" y="110" fontSize="11" fill="#2f6fe2" textAnchor="middle" fontWeight="700" style={{ opacity: pushed ? 1 : 0, transition: "opacity 0.3s" }}>
+            F۱
+          </text>
+        </g>
+        <g style={{ transform: `translateX(${pushed ? d2 : 0}px)`, transition: `transform ${PUSH_T}s cubic-bezier(.2,.7,.3,1)` }}>
+          {cart(200, wheelSpin2, "#e2622f")}
+          <line x1="200" y1="124" x2="226" y2="124" stroke="#e2622f" strokeWidth="4" style={{ opacity: pushed ? 1 : 0, transition: "opacity 0.3s" }} />
+          <polygon points="226,118 226,130 236,124" fill="#e2622f" style={{ opacity: pushed ? 1 : 0, transition: "opacity 0.3s" }} />
+          <text x="213" y="110" fontSize="11" fill="#e2622f" textAnchor="middle" fontWeight="700" style={{ opacity: pushed ? 1 : 0, transition: "opacity 0.3s" }}>
+            F۲
+          </text>
+        </g>
+      </svg>
+      <div className="vlab-controls">
+        <div className="vlab-ctrl-col" style={{ flex: 1 }}>
+          <label className="vlab-ctrl-label">جرمِ گاریِ آبی (کیلوگرم): {mass1}</label>
+          <input type="range" min="1" max="10" value={mass1} onChange={(e) => setMass1(+e.target.value)} />
+          <label className="vlab-ctrl-label">جرمِ گاریِ نارنجی (کیلوگرم): {mass2}</label>
+          <input type="range" min="1" max="10" value={mass2} onChange={(e) => setMass2(+e.target.value)} />
+        </div>
+        <button type="button" className="vlab-toggle-btn" onClick={() => setPushed((p) => !p)}>
+          {pushed ? "⟲ بازگرداندنِ گاری‌ها" : "➜ هل دادن"}
+        </button>
+      </div>
+      <div className="vlab-readout">
+        نیرویی که فنر به هر گاری وارد می‌کند برابر و در خلافِ جهتِ هم است (F۱ = −F۲) — طبقِ قانونِ سوم نیوتن.
+        <br />
+        جابجاییِ گاریِ آبی (جرم {mass1}): <b>{pushed ? d1.toFixed(0) : 0} واحد</b> — جابجاییِ گاریِ نارنجی (جرم {mass2}): <b>{pushed ? d2.toFixed(0) : 0} واحد</b> — چون نیرو یکسان است، گاریِ سبک‌تر شتابِ بیشتری می‌گیرد و بیشتر جابجا می‌شود.
       </div>
     </div>
   );
@@ -20804,7 +20994,9 @@ const VLAB_COMPONENTS = {
   photosynthesis: VlabPhotosynthesisExperiment,
   pulley: VlabPulleyExperiment,
   friction: VlabFrictionExperiment,
+  "newton-first-law": VlabNewtonFirstLawExperiment,
   "newton-second-law": VlabNewtonSecondLawExperiment,
+  "newton-third-law": VlabNewtonThirdLawExperiment,
   "led-voltage": VlabLedVoltageExperiment,
   electromagnet: VlabElectromagnetExperiment,
   capacitor: VlabCapacitorExperiment,

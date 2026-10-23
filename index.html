@@ -21579,11 +21579,39 @@ function VlabHeartRateExperiment({ onReading }) {
 /* ---------- ۲۳. پخش مولکولی (انتشار رنگ در آب) ---------- */
 function VlabDiffusionExperiment({ onReading }) {
   const [temp, setTemp] = useState(25);
-  const [elapsed, setElapsed] = useState(10);
-  const diffusionRadius = vlabClamp(Math.sqrt(temp * elapsed) * 1.1, 4, 95);
+  // کاربر گفت نتیجه‌ی قبلی («نوارهای لغزنده») خراب شده و خواستِ واقعی این بود که خودِ آزمایش
+  // مثلِ یک فیلمِ انیمیشن، به‌طورِ واقعی و پیوسته در طولِ زمان پخش شود — نه این‌که با جابه‌جاکردنِ
+  // دستیِ یک نوارِ «زمان» از این حالت به آن حالت بپرد. برایِ همین «زمانِ سپری‌شده» دیگر یک ورودیِ
+  // دستی نیست: با setInterval به‌طورِ واقعی و خودکار جلو می‌رود (دقیقاً همان الگویِ progress
+  // واقعیِ setInterval+ref که در آزمایشِ حل‌شدن/دما استفاده شد)، و فقط دما (که سرعتِ پخش را
+  // تعیین می‌کند) دستِ کاربر می‌ماند.
+  const [elapsed, setElapsed] = useState(0);
+  const [gen, setGen] = useState(0);
+  const tempRef = React.useRef(temp);
+  tempRef.current = temp;
 
   useEffect(() => {
-    if (onReading) onReading(`دما: ${temp}°C | زمان: ${elapsed} ثانیه | شعاع پخش رنگ تقریبی: ${diffusionRadius.toFixed(0)} میلی‌متر`);
+    const iv = setInterval(() => {
+      setElapsed((e) => {
+        const rad = Math.sqrt(tempRef.current * e) * 1.1;
+        if (rad >= 93) return e; // قطره کاملاً پخش و ناپدید شده — فیلم تا «ریختنِ دوباره» متوقف می‌ماند
+        return Math.min(e + 1, 999);
+      });
+    }, 200);
+    return () => clearInterval(iv);
+    // eslint-disable-next-line
+  }, [gen]);
+
+  const diffusionRadius = vlabClamp(Math.sqrt(temp * elapsed) * 1.1, 4, 95);
+  const diffusionDone = diffusionRadius >= 92.5;
+
+  const replay = () => {
+    setElapsed(0);
+    setGen((g) => g + 1);
+  };
+
+  useEffect(() => {
+    if (onReading) onReading(`دما: ${temp}°C | زمان: ${elapsed.toFixed(0)} ثانیه | شعاع پخش رنگ تقریبی: ${diffusionRadius.toFixed(0)} میلی‌متر`);
     // eslint-disable-next-line
   }, [temp, elapsed]);
 
@@ -21817,44 +21845,50 @@ function VlabDiffusionExperiment({ onReading }) {
           {/* مرحله‌ی نهایی: محلولِ کاملاً یک‌نواخت — کلِ ظرف را به‌طورِ یک‌دست آبی می‌کند */}
           <rect x="0" y="0" width="320" height="186" fill="#2f6fe2" opacity={mixFrac * 0.58} />
 
-          {/* صحنه‌ی برخورد/پاششِ قطره — فقط یک‌بار، هنگامِ بازشدنِ آزمایش، روی هرچه بالا ساخته شد
-              پخش می‌شود و خودبه‌خود محو می‌شود؛ هیچ‌چیزِ دیگری در آزمایش تغییر نکرده است. */}
-          <circle cx="160" cy="90" r="2" fill="none" stroke="#5fa8e0" strokeWidth="2.4" style={{ animation: "vlabDiffusionSplashRing 0.65s ease-out forwards" }} />
-          <circle cx="160" cy="90" r="2" fill="none" stroke="#bcdcf7" strokeWidth="1.4" style={{ animation: "vlabDiffusionSplashRing2 0.85s ease-out forwards" }} />
-          <g transform="translate(160,90)">
-            {splashDroplets.map((d) => (
-              <circle
-                key={"splash" + d.key}
-                cx="0"
-                cy="0"
-                r={d.size}
-                fill="#3a7fd9"
-                style={{ animation: `vlabDiffusionSplash${d.key} 0.6s ease-out ${d.delay}s forwards` }}
-              />
-            ))}
+          {/* صحنه‌ی برخورد/پاششِ قطره — یک‌بار هنگامِ بازشدنِ آزمایش و یک‌بار دیگر هر وقت «چکاندنِ
+              دوباره‌ی قطره» زده شود (با key={gen} دوباره mount و دوباره پخش می‌شود) */}
+          <g key={"splash-scene-" + gen}>
+            <circle cx="160" cy="90" r="2" fill="none" stroke="#5fa8e0" strokeWidth="2.4" style={{ animation: "vlabDiffusionSplashRing 0.65s ease-out forwards" }} />
+            <circle cx="160" cy="90" r="2" fill="none" stroke="#bcdcf7" strokeWidth="1.4" style={{ animation: "vlabDiffusionSplashRing2 0.85s ease-out forwards" }} />
+            <g transform="translate(160,90)">
+              {splashDroplets.map((d) => (
+                <circle
+                  key={"splash" + d.key}
+                  cx="0"
+                  cy="0"
+                  r={d.size}
+                  fill="#3a7fd9"
+                  style={{ animation: `vlabDiffusionSplash${d.key} 0.6s ease-out ${d.delay}s forwards` }}
+                />
+              ))}
+            </g>
           </g>
         </g>
 
         <VlabDropperMini x={160} y={16} rotate={0} color="#1a3fa0" />
         <VlabThermometerReal x={278} y={32} temp={temp} minT={0} maxT={90} h={66} />
-        {/* به‌جایِ تکیه‌کردنِ صِرف به نوارِ لغزنده‌ی زمان، یک کرونومترِ عقربه‌ایِ دقیق و زیبا هم اضافه
-            شد — عقربه با زمانِ سپری‌شده (از ۰ تا ۱۲۰ ثانیه) می‌چرخد و عددِ دقیق زیرش خوانده می‌شود */}
-        <VlabStopwatchIcon x={44} y={26} scale={0.95} seconds={elapsed} maxSeconds={120} readout={`${elapsed}s`} />
+        {/* کرونومترِ عقربه‌ایِ واقعی: چون حالا زمان به‌طورِ خودکار و پیوسته جلو می‌رود (نه با نوارِ
+            لغزنده)، عقربه مثلِ یک کرونومترِ واقعی هر ۶۰ ثانیه یک دور کامل می‌زند و عددِ کلِ زمانِ
+            سپری‌شده زیرش نوشته می‌شود */}
+        <VlabStopwatchIcon x={44} y={26} scale={0.95} seconds={elapsed % 60} maxSeconds={60} readout={`${elapsed.toFixed(0)}s`} />
       </svg>
       <div className="vlab-controls">
         <div className="vlab-ctrl-col" style={{ flex: 1 }}>
           <label className="vlab-ctrl-label">دمای آب (°C): {temp}</label>
           <input type="range" min="0" max="90" value={temp} onChange={(e) => setTemp(+e.target.value)} />
-          <label className="vlab-ctrl-label">زمان سپری‌شده (ثانیه): {elapsed}</label>
-          <input type="range" min="1" max="120" value={elapsed} onChange={(e) => setElapsed(+e.target.value)} />
+          {diffusionDone && (
+            <button type="button" className="vlab-toggle-btn" onClick={replay} style={{ marginTop: "8px" }}>
+              💧 چکاندنِ دوباره‌ی قطره
+            </button>
+          )}
         </div>
       </div>
       <div className="vlab-readout">
-        شعاع تقریبی پخش رنگ ≈ <b>{diffusionRadius.toFixed(0)} میلی‌متر</b>
+        شعاع تقریبی پخش رنگ ≈ <b>{diffusionRadius.toFixed(0)} میلی‌متر</b> | زمانِ سپری‌شده ≈ <b>{elapsed.toFixed(0)} ثانیه</b>
         <br />
-        {mixFrac >= 0.98
+        {diffusionDone
           ? "رنگ به‌طورِ کاملاً یک‌نواخت در کلِ ظرف پخش شده است."
-          : "دمای بالاتر یعنی مولکول‌های سریع‌تر، پس انتشار (نفوذ) سریع‌تر اتفاق می‌افتد — در دما/زمانِ بیشتر، رنگ سرانجام به‌طور یک‌نواخت کلِ ظرف را پر می‌کند."}
+          : "دمای بالاتر یعنی مولکول‌های سریع‌تر، پس انتشار (نفوذ) سریع‌تر اتفاق می‌افتد — خودِ زمان به‌طورِ خودکار جلو می‌رود و قطره کم‌کم شکل عوض می‌کند و از بین می‌رود تا کلِ ظرف یک‌نواخت آبی شود."}
       </div>
       <style>{`
         @keyframes vlabDiffusionSway {

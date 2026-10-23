@@ -2542,6 +2542,23 @@ function StudentRegistration({ language, onBack, onContinue, prefillPhone }) {
   const [studentPhoto, setStudentPhoto] = useState(null);
   const [idDocPhoto, setIdDocPhoto] = useState(null);
 
+  const [healthModalOpen, setHealthModalOpen] = useState(false);
+  const [healthNotice, setHealthNotice] = useState("");
+  const [healthLoading, setHealthLoading] = useState(false);
+  const [healthSaving, setHealthSaving] = useState(false);
+  const [healthSaveMsg, setHealthSaveMsg] = useState("");
+  const [healthSaved, setHealthSaved] = useState(false);
+  const [healthHeight, setHealthHeight] = useState("");
+  const [healthWeight, setHealthWeight] = useState("");
+  const [healthAllergy, setHealthAllergy] = useState("");
+  const [healthCondition, setHealthCondition] = useState("");
+  const [healthMedication, setHealthMedication] = useState("");
+  const [healthGlasses, setHealthGlasses] = useState(false);
+  const [healthHearingAid, setHealthHearingAid] = useState(false);
+  const [healthVaccines, setHealthVaccines] = useState([]);
+  const [healthVaccineName, setHealthVaccineName] = useState("");
+  const [healthVaccineDate, setHealthVaccineDate] = useState("");
+
   const readFileAsDataUrl = (setter) => (e) => {
     const file = e.target.files && e.target.files[0];
     if (!file) return;
@@ -2610,6 +2627,90 @@ function StudentRegistration({ language, onBack, onContinue, prefillPhone }) {
     const letterNum = letterToNumberMap[serialLetter] || "";
     if (!letterNum) return "";
     return serialSix + serialTwo + letterNum;
+  };
+
+  const healthRecordsKey = () => "health-records:" + schoolCode.trim() + ":" + skey(className);
+
+  const openHealthModal = async () => {
+    setHealthNotice("");
+    setHealthSaveMsg("");
+    const studentCode = computeStudentCode();
+    if (!isFreeApplicant && schoolCode.trim().length !== 8) {
+      setHealthNotice("ابتدا کد مدرسه (۸ رقم) را در بخش «مدرسه» تکمیل کنید.");
+      return;
+    }
+    if (!className) {
+      setHealthNotice("ابتدا نام کلاس را در بخش «تحصیلی» انتخاب کنید.");
+      return;
+    }
+    if (!studentCode) {
+      setHealthNotice("ابتدا شماره‌سریال شناسنامه را کامل وارد کنید.");
+      return;
+    }
+    setHealthLoading(true);
+    let rec = {};
+    try {
+      const raw = await authStorageGet(healthRecordsKey(), true);
+      const all = raw ? JSON.parse(raw) : {};
+      rec = all[studentCode] || {};
+    } catch (e) {
+      rec = {};
+    }
+    setHealthHeight(rec.height || "");
+    setHealthWeight(rec.weight || "");
+    setHealthAllergy(rec.allergyNote || "");
+    setHealthCondition(rec.condition || "");
+    setHealthMedication(rec.medication || "");
+    setHealthGlasses(!!rec.glasses);
+    setHealthHearingAid(!!rec.hearingAid);
+    setHealthVaccines(rec.vaccinations || []);
+    setHealthVaccineName("");
+    setHealthVaccineDate("");
+    setHealthLoading(false);
+    setHealthModalOpen(true);
+  };
+
+  const addHealthVaccine = () => {
+    if (!healthVaccineName.trim()) return;
+    setHealthVaccines((prev) => [
+      ...prev,
+      { name: healthVaccineName.trim(), date: healthVaccineDate.trim() || new Date().toLocaleDateString("fa-IR") },
+    ]);
+    setHealthVaccineName("");
+    setHealthVaccineDate("");
+  };
+
+  const removeHealthVaccine = (idx) => {
+    setHealthVaccines((prev) => prev.filter((_, i) => i !== idx));
+  };
+
+  const saveHealthRecord = async () => {
+    const studentCode = computeStudentCode();
+    if (!studentCode) return;
+    setHealthSaving(true);
+    try {
+      const raw = await authStorageGet(healthRecordsKey(), true);
+      const all = raw ? JSON.parse(raw) : {};
+      const prevRec = all[studentCode] || {};
+      const nextRec = {
+        ...prevRec,
+        height: healthHeight,
+        weight: healthWeight,
+        allergyNote: healthAllergy.trim(),
+        condition: healthCondition.trim(),
+        medication: healthMedication.trim(),
+        glasses: healthGlasses,
+        hearingAid: healthHearingAid,
+        vaccinations: healthVaccines,
+      };
+      const nextAll = { ...all, [studentCode]: nextRec };
+      await authStorageSet(healthRecordsKey(), JSON.stringify(nextAll), true);
+      setHealthSaved(true);
+      setHealthSaveMsg("✅ پرونده‌ی بهداشتی ذخیره شد.");
+    } catch (e) {
+      setHealthSaveMsg("ذخیره ناموفق بود. دوباره تلاش کنید.");
+    }
+    setHealthSaving(false);
   };
 
   useEffect(() => {
@@ -3820,6 +3921,40 @@ function StudentRegistration({ language, onBack, onContinue, prefillPhone }) {
           cursor: pointer; transition: background .15s ease, border-color .15s ease;
         }
         .psr-health-entry-btn:hover { background: #fff8e8; border-color: #e0a83e; }
+        .psr-health-entry-btn:disabled { background: #f1ede1; color: #9a9484; cursor: not-allowed; border-color: #e2d8bc; }
+        .psr-health-saved-badge { color: #2c6e3f; font-weight: 700; font-size: 12px; margin-right: 8px; }
+        .psr-health-notice { display: block; margin-top: 6px; font-size: 11.5px; color: #a3231b; }
+
+        .psr-health-modal-box { max-width: 640px; }
+        .psr-health-intro { margin: 0; padding: 14px 20px 0; font-size: 12.5px; color: #7a5a1e; line-height: 1.9; flex-shrink: 0; }
+        .psr-health-body { padding: 16px 20px 6px; overflow-y: auto; flex: 1 1 auto; min-height: 0; }
+        .psr-health-section { margin-bottom: 20px; }
+        .psr-health-section:last-child { margin-bottom: 4px; }
+        .psr-health-section-title { color: #1c2540; font-weight: 700; font-size: 13.5px; margin: 0 0 10px; display: flex; align-items: center; gap: 6px; }
+        .psr-health-row { display: flex; flex-wrap: wrap; gap: 14px 16px; margin-bottom: 4px; }
+        .psr-w-height { width: 92px; }
+        .psr-w-weight { width: 92px; }
+        .psr-w-medication { width: 220px; }
+        .psr-w-vaccname { width: 190px; }
+        .psr-w-vaccdate { width: 130px; }
+        .psr-health-checkbox-row { display: flex; align-items: center; gap: 8px; }
+        .psr-health-checkbox-row input { width: 18px; height: 18px; accent-color: #c8862b; cursor: pointer; }
+        .psr-health-checkbox-row label { color: #33395a; font-weight: 600; font-size: 13px; cursor: pointer; }
+        .psr-vacc-list { display: flex; flex-direction: column; gap: 6px; margin-top: 10px; }
+        .psr-vacc-item { display: flex; justify-content: space-between; align-items: center; background: #fffaf0; border: 1px solid rgba(28,37,64,0.08); border-radius: 10px; padding: 8px 12px; font-size: 12.5px; color: #33395a; }
+        .psr-vacc-del { border: none; background: none; color: #a3231b; font-size: 13px; font-weight: 700; cursor: pointer; padding: 0 4px; }
+        .psr-health-empty { color: #8a8060; font-size: 12px; margin: 6px 0 0; }
+        .psr-health-footer { padding: 4px 20px 20px; flex-shrink: 0; }
+        .psr-health-save-btn {
+          width: 100%; height: 48px; border: none; border-radius: 12px;
+          background: linear-gradient(90deg, #c8862b, #e0a83e 45%, #f2c572);
+          color: #241503; font-weight: 800; font-size: 14.5px; cursor: pointer;
+        }
+        .psr-health-save-btn:disabled { opacity: 0.6; cursor: not-allowed; }
+        .psr-health-save-msg { text-align: center; margin: 10px 0 0; font-size: 12.5px; color: #2c6e3f; font-weight: 700; }
+        @media (max-width: 480px) {
+          .psr-w-height, .psr-w-weight, .psr-w-medication, .psr-w-vaccname, .psr-w-vaccdate { width: 100%; }
+        }
 
         .psr-input:disabled, .psr-select:disabled, .psr-textarea:disabled {
           background: #f1ede1; color: #9a9484; cursor: not-allowed;
@@ -4725,12 +4860,172 @@ function StudentRegistration({ language, onBack, onContinue, prefillPhone }) {
                   </div>
                   <div className="psr-field">
                     <label className="psr-label">پرونده بهداشتی دانش‌آموز</label>
-                    <button type="button" className="psr-health-entry-btn">
-                      ورود
-                    </button>
+                    <div>
+                      <button
+                        type="button"
+                        className="psr-health-entry-btn"
+                        disabled={isFreeApplicant || healthLoading}
+                        onClick={openHealthModal}
+                      >
+                        {isFreeApplicant ? "نیاز نیست" : healthLoading ? "در حال بارگذاری..." : healthSaved ? "✓ ویرایش پرونده" : "ورود اطلاعات"}
+                      </button>
+                      {healthNotice && <span className="psr-health-notice">{healthNotice}</span>}
+                    </div>
                   </div>
                 </div>
               </div>
+
+              {healthModalOpen && (
+                <div className="psr-modal-overlay" onClick={() => setHealthModalOpen(false)}>
+                  <div className="psr-modal-box psr-health-modal-box" onClick={(e) => e.stopPropagation()}>
+                    <div className="psr-modal-head">
+                      <h3>🩺 پرونده بهداشتی دانش‌آموز</h3>
+                      <button type="button" className="psr-modal-close" onClick={() => setHealthModalOpen(false)}>
+                        ✕
+                      </button>
+                    </div>
+                    <p className="psr-health-intro">
+                      این اطلاعات کاملاً اختیاری است و فقط برای مراقبت بهتر، به‌صورت محرمانه در اختیار مسئول بهداشت همین مدرسه قرار می‌گیرد.
+                    </p>
+                    <div className="psr-health-body">
+                      <div className="psr-health-section">
+                        <div className="psr-health-section-title">📏 اندازه‌گیری پایه</div>
+                        <div className="psr-health-row">
+                          <div className="psr-field">
+                            <label className="psr-label">قد (سانتی‌متر)</label>
+                            <input
+                              className="psr-input psr-w-height"
+                              type="number"
+                              inputMode="numeric"
+                              value={healthHeight}
+                              onChange={(e) => setHealthHeight(e.target.value)}
+                            />
+                          </div>
+                          <div className="psr-field">
+                            <label className="psr-label">وزن (کیلوگرم)</label>
+                            <input
+                              className="psr-input psr-w-weight"
+                              type="number"
+                              inputMode="numeric"
+                              value={healthWeight}
+                              onChange={(e) => setHealthWeight(e.target.value)}
+                            />
+                          </div>
+                        </div>
+                      </div>
+
+                      <div className="psr-health-section">
+                        <div className="psr-health-section-title">⚠️ حساسیت‌ها و بیماری‌های زمینه‌ای</div>
+                        <div className="psr-health-row">
+                          <div className="psr-field" style={{ flex: "1 1 100%" }}>
+                            <label className="psr-label">حساسیت دارویی یا غذایی (اختیاری)</label>
+                            <textarea
+                              className="psr-textarea"
+                              placeholder="مثلاً حساسیت به بادام‌زمینی یا پنی‌سیلین"
+                              value={healthAllergy}
+                              onChange={(e) => setHealthAllergy(e.target.value)}
+                            />
+                          </div>
+                        </div>
+                        <div className="psr-health-row">
+                          <div className="psr-field" style={{ flex: "1 1 100%" }}>
+                            <label className="psr-label">بیماری خاص یا شرایط زمینه‌ای (اختیاری)</label>
+                            <textarea
+                              className="psr-textarea"
+                              placeholder="مثلاً آسم، دیابت، صرع"
+                              value={healthCondition}
+                              onChange={(e) => setHealthCondition(e.target.value)}
+                            />
+                          </div>
+                        </div>
+                      </div>
+
+                      <div className="psr-health-section">
+                        <div className="psr-health-section-title">💊 دارو و نیازهای ویژه</div>
+                        <div className="psr-health-row">
+                          <div className="psr-field">
+                            <label className="psr-label">داروی مصرفی مستمر (اختیاری)</label>
+                            <input
+                              className="psr-input psr-w-medication"
+                              placeholder="نام دارو"
+                              value={healthMedication}
+                              onChange={(e) => setHealthMedication(e.target.value)}
+                            />
+                          </div>
+                        </div>
+                        <div className="psr-health-row" style={{ marginTop: 10 }}>
+                          <div className="psr-health-checkbox-row">
+                            <input
+                              type="checkbox"
+                              id="psr-health-glasses"
+                              checked={healthGlasses}
+                              onChange={(e) => setHealthGlasses(e.target.checked)}
+                            />
+                            <label htmlFor="psr-health-glasses">استفاده از عینک</label>
+                          </div>
+                          <div className="psr-health-checkbox-row">
+                            <input
+                              type="checkbox"
+                              id="psr-health-hearingaid"
+                              checked={healthHearingAid}
+                              onChange={(e) => setHealthHearingAid(e.target.checked)}
+                            />
+                            <label htmlFor="psr-health-hearingaid">استفاده از سمعک</label>
+                          </div>
+                        </div>
+                      </div>
+
+                      <div className="psr-health-section">
+                        <div className="psr-health-section-title">💉 واکسیناسیون</div>
+                        <div className="psr-health-row">
+                          <div className="psr-field">
+                            <label className="psr-label">نام واکسن</label>
+                            <input
+                              className="psr-input psr-w-vaccname"
+                              placeholder="مثلاً هپاتیت B"
+                              value={healthVaccineName}
+                              onChange={(e) => setHealthVaccineName(e.target.value)}
+                            />
+                          </div>
+                          <div className="psr-field">
+                            <label className="psr-label">تاریخ تزریق</label>
+                            <input
+                              className="psr-input psr-w-vaccdate"
+                              placeholder="مثلاً ۱۴۰۵/۶/۱۶"
+                              value={healthVaccineDate}
+                              onChange={(e) => setHealthVaccineDate(e.target.value)}
+                            />
+                          </div>
+                          <div className="psr-field" style={{ justifyContent: "flex-end" }}>
+                            <button type="button" className="psr-health-entry-btn" onClick={addHealthVaccine}>
+                              افزودن
+                            </button>
+                          </div>
+                        </div>
+                        <div className="psr-vacc-list">
+                          {healthVaccines.map((v, i) => (
+                            <div key={i} className="psr-vacc-item">
+                              <span>{v.name} — {v.date}</span>
+                              <button type="button" className="psr-vacc-del" onClick={() => removeHealthVaccine(i)}>
+                                حذف
+                              </button>
+                            </div>
+                          ))}
+                          {healthVaccines.length === 0 && (
+                            <p className="psr-health-empty">هنوز واکسنی ثبت نشده است.</p>
+                          )}
+                        </div>
+                      </div>
+                    </div>
+                    <div className="psr-health-footer">
+                      <button type="button" className="psr-health-save-btn" disabled={healthSaving} onClick={saveHealthRecord}>
+                        {healthSaving ? "در حال ذخیره..." : "ذخیره‌ی پرونده‌ی بهداشتی"}
+                      </button>
+                      {healthSaveMsg && <p className="psr-health-save-msg">{healthSaveMsg}</p>}
+                    </div>
+                  </div>
+                </div>
+              )}
             </>
           )}
 

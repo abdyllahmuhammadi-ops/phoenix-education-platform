@@ -21366,15 +21366,13 @@ function VlabHeartRateExperiment({ onReading }) {
         {/* دستگاهِ ضربان‌سنج: بدنه‌ی فلزیِ خاکستری + صفحه‌ی سیاهِ ECG با موجِ سبزِ متحرک + عددِ دیجیتال */}
         <rect x="8" y="8" width="164" height="94" rx="8" fill="#232a44" stroke="#4a5280" strokeWidth="2" />
         <rect x="14" y="16" width="150" height="56" rx="4" fill="#061309" />
+        {/* همان درسِ رفعِ باگِ قلب اینجا هم اعمال شد: دیگر هیچ attributeِ ثابتِ transform روی عنصرِ
+            متحرک نیست — کلِ جایگذاری (ازجمله موقعیتِ شروع) از خودِ keyframe می‌آید، تا در هیچ
+            مرورگری با تداخلِ attribute/CSS transform، این خط به‌طورِ کامل ناپدید نشود. */}
         <g clipPath="url(#ecgScreenClip)">
-          <path
-            d={ecgPath}
-            fill="none"
-            stroke="#3ddc6f"
-            strokeWidth="2"
-            transform="translate(14,44)"
-            style={{ animation: `vlabEcgScroll ${pulseDuration * 2}s linear infinite` }}
-          />
+          <g style={{ animation: `vlabEcgScroll ${pulseDuration * 2}s linear infinite` }}>
+            <path d={ecgPath} fill="none" stroke="#3ddc6f" strokeWidth="2" />
+          </g>
         </g>
         <rect x="14" y="78" width="150" height="18" rx="3" fill="#061309" />
         <text x="89" y="92" fontSize="13" fill="#3ddc6f" textAnchor="middle" fontWeight="700" style={{ direction: "ltr", unicodeBidi: "isolate" }}>
@@ -21437,7 +21435,7 @@ function VlabHeartRateExperiment({ onReading }) {
       </div>
       <style>{`
         @keyframes vlabHeartbeat { 0%, 100% { transform: scale(1); } 30% { transform: scale(1.18); } 50% { transform: scale(1); } 70% { transform: scale(1.1); } }
-        @keyframes vlabEcgScroll { from { transform: translate(14px,44px); } to { transform: translate(-136px,44px); } }
+        @keyframes vlabEcgScroll { from { transform: translate(14px,44px); } to { transform: translate(-150px,44px); } }
         @keyframes vlabRunLegs { 0%, 100% { transform: rotate(${ampDeg}deg); } 50% { transform: rotate(-${ampDeg}deg); } }
         @keyframes vlabRunArms { 0%, 100% { transform: rotate(-${ampDeg}deg); } 50% { transform: rotate(${ampDeg}deg); } }
       `}</style>

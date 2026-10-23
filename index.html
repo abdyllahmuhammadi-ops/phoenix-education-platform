@@ -19405,16 +19405,44 @@ function VlabDissolvingExperiment({ onReading }) {
   const jitter = (i, phase) => (stirring ? Math.sin(i * 2.4 + stirCount * 1.7 + phase) * 9 : 0);
   // ارتفاعِ معلق‌شدنِ شبه‌تصادفیِ هر ذره هنگامی که تازه هم‌زده شده (برای حرکتِ به‌تدریج ته‌نشین‌شدن)
   const suspendLift = (i) => 16 + ((i * 29) % 24);
-  // اصلاح: نسخه‌ی قبلیِ «چرخشِ گروهی» با remount کردنِ کلِ گروه روی هر کلیکِ هم‌زدن (key={stirCount}
-  // روی <g> والد) پیاده شده بود، که باعث می‌شد ترانزیشنِ cx/cy هر دانه (که برای حرکتِ نرمِ
-  // بالاپریدن/ته‌نشینی حیاتی است) هر بار قطع/ریست شود و حرکت ناگهانی/ناهماهنگ به‌نظر برسد — دقیقاً
-  // همان چیزی که کاربر «اصلا مناسب نیست» خواند. جایگزین شد با یک «پراکندگیِ چرخشیِ» کاملاً مبتنی بر
-  // همان مکانیزمِ ترانزیشنِ cx/cy که از قبل درست کار می‌کرد (بدونِ هیچ remount یا keyframe جداگانه‌ای):
-  // هر ذره، فقط هنگامِ suspended، به اندازه و جهتِ ثابتِ خودش (با زاویه‌ی طلاییِ ۱۳۷٫۵ درجه برای
-  // پخشِ یکنواخت) به بیرون پرتاب می‌شود و با همان ترانزیشنِ نرمِ موجود برمی‌گردد — نتیجه: واقعاً شبیهِ
-  // پخش‌شدنِ چرخشیِ ذرات در گردابِ آب، بدونِ هیچ پرشِ فنی/قطع‌شدگی.
-  const swirlDX = (i) => Math.cos((i * 137.5 * Math.PI) / 180) * (7 + ((i * 11) % 9));
-  const swirlDY = (i) => Math.sin((i * 137.5 * Math.PI) / 180) * (5 + ((i * 7) % 7));
+
+  // --- چرخشِ واقعیِ ذرات ---
+  // نسخه‌ی قبلی (swirlDX/DY) هر ذره را فقط به یک نقطه‌ی ثابت پرتاب می‌کرد و با ترانزیشنِ CSS خطی
+  // به عقب برمی‌گرداند — این یک رفت-و-برگشتِ مستقیم‌الخط بود، نه چرخش/دَوَران واقعی (CSS transition
+  // فقط بینِ دو مقدار به‌خطِ‌مستقیم درون‌یابی می‌کند، نمی‌تواند مسیرِ دایره‌ای بپیماید). برای چرخشِ
+  // واقعی، یک زاویه باید پیوسته و فریم‌به‌فریم افزایش یابد — دقیقاً همان الگویی که این پروژه برای
+  // انیمیشنِ مولکول‌های آزمایشِ حالت‌های ماده استفاده کرده: requestAnimationFrame + ref (نه state،
+  // تا از رندرِ مکررِ غیرضروری جلوگیری شود) با یک تیکِ throttle‌شده برای رندر مجدد.
+  const spinAngleRef = React.useRef(0);
+  const spinFrameRef = React.useRef(0);
+  const [, setSpinTick] = useState(0);
+  const SPIN_TOTAL_FRAMES = 110; // ≈ ۱٫۸ ثانیه با ۶۰fps
+
+  useEffect(() => {
+    if (stirCount === 0 || material === "روغن") return;
+    spinFrameRef.current = 0;
+    let raf;
+    const step = () => {
+      spinFrameRef.current += 1;
+      spinAngleRef.current += 0.3; // رادیان در هر فریم — طیِ کل بازه چند دورِ کامل می‌چرخد
+      if (spinFrameRef.current % 2 === 0) setSpinTick((t) => t + 1);
+      if (spinFrameRef.current < SPIN_TOTAL_FRAMES) {
+        raf = requestAnimationFrame(step);
+      } else {
+        setSpinTick((t) => t + 1);
+      }
+    };
+    raf = requestAnimationFrame(step);
+    return () => cancelAnimationFrame(raf);
+    // eslint-disable-next-line
+  }, [stirCount, material]);
+
+  const spinProgress = Math.min(1, spinFrameRef.current / SPIN_TOTAL_FRAMES);
+  const spinActive = spinFrameRef.current > 0 && spinFrameRef.current < SPIN_TOTAL_FRAMES;
+  // دامنه‌ی چرخش: صفر در ابتدا/انتها، اوج در میانه — تا ذره از جای خودش شروع و دوباره به همان‌جا برسد
+  const spinEnvelope = Math.sin(Math.PI * spinProgress);
+  const orbitX = (i) => Math.cos(spinAngleRef.current + i * 0.8) * (7 + ((i * 11) % 7)) * spinEnvelope;
+  const orbitY = (i) => Math.sin(spinAngleRef.current + i * 0.8) * (5 + ((i * 7) % 5)) * spinEnvelope;
 
   // توده‌ی ذراتِ شکر/نمک/شن کفِ ظرف — به‌خواستِ کاربر باید انبوه و واقعی به‌نظر برسد (معادل ~۱۰۰ گرم)
   // نه فقط چند نقطه‌ی پراکنده؛ شکلِ تپه‌ای با چیدمانِ شبه‌تصادفیِ ثابت (seed بر پایه‌ی sin) ساخته می‌شود.
@@ -19447,9 +19475,9 @@ function VlabDissolvingExperiment({ onReading }) {
   // کسری از توده که هنوز باقی مانده: شن هیچ‌وقت کم نمی‌شود، شکر/نمک با هر هم‌زدن کوچک‌تر می‌شوند تا کامل حل شوند
   const pileFrac = !dissolves ? 1 : dissolved ? 0 : Math.max(0.12, 1 - stirCount / 3);
   const visiblePile = pileParticles.slice(0, Math.round(pileParticles.length * pileFrac));
-  // برای روغن، همزن نباید تا کفِ ظرف برود (آنجا چیزی برای هم‌زدن نیست)؛ باید داخلِ ناحیه‌ی
-  // روغن+آب (نزدیکِ سطح تا میانه‌ی ظرف) بماند — برای بقیه‌ی مواد که ته‌نشین می‌شوند، تا کف می‌رود.
-  const spoonReach = material === "روغن" ? 62 : 88;
+  // برای روغن، همزن نباید تا کفِ ظرف برود (آنجا چیزی برای هم‌زدن نیست)؛ باید بالاترِ ظرف، نزدیکِ
+  // خودِ لایه‌ی روغن/مرزِ روغن-آب بماند، نه میانه‌ی ظرف — برای بقیه‌ی مواد که ته‌نشین می‌شوند، تا کف می‌رود.
+  const spoonReach = material === "روغن" ? 18 : 88;
 
   return (
     <div className="vlab-exp">
@@ -19485,17 +19513,19 @@ function VlabDissolvingExperiment({ onReading }) {
           <g opacity={0.95}>
             {visiblePile.map((p, i) => {
               const lift = suspended ? suspendLift(i) : 0;
-              const swirlX = suspended ? swirlDX(i) : 0;
-              const swirlY = suspended ? swirlDY(i) : 0;
               return (
                 <circle
                   key={i}
-                  cx={p.x + swirlX + jitter(i, p.row * 0.4)}
-                  cy={p.y - lift - swirlY + jitter(i, p.row * 0.4 + 1) * (suspended ? 0.6 : 0.2)}
+                  cx={p.x + orbitX(i) + jitter(i, p.row * 0.4)}
+                  cy={p.y - lift + orbitY(i) + jitter(i, p.row * 0.4 + 1) * (suspended ? 0.6 : 0.2)}
                   r={p.r}
                   fill={material === "شن" ? "#8a6d3b" : "#fdfdfb"}
                   opacity={material === "شن" ? 0.95 : 0.9}
-                  style={{ transition: `cx ${suspended ? "0.3s" : "1.6s"} ease, cy ${suspended ? "0.3s" : "1.6s"} ease, opacity 0.5s` }}
+                  style={{
+                    transition: spinActive
+                      ? "opacity 0.5s"
+                      : `cx 0.3s, cy ${suspended ? "0.3s" : "1.6s"} ease, opacity 0.5s`,
+                  }}
                 />
               );
             })}

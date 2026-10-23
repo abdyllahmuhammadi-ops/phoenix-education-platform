@@ -18175,6 +18175,29 @@ function VlabStirSpoonMini({ x, y, reach = 88, stirKey = 0, handleTop = -48 }) {
   );
 }
 
+// عکسِ واقعیِ باتریِ نوستالژیکِ «قوه پارس» که کاربر فرستاد — طبقِ درخواستِ او، در همه‌ی آزمایش‌های
+// مداری به‌جای آیکونِ برداری استفاده می‌شود. قطبِ واقعی رعایت شده: دکمه‌ی فلزیِ بالا = +، انتهای
+// تخت = −  (برعکسِ قراردادِ قبلیِ این آزمایشگاه برای باتریِ برداری که بالا را − می‌گرفت — چون حالا
+// عکسِ واقعی داریم، قطبِ واقعیِ فیزیکی اولویت دارد).
+const VLAB_BATTERY_PHOTO = "data:image/jpeg;base64,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";
+function VlabBatteryPhoto({ x, y, width, height, label }) {
+  const w = width || 30;
+  const h = height || 34;
+  return (
+    <g>
+      <image href={VLAB_BATTERY_PHOTO} x={x} y={y} width={w} height={h} preserveAspectRatio="xMidYMid slice" />
+      <rect x={x} y={y} width={w} height={h} fill="none" stroke="#1c2540" strokeWidth="0.6" rx="2" />
+      <text x={x + w / 2} y={y - 3} fontSize="8.5" fill="#eaf0fb" textAnchor="middle" fontWeight="700">+</text>
+      <text x={x + w / 2} y={y + h + 10} fontSize="8.5" fill="#eaf0fb" textAnchor="middle" fontWeight="700">−</text>
+      {label && (
+        <text x={x + w / 2} y={y + h + 21} fontSize="7" fill="#9aa3c0" textAnchor="middle">
+          {label}
+        </text>
+      )}
+    </g>
+  );
+}
+
 /* ---------- ۱. اهرم‌ها و تعادل ---------- */
 function VlabLeverExperiment({ onReading }) {
   const [leftMass, setLeftMass] = useState(5);
@@ -18363,18 +18386,14 @@ function VlabOhmExperiment({ onReading }) {
         <circle cx="222" cy="55" r={30 + t * 34} fill="#f3f6ff" opacity={0.03 + t * 0.32} />
         <circle cx="222" cy="55" r={18 + t * 22} fill="#f3f6ff" opacity={0.06 + t * 0.5} />
 
-        {/* باتری — بدنه با دو سر رنگی و برچسب‌دار تا قطب مثبت و منفی کاملاً مشخص باشد */}
-        <rect x="20" y="72" width="64" height="30" rx="4" fill="#2b2f3a" stroke="#6b7390" strokeWidth="1.5" />
-        <rect x="18" y="78" width="6" height="18" rx="2" fill="#5b7fb8" />
-        <rect x="84" y="80" width="10" height="14" rx="2" fill="#f2c548" />
-        <text x="36" y="93" fontSize="18" fontWeight="bold" fill="#9fc0f2" textAnchor="middle">−</text>
-        <text x="70" y="93" fontSize="18" fontWeight="bold" fill="#f2c548" textAnchor="middle">+</text>
-        <text x="52" y="118" fontSize="10" fill="#aab3cc" textAnchor="middle">باتری {voltage} ولت</text>
+        {/* باتری: عکسِ واقعیِ باتریِ نوستالژیکِ «قوه پارس» — دکمه‌ی فلزیِ بالا = +، ته‌ی تخت = − (قطبِ واقعی) */}
+        <VlabBatteryPhoto x={38} y={60} width={28} height={32} />
+        <text x="52" y="106" fontSize="10" fill="#aab3cc" textAnchor="middle">باتری {voltage} ولت</text>
 
-        {/* سیم از قطب مثبت (طلایی) — به نوک تماس در ته لامپ وصل می‌شود */}
-        <path d="M 94,87 L 112,87 L 112,188 L 222,188 L 222,138" fill="none" stroke="#f2c548" strokeWidth="3" strokeLinecap="round" />
-        {/* سیم از قطب منفی (آبی) — به بدنه‌ی پیچی کنار پایه وصل می‌شود */}
-        <path d="M 18,87 L 10,87 L 10,168 L 204,168 L 204,112" fill="none" stroke="#5b7fb8" strokeWidth="3" strokeLinecap="round" />
+        {/* سیم از قطب مثبت (دکمه‌ی بالا) — به نوک تماس در ته لامپ وصل می‌شود */}
+        <path d="M 52,60 L 52,40 L 112,40 L 112,188 L 222,188 L 222,138" fill="none" stroke="#f2c548" strokeWidth="3" strokeLinecap="round" />
+        {/* سیم از قطب منفی (ته‌ی تخت) — به بدنه‌ی پیچی کنار پایه وصل می‌شود */}
+        <path d="M 52,92 L 52,168 L 204,168 L 204,112" fill="none" stroke="#5b7fb8" strokeWidth="3" strokeLinecap="round" />
 
         {/* پایه‌ی پیچی فلزی لامپ */}
         <rect x="206" y="100" width="32" height="24" fill="#9aa3b0" stroke="#5b6472" strokeWidth="1" />
@@ -18528,30 +18547,26 @@ function VlabSeriesParallelExperiment({ onReading }) {
       <svg viewBox="0 0 320 240" className="vlab-svg" style={{ background: "#0b1330" }}>
         <rect x="0" y="0" width="320" height="240" rx="12" fill="#0b1330" />
 
-        {/* باتری */}
-        <rect x="20" y="72" width="64" height="30" rx="4" fill="#2b2f3a" stroke="#6b7390" strokeWidth="1.5" />
-        <rect x="18" y="78" width="6" height="18" rx="2" fill="#5b7fb8" />
-        <rect x="84" y="80" width="10" height="14" rx="2" fill="#f2c548" />
-        <text x="36" y="93" fontSize="18" fontWeight="bold" fill="#9fc0f2" textAnchor="middle">−</text>
-        <text x="70" y="93" fontSize="18" fontWeight="bold" fill="#f2c548" textAnchor="middle">+</text>
-        <text x="52" y="118" fontSize="10" fill="#aab3cc" textAnchor="middle">باتری {voltage} ولت</text>
+        {/* باتری: عکسِ واقعیِ باتریِ نوستالژیکِ «قوه پارس» — دکمه‌ی فلزیِ بالا = +، ته‌ی تخت = − */}
+        <VlabBatteryPhoto x={38} y={60} width={28} height={32} />
+        <text x="52" y="106" fontSize="10" fill="#aab3cc" textAnchor="middle">باتری {voltage} ولت</text>
 
         {mode === "سری" ? (
           <g>
             {/* سیم طلایی: از قطب مثبت تا نوک تماس لامپ ۱، سپس از بدنه‌ی لامپ ۱ تا نوک لامپ ۲ (مسیر پیوسته‌ی جریان) */}
-            <path d={`M 94,87 L 110,87 L 110,205 L ${c1.tipX},205 L ${c1.tipX},${c1.tipY}`} fill="none" stroke="#f2c548" strokeWidth="3" strokeLinecap="round" />
+            <path d={`M 52,60 L 52,40 L 110,40 L 110,205 L ${c1.tipX},205 L ${c1.tipX},${c1.tipY}`} fill="none" stroke="#f2c548" strokeWidth="3" strokeLinecap="round" />
             <path d={`M ${c1.shellX},${c1.shellY} L ${c1.shellX},215 L ${c2.tipX},215 L ${c2.tipX},${c2.tipY}`} fill="none" stroke="#f2c548" strokeWidth="3" strokeLinecap="round" />
             {/* سیم آبی: از بدنه‌ی لامپ ۲ تا قطب منفی */}
-            <path d={`M ${c2.shellX},${c2.shellY} L ${c2.shellX},225 L 10,225 L 10,87 L 18,87`} fill="none" stroke="#5b7fb8" strokeWidth="3" strokeLinecap="round" />
+            <path d={`M ${c2.shellX},${c2.shellY} L ${c2.shellX},225 L 10,225 L 10,92 L 52,92`} fill="none" stroke="#5b7fb8" strokeWidth="3" strokeLinecap="round" />
           </g>
         ) : (
           <g>
             {/* سیم طلایی: یک شینه‌ی مشترک که قطب مثبت را به نوک تماس هر دو لامپ وصل می‌کند */}
-            <path d={`M 94,87 L 110,87 L 110,205 L ${c2.tipX},205`} fill="none" stroke="#f2c548" strokeWidth="3" strokeLinecap="round" />
+            <path d={`M 52,60 L 52,40 L 110,40 L 110,205 L ${c2.tipX},205`} fill="none" stroke="#f2c548" strokeWidth="3" strokeLinecap="round" />
             <line x1={c1.tipX} y1="205" x2={c1.tipX} y2={c1.tipY} stroke="#f2c548" strokeWidth="3" strokeLinecap="round" />
             <line x1={c2.tipX} y1="205" x2={c2.tipX} y2={c2.tipY} stroke="#f2c548" strokeWidth="3" strokeLinecap="round" />
             {/* سیم آبی: یک شینه‌ی مشترک که قطب منفی را به بدنه‌ی هر دو لامپ وصل می‌کند */}
-            <path d={`M 18,87 L 10,87 L 10,225 L ${c2.shellX},225`} fill="none" stroke="#5b7fb8" strokeWidth="3" strokeLinecap="round" />
+            <path d={`M 52,92 L 10,92 L 10,225 L ${c2.shellX},225`} fill="none" stroke="#5b7fb8" strokeWidth="3" strokeLinecap="round" />
             <line x1={c1.shellX} y1="225" x2={c1.shellX} y2={c1.shellY} stroke="#5b7fb8" strokeWidth="3" strokeLinecap="round" />
             <line x1={c2.shellX} y1="225" x2={c2.shellX} y2={c2.shellY} stroke="#5b7fb8" strokeWidth="3" strokeLinecap="round" />
           </g>
@@ -19425,13 +19440,10 @@ function VlabSimpleSwitchExperiment({ onReading }) {
   return (
     <div className="vlab-exp">
       <svg viewBox="0 -20 320 190" className="vlab-svg" style={{ background: "#0b1330", borderRadius: "10px" }}>
-        <rect x="30" y="70" width="26" height="50" rx="3" fill="#2c2f3a" stroke="#4a4f60" strokeWidth="1" />
-        <rect x="30" y="70" width="26" height="10" fill="#3a9bd5" />
-        <text x="43" y="78" fontSize="9" fill="#fff" textAnchor="middle" fontWeight="700">−</text>
-        <rect x="30" y="110" width="26" height="10" fill="#f2c572" />
-        <text x="43" y="118" fontSize="9" fill="#1c2540" textAnchor="middle" fontWeight="700">+</text>
-        {/* سیم طلایی (+): باتری → پایه‌ی لولای کلید */}
-        <path d="M43,120 L43,160 L150,160 L150,130" fill="none" stroke="#f2c572" strokeWidth="2.6" />
+        {/* باتری: عکسِ واقعیِ باتریِ نوستالژیکِ «قوه پارس» — دکمه‌ی فلزیِ بالا = +، ته‌ی تخت = − */}
+        <VlabBatteryPhoto x={30} y={68} width={26} height={32} />
+        {/* سیم طلایی (+): از دکمه‌ی بالاییِ باتری → پایه‌ی لولای کلید */}
+        <path d="M43,68 L43,55 L150,55 L150,130" fill="none" stroke="#f2c572" strokeWidth="2.6" />
         {/* کلید دوباره طراحی شد: کاربر گفت شکل کلید و سیمِ طرفِ لامپ درست نیست. قبلاً وقتی کلید باز بود،
             هیچ سیمی بین پایه‌ی دومِ کلید و لامپ دیده نمی‌شد (انگار آن سیم اصلاً وجود ندارد)، و لولا/پایه‌ها
             هم فقط دو نقطه‌ی شناور بودند. حالا: یک صفحه‌ی نصبِ کوچک زیرِ لولا، یک پایه‌ی ثابت و ایستاده
@@ -19453,8 +19465,8 @@ function VlabSimpleSwitchExperiment({ onReading }) {
         {!closed && <circle cx="174" cy="88" r="3" fill="#8a6d3b" stroke="#cfd8e8" strokeWidth="0.8" />}
         <text x="168" y="149" fontSize="8" fill="#9aa3c0" textAnchor="middle">کلید</text>
         <VlabMiniBulb cx={240} baseTopY={100} t={closed ? 0.9 : 0} />
-        {/* سیم آبی (−): بدنه‌ی فلزی لامپ → باتری */}
-        <path d="M230,110 L230,40 L43,40 L43,70" fill="none" stroke="#3a9bd5" strokeWidth="2.6" />
+        {/* سیم آبی (−): بدنه‌ی فلزی لامپ → ته‌ی تختِ باتری (قطب منفیِ واقعی) */}
+        <path d="M230,110 L230,40 L36,40 L36,100 L43,100" fill="none" stroke="#3a9bd5" strokeWidth="2.6" />
       </svg>
       <div className="vlab-controls">
         <div className="vlab-ctrl-col">
@@ -20555,15 +20567,15 @@ function VlabLedVoltageExperiment({ onReading }) {
       {/* «مقاومت محافظ» در فهرست وسایل بود ولی هیچ‌وقت کشیده نمی‌شد؛ نماد زیگزاگی واقعی مقاومت بین باتری و
           LED اضافه شد، همراه با زمینه‌ی تیره‌ی هم‌خانواده با بقیه‌ی مدارهای این آزمایشگاه. */}
       <svg viewBox="0 0 320 150" className="vlab-svg" style={{ background: "#0b1330", borderRadius: "10px" }}>
-        <rect x="20" y="55" width="24" height="40" rx="3" fill="#2c2f3a" stroke="#4a4f60" strokeWidth="1" />
-        <rect x="20" y="55" width="24" height="12" fill="#3a9bd5" />
-        <rect x="20" y="83" width="24" height="12" fill="#f2c572" />
-        <line x1="44" y1="75" x2="70" y2="75" stroke="#f2c572" strokeWidth="2.6" />
+        {/* باتری: عکسِ واقعیِ باتریِ نوستالژیکِ «قوه پارس» — دکمه‌ی فلزیِ بالا = +، ته‌ی تخت = − */}
+        <VlabBatteryPhoto x={20} y={53} width={24} height={34} />
+        {/* سیم طلایی (+): از دکمه‌ی بالاییِ باتری → مقاومت محافظ */}
+        <path d="M32,53 L32,35 L70,35 L70,75" fill="none" stroke="#f2c572" strokeWidth="2.6" />
         <path d="M70,75 L75,67 L82,83 L89,67 L96,83 L103,67 L108,75" fill="none" stroke="#f2c572" strokeWidth="2.6" />
         <text x="89" y="56" fontSize="7.5" fill="#9aa3c0" textAnchor="middle">مقاومت محافظ</text>
         <line x1="108" y1="75" x2="130" y2="75" stroke="#f2c572" strokeWidth="2.6" />
-        <line x1="20" y1="115" x2="20" y2="67" stroke="#3a9bd5" strokeWidth="2.6" />
-        <line x1="20" y1="115" x2="280" y2="115" stroke="#3a9bd5" strokeWidth="2.6" />
+        {/* سیم آبی (−): ته‌ی تختِ باتری → ریل برگشت */}
+        <path d="M32,87 L32,115 L280,115" fill="none" stroke="#3a9bd5" strokeWidth="2.6" />
         <line x1="190" y1="75" x2="280" y2="75" stroke="#f2c572" strokeWidth="2.6" />
         <line x1="280" y1="75" x2="280" y2="115" stroke="#3a9bd5" strokeWidth="2.6" />
         <circle cx="145" cy="75" r={15 + (brightness / 100) * 10} fill="#ff5c7a" opacity={isOn ? 0.08 + (brightness / 100) * 0.3 : 0} />
@@ -20604,10 +20616,10 @@ function VlabElectromagnetExperiment({ onReading }) {
     <div className="vlab-exp">
       {/* کاربر خواست: نوکِ میخ آهنی مشخص باشد، گیره‌ها به رنگِ فلزِ استیل و به شکلِ گیره‌ی کاملِ واقعی
           دربیایند، زمینه با بقیه‌ی مدارهای این آزمایشگاه هم‌خانواده باشد، و قطب‌های باتری مشخص شوند.
-          باتری دقیقاً همان الگوی استانداردِ باتری در آزمایش‌های کلید/LED/خازن است (بدنه‌ی تیره، نوارِ
-          آبی=− بالا، نوارِ طلایی=+ پایین) تا با بقیه‌ی مدارها هم‌خانواده بماند؛ سیم‌ها هم هم‌رنگِ قطبِ
-          متصل‌شده رسم شدند. گیره‌ها از رویِ شکلِ واقعیِ یک گیره‌ی کاغذِ دوحلقه‌ای رسم شدند (نه یک قلابِ
-          باز)، با سایه‌روشنِ فلزی برایِ حسِ استیل. */}
+          باتری حالا عکسِ واقعیِ باتریِ نوستالژیکِ «قوه پارس» است (دکمه‌ی فلزیِ بالا=+، ته‌ی تخت=−)،
+          مثلِ همه‌ی مدارهای دیگرِ این آزمایشگاه؛ سیم‌ها هم هم‌رنگِ قطبِ متصل‌شده رسم شدند. گیره‌ها از
+          رویِ شکلِ واقعیِ یک گیره‌ی کاغذِ دوحلقه‌ای رسم شدند (نه یک قلابِ باز)، با سایه‌روشنِ فلزی
+          برایِ حسِ استیل. */}
       <svg viewBox="0 0 320 195" className="vlab-svg" style={{ background: "#0b1330", borderRadius: "10px" }}>
         <defs>
           <linearGradient id="emagNailGrad" x1="0" y1="0" x2="1" y2="0">
@@ -20624,22 +20636,22 @@ function VlabElectromagnetExperiment({ onReading }) {
         {Array.from({ length: Math.min(14, Math.round(turns / 8)) }).map((_, i) => (
           <ellipse key={i} cx="170" cy={34 + i * 5.2} rx="24" ry="5" fill="none" stroke="#c8862b" strokeWidth="2" />
         ))}
-        {/* سیمِ − (آبی) از سرِ بالاییِ سیم‌پیچ به نوارِ آبیِ باتری */}
-        <line x1="146" y1="34" x2="146" y2="20" stroke="#3a9bd5" strokeWidth="2.4" />
-        <line x1="146" y1="20" x2="43" y2="20" stroke="#3a9bd5" strokeWidth="2.4" />
-        <line x1="43" y1="20" x2="43" y2="70" stroke="#3a9bd5" strokeWidth="2.4" />
-        {/* سیمِ + (طلایی) از سرِ دیگرِ سیم‌پیچ دور زده و به نوارِ طلاییِ باتری می‌رسد */}
-        <line x1="194" y1="34" x2="194" y2="20" stroke="#f2c572" strokeWidth="2.4" />
-        <line x1="194" y1="20" x2="252" y2="20" stroke="#f2c572" strokeWidth="2.4" />
-        <line x1="252" y1="20" x2="252" y2="158" stroke="#f2c572" strokeWidth="2.4" />
-        <line x1="252" y1="158" x2="43" y2="158" stroke="#f2c572" strokeWidth="2.4" />
-        <line x1="43" y1="158" x2="43" y2="120" stroke="#f2c572" strokeWidth="2.4" />
-        {/* باتری: همان الگوی استانداردِ باتریِ این آزمایشگاه، با قطب‌هایِ مشخص */}
-        <rect x="30" y="70" width="26" height="50" rx="3" fill="#2c2f3a" stroke="#4a4f60" strokeWidth="1" />
-        <rect x="30" y="70" width="26" height="10" fill="#3a9bd5" />
-        <text x="43" y="78" fontSize="9" fill="#fff" textAnchor="middle" fontWeight="700">−</text>
-        <rect x="30" y="110" width="26" height="10" fill="#f2c572" />
-        <text x="43" y="118" fontSize="9" fill="#1c2540" textAnchor="middle" fontWeight="700">+</text>
+        {/* سیمِ − (آبی) از سرِ بالاییِ سیم‌پیچ، از کنارِ چپِ باتری، به ته‌ی تختِ باتری (قطب منفیِ واقعی) */}
+        <path
+          d="M146,34 L146,20 L43,20 L43,60 L20,60 L20,100 L43,100"
+          fill="none"
+          stroke="#3a9bd5"
+          strokeWidth="2.4"
+        />
+        {/* سیمِ + (طلایی) از سرِ دیگرِ سیم‌پیچ دور زده، از کنارِ راستِ باتری، به دکمه‌ی بالاییِ باتری (قطب مثبتِ واقعی) */}
+        <path
+          d="M194,34 L194,20 L252,20 L252,158 L43,158 L43,104 L60,104 L60,64 L43,64 L43,68"
+          fill="none"
+          stroke="#f2c572"
+          strokeWidth="2.4"
+        />
+        {/* باتری: عکسِ واقعیِ باتریِ نوستالژیکِ «قوه پارس» — دکمه‌ی فلزیِ بالا = +، ته‌ی تخت = − */}
+        <VlabBatteryPhoto x={30} y={68} width={26} height={32} />
         {/* گیره‌های جذب‌شده به نوکِ میخ: شکلِ واقعیِ گیره‌ی دوحلقه‌ای، رنگِ استیل با سایه‌روشنِ فلزی */}
         {Array.from({ length: clipCount }).map((_, i) => (
           <g key={i} transform={`translate(${151 + (i % 5) * 11},${142 + Math.floor(i / 5) * 15}) rotate(${(i % 3) * 6 - 6}) scale(0.62)`}>
@@ -20773,15 +20785,10 @@ function VlabCapacitorExperiment({ onReading }) {
   return (
     <div className="vlab-exp">
       <svg viewBox="0 0 320 175" className="vlab-svg" style={{ background: "#0b1330", borderRadius: "10px" }}>
-        {/* باتری با قطب‌های مشخص: نوارِ آبی=− بالا، نوارِ طلایی=+ پایین (الگوی استانداردِ این آزمایشگاه) */}
-        <rect x="20" y="55" width="24" height="40" rx="3" fill="#2c2f3a" stroke="#4a4f60" strokeWidth="1" />
-        <rect x="20" y="55" width="24" height="12" fill="#3a9bd5" />
-        <text x="32" y="64" fontSize="8" fill="#fff" textAnchor="middle" fontWeight="700">−</text>
-        <rect x="20" y="83" width="24" height="12" fill="#f2c572" />
-        <text x="32" y="92" fontSize="8" fill="#1c2540" textAnchor="middle" fontWeight="700">+</text>
-        {/* سیمِ + از باتری به تماسِ «شارژ»ِ کلید */}
-        <line x1="44" y1="89" x2="60" y2="89" stroke="#f2c572" strokeWidth="2.4" />
-        <line x1="60" y1="89" x2="60" y2="38" stroke="#f2c572" strokeWidth="2.4" />
+        {/* باتری: عکسِ واقعیِ باتریِ نوستالژیکِ «قوه پارس» — دکمه‌ی فلزیِ بالا = +، ته‌ی تخت = − */}
+        <VlabBatteryPhoto x={20} y={53} width={24} height={34} />
+        {/* سیمِ + از دکمه‌ی بالاییِ باتری به تماسِ «شارژ»ِ کلید */}
+        <path d="M32,53 L32,35 L60,35 L60,38" fill="none" stroke="#f2c572" strokeWidth="2.4" />
         <line x1="60" y1="38" x2={throwA.x} y2={throwA.y} stroke="#f2c572" strokeWidth="2.4" />
         <circle cx={throwA.x} cy={throwA.y} r="3.2" fill="#f2c572" opacity={mode === "charging" ? 1 : 0.45} />
         {/* سیمِ کوتاه‌کننده از تماسِ «تخلیه» مستقیم به ریلِ بازگشت (باتری دور زده می‌شود) */}
@@ -20816,7 +20823,8 @@ function VlabCapacitorExperiment({ onReading }) {
         <text x="200" y="110" fontSize="8" fill="#9aa3c0" textAnchor="middle">خازن</text>
         <line x1="200" y1="88" x2="200" y2="120" stroke="#3a9bd5" strokeWidth="2.4" />
         <line x1="200" y1="120" x2="44" y2="120" stroke="#3a9bd5" strokeWidth="2.4" />
-        <line x1="44" y1="120" x2="44" y2="67" stroke="#3a9bd5" strokeWidth="2.4" />
+        {/* سیمِ − از ریلِ بازگشت به ته‌ی تختِ باتری (قطب منفیِ واقعی) */}
+        <path d="M44,120 L44,105 L32,105 L32,87" fill="none" stroke="#3a9bd5" strokeWidth="2.4" />
         {/* ولت‌متر — صفحه‌ی گرد با عقربه‌ای که با درصد شارژ می‌چرخد */}
         <g transform="translate(265,70)">
           <circle cx="0" cy="0" r="26" fill="#1a2140" stroke="#cfd8e8" strokeWidth="2" />

@@ -21103,7 +21103,7 @@ function VlabDensityFloatingExperiment({ onReading }) {
   // نشسته رویِ کف. حالا floorY دقیقاً با همان مختصاتِ کفِ مسیرِ آب یکی شد.
   const waterTopY = 98;
   const floorY = 158;
-  const visualSubmergedFrac = { چوب: 0.1, یخ: 0.4, پلاستیک: 0.6 };
+  const visualSubmergedFrac = { چوب: 0.3, یخ: 0.4, پلاستیک: 0.6 };
   const photoMap = {
     چوب: { src: VLAB_DENSITY_PHOTO_WOOD, ratio: VLAB_DENSITY_PHOTO_WOOD_RATIO, w: 50 },
     یخ: { src: VLAB_DENSITY_PHOTO_ICE, ratio: VLAB_DENSITY_PHOTO_ICE_RATIO, w: 38 },
@@ -21127,6 +21127,14 @@ function VlabDensityFloatingExperiment({ onReading }) {
         <line x1="70" y1="46" x2="70" y2="152" stroke="#eaf3ff" strokeWidth="3" opacity="0.15" />
 
         {isPhoto && <VlabDensityPhoto x={160 - photo.w / 2} y={objY} width={photo.w} src={photo.src} ratio={photo.ratio} />}
+        {/* برایِ اجسامِ شناور، یک موجِ کوچکِ حلقه‌ای درست رویِ خطِ آب، کنارِ جسم کشیده می‌شود — تا
+            به‌وضوح دیده شود که جسم رویِ سطحِ آب نشسته (نه در فضایِ خالیِ بالایِ آن شناور است). */}
+        {floats && (
+          <g opacity="0.55">
+            <ellipse cx="160" cy={waterTopY} rx={photo ? photo.w * 0.9 : 30} ry="3.5" fill="none" stroke="#aee3ff" strokeWidth="1" />
+            <ellipse cx="160" cy={waterTopY} rx={photo ? photo.w * 0.6 : 20} ry="2.2" fill="none" stroke="#aee3ff" strokeWidth="1" opacity="0.7" />
+          </g>
+        )}
         {material === "پلاستیک" && (
           <g>
             <rect x="144" y={objY} width="32" height="34" rx="9" fill="#5fb0e0" stroke="#2f6f97" strokeWidth="1.5" />

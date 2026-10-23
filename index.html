@@ -21317,12 +21317,19 @@ function VlabHeartRateExperiment({ onReading }) {
   const ecgUnit = "l10,0 l4,0 l3,-7 l4,16 l3,-22 l3,13 l4,0 l10,0";
   const ecgPath = `M0,30 ${Array.from({ length: 10 }).map(() => ecgUnit).join(" ")}`;
 
+  // آدمکی که درجا راه می‌رود/می‌دود — سرعت و دامنه‌ی تابِ دست‌وپا با سطحِ فعالیت بالا می‌رود:
+  // در استراحت یک راه‌رفتنِ آرامِ درجا، در فعالیتِ شدید یک دویدنِ تندِ پرتاب.
+  const legDur = vlabClamp(0.95 - activity * 0.065, 0.28, 0.95);
+  const ampDeg = 12 + activity * 2;
+  const runLabel = activity === 0 ? "راه‌رفتنِ آرامِ درجا" : activity <= 3 ? "راه‌رفتنِ تند" : activity <= 7 ? "دویدنِ متوسط" : "دویدنِ شدید";
+
   return (
     <div className="vlab-exp">
       {/* «ساعت یا کرنومتر» و «انگشت برای حس ضربان» که در فهرست وسایل بودند، اضافه شدند؛ به‌جایِ یک
           قلبِ تختِ تک‌رنگ، حالا یک دستگاهِ ضربان‌سنجِ واقعیِ بیمارستانی (صفحه‌ی سیاه با خطِ ECGِ سبزِ
-          متحرک) و یک قلبِ با گرادیانِ سه‌بعدی و رگ‌های خروجی کشیده شد. */}
-      <svg viewBox="0 0 320 180" className="vlab-svg" style={{ background: "#0b1330", borderRadius: "10px" }}>
+          متحرک) و یک قلبِ با گرادیانِ سه‌بعدی و رگ‌های خروجی کشیده شد. ارتفاعِ viewBox به 230 افزایش
+          یافت تا جای کافی برایِ آدمکِ در حالِ راه‌رفتن/دویدن در پایینِ صحنه باز شود. */}
+      <svg viewBox="0 0 320 230" className="vlab-svg" style={{ background: "#0b1330", borderRadius: "10px" }}>
         <defs>
           <radialGradient id="heartGrad" cx="35%" cy="30%" r="75%">
             <stop offset="0%" stopColor="#ff7a5c" />
@@ -21334,17 +21341,26 @@ function VlabHeartRateExperiment({ onReading }) {
           </clipPath>
         </defs>
 
-        {/* قلب: گرادیانِ سه‌بعدی + دو رگِ خروجی از بالا، با انیمیشنِ تپش هم‌زمان با ضربان واقعی */}
-        <g transform="translate(220,95)" style={{ transformOrigin: "0px 0px", animation: `vlabHeartbeat ${pulseDuration}s ease-in-out infinite` }}>
-          <path d="M-8,-38 Q-6,-50 4,-48 L4,-30 Z" fill="#b23a3a" stroke="#7a1f1f" strokeWidth="1" />
-          <path d="M8,-38 Q14,-52 22,-46 L14,-28 Z" fill="#b23a3a" stroke="#7a1f1f" strokeWidth="1" />
-          <path
-            d="M0,45 C-55,5 -52,-38 -18,-42 C0,-44 8,-26 8,-18 C8,-26 20,-46 40,-42 C72,-36 72,5 0,45 Z"
-            fill="url(#heartGrad)"
-            stroke="#7a1f1f"
-            strokeWidth="1.4"
-          />
-          <path d="M-18,-20 C-8,-10 -4,8 4,26" fill="none" stroke="#ff9d85" strokeWidth="2.2" opacity="0.55" strokeLinecap="round" />
+        {/* قلب: گرادیانِ سه‌بعدی + دو رگِ خروجی از بالا، با انیمیشنِ تپش هم‌زمان با ضربان واقعی.
+            نکته‌ی مهم: اگر انیمیشنِ CSSِ «transform» روی همان عنصری اعمال شود که خودش از قبل یک
+            attributeِ «transform="translate(...)"» دارد، مرورگر مقدارِ attribute را کاملاً نادیده
+            می‌گیرد و فقط مقدارِ انیمیشن (اینجا فقط scale، بدونِ translate) اعمال می‌شود — یعنی قلب به
+            مختصاتِ (0,0) صفحه می‌پرد، دقیقاً همان باگی که کاربر دید (قلب فقط یک تکه‌ی کوچک در گوشه‌ی
+            بالا-چپ، روی صفحه‌ی ECG افتاده بود). رفع شد با دو <g> تودرتو: g بیرونی فقط برایِ جایگذاریِ
+            ثابت (translate)، g درونی فقط برایِ انیمیشنِ تپش (scale) — این دو هرگز نباید روی یک عنصر
+            ترکیب شوند. */}
+        <g transform="translate(220,95)">
+          <g style={{ transformOrigin: "0px 0px", animation: `vlabHeartbeat ${pulseDuration}s ease-in-out infinite` }}>
+            <path d="M-8,-38 Q-6,-50 4,-48 L4,-30 Z" fill="#b23a3a" stroke="#7a1f1f" strokeWidth="1" />
+            <path d="M8,-38 Q14,-52 22,-46 L14,-28 Z" fill="#b23a3a" stroke="#7a1f1f" strokeWidth="1" />
+            <path
+              d="M0,45 C-55,5 -52,-38 -18,-42 C0,-44 8,-26 8,-18 C8,-26 20,-46 40,-42 C72,-36 72,5 0,45 Z"
+              fill="url(#heartGrad)"
+              stroke="#7a1f1f"
+              strokeWidth="1.4"
+            />
+            <path d="M-18,-20 C-8,-10 -4,8 4,26" fill="none" stroke="#ff9d85" strokeWidth="2.2" opacity="0.55" strokeLinecap="round" />
+          </g>
         </g>
 
         {/* دستگاهِ ضربان‌سنج: بدنه‌ی فلزیِ خاکستری + صفحه‌ی سیاهِ ECG با موجِ سبزِ متحرک + عددِ دیجیتال */}
@@ -21374,6 +21390,39 @@ function VlabHeartRateExperiment({ onReading }) {
         </g>
 
         <text x="90" y="118" fontSize="8" fill="#9aa3c0" textAnchor="middle">دستگاهِ ضربان‌سنج</text>
+
+        {/* آدمکِ در حالِ راه‌رفتن/دویدن: دست‌وپاها حولِ مفصلِ شانه/رانِ خود (با g جداگانه برایِ هرکدام)
+            با یک چرخشِ رفت‌وبرگشتی می‌چرخند؛ دامنه و سرعتِ این چرخش به سطحِ فعالیت وابسته است، یعنی
+            دقیقاً همان چیزی که باعثِ بالا رفتنِ ضربان‌قلب در بالا شده. سایه‌ی زیرِ پا و خطِ زمین کمک
+            می‌کند آدمک «روی زمین» به نظر برسد نه معلق در هوا. */}
+        <g transform="translate(70,205)">
+          <ellipse cx="0" cy="27" rx="17" ry="4" fill="#000" opacity="0.28" />
+          <line x1="-26" y1="27" x2="26" y2="27" stroke="#3a4472" strokeWidth="2" />
+
+          {/* پای عقب */}
+          <g style={{ transformOrigin: "0px -5px", animation: `vlabRunLegs ${legDur}s ease-in-out infinite`, animationDelay: `${legDur / 2}s` }}>
+            <line x1="0" y1="-5" x2="0" y2="22" stroke="#2f5fb0" strokeWidth="4.5" strokeLinecap="round" />
+          </g>
+          {/* پای جلو */}
+          <g style={{ transformOrigin: "0px -5px", animation: `vlabRunLegs ${legDur}s ease-in-out infinite` }}>
+            <line x1="0" y1="-5" x2="0" y2="22" stroke="#3d72cc" strokeWidth="4.5" strokeLinecap="round" />
+          </g>
+
+          {/* تنه و سر */}
+          <line x1="0" y1="-34" x2="0" y2="-5" stroke="#e8c3a0" strokeWidth="4.5" strokeLinecap="round" />
+          <circle cx="0" cy="-41" r="7" fill="#e8c3a0" stroke="#c8926a" strokeWidth="1" />
+
+          {/* بازویِ عقب */}
+          <g style={{ transformOrigin: "0px -32px", animation: `vlabRunArms ${legDur}s ease-in-out infinite`, animationDelay: `${legDur / 2}s` }}>
+            <line x1="0" y1="-32" x2="0" y2="-10" stroke="#c8926a" strokeWidth="3.5" strokeLinecap="round" />
+          </g>
+          {/* بازویِ جلو */}
+          <g style={{ transformOrigin: "0px -32px", animation: `vlabRunArms ${legDur}s ease-in-out infinite` }}>
+            <line x1="0" y1="-32" x2="0" y2="-10" stroke="#e8c3a0" strokeWidth="3.5" strokeLinecap="round" />
+          </g>
+
+          <text x="0" y="46" fontSize="8" fill="#9aa3c0" textAnchor="middle">{runLabel}</text>
+        </g>
       </svg>
       <div className="vlab-controls">
         <div className="vlab-ctrl-col" style={{ flex: 1 }}>
@@ -21389,6 +21438,8 @@ function VlabHeartRateExperiment({ onReading }) {
       <style>{`
         @keyframes vlabHeartbeat { 0%, 100% { transform: scale(1); } 30% { transform: scale(1.18); } 50% { transform: scale(1); } 70% { transform: scale(1.1); } }
         @keyframes vlabEcgScroll { from { transform: translate(14px,44px); } to { transform: translate(-136px,44px); } }
+        @keyframes vlabRunLegs { 0%, 100% { transform: rotate(${ampDeg}deg); } 50% { transform: rotate(-${ampDeg}deg); } }
+        @keyframes vlabRunArms { 0%, 100% { transform: rotate(-${ampDeg}deg); } 50% { transform: rotate(${ampDeg}deg); } }
       `}</style>
     </div>
   );

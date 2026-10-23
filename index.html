@@ -9707,7 +9707,7 @@ function TeacherScheduleStep({ onBack, onContinue, teachingLevel, mainSubject, t
 const TGB_LETTER_TO_NUM = { "الف": "1", "ب": "2", "ج": "3", "د": "4", "ه": "5", "ی": "6" };
 const TGB_SESSIONS = Array.from({ length: 25 }, (_, i) => i + 1);
 
-function TgbGradebookTable({ term, roster, data, onActivityChange, onScoreChange }) {
+function TgbGradebookTable({ term, roster, data, onActivityChange, onScoreChange, onOpenGrading }) {
   return (
     <div className="tgb-table-wrap">
       <table className="tgb-table">
@@ -9720,7 +9720,7 @@ function TgbGradebookTable({ term, roster, data, onActivityChange, onScoreChange
               <th key={s} className="tgb-th-session">{s}</th>
             ))}
             <th className="tgb-th-score">میانگین مستمر</th>
-            <th className="tgb-th-score">نمره امتحانی</th>
+            <th className="tgb-th-score tgb-th-exam">نمره امتحانی</th>
           </tr>
         </thead>
         <tbody>
@@ -9756,13 +9756,26 @@ function TgbGradebookTable({ term, roster, data, onActivityChange, onScoreChange
                   />
                 </td>
                 <td className="tgb-td-score">
-                  <input
-                    className="tgb-score-input"
-                    inputMode="decimal"
-                    placeholder="۰۰.۰۰"
-                    value={rowData.exam}
-                    onChange={(e) => onScoreChange(rowKey, "exam", e.target.value)}
-                  />
+                  <div className="tgb-exam-score-cell">
+                    <input
+                      className="tgb-score-input"
+                      inputMode="decimal"
+                      placeholder="۰۰.۰۰"
+                      value={rowData.exam}
+                      onChange={(e) => onScoreChange(rowKey, "exam", e.target.value)}
+                    />
+                    <button
+                      type="button"
+                      className="tgb-grade-ai-btn"
+                      title="تصحیح برگه‌ی امتحانی با رهیار"
+                      onClick={() => onOpenGrading(rowKey)}
+                    >
+                      🤖
+                    </button>
+                    {rowData.examGradedByAi && (
+                      <span className="tgb-grade-ai-badge" title="این نمره توسط رهیار تصحیح شده است">✓ رهیار</span>
+                    )}
+                  </div>
                 </td>
               </tr>
             );
@@ -9899,7 +9912,13 @@ function TeacherGradebookStep({ onBack, onFinish, teacherClasses, prefillSchoolC
     (async () => {
       try {
         const r = await window.storage.get("school-letterhead:" + schoolCode, true);
-        setLetterhead((prev) => ({ ...prev, ...JSON.parse(r.value) }));
+        // نکته‌ی مهم: parse باید همین‌جا (پیش از صف‌شدنِ تابع setLetterhead) انجام شود —
+        // اگر داخل تابع به‌روزرسانی‌کننده‌ی setLetterhead باشد، در رندر بعدی اجرا می‌شود،
+        // یعنی بیرون از دامنه‌ی همین try/catch، و خطای JSON.parse(null) کل کامپوننت را کرش می‌کند
+        if (r && r.value) {
+          const parsed = JSON.parse(r.value);
+          setLetterhead((prev) => ({ ...prev, ...parsed }));
+        }
       } catch (e) {
         /* هنوز کسی برای این مدرسه ثبت نکرده است */
       }
@@ -10422,10 +10441,120 @@ function TeacherGradebookStep({ onBack, onFinish, teacherClasses, prefillSchoolC
     setData((prev) => {
       const rowData = prev[studentCode] || { attendance: {}, avg: "", exam: "" };
       const nextRow = { ...rowData, [field]: value };
+      // ویرایش دستیِ معلم روی نمره‌ی امتحانی، نشانِ «تصحیح‌شده توسط رهیار» را پاک می‌کند —
+      // چون دیگر این عدد خروجی خودکار رهیار نیست، نمره‌ای است که خودِ معلم نهایی کرده
+      if (field === "exam") delete nextRow.examGradedByAi;
       const nextData = { ...prev, [studentCode]: nextRow };
       persist(nextData);
       return nextData;
     });
+  };
+
+  // --- تصحیح برگه‌ی امتحانی توسط رهیار ---
+  const [gradingStudentCode, setGradingStudentCode] = useState(null);
+  const [gradingImageBase64, setGradingImageBase64] = useState("");
+  const [gradingImageMediaType, setGradingImageMediaType] = useState("");
+  const [gradingImagePreview, setGradingImagePreview] = useState("");
+  const [gradingLoading, setGradingLoading] = useState(false);
+  const [gradingError, setGradingError] = useState("");
+  const [gradingResult, setGradingResult] = useState(null);
+
+  const openGradingModal = (studentCode) => {
+    setGradingStudentCode(studentCode);
+    setGradingImageBase64("");
+    setGradingImageMediaType("");
+    setGradingImagePreview("");
+    setGradingError("");
+    setGradingResult(null);
+  };
+  const closeGradingModal = () => setGradingStudentCode(null);
+
+  const handleGradingFileChange = (e) => {
+    const file = e.target.files && e.target.files[0];
+    if (!file) return;
+    setGradingError("");
+    setGradingResult(null);
+    const reader = new FileReader();
+    reader.onload = () => {
+      const result = reader.result || "";
+      const match = /^data:(.+);base64,(.*)$/.exec(String(result));
+      if (match) {
+        setGradingImageMediaType(match[1]);
+        setGradingImageBase64(match[2]);
+        setGradingImagePreview(String(result));
+      }
+    };
+    reader.readAsDataURL(file);
+  };
+
+  const applyAiGrading = (studentCode, scoreValue, detail) => {
+    setData((prev) => {
+      const rowData = prev[studentCode] || { attendance: {}, avg: "", exam: "" };
+      const nextRow = { ...rowData, exam: String(scoreValue), examGradedByAi: true };
+      const nextData = { ...prev, [studentCode]: nextRow };
+      persist(nextData);
+      return nextData;
+    });
+  };
+
+  const handleRunGrading = async () => {
+    if (!gradingStudentCode || !gradingImageBase64) return;
+    setGradingLoading(true);
+    setGradingError("");
+    try {
+      // بانک سؤال رسمیِ همین درس/پایه را فقط به‌عنوان مرجعِ کمکی می‌خوانیم؛ نبودش رهیار را
+      // متوقف نمی‌کند — طبق اصل استقلال رهیار از ثبت‌نام/فعالیت معلم واقعی
+      let bankQuestions = [];
+      try {
+        if (schoolCode && className && typeof window !== "undefined" && window.storage) {
+          const gbGrade = pqbGuessGradeFromClassName(className);
+          if (gbGrade) {
+            const r = await window.storage
+              .get("question-bank:" + schoolCode + ":" + skey(gbSubject) + ":" + gbGrade, true)
+              .catch(() => null);
+            bankQuestions = r && r.value ? JSON.parse(r.value) : [];
+          }
+        }
+      } catch (e) {
+        bankQuestions = [];
+      }
+      const result = await pqbGradeExamPaper({
+        subject: gbSubject,
+        imageBase64: gradingImageBase64,
+        imageMediaType: gradingImageMediaType || "image/jpeg",
+        totalScore: PQB_DEFAULT_EXAM_TOTAL_SCORE,
+        bankQuestions,
+      });
+      if (!result) {
+        setGradingError("رهیار نتوانست این برگه را بخواند یا تصحیح کند. دوباره امتحان کنید یا عکس واضح‌تری بارگذاری کنید.");
+        setGradingLoading(false);
+        return;
+      }
+      setGradingResult(result);
+      // نمره‌ی نهایی خودکار است و نیازی به تأیید معلم ندارد — مستقیم در کارنامه ثبت می‌شود
+      applyAiGrading(gradingStudentCode, result.totalScore, result);
+      // طبق اصل سامانه («هر رویداد و نمونه‌سؤال جدید باید ذخیره شود»)، جزئیات کامل تصحیح
+      // برای مراجعه‌ی بعدی (معلم/والدین/تحلیل روند) نگه داشته می‌شود، نه فقط عدد نهایی
+      try {
+        if (typeof window !== "undefined" && window.storage) {
+          const histKey = "exam-grading-history:" + schoolCode + ":" + skey(className) + ":" + gradingStudentCode;
+          const hr = await window.storage.get(histKey, true).catch(() => null);
+          const histList = hr && hr.value ? JSON.parse(hr.value) : [];
+          histList.push({
+            date: new Date().toLocaleString("fa-IR"),
+            subject: gbSubject,
+            term,
+            ...result,
+          });
+          await window.storage.set(histKey, JSON.stringify(histList.slice(-30)), true);
+        }
+      } catch (e) {
+        // تلاش‌محور — شکست در ذخیره‌ی تاریخچه نباید باعث شود نمره در کارنامه ثبت نشود
+      }
+    } catch (e) {
+      setGradingError("خطا در تصحیح. دوباره امتحان کنید.");
+    }
+    setGradingLoading(false);
   };
 
   const emberSeeds = [
@@ -10618,6 +10747,7 @@ function TeacherGradebookStep({ onBack, onFinish, teacherClasses, prefillSchoolC
         .tgb-th-narrow { width: 50px; }
         .tgb-th-session { width: 30px; }
         .tgb-th-score { width: 80px; }
+        .tgb-th-score.tgb-th-exam { width: 104px; }
         .tgb-table td { padding: 4px; border-bottom: 1px solid rgba(28,37,64,0.06); text-align: center; }
         .tgb-td-name { text-align: right; padding-right: 10px; font-size: 12.5px; color: #1c2540; font-weight: 600; white-space: nowrap; }
         .tgb-td-narrow { font-size: 12px; color: #33395a; }
@@ -10628,6 +10758,50 @@ function TeacherGradebookStep({ onBack, onFinish, teacherClasses, prefillSchoolC
         .tgb-activity-input.absent { background: #fdecec; color: #c0392b; border-color: #f3b9b9; font-weight: 800; }
         .tgb-score-input { width: 64px; height: 30px; border-radius: 8px; border: 1px solid #d9c9a0; text-align: center; font-size: 12px; }
         .tgb-empty-row { text-align: center; color: #8a8060; font-size: 13px; padding: 24px 0; }
+        .tgb-exam-score-cell { display: flex; flex-direction: column; align-items: center; gap: 3px; }
+        .tgb-exam-score-cell .tgb-score-input { width: 64px; }
+        .tgb-grade-ai-btn {
+          width: 24px; height: 22px; padding: 0; border-radius: 6px; border: 1px solid #e0a83e;
+          background: #fffaf0; color: #a8741f; font-size: 12px; line-height: 1; cursor: pointer;
+        }
+        .tgb-grade-ai-btn:hover { background: #fdeccb; }
+        .tgb-grade-ai-badge {
+          font-size: 9.5px; font-weight: 800; color: #1f7a3c; background: #eefaf0;
+          border: 1px solid #bfe6c6; border-radius: 999px; padding: 1px 6px; white-space: nowrap;
+        }
+
+        .tgb-grading-modal-overlay {
+          position: fixed; inset: 0; background: rgba(28,21,8,0.55); display: flex;
+          align-items: center; justify-content: center; z-index: 400; padding: 16px;
+        }
+        .tgb-grading-modal-box {
+          background: #fffdf7; border-radius: 16px; max-width: 560px; width: 100%;
+          max-height: 88vh; display: flex; flex-direction: column; overflow: hidden;
+          box-shadow: 0 20px 60px rgba(28,21,8,0.35);
+        }
+        .tgb-grading-modal-head {
+          display: flex; align-items: center; justify-content: space-between; padding: 16px 18px;
+          border-bottom: 1px solid #eddcb0; flex-shrink: 0;
+        }
+        .tgb-grading-modal-title { font-weight: 800; color: #1c2540; font-size: 15px; }
+        .tgb-grading-modal-close { border: none; background: transparent; color: #8a8060; font-size: 18px; cursor: pointer; }
+        .tgb-grading-modal-body { padding: 16px 18px; overflow-y: auto; flex: 1 1 auto; min-height: 0; }
+        .tgb-grading-upload-row { display: flex; flex-direction: column; gap: 10px; margin-bottom: 14px; }
+        .tgb-grading-file-input { font-size: 12.5px; }
+        .tgb-grading-preview-img { max-width: 100%; max-height: 260px; border-radius: 10px; border: 1px solid #e6d9b6; align-self: center; }
+        .tgb-grading-run-btn {
+          width: 100%; height: 46px; border: none; border-radius: 10px;
+          background: linear-gradient(135deg, #f2c572, #c8862b); color: #241503;
+          font-weight: 800; font-size: 13.5px; cursor: pointer;
+        }
+        .tgb-grading-run-btn:disabled { opacity: 0.55; cursor: default; }
+        .tgb-grading-error { color: #c0392b; font-size: 12.5px; font-weight: 700; margin-top: 10px; text-align: center; }
+        .tgb-grading-result-box { margin-top: 16px; border-top: 1px dashed #eddcb0; padding-top: 14px; }
+        .tgb-grading-total { font-weight: 800; color: #2c6e3f; font-size: 15px; margin-bottom: 10px; text-align: center; }
+        .tgb-grading-item { background: #fff8e8; border: 1px solid #eddcb0; border-radius: 10px; padding: 10px 12px; margin-bottom: 8px; font-size: 12.5px; line-height: 1.8; }
+        .tgb-grading-item-score { font-weight: 800; color: #a8741f; }
+        .tgb-grading-overall { background: #eef6f0; border: 1px solid #bfe0c8; border-radius: 10px; padding: 10px 12px; font-size: 12.5px; line-height: 1.8; color: #2c6e3f; margin-top: 10px; }
+        .tgb-grading-hint { font-size: 11.5px; color: #8a8060; line-height: 1.8; margin-bottom: 10px; }
 
         .tgb-finish-btn { width: 100%; margin-top: 20px; height: 50px; border: none; border-radius: 14px; background: #1c2540; color: #fbf7ec; font-weight: 700; font-size: 14.5px; cursor: pointer; }
 
@@ -11057,6 +11231,7 @@ function TeacherGradebookStep({ onBack, onFinish, teacherClasses, prefillSchoolC
                 data={data}
                 onActivityChange={handleActivityChange}
                 onScoreChange={handleScoreChange}
+                onOpenGrading={openGradingModal}
               />
             </>
           )}
@@ -11064,6 +11239,64 @@ function TeacherGradebookStep({ onBack, onFinish, teacherClasses, prefillSchoolC
           <button type="button" className="tgb-finish-btn" onClick={onFinish}>
             بازگشت به داشبورد معلم
           </button>
+
+          {gradingStudentCode && (
+            <div className="tgb-grading-modal-overlay" onClick={closeGradingModal}>
+              <div className="tgb-grading-modal-box" onClick={(e) => e.stopPropagation()}>
+                <div className="tgb-grading-modal-head">
+                  <span className="tgb-grading-modal-title">
+                    🤖 تصحیح برگه‌ی امتحانی —{" "}
+                    {(() => {
+                      const st = roster.find((s) => s.studentCode === gradingStudentCode);
+                      return st ? st.lastName + " " + st.firstName : gradingStudentCode;
+                    })()}
+                  </span>
+                  <button type="button" className="tgb-grading-modal-close" onClick={closeGradingModal}>✖️</button>
+                </div>
+                <div className="tgb-grading-modal-body">
+                  <p className="tgb-grading-hint">
+                    عکس یا اسکنِ برگه‌ی دست‌نویسِ امتحان این دانش‌آموز را بارگذاری کنید. رهیار متن را می‌خواند، آن را تصحیح می‌کند و نمره‌ی نهایی را (از {PQB_DEFAULT_EXAM_TOTAL_SCORE} نمره) مستقیم در کارنامه ثبت می‌کند — بدون نیاز به تأیید جداگانه.
+                  </p>
+                  <div className="tgb-grading-upload-row">
+                    <input type="file" accept="image/*" className="tgb-grading-file-input" onChange={handleGradingFileChange} />
+                    {gradingImagePreview && <img src={gradingImagePreview} alt="پیش‌نمایش برگه" className="tgb-grading-preview-img" />}
+                  </div>
+                  <button
+                    type="button"
+                    className="tgb-grading-run-btn"
+                    disabled={!gradingImageBase64 || gradingLoading}
+                    onClick={handleRunGrading}
+                  >
+                    {gradingLoading ? "در حال خوانش و تصحیح..." : "🤖 تصحیح با رهیار"}
+                  </button>
+                  {gradingError && <p className="tgb-grading-error">⚠️ {gradingError}</p>}
+
+                  {gradingResult && (
+                    <div className="tgb-grading-result-box">
+                      <p className="tgb-grading-total">
+                        نمره‌ی نهایی: {gradingResult.totalScore} از {gradingResult.maxScore || PQB_DEFAULT_EXAM_TOTAL_SCORE} — در کارنامه ثبت شد ✓
+                      </p>
+                      {(gradingResult.breakdown || []).map((b, i) => (
+                        <div key={i} className="tgb-grading-item">
+                          <b>سؤال {b.questionNumber || i + 1}.</b> {b.questionSummary}
+                          <br />
+                          پاسخ دانش‌آموز: {b.studentAnswerSummary}
+                          <br />
+                          <span className="tgb-grading-item-score">نمره: {b.awardedScore} از {b.maxScore}</span>
+                          {b.feedback && <> — {b.feedback}</>}
+                        </div>
+                      ))}
+                      {gradingResult.overallFeedback && (
+                        <div className="tgb-grading-overall">
+                          <b>بازخورد کلی:</b> {gradingResult.overallFeedback}
+                        </div>
+                      )}
+                    </div>
+                  )}
+                </div>
+              </div>
+            </div>
+          )}
         </div>
       </div>
     </div>
@@ -17153,6 +17386,59 @@ async function pqbEnsureBankPopulated(schoolCode, subject, grade) {
     if (freshList.length > 0) return freshList; // کسی زودتر از ما پر کرده — دست نمی‌زنیم
     await window.storage.set(key, JSON.stringify(generated), true);
     return generated;
+  } catch (e) {
+    return null;
+  }
+}
+
+// تصحیح برگه‌ی امتحانی دست‌نویس توسط رهیار — معلم واقعی عکس/اسکن برگه را بارگذاری می‌کند،
+// رهیار متن را می‌خواند، تصحیح می‌کند و نمره‌ی نهایی (خودکار، بدون نیاز به تأیید معلم) می‌دهد.
+// رهیار اینجا هم مستقل است: حتی اگر بانک سؤالِ رسمیِ این درس/پایه خالی یا ناقص باشد (مثلاً چون
+// معلم هنوز ثبت‌نام نکرده)، تصحیح را فقط بر اساس محتوای خودِ برگه و استاندارد کتاب درسی انجام
+// می‌دهد؛ اگر بانک سؤال موجود باشد، فقط به‌عنوان مرجعِ کمکی برای هم‌راستاییِ سطح دشواری استفاده می‌شود.
+async function pqbGradeExamPaper({ subject, imageBase64, imageMediaType, totalScore, bankQuestions }) {
+  if (!imageBase64) return null;
+  try {
+    const maxScore = typeof totalScore === "number" && totalScore > 0 ? totalScore : PQB_DEFAULT_EXAM_TOTAL_SCORE;
+    const refQuestionsText =
+      bankQuestions && bankQuestions.length > 0
+        ? " برای مرجع و هم‌راستاییِ سطح دشواری (نه لزوماً سؤالاتِ همین برگه)، چند نمونه سؤالِ همین درس از بانک رسمی مدرسه در اختیار شماست: " +
+          bankQuestions.slice(0, 8).map((q) => q.text).join(" | ")
+        : "";
+    const response = await fetch("https://api.anthropic.com/v1/messages", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        model: "claude-sonnet-4-6",
+        max_tokens: 3000,
+        system:
+          "شما رهیار، دستیار هوشمند تصحیح برگه‌ی امتحانی برای معلمان ایرانی هستید. یک تصویر از برگه‌ی امتحانی دست‌نویسِ یک دانش‌آموز داده می‌شود. " +
+          "ابتدا متنِ دست‌نویس (سؤال‌ها و پاسخ‌های دانش‌آموز) را با دقت بخوانید، سپس هر پاسخ را بر اساس درس «" +
+          (subject || "عمومی") +
+          "» و استانداردهای کتاب درسی ایران تصحیح و نمره‌گذاری کنید. نمره‌ی کل این برگه باید دقیقاً از " +
+          maxScore +
+          " نمره باشد؛ نمره‌ی هر سؤال باید منطقی و متناسب با دشواری/اهمیت همان سؤال باشد (نه لزوماً مساوی بین سؤالات)، اما جمعِ نمره‌ی سؤالات باید دقیقاً برابر نمره‌ی کل باشد." +
+          refQuestionsText +
+          ' یک شیء JSON با دقیقاً این ساختار برگردان: {"totalScore": عدد, "maxScore": ' +
+          maxScore +
+          ', "breakdown": [{"questionNumber": عدد, "questionSummary": "خلاصه‌ی سؤال", "studentAnswerSummary": "خلاصه‌ی پاسخ دانش‌آموز", "awardedScore": عدد, "maxScore": عدد, "feedback": "بازخورد کوتاه و سازنده"}], "overallFeedback": "یک پاراگراف بازخورد کلی، سازنده و راهنما برای دانش‌آموز"}. اگر بخشی از برگه ناخوانا بود، حدسِ منطقی بزنید و در feedback به‌طور شفاف ذکر کنید. فقط همان شیء JSON را برگردان، بدون هیچ توضیح یا Markdown اضافه.',
+        messages: [
+          {
+            role: "user",
+            content: [
+              { type: "image", source: { type: "base64", media_type: imageMediaType || "image/jpeg", data: imageBase64 } },
+              { type: "text", text: "لطفاً این برگه‌ی امتحانی را تصحیح و نمره‌گذاری کن." },
+            ],
+          },
+        ],
+      }),
+    });
+    const data = await response.json();
+    const rawText = data && data.content && data.content[0] && data.content[0].text ? data.content[0].text : "";
+    const cleaned = rawText.replace(/```json|```/g, "").trim();
+    const parsed = JSON.parse(cleaned);
+    if (typeof parsed.totalScore !== "number") return null;
+    return parsed;
   } catch (e) {
     return null;
   }

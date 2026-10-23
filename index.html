@@ -21712,6 +21712,26 @@ function VlabDiffusionExperiment({ onReading }) {
     };
   });
 
+  // صحنه‌ی برخورد/پاششِ قطره: علاوه بر همه‌چیزِ بالا (که بدونِ تغییر می‌ماند)، یک انیمیشنِ
+  // یک‌بارمصرف (نه بی‌نهایت، با fill:forwards) که فقط هنگامِ بازشدنِ آزمایش یک‌بار پخش می‌شود —
+  // دو حلقه‌ی ضربه که منبسط و محو می‌شوند + چند قطره‌ی ریزِ پاشیده‌شونده که به بیرون می‌پرند.
+  // همانندِ driftParticles، برایِ پرهیز از تداخلِ attributeِ transform با CSS animation (قانونِ
+  // ثابتِ این آزمایشگاه)، قطره‌ها در یک <g> با transform attribute ثابت قرار می‌گیرند و خودشان
+  // فقط با CSS transform حرکت می‌کنند.
+  const splashDroplets = Array.from({ length: 10 }).map((_, i) => {
+    const ang = seeded(i, 70) * Math.PI * 2;
+    const dist = 16 + seeded(i, 71) * 22;
+    const ex = Math.cos(ang) * dist;
+    const ey = Math.sin(ang) * dist * 0.75 - 6;
+    return {
+      key: i,
+      ex,
+      ey,
+      size: vlabClamp(2.4 - seeded(i, 72) * 1.4, 1, 2.4),
+      delay: seeded(i, 73) * 0.08,
+    };
+  });
+
   return (
     <div className="vlab-exp">
       {/* قطره‌چکان (برای چکاندن رنگ خوراکی) و دماسنج که در فهرست وسایل بودند، اضافه شدند */}
@@ -21796,6 +21816,23 @@ function VlabDiffusionExperiment({ onReading }) {
           <path d={blobPath(160, 90, coreR * 0.55, 13)} fill="#5fa8e0" opacity={0.55 * patternOpacity} />
           {/* مرحله‌ی نهایی: محلولِ کاملاً یک‌نواخت — کلِ ظرف را به‌طورِ یک‌دست آبی می‌کند */}
           <rect x="0" y="0" width="320" height="186" fill="#2f6fe2" opacity={mixFrac * 0.58} />
+
+          {/* صحنه‌ی برخورد/پاششِ قطره — فقط یک‌بار، هنگامِ بازشدنِ آزمایش، روی هرچه بالا ساخته شد
+              پخش می‌شود و خودبه‌خود محو می‌شود؛ هیچ‌چیزِ دیگری در آزمایش تغییر نکرده است. */}
+          <circle cx="160" cy="90" r="2" fill="none" stroke="#5fa8e0" strokeWidth="2.4" style={{ animation: "vlabDiffusionSplashRing 0.65s ease-out forwards" }} />
+          <circle cx="160" cy="90" r="2" fill="none" stroke="#bcdcf7" strokeWidth="1.4" style={{ animation: "vlabDiffusionSplashRing2 0.85s ease-out forwards" }} />
+          <g transform="translate(160,90)">
+            {splashDroplets.map((d) => (
+              <circle
+                key={"splash" + d.key}
+                cx="0"
+                cy="0"
+                r={d.size}
+                fill="#3a7fd9"
+                style={{ animation: `vlabDiffusionSplash${d.key} 0.6s ease-out ${d.delay}s forwards` }}
+              />
+            ))}
+          </g>
         </g>
 
         <VlabDropperMini x={160} y={16} rotate={0} color="#1a3fa0" />
@@ -21821,6 +21858,25 @@ function VlabDiffusionExperiment({ onReading }) {
           0%, 100% { transform: rotate(-3.5deg); }
           50% { transform: rotate(3.5deg); }
         }
+        @keyframes vlabDiffusionSplashRing {
+          0% { r: 2; stroke-opacity: 0.9; stroke-width: 3; }
+          100% { r: 34; stroke-opacity: 0; stroke-width: 0.4; }
+        }
+        @keyframes vlabDiffusionSplashRing2 {
+          0% { r: 2; stroke-opacity: 0.7; stroke-width: 2; }
+          100% { r: 46; stroke-opacity: 0; stroke-width: 0.3; }
+        }
+        ${splashDroplets
+          .map(
+            (d) => `
+          @keyframes vlabDiffusionSplash${d.key} {
+            0% { transform: translate(0px, 0px); opacity: 1; }
+            60% { opacity: 0.9; }
+            100% { transform: translate(${d.ex.toFixed(1)}px, ${d.ey.toFixed(1)}px); opacity: 0; }
+          }
+        `
+          )
+          .join("")}
         ${driftParticles
           .map(
             (p) => `

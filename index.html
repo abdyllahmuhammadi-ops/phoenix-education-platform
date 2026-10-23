@@ -21599,6 +21599,8 @@ function VlabDiffusionExperiment({ onReading }) {
     const dist = seeded(i, 2) * diffusionRadius;
     return { x: 160 + Math.cos(ang) * dist, y: 90 + Math.sin(ang) * dist * 0.85, r: vlabClamp(3.2 - dist / 40, 0.6, 3.2), o: vlabClamp(1 - dist / (diffusionRadius + 8), 0.12, 0.9) };
   });
+  // dyeDots هم مثلِ روبان‌ها فقط بعد از شروعِ پخش (نه هم‌زمان با رشدِ تنهاییِ لکه) باید دیده شوند —
+  // مقدارِ ribbonFrac پس از تعریفِ coreR/ribbonFrac پایین‌تر روی opacity‌شان ضرب می‌شود.
 
   // الهام‌گرفته از فیلمِ واقعیِ قطره‌چکانیِ رنگ در آب که کاربر فرستاد؛ بعد از بازخوردِ کاربر روی
   // نسخه‌ی اول («شبیهِ خطوطِ خورشیدی نشود») اصلاح شد: آن نسخه همه‌ی رشته‌ها را از دقیقاً یک نقطه‌ی
@@ -21622,10 +21624,33 @@ function VlabDiffusionExperiment({ onReading }) {
     }
     return d + "Z";
   };
-  const coreR = vlabClamp(diffusionRadius * 0.3, 7, 22);
+  // لکه‌ی مرکزی باید همیشه و به‌طورِ کاملاً محسوس با شعاعِ پخش بزرگ‌تر شود — نسخه‌ی قبلی به‌خاطرِ
+  // کلمپ‌شدنِ زودهنگام (۷ تا ۲۲) در بازه‌ی بزرگی از دما/زمانِ کم عملاً «ثابت» به‌نظر می‌رسید.
+  const coreR = vlabClamp(5 + diffusionRadius * 0.28, 5, 28);
+  // روبان‌ها نباید از همان ابتدا ظاهر شوند؛ اول لکه به‌تنهایی آهسته‌آهسته بزرگ می‌شود و فقط پس از
+  // آن‌که اندکی رشد کرد (شعاعِ پخش از ~۱۵ عبور کند) روبان‌های نامنظم شروع به بیرون‌زدن و درازشدن
+  // می‌کنند — یک smoothstep ساده برایِ گذارِ نرم (نه پرش ناگهانی).
+  const ribbonT = vlabClamp((diffusionRadius - 15) / 35, 0, 1);
+  const ribbonFrac = ribbonT * ribbonT * (3 - 2 * ribbonT);
   // کشیدگیِ نامتقارنِ ابرِ زمینه — یک بیضیِ کج و نامنظم، نه یک دایره‌ی کاملاً کروی
   const cloudStretchX = 1.15 + seeded(1, 40) * 0.35;
   const cloudStretchY = 0.75 + seeded(2, 41) * 0.3;
+
+  // خودِ آبِ داخلِ ظرف هم باید در طولِ پخش، آهسته‌آهسته و به‌شکلی نامنظم (نه یک‌دست و نه فقط دورِ
+  // لکه‌ی مرکزی) کم‌کم به‌رنگِ آبی درآید — تکه‌ابرهای محوِ پراکنده در سراسرِ ظرف که هرکدام در
+  // آستانه‌ی شعاعِ پخشِ متفاوتی «روشن» می‌شوند (seeded random)، تا حسِ رنگ‌گرفتنِ تدریجی و
+  // ناهمگنِ آب را بدهد؛ نزدیکِ انتها خودشان تقریباً کاملاً روشن می‌شوند و با rectِ یک‌نواختِ
+  // mixFrac بی‌درز ادغام می‌شوند.
+  const waterPatches = Array.from({ length: 26 }).map((_, i) => {
+    const px = 76 + seeded(i, 60) * 172;
+    const py = 40 + seeded(i, 61) * 106;
+    const r = 15 + seeded(i, 62) * 20;
+    const actAt = seeded(i, 63) * 52;
+    const maxOp = 0.2 + seeded(i, 64) * 0.28;
+    const pt = vlabClamp((diffusionRadius - actAt) / 16, 0, 1);
+    const sm = pt * pt * (3 - 2 * pt);
+    return { key: i, px, py, r, o: sm * maxOp };
+  });
 
   const ribbons = Array.from({ length: 16 }).map((_, i) => {
     const coreAngle = seeded(i, 7) * Math.PI * 2;
@@ -21633,7 +21658,7 @@ function VlabDiffusionExperiment({ onReading }) {
     let x = 160 + Math.cos(coreAngle) * startDist;
     let y = 90 + Math.sin(coreAngle) * startDist * 0.85;
     let dir = coreAngle + (seeded(i, 17) - 0.5) * 1.6;
-    const totalReach = diffusionRadius * (0.72 + seeded(i, 9) * 0.6);
+    const totalReach = diffusionRadius * (0.72 + seeded(i, 9) * 0.6) * ribbonFrac;
     const pts = [[x, y]];
     for (let s = 0; s < 3; s++) {
       dir += (seeded(i, 20 + s * 3) - 0.5) * 1.7;
@@ -21705,6 +21730,10 @@ function VlabDiffusionExperiment({ onReading }) {
             <stop offset="55%" stopColor="#2347b0" />
             <stop offset="100%" stopColor="#13285f" />
           </radialGradient>
+          {/* برایِ تکه‌ابرهای محوِ رنگ‌گرفتنِ آب — لبه‌های نرم، نه دایره‌های تیزِ مصنوعی */}
+          <filter id="diffusionSoftBlur" x="-60%" y="-60%" width="220%" height="220%">
+            <feGaussianBlur stdDeviation="7" />
+          </filter>
         </defs>
         {/* بشرِ شیشه‌ای: طبقِ خواسته‌ی کاربر، خودِ آب سفید در نظر گرفته شد (نه آبیِ تیره) تا رنگِ
             آبیِ اضافه‌شده واضح و زیبا دیده شود — دقیقاً مثلِ زمینه‌ی سفیدِ فیلمِ واقعیِ قطره‌چکان */}
@@ -21721,10 +21750,15 @@ function VlabDiffusionExperiment({ onReading }) {
             بدنه‌ی بشر محصور شده‌اند. در دما/زمانِ بالا، این الگو محو می‌شود و به‌جایش یک رنگِ کاملاً
             یک‌نواخت کلِ ظرف را پر می‌کند (مرحله‌ی نهاییِ واقعیِ انتشار). */}
         <g clipPath="url(#diffusionGlassClip)">
+          <g filter="url(#diffusionSoftBlur)">
+            {waterPatches.map((p) => (
+              <circle key={"patch" + p.key} cx={p.px} cy={p.py} r={p.r} fill="#2f6fe2" opacity={p.o} />
+            ))}
+          </g>
           <path
             d={blobPath(160, 90, diffusionRadius, 3, cloudStretchX, cloudStretchY)}
             fill="rgba(47,111,226,0.10)"
-            opacity={patternOpacity}
+            opacity={patternOpacity * ribbonFrac}
           />
           {ribbons.map((r) => (
             <g
@@ -21732,7 +21766,7 @@ function VlabDiffusionExperiment({ onReading }) {
               style={{
                 transformOrigin: `${r.pivotX.toFixed(1)}px ${r.pivotY.toFixed(1)}px`,
                 animation: `vlabDiffusionSway ${r.swayDur}s ease-in-out ${r.swayDelay}s infinite`,
-                opacity: patternOpacity,
+                opacity: patternOpacity * ribbonFrac,
               }}
             >
               {r.segs.map((s, si) => (
@@ -21741,10 +21775,10 @@ function VlabDiffusionExperiment({ onReading }) {
             </g>
           ))}
           {dyeDots.map((d, i) => (
-            <circle key={i} cx={d.x} cy={d.y} r={d.r} fill="#2f6fe2" opacity={d.o * patternOpacity} />
+            <circle key={i} cx={d.x} cy={d.y} r={d.r} fill="#2f6fe2" opacity={d.o * patternOpacity * ribbonFrac} />
           ))}
           {/* ذراتِ ریزِ در حالِ لغزش — حرکتِ پیوسته و نامرتب در همه‌ی جهت‌ها */}
-          <g transform="translate(160,90)" style={{ opacity: patternOpacity }}>
+          <g transform="translate(160,90)" style={{ opacity: patternOpacity * ribbonFrac }}>
             {driftParticles.map((p) => (
               <circle
                 key={"drift" + p.key}

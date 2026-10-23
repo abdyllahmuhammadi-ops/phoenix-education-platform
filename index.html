@@ -21600,10 +21600,61 @@ function VlabDiffusionExperiment({ onReading }) {
     return { x: 160 + Math.cos(ang) * dist, y: 90 + Math.sin(ang) * dist * 0.85, r: vlabClamp(3.2 - dist / 40, 0.6, 3.2), o: vlabClamp(1 - dist / (diffusionRadius + 8), 0.12, 0.9) };
   });
 
+  // الهام‌گرفته از فیلمِ واقعیِ قطره‌چکانیِ رنگ در آب که کاربر فرستاد: به‌جایِ یک ابرِ کاملاً صافِ
+  // گرادیانی، رنگ به‌شکلِ رشته‌ها/تارهایِ کِش‌دار و پیچ‌خورده (مثلِ دودِ غلیظ در آب) از مرکز به
+  // بیرون می‌رود — ریشه‌ی هر رشته تیره (نزدیکِ رنگِ غلیظِ اصلی) و نوکش روشن‌تر/محوتر می‌شود، دقیقاً
+  // همان الگویی که در فیلم دیده می‌شود. مرکزِ قطره هم به‌جایِ دایره‌ی کاملاً صاف، یک لکه‌ی کمی
+  // نامنظم (ارگانیک) است چون قطره‌ی واقعیِ رنگ هیچ‌وقت دایره‌ی کاملاً صاف نیست.
+  const blobPath = (cx, cy, baseR, salt) => {
+    const n = 10;
+    const pts = Array.from({ length: n }).map((_, i) => {
+      const ang = (i / n) * Math.PI * 2;
+      const r = baseR * (0.78 + seeded(i, salt) * 0.42);
+      return [cx + Math.cos(ang) * r, cy + Math.sin(ang) * r * 0.85];
+    });
+    let d = `M${(pts[0][0] + pts[n - 1][0]) / 2},${(pts[0][1] + pts[n - 1][1]) / 2} `;
+    for (let i = 0; i < n; i++) {
+      const [x1, y1] = pts[i];
+      const [x2, y2] = pts[(i + 1) % n];
+      d += `Q${x1},${y1} ${(x1 + x2) / 2},${(y1 + y2) / 2} `;
+    }
+    return d + "Z";
+  };
+  const coreR = vlabClamp(diffusionRadius * 0.3, 7, 22);
+  const tendrils = Array.from({ length: 18 }).map((_, i) => {
+    const cx = 160, cy = 90;
+    const angle = seeded(i, 7) * Math.PI * 2;
+    const wobble = (seeded(i, 8) - 0.5) * 1.8;
+    const reach = diffusionRadius * (0.75 + seeded(i, 9) * 0.6);
+    const midAng = angle + wobble * 0.55;
+    const midR = reach * 0.5;
+    const mx = cx + Math.cos(midAng) * midR;
+    const my = cy + Math.sin(midAng) * midR * 0.85;
+    const endAng = angle + wobble;
+    const ex = cx + Math.cos(endAng) * reach;
+    const ey = cy + Math.sin(endAng) * reach * 0.85;
+    const rootX = cx + Math.cos(angle) * reach * 0.28;
+    const rootY = cy + Math.sin(angle) * reach * 0.28 * 0.85;
+    return {
+      key: i,
+      root: `M${cx},${cy} L${rootX},${rootY}`,
+      wisp: `M${cx},${cy} Q${mx},${my} ${ex},${ey}`,
+      width: vlabClamp(2.4 - diffusionRadius / 110, 0.9, 2.4),
+      op: vlabClamp(0.6 - diffusionRadius / 300, 0.3, 0.6),
+    };
+  });
+
   return (
     <div className="vlab-exp">
       {/* قطره‌چکان (برای چکاندن رنگ خوراکی) و دماسنج که در فهرست وسایل بودند، اضافه شدند */}
       <svg viewBox="0 -16 320 186" className="vlab-svg" style={{ background: "#0b1330", borderRadius: "10px" }}>
+        <defs>
+          {/* دقیقاً همان خطوطِ بدنه‌ی بشر، تا رشته‌های رنگ هیچ‌وقت — حتی در بیشینه‌ی شعاعِ پخش —
+              از دیواره‌ی شیشه بیرون نزنند */}
+          <clipPath id="diffusionGlassClip">
+            <path d="M58,30 L58,150 Q58,158 66,158 L254,158 Q262,158 262,150 L262,30 Z" />
+          </clipPath>
+        </defs>
         {/* بشرِ شیشه‌ای: بدنه‌ی شفاف با خطِ برجستگیِ نور و خط‌های مدرج، به‌جایِ یک مستطیلِ تخت */}
         <path d="M58,30 L58,150 Q58,158 66,158 L254,158 Q262,158 262,150 L262,30" fill="#16335c" opacity="0.4" stroke="#8fb4e0" strokeWidth="2" />
         <path d="M58,30 L58,150 Q58,158 66,158 L254,158 Q262,158 262,150 L262,30" fill="none" stroke="#8fb4e0" strokeWidth="2" />
@@ -21612,13 +21663,23 @@ function VlabDiffusionExperiment({ onReading }) {
         ))}
         <line x1="68" y1="34" x2="68" y2="150" stroke="#eaf3ff" strokeWidth="4" opacity="0.18" />
 
-        {/* ابرِ نرمِ رنگ (مرکز پررنگ، لبه‌ها محو) + دانه‌های پراکنده‌ی رنگ */}
-        <circle cx="160" cy="90" r={diffusionRadius} fill="rgba(47,111,226,0.22)" />
-        <circle cx="160" cy="90" r={diffusionRadius * 0.55} fill="rgba(47,111,226,0.32)" />
-        {dyeDots.map((d, i) => (
-          <circle key={i} cx={d.x} cy={d.y} r={d.r} fill="#2f6fe2" opacity={d.o} />
-        ))}
-        <circle cx="160" cy="90" r="5" fill="#1a3fa0" />
+        {/* ابرِ نرمِ زمینه (برایِ عمق) + رشته‌های کِش‌دارِ رنگ (ریشه‌ی تیره → نوکِ روشن) + دانه‌های
+            پراکنده‌ی رنگ — الهام‌گرفته از فیلمِ واقعیِ قطره‌چکانیِ رنگ در آب؛ همه داخلِ clipPathِ
+            بدنه‌ی بشر محصور شده‌اند */}
+        <g clipPath="url(#diffusionGlassClip)">
+          <circle cx="160" cy="90" r={diffusionRadius} fill="rgba(47,111,226,0.14)" />
+          {tendrils.map((t) => (
+            <g key={t.key}>
+              <path d={t.wisp} fill="none" stroke="#5fa8e0" strokeWidth={t.width} strokeLinecap="round" opacity={t.op} />
+              <path d={t.root} fill="none" stroke="#1a3fa0" strokeWidth={t.width + 0.6} strokeLinecap="round" opacity={vlabClamp(t.op + 0.2, 0.25, 0.8)} />
+            </g>
+          ))}
+          {dyeDots.map((d, i) => (
+            <circle key={i} cx={d.x} cy={d.y} r={d.r} fill="#2f6fe2" opacity={d.o} />
+          ))}
+          <path d={blobPath(160, 90, coreR, 11)} fill="#1a3fa0" />
+          <path d={blobPath(160, 90, coreR * 0.6, 13)} fill="#2f55c4" opacity="0.8" />
+        </g>
 
         <VlabDropperMini x={160} y={16} rotate={0} color="#1a3fa0" />
         <VlabThermometerMini x={275} y={40} temp={temp} minT={0} maxT={90} h={60} />

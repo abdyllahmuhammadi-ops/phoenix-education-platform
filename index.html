@@ -21837,6 +21837,9 @@ function VlabDiffusionExperiment({ onReading }) {
 
         <VlabDropperMini x={160} y={16} rotate={0} color="#1a3fa0" />
         <VlabThermometerReal x={278} y={32} temp={temp} minT={0} maxT={90} h={66} />
+        {/* به‌جایِ تکیه‌کردنِ صِرف به نوارِ لغزنده‌ی زمان، یک کرونومترِ عقربه‌ایِ دقیق و زیبا هم اضافه
+            شد — عقربه با زمانِ سپری‌شده (از ۰ تا ۱۲۰ ثانیه) می‌چرخد و عددِ دقیق زیرش خوانده می‌شود */}
+        <VlabStopwatchIcon x={44} y={26} scale={0.95} seconds={elapsed} maxSeconds={120} readout={`${elapsed}s`} />
       </svg>
       <div className="vlab-controls">
         <div className="vlab-ctrl-col" style={{ flex: 1 }}>

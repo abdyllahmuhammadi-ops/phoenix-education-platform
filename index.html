@@ -21606,7 +21606,9 @@ function VlabDiffusionExperiment({ onReading }) {
     // eslint-disable-next-line
   }, [gen]);
 
-  const diffusionRadius = vlabClamp(Math.sqrt(temp * elapsed) * 1.1, 4, 95);
+  // کاربر گفت با افزایشِ دما، سرعتِ انتشار باید بیشتر هم بشود — نه فقط به‌خاطرِ sqrt(temp) که از
+  // قبل بود، بلکه خودِ ضریب هم با دما بزرگ‌تر شود، تا در دماهای بالا پخش محسوساً سریع‌تر دیده شود.
+  const diffusionRadius = vlabClamp(Math.sqrt(temp * elapsed) * (0.9 + temp / 120), 4, 95);
   const diffusionDone = diffusionRadius >= 92.5;
 
   const replay = () => {
@@ -21674,7 +21676,7 @@ function VlabDiffusionExperiment({ onReading }) {
   // (شروعِ هر بازه = منطبق بر مرکز، یعنی نامحسوس) به دو نیمه با فاصله‌ی ژرف‌تر (offMag نزدیکِ خودِ
   // شعاع، نه فقط حدودِ نصفش) باز می‌شود — پس هم برایِ همیشه ادامه دارد، هم تعدادِ شکل‌ها همیشه
   // همان ۲×SPLIT_LINEAGES می‌ماند (بارِ محاسباتی/بصری محدود).
-  const SPLIT_PERIOD = 2;
+  const SPLIT_PERIOD = 1.3; // کمی سریع‌تر از قبل (۲ ثانیه)، طبقِ خواسته‌ی کاربر
   const SPLIT_LINEAGES = 6;
   const splitCycleF = elapsed / SPLIT_PERIOD;
   const splitCycleIdx = Math.floor(splitCycleF);
@@ -21712,6 +21714,16 @@ function VlabDiffusionExperiment({ onReading }) {
       });
     }
   }
+  // کاربر گفت از همان لحظه‌ی اول باید شاهدِ تغییرِ رنگِ اطرافِ قطره‌ها باشیم — روبان‌ها/ابرِ زمینه
+  // عمداً دیر (بعد از ribbonFrac) شروع می‌شوند، ولی این هاله‌ی محوِ دورِ هر تکه از همان ثانیه‌ی
+  // اول دیده می‌شود (هیچ آستانه‌ای ندارد، فقط با خودِ elapsed آرام‌آرام پررنگ‌تر می‌شود).
+  const fragHalos = splitFragments.map((f) => ({
+    x: f.x,
+    y: f.y,
+    r: f.r * 2.1,
+    o: vlabClamp(elapsed / 2.5, 0, 1) * 0.3,
+    key: "halo-" + f.key,
+  }));
   // روبان‌ها نباید از همان ابتدا ظاهر شوند؛ اول لکه به‌تنهایی آهسته‌آهسته بزرگ می‌شود و فقط پس از
   // آن‌که اندکی رشد کرد (شعاعِ پخش از ~۱۵ عبور کند) روبان‌های نامنظم شروع به بیرون‌زدن و درازشدن
   // می‌کنند — یک smoothstep ساده برایِ گذارِ نرم (نه پرش ناگهانی).
@@ -21737,6 +21749,9 @@ function VlabDiffusionExperiment({ onReading }) {
     return { key: i, px, py, r, o: sm * maxOp };
   });
 
+  // کاربر گفت برایِ نشان‌دادنِ انتشار، علاوه بر خطوطِ شکسته (segmentsِ مستقیم)، از خطوطِ منحنی هم
+  // استفاده شود — نیمی از روبان‌ها (curvy) حالا با Q (کمانِ واقعی، از رویِ همان bowِ محاسبه‌شده)
+  // کشیده می‌شوند، نیمِ دیگر مثلِ قبل خطِ شکسته/مستقیم می‌مانند، تا هر دو سبک هم‌زمان دیده شوند.
   const ribbons = Array.from({ length: 16 }).map((_, i) => {
     const coreAngle = seeded(i, 7) * Math.PI * 2;
     const startDist = seeded(i, 16) * coreR * 0.75;
@@ -21744,7 +21759,9 @@ function VlabDiffusionExperiment({ onReading }) {
     let y = 90 + Math.sin(coreAngle) * startDist * 0.85;
     let dir = coreAngle + (seeded(i, 17) - 0.5) * 1.6;
     const totalReach = diffusionRadius * (0.72 + seeded(i, 9) * 0.6) * ribbonFrac;
+    const curvy = seeded(i, 50) > 0.5;
     const pts = [[x, y]];
+    const bends = [];
     for (let s = 0; s < 3; s++) {
       dir += (seeded(i, 20 + s * 3) - 0.5) * 1.7;
       const segLen = (totalReach / 3) * (0.65 + seeded(i, 21 + s * 3) * 0.7);
@@ -21753,16 +21770,25 @@ function VlabDiffusionExperiment({ onReading }) {
       const nx = x + Math.cos(dir) * segLen + Math.cos(perp) * bow;
       const ny = y + Math.sin(dir) * segLen * 0.85 + Math.sin(perp) * bow * 0.85;
       pts.push([nx, ny]);
+      bends.push({ perp, mag: curvy ? bow * 1.7 : 0 });
       x = nx;
       y = ny;
     }
     const baseWidth = vlabClamp(3.2 - diffusionRadius / 90, 1.1, 3.2);
     const baseOp = vlabClamp(0.68 - diffusionRadius / 260, 0.22, 0.68);
-    const segs = [
-      { d: `M${pts[0][0]},${pts[0][1]} L${pts[1][0]},${pts[1][1]}`, w: baseWidth, c: "#1a3fa0", o: baseOp },
-      { d: `M${pts[1][0]},${pts[1][1]} L${pts[2][0]},${pts[2][1]}`, w: baseWidth * 0.65, c: "#3a7fd9", o: baseOp * 0.75 },
-      { d: `M${pts[2][0]},${pts[2][1]} L${pts[3][0]},${pts[3][1]}`, w: baseWidth * 0.35, c: "#7fc4f2", o: baseOp * 0.5 },
-    ];
+    const widths = [baseWidth, baseWidth * 0.65, baseWidth * 0.35];
+    const colors = ["#1a3fa0", "#3a7fd9", "#7fc4f2"];
+    const ops = [baseOp, baseOp * 0.75, baseOp * 0.5];
+    const segs = [0, 1, 2].map((s) => {
+      const [x0, y0] = pts[s];
+      const [x1, y1] = pts[s + 1];
+      const { perp, mag } = bends[s];
+      const d =
+        mag !== 0
+          ? `M${x0},${y0} Q${((x0 + x1) / 2 + Math.cos(perp) * mag).toFixed(1)},${((y0 + y1) / 2 + Math.sin(perp) * mag * 0.85).toFixed(1)} ${x1},${y1}`
+          : `M${x0},${y0} L${x1},${y1}`;
+      return { d, w: widths[s], c: colors[s], o: ops[s] };
+    });
     return {
       key: i,
       segs,
@@ -21858,6 +21884,12 @@ function VlabDiffusionExperiment({ onReading }) {
           <g filter="url(#diffusionSoftBlur)">
             {waterPatches.map((p) => (
               <circle key={"patch" + p.key} cx={p.px} cy={p.py} r={p.r} fill="#2f6fe2" opacity={p.o} />
+            ))}
+          </g>
+          {/* هاله‌ی بی‌آستانه‌ی دورِ هر قطره — بدونِ هیچ گیتی، از ثانیه‌ی اول */}
+          <g filter="url(#diffusionSoftBlur)">
+            {fragHalos.map((h) => (
+              <circle key={h.key} cx={h.x} cy={h.y} r={h.r} fill="#3a7fd9" opacity={h.o * patternOpacity} />
             ))}
           </g>
           <path

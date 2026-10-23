@@ -19310,17 +19310,28 @@ function VlabSimpleSwitchExperiment({ onReading }) {
         <text x="43" y="78" fontSize="9" fill="#fff" textAnchor="middle" fontWeight="700">−</text>
         <rect x="30" y="110" width="26" height="10" fill="#f2c572" />
         <text x="43" y="118" fontSize="9" fill="#1c2540" textAnchor="middle" fontWeight="700">+</text>
-        {/* سیم طلایی (+): باتری → کلید → نوک لامپ */}
+        {/* سیم طلایی (+): باتری → پایه‌ی لولای کلید */}
         <path d="M43,120 L43,160 L150,160 L150,130" fill="none" stroke="#f2c572" strokeWidth="2.6" />
+        {/* کلید دوباره طراحی شد: کاربر گفت شکل کلید و سیمِ طرفِ لامپ درست نیست. قبلاً وقتی کلید باز بود،
+            هیچ سیمی بین پایه‌ی دومِ کلید و لامپ دیده نمی‌شد (انگار آن سیم اصلاً وجود ندارد)، و لولا/پایه‌ها
+            هم فقط دو نقطه‌ی شناور بودند. حالا: یک صفحه‌ی نصبِ کوچک زیرِ لولا، یک پایه‌ی ثابت و ایستاده
+            برای تماسِ دوم (که سیمِ طلاییِ آن به لامپ همیشه و در هر دو حالت وصل است — چون آن سیم واقعاً
+            همیشه آن‌جاست)، و فقط تیغه‌ی متحرکِ کلید (با یک دستگیره‌ی گرد در نوک) بین بازوباز/بسته جابه‌جا
+            می‌شود. */}
+        <rect x="143" y="128" width="14" height="6" rx="1.5" fill="#1c2540" stroke="#4a4f60" strokeWidth="0.6" />
+        <rect x="190" y="112" width="12" height="6" rx="1.5" fill="#1c2540" stroke="#4a4f60" strokeWidth="0.6" />
+        <line x1="196" y1="112" x2="196" y2="105" stroke="#cfd8e8" strokeWidth="2.2" strokeLinecap="round" />
+        {/* سیمِ طلاییِ همیشگیِ کلید → لامپ (دیگر فقط در حالت بسته دیده نمی‌شود) */}
+        <path d="M196,112 L196,119 L240,119" fill="none" stroke="#f2c572" strokeWidth="2.6" />
         {closed ? (
-          <line x1="150" y1="130" x2="196" y2="105" stroke="#f2c572" strokeWidth="2.6" />
+          <line x1="150" y1="130" x2="196" y2="105" stroke="#d9ac5e" strokeWidth="3.4" strokeLinecap="round" />
         ) : (
-          <line x1="150" y1="130" x2="180" y2="88" stroke="#f2c572" strokeWidth="2.6" />
+          <line x1="150" y1="130" x2="174" y2="88" stroke="#d9ac5e" strokeWidth="3.4" strokeLinecap="round" />
         )}
-        <circle cx="150" cy="130" r="3.5" fill="#cfd8e8" />
-        <circle cx="196" cy="105" r="3.5" fill="#cfd8e8" opacity={closed ? 1 : 0.4} />
-        <text x="150" y="146" fontSize="8" fill="#9aa3c0" textAnchor="middle">کلید</text>
-        {closed && <line x1="196" y1="105" x2="240" y2="119" stroke="#f2c572" strokeWidth="2.6" />}
+        <circle cx="150" cy="130" r="4" fill="#cfd8e8" stroke="#5b6472" strokeWidth="0.8" />
+        <circle cx="196" cy="105" r="3.5" fill={closed ? "#f2c572" : "#5b6472"} stroke="#cfd8e8" strokeWidth="0.8" />
+        {!closed && <circle cx="174" cy="88" r="3" fill="#8a6d3b" stroke="#cfd8e8" strokeWidth="0.8" />}
+        <text x="168" y="149" fontSize="8" fill="#9aa3c0" textAnchor="middle">کلید</text>
         <VlabMiniBulb cx={240} baseTopY={100} t={closed ? 0.9 : 0} />
         {/* سیم آبی (−): بدنه‌ی فلزی لامپ → باتری */}
         <path d="M230,110 L230,40 L43,40 L43,70" fill="none" stroke="#3a9bd5" strokeWidth="2.6" />

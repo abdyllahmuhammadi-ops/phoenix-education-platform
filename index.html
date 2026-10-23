@@ -19714,7 +19714,11 @@ function VlabPulleyExperiment({ onReading }) {
   // جابجایی با خط‌کش اندازه‌گیری شود، و کل صحنه زیباتر/حرفه‌ای‌تر به‌نظر برسد (پس‌زمینه‌ی تیره مثل سایر
   // آزمایش‌های «حرفه‌ای‌شده»، سایه‌ی بار، طناب با درخشش).
   const LIFT = 65; // میزان بالا رفتن بار هنگام کشیدن (px ≈ cm) — کمی بیشتر شد تا جابجایی واضح‌تر دیده شود
-  const RULER_STEP = LIFT / 5;
+  // مقیاس تصویریِ خط‌کش عمداً از میزان واقعیِ جابجایی (LIFT=65px) جداست: اگر خط‌کش را مستقیماً با همان
+  // ۶۵ پیکسل بزرگ می‌کردیم، فاصله‌ی بین خط‌درجه‌ها (۶۵/۵=۱۳px) از اندازه‌ی فونتِ بزرگِ جدید (۱۹px) کمتر
+  // می‌شد و عددها روی هم می‌افتادند (دقیقاً همین باگ در تلاشِ اول پیش آمد). پس خط‌کش روی مقیاس تصویریِ
+  // بزرگ‌تر و مستقلِ خودش (RULER_H) رسم می‌شود؛ عددهای رویش هنوز همان سانتی‌مترهای واقعی‌اند.
+  const RULER_H = 155;
   const loadLift = pulled ? LIFT : 0;
   const ropePulled = pulled ? LIFT * ma : 0; // طناب باید به اندازه‌ی مزیت مکانیکی بیشتر کشیده شود
   const wheelSpinDeg = pulled ? 560 : 0;
@@ -19779,22 +19783,25 @@ function VlabPulleyExperiment({ onReading }) {
       <text x={cx} y={topY + h + 4 + arrowLen + 20} fontSize="7.5" fill="#d1333f" textAnchor="middle" fontWeight="700">وزن (نیروی مقاوم)</text>
     </g>
   );
-  // خط‌کش: کاربر گفت خیلی ریز است و به‌زور دیده می‌شود — کاملاً بزرگ‌تر شد: بدنه‌ی پهن‌تر، خط‌های
-  // درجه‌بندی ضخیم‌تر، عدد روی هر خط (نه یکی‌درمیان)، فونت درشت و پررنگ، و یک نشانگرِ فلش‌مانندِ
-  // ضخیم به‌جای خط نازک قبلی، به‌علاوه برچسب واحد «سانتی‌متر» بالای خط‌کش.
+  // خط‌کش: کاربر دوباره گفت بزرگ‌تر کن (۸۰٪ بزرگ‌تر) و درجه‌ها/عددها روی خودِ بدنه‌ی خط‌کش باشند،
+  // نه بیرون از آن — بدنه‌ی خیلی پهن‌تر شد و عددها حالا داخل خودِ نوار تانِ خط‌کش، کنار هر خط‌درجه،
+  // نوشته می‌شوند (دقیقاً مثل یک خط‌کش واقعی).
   const ruler = (bottomY) => (
     <g>
-      <text x="316" y={bottomY - LIFT - 22} fontSize="11" fill="#f2e3b8" textAnchor="middle" fontWeight="700">سانتی‌متر</text>
-      <rect x="300" y={bottomY - LIFT - 12} width="32" height={LIFT + 24} rx="4" fill="#f2e3b8" stroke="#c8a35a" strokeWidth="2" />
-      {Array.from({ length: 6 }).map((_, i) => (
-        <g key={i}>
-          <line x1="300" y1={bottomY - i * RULER_STEP} x2="286" y2={bottomY - i * RULER_STEP} stroke="#6b4e24" strokeWidth="2.4" />
-          <text x="281" y={bottomY - i * RULER_STEP + 4.5} fontSize="12" fill="#eaf0fb" textAnchor="end" fontWeight="700">{Math.round(i * RULER_STEP)}</text>
-        </g>
-      ))}
-      <g style={{ transform: `translateY(${-loadLift}px)`, transition: "transform 1.4s cubic-bezier(.3,.6,.4,1)" }}>
-        <line x1="280" y1={bottomY} x2="302" y2={bottomY} stroke="#2f6fe2" strokeWidth="5" strokeLinecap="round" />
-        <polygon points={`302,${bottomY - 7} 302,${bottomY + 7} 312,${bottomY}`} fill="#2f6fe2" />
+      <text x="312" y={bottomY - RULER_H - 18} fontSize="18" fill="#f2e3b8" textAnchor="middle" fontWeight="700">سانتی‌متر</text>
+      <rect x="282" y={bottomY - RULER_H - 10} width="62" height={RULER_H + 20} rx="7" fill="#f2e3b8" stroke="#c8a35a" strokeWidth="3" />
+      {Array.from({ length: 6 }).map((_, i) => {
+        const y = bottomY - (RULER_H / 5) * i;
+        return (
+          <g key={i}>
+            <line x1="282" y1={y} x2="300" y2={y} stroke="#6b4e24" strokeWidth="4" />
+            <text x="306" y={y + 7} fontSize="19" fill="#5b3d1a" textAnchor="start" fontWeight="700">{Math.round((LIFT / 5) * i)}</text>
+          </g>
+        );
+      })}
+      <g style={{ transform: `translateY(${pulled ? -RULER_H : 0}px)`, transition: "transform 1.4s cubic-bezier(.3,.6,.4,1)" }}>
+        <line x1="254" y1={bottomY} x2="284" y2={bottomY} stroke="#2f6fe2" strokeWidth="9" strokeLinecap="round" />
+        <polygon points={`284,${bottomY - 12} 284,${bottomY + 12} 298,${bottomY}`} fill="#2f6fe2" />
       </g>
     </g>
   );
@@ -19811,7 +19818,7 @@ function VlabPulleyExperiment({ onReading }) {
           را واقعاً نشان می‌دهد. دور بعد (به‌خواست کاربر): چرخ‌ها واقعاً می‌چرخند، نیروی مقاوم (وزن بار) و
           نیروی کشش هر دو همراه بار جابجا می‌شوند، یک خط‌کش میزان بالارفتن بار را اندازه می‌گیرد و
           پس‌زمینه‌ی تیره + سایه‌ی بار برای زیبایی بیشتر اضافه شد. */}
-      <svg viewBox="0 0 360 210" className="vlab-svg" style={{ background: "#0b1330", borderRadius: "10px" }}>
+      <svg viewBox="0 0 400 210" className="vlab-svg" style={{ background: "#0b1330", borderRadius: "10px" }}>
         {pulleyType === "ثابت" ? (
           <>
             <rect x="110" y="6" width="100" height="10" fill="#5b4636" />

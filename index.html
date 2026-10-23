@@ -19713,7 +19713,8 @@ function VlabPulleyExperiment({ onReading }) {
   // کاربر خواست: چرخ‌های قرقره واقعاً بچرخند، نیروی مقاوم (وزن بار) هم همراه بار جابجا شود، میزان
   // جابجایی با خط‌کش اندازه‌گیری شود، و کل صحنه زیباتر/حرفه‌ای‌تر به‌نظر برسد (پس‌زمینه‌ی تیره مثل سایر
   // آزمایش‌های «حرفه‌ای‌شده»، سایه‌ی بار، طناب با درخشش).
-  const LIFT = 55; // میزان بالا رفتن بار هنگام کشیدن (px ≈ cm)
+  const LIFT = 65; // میزان بالا رفتن بار هنگام کشیدن (px ≈ cm) — کمی بیشتر شد تا جابجایی واضح‌تر دیده شود
+  const RULER_STEP = LIFT / 5;
   const loadLift = pulled ? LIFT : 0;
   const ropePulled = pulled ? LIFT * ma : 0; // طناب باید به اندازه‌ی مزیت مکانیکی بیشتر کشیده شود
   const wheelSpinDeg = pulled ? 560 : 0;
@@ -19731,8 +19732,11 @@ function VlabPulleyExperiment({ onReading }) {
     // eslint-disable-next-line
   }, [load, pulleyType, pulled]);
 
+  // کاربر گفت چرخش چرخ‌ها دیده نمی‌شود: چون الگوی پره‌ها هر ۴۵ درجه با خودش یکی است (تقارن چرخشی)،
+  // چرخیدن واقعی هم بصراً قابل تشخیص نبود. یک نشانگرِ رنگیِ نامتقارن (نقطه‌ی قرمز روی لبه‌ی چرخ) اضافه
+  // شد که با چرخیدنِ واقعی چرخ، دور محور می‌گردد و تفاوت زاویه کاملاً به چشم می‌آید.
   const pulleyWheel = (cx, cy, r, spin) => (
-    <g style={{ transform: `rotate(${spin}deg)`, transformOrigin: `${cx}px ${cy}px`, transition: "transform 1.2s cubic-bezier(.3,.6,.4,1)" }}>
+    <g style={{ transform: `rotate(${spin}deg)`, transformOrigin: `${cx}px ${cy}px`, transition: "transform 1.4s cubic-bezier(.3,.6,.4,1)" }}>
       <circle cx={cx} cy={cy} r={r} fill="#efe6d0" stroke="#5b4636" strokeWidth="3.2" />
       {[0, 45, 90, 135].map((ang) => (
         <line
@@ -19746,6 +19750,8 @@ function VlabPulleyExperiment({ onReading }) {
         />
       ))}
       <circle cx={cx} cy={cy} r={3.2} fill="#3a2f22" />
+      {/* نشانگر چرخش: نقطه‌ی قرمزِ نامتقارن روی لبه‌ی چرخ */}
+      <circle cx={cx + (r - 4)} cy={cy} r={Math.max(2.4, r * 0.18)} fill="#e2404f" stroke="#7a1620" strokeWidth="0.8" />
     </g>
   );
   const crate = (cx, topY, w = 40, h = 30) => (
@@ -19773,25 +19779,23 @@ function VlabPulleyExperiment({ onReading }) {
       <text x={cx} y={topY + h + 4 + arrowLen + 20} fontSize="7.5" fill="#d1333f" textAnchor="middle" fontWeight="700">وزن (نیروی مقاوم)</text>
     </g>
   );
-  // خط‌کش عمودی برای نشان دادن میزان بالا رفتن بار (همان زبان بصریِ خط‌کشِ سقوط آزاد/اصطکاک)
+  // خط‌کش: کاربر گفت خیلی ریز است و به‌زور دیده می‌شود — کاملاً بزرگ‌تر شد: بدنه‌ی پهن‌تر، خط‌های
+  // درجه‌بندی ضخیم‌تر، عدد روی هر خط (نه یکی‌درمیان)، فونت درشت و پررنگ، و یک نشانگرِ فلش‌مانندِ
+  // ضخیم به‌جای خط نازک قبلی، به‌علاوه برچسب واحد «سانتی‌متر» بالای خط‌کش.
   const ruler = (bottomY) => (
     <g>
-      <rect x="252" y={bottomY - LIFT - 6} width="12" height={LIFT + 12} rx="2" fill="#f2e3b8" stroke="#c8a35a" strokeWidth="1" />
+      <text x="316" y={bottomY - LIFT - 22} fontSize="11" fill="#f2e3b8" textAnchor="middle" fontWeight="700">سانتی‌متر</text>
+      <rect x="300" y={bottomY - LIFT - 12} width="32" height={LIFT + 24} rx="4" fill="#f2e3b8" stroke="#c8a35a" strokeWidth="2" />
       {Array.from({ length: 6 }).map((_, i) => (
         <g key={i}>
-          <line x1="252" y1={bottomY - i * 11} x2={i % 2 === 0 ? 246 : 248} y2={bottomY - i * 11} stroke="#8a6d3b" strokeWidth="1" />
-          {i % 2 === 0 && <text x="242" y={bottomY - i * 11 + 3} fontSize="6.5" fill="#cfd8e8" textAnchor="end">{i * 11}</text>}
+          <line x1="300" y1={bottomY - i * RULER_STEP} x2="286" y2={bottomY - i * RULER_STEP} stroke="#6b4e24" strokeWidth="2.4" />
+          <text x="281" y={bottomY - i * RULER_STEP + 4.5} fontSize="12" fill="#eaf0fb" textAnchor="end" fontWeight="700">{Math.round(i * RULER_STEP)}</text>
         </g>
       ))}
-      <line
-        x1="246"
-        y1={bottomY - loadLift}
-        x2="264"
-        y2={bottomY - loadLift}
-        stroke="#2f6fe2"
-        strokeWidth="1.8"
-        style={{ transition: "y1 1.2s cubic-bezier(.3,.6,.4,1), y2 1.2s cubic-bezier(.3,.6,.4,1)" }}
-      />
+      <g style={{ transform: `translateY(${-loadLift}px)`, transition: "transform 1.4s cubic-bezier(.3,.6,.4,1)" }}>
+        <line x1="280" y1={bottomY} x2="302" y2={bottomY} stroke="#2f6fe2" strokeWidth="5" strokeLinecap="round" />
+        <polygon points={`302,${bottomY - 7} 302,${bottomY + 7} 312,${bottomY}`} fill="#2f6fe2" />
+      </g>
     </g>
   );
 
@@ -19807,7 +19811,7 @@ function VlabPulleyExperiment({ onReading }) {
           را واقعاً نشان می‌دهد. دور بعد (به‌خواست کاربر): چرخ‌ها واقعاً می‌چرخند، نیروی مقاوم (وزن بار) و
           نیروی کشش هر دو همراه بار جابجا می‌شوند، یک خط‌کش میزان بالارفتن بار را اندازه می‌گیرد و
           پس‌زمینه‌ی تیره + سایه‌ی بار برای زیبایی بیشتر اضافه شد. */}
-      <svg viewBox="0 0 320 210" className="vlab-svg" style={{ background: "#0b1330", borderRadius: "10px" }}>
+      <svg viewBox="0 0 360 210" className="vlab-svg" style={{ background: "#0b1330", borderRadius: "10px" }}>
         {pulleyType === "ثابت" ? (
           <>
             <rect x="110" y="6" width="100" height="10" fill="#5b4636" />
@@ -19817,15 +19821,25 @@ function VlabPulleyExperiment({ onReading }) {
             <rect x="152" y="14" width="16" height="10" fill="#1c2540" />
             {pulleyWheel(160, 45, 16, wheelSpinDeg)}
             <path d="M140,165 L140,51.5 A20,20 0 0 1 180,51.5" fill="none" stroke="#c8a35a" strokeWidth="2.4" strokeLinecap="round" />
+            {/* کاربر گفت موقع بالا کشیدن، طناب «پاره می‌شود» — علت: مرورگر تغییرِ x1/y1/x2/y2 روی
+                <line> را با CSS transition میان‌یابی نمی‌کند (برخلاف x/y روی rect یا cx/cy روی circle)،
+                پس این خط فوراً به طول نهایی می‌پرید در حالی‌که بار (که با transform جابجا می‌شود) هنوز
+                آرام‌آرام بالا می‌آمد — طناب از بار جدا به‌نظر می‌رسید. راه‌حل: این بخشِ طناب هم با همان
+                مکانیزم transform (این‌بار scaleY، با لنگرِ ثابت درست روی قرقره) جابجا می‌شود، دقیقاً
+                هم‌زمان و هم‌روش با جابجاییِ بار، پس هرگز از هم جدا نمی‌افتند. */}
             <line
               x1="180"
               y1="51.5"
               x2="180"
-              y2={130 - loadLift}
+              y2="130"
               stroke="#c8a35a"
               strokeWidth="2.4"
               strokeLinecap="round"
-              style={{ transition: "y2 1.2s cubic-bezier(.3,.6,.4,1)" }}
+              style={{
+                transformOrigin: "180px 51.5px",
+                transform: `scaleY(${1 - loadLift / 78.5})`,
+                transition: "transform 1.2s cubic-bezier(.3,.6,.4,1)",
+              }}
             />
             <g style={{ transform: `translateY(${-loadLift}px)`, transition: "transform 1.2s cubic-bezier(.3,.6,.4,1)" }}>
               <ellipse cx="180" cy="168" rx="16" ry="4" fill="#000" opacity="0.22" />

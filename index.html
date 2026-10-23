@@ -18047,17 +18047,15 @@ function VlabDropperMini({ x, y, rotate, color }) {
 
 // قاشق هم‌زدن: برای آزمایش‌هایی که «هم زدن» بخشی از روش کار است ولی قاشق واقعی دیده نمی‌شد
 function VlabStirSpoonMini({ x, y, reach = 88, stirKey = 0, handleTop = -48 }) {
-  {/* به‌خواستِ کاربر، چند اصلاح: (۱) شکلِ سرِ قاشق عوض شد — دیگر کفگیرِ سوراخ‌دار نیست (که شبیه
-      صورت دیده می‌شد)، حالا یک کاسه‌ی بیضی‌شکلِ ساده و توپر با یک هایلایتِ کوچک برای حجم است؛
-      دسته‌اش هنوز بلند است و با پارامتر reach تا کفِ ظرف می‌رسد. (۲) هر بار که stirKey تغییر کند
-      (یعنی کاربر یک‌بار «هم بزن» را زده)، کل قاشق یک چرخشِ کامل ۳٫۵ دوری (۱۲۶۰ درجه) حول نقطه‌ای
-      نزدیکِ دسته انجام می‌دهد — دقیقاً شبیهِ واقعیِ هم‌زدنِ دایره‌ای، نه فقط یک خم‌شدنِ ساده.
-      (۳) طولِ بالاییِ دسته با handleTop قابل‌تنظیم است تا در ظرفِ بلندترشده، باز هم از درِ ظرف
-      واضح بیرون بزند. */}
+  {/* به‌خواستِ کاربر: (۱) شکلِ سرِ قاشق — کاسه‌ی بیضی‌شکلِ ساده و توپر با یک هایلایتِ کوچک برای
+      حجم؛ دسته‌اش با پارامتر reach تا کفِ ظرف می‌رسد. (۲) هر بار که stirKey تغییر کند، کلِ ابزار
+      (بدون چرخشِ عقربه‌ای و بدون بیرون‌زدن از لیوان) در یک مدارِ کوچکِ بیضی‌شکل داخلِ لیوان
+      جابه‌جا می‌شود — شبیهِ حرکتِ پاندولیِ واقعیِ هم‌زدن با دست، نه چرخشِ عقربه‌ی ساعت.
+      (۳) طولِ بالاییِ دسته با handleTop قابل‌تنظیم است تا از درِ ظرف واضح بیرون بزند. */}
   const headY = reach - 8;
   return (
     <g transform={`translate(${x},${y})`}>
-      <g key={stirKey} className={stirKey > 0 ? "vlab-stir-spinning" : ""} style={{ transformOrigin: "0px -40px" }}>
+      <g key={stirKey} className={stirKey > 0 ? "vlab-stir-spinning" : ""}>
         <line x1="0" y1={handleTop} x2="0" y2={headY} stroke="#8a93a8" strokeWidth="2.6" strokeLinecap="round" />
         <ellipse cx="0" cy={headY + 7} rx="9" ry="10" fill="#d7deea" stroke="#5b6472" strokeWidth="1.3" />
         <ellipse cx="-2.4" cy={headY + 3.5} rx="4.2" ry="5.2" fill="#f2f5fa" opacity="0.65" />
@@ -19482,13 +19480,13 @@ function VlabDissolvingExperiment({ onReading }) {
         )}
         {!dissolves && material === "روغن" && (
           <>
-            {/* لایه‌ی ضخیم‌ترِ یکپارچه‌ی روغن، دقیقاً روی سطح آب و بدون هیچ فاصله‌ای تا دیواره‌ها —
-                و چون ظرف بلندتر شده، جای کافی دارد و هیچ‌وقت از لبه بیرون نمی‌زند */}
-            <ellipse cx="160" cy="46" rx="57" ry="10" fill="#e8c35a" opacity={oilMixing ? 0 : 0.92} style={{ transition: "opacity 1.8s ease" }} />
-            <ellipse cx="160" cy="40" rx="50" ry="3.2" fill="#f4dd8c" opacity={oilMixing ? 0 : 0.55} style={{ transition: "opacity 1.8s ease" }} />
-            {/* هنگام هم‌زدن: به‌جای قطره‌های جداجدا، یک ابرِ پیوسته و محوشده از روغن در آب پخش می‌شود
-                و بعد به‌تدریج (نه ناگهان) دوباره بالا می‌آید */}
-            <g opacity={oilMixing ? 0.82 : 0} style={{ transition: "opacity 1.3s ease" }} filter="url(#vlabOilBlur)">
+            {/* لایه‌ی روغنِ ضخیم‌تر (معادل یک لایه‌ی واقعیِ ~۵ میلی‌متری)، همیشه با فاصله‌ی امن از درِ
+                ظرف. وقتی هم‌زدن تمام می‌شود، دیگر فقط محو (fade) نمی‌شود — واقعاً از عمقِ آب به‌سمتِ
+                سطح، به‌آرامی (۲ ثانیه) بالا می‌آید (حرکتِ cy، نه فقط opacity) تا تدریجی به‌نظر برسد. */}
+            <ellipse cx="160" cy={oilMixing ? 88 : 53} rx="57" ry="13" fill="#e8c35a" opacity={oilMixing ? 0 : 0.93} style={{ transition: `cy ${oilMixing ? "0.3s" : "2s"} ease, opacity ${oilMixing ? "0.3s" : "2s"} ease` }} />
+            <ellipse cx="160" cy={oilMixing ? 82 : 44} rx="50" ry="3.6" fill="#f4dd8c" opacity={oilMixing ? 0 : 0.55} style={{ transition: `cy ${oilMixing ? "0.3s" : "2s"} ease, opacity ${oilMixing ? "0.3s" : "2s"} ease` }} />
+            {/* هنگام هم‌زدن: به‌جای قطره‌های جداجدا، یک ابرِ پیوسته و محوشده از روغن در آب پخش می‌شود */}
+            <g opacity={oilMixing ? 0.82 : 0} style={{ transition: "opacity 0.9s ease" }} filter="url(#vlabOilBlur)">
               <ellipse cx="128" cy="90" rx="24" ry="15" fill="#e8c35a" />
               <ellipse cx="158" cy="112" rx="28" ry="17" fill="#e8c35a" />
               <ellipse cx="189" cy="88" rx="21" ry="14" fill="#e8c35a" />
@@ -20495,8 +20493,21 @@ function StudentVirtualLabView({ onBack, grade, studentCode, schoolCode }) {
         .pqb-empty { color: #8a8060; font-size: 13px; text-align: center; padding: 20px 0; }
         .pqb-upload-hint { color: #6b7399; font-size: 12px; line-height: 1.9; margin: 0 0 12px; }
         .vlab-exp { display: flex; flex-direction: column; gap: 14px; }
-        @keyframes vlab-stir-spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(1260deg); } }
-        .vlab-stir-spinning { animation: vlab-stir-spin 0.9s cubic-bezier(0.37,0,0.63,1) 1; transform-origin: 0px -6px; }
+        /* حرکتِ واقعیِ هم‌زدن: کلِ ابزار (دسته+سر) با هم و بدون چرخش، در یک مدارِ کوچکِ بیضی‌شکل
+           جابه‌جا می‌شود — دقیقاً مثل وقتی با دست یک همزن را داخلِ لیوان، بدون بیرون‌بردنش از لیوان،
+           در یک دایره‌ی کوچک می‌چرخانیم؛ تغییرِ scale هم حسِ عمق/سه‌بعدی (جلو/عقب رفتن) را القا می‌کند. */
+        @keyframes vlab-stir-orbit {
+          0% { transform: translate(0px, 0px) scale(1); }
+          12.5% { transform: translate(7px, -2px) scale(1.05); }
+          25% { transform: translate(5px, 3px) scale(1); }
+          37.5% { transform: translate(0px, 5px) scale(0.95); }
+          50% { transform: translate(-5px, 3px) scale(1); }
+          62.5% { transform: translate(-7px, -2px) scale(1.05); }
+          75% { transform: translate(-5px, -5px) scale(1); }
+          87.5% { transform: translate(0px, -5px) scale(0.95); }
+          100% { transform: translate(0px, 0px) scale(1); }
+        }
+        .vlab-stir-spinning { animation: vlab-stir-orbit 0.42s linear 4; transform-origin: center; }
         .vlab-svg { width: 100%; max-width: 420px; height: auto; margin: 0 auto; background: #fbf7ec; border-radius: 12px; border: 1px solid rgba(28,37,64,0.08); }
         .vlab-scope-circle { max-width: 260px; background: #0b1330; }
         .vlab-micro-layout { display: flex; gap: 16px; flex-wrap: wrap; justify-content: center; align-items: flex-start; }

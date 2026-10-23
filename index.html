@@ -21590,13 +21590,22 @@ function VlabDiffusionExperiment({ onReading }) {
   const tempRef = React.useRef(temp);
   tempRef.current = temp;
 
+  // کاربرِ بعدی گفت نسخه‌ی قبلی خیلی سریع بود: «۱۲۰ ثانیه یعنی دو دقیقه‌ی واقعی، نه کمتر از ۱۰
+  // ثانیه تمام شود». برایِ دقیقِ واقعی‌بودن (نه شبیه‌سازیِ تقریبی با +۱ در هر تیک که عملاً پنج‌برابرِ
+  // زمانِ واقعی حرکت می‌کرد)، حالا زمانِ سپری‌شده مستقیماً از ساعتِ واقعیِ مرورگر (Date.now) محاسبه
+  // می‌شود — یک ثانیه‌ی نمایشی دقیقاً یک ثانیه‌ی واقعی است، نه بیشتر و نه کمتر.
   useEffect(() => {
+    const startedAt = Date.now();
+    let stopped = false;
     const iv = setInterval(() => {
-      setElapsed((e) => {
-        const rad = Math.sqrt(tempRef.current * e) * 1.1;
-        if (rad >= 93) return e; // قطره کاملاً پخش و ناپدید شده — فیلم تا «ریختنِ دوباره» متوقف می‌ماند
-        return Math.min(e + 1, 999);
-      });
+      if (stopped) return;
+      const realSec = (Date.now() - startedAt) / 1000;
+      const rad = Math.sqrt(tempRef.current * realSec) * 1.1;
+      if (rad >= 93) {
+        stopped = true; // قطره کاملاً پخش و ناپدید شده — فیلم (و کرونومتر) تا «چکاندنِ دوباره» متوقف می‌ماند
+        clearInterval(iv);
+      }
+      setElapsed(realSec);
     }, 200);
     return () => clearInterval(iv);
     // eslint-disable-next-line
@@ -21637,11 +21646,16 @@ function VlabDiffusionExperiment({ onReading }) {
   // خمِ تصادفیِ پیاپی (random-walk، نه یک منحنیِ ساده) می‌پیچد، و با سه بخشِ متوالیِ باریک‌شونده
   // (ریشه‌ی پهن‌وتیره → میانه → نوکِ باریک‌وروشن) کشیده می‌شود تا شکلِ یک روبانِ واقعیِ کِش‌دار را
   // بدهد، نه یک خطِ یک‌دستِ نازک.
-  const blobPath = (cx, cy, baseR, salt, stretchX = 1, stretchY = 1) => {
+  // کاربر گفت شکلِ قطره ثابت است و فقط بزرگ می‌شود — چون همان مجموعه‌نقاطِ seeded ثابت فقط
+  // scale می‌خورد. حالا یک موجِ زمانیِ نرم (دو سینوسِ هم‌پوشان با فرکانس/فازِ متفاوت برایِ هر نقطه)
+  // به شعاعِ هر نقطه اضافه می‌شود؛ چون این تابع هر ۲۰۰ میلی‌ثانیه با elapsedِ واقعی دوباره فراخوانی
+  // می‌شود، خودِ طرح‌کلیِ نامنظمِ لکه هم پیوسته و آهسته می‌لولد/تغییرِ شکل می‌دهد، نه فقط اندازه‌اش.
+  const blobPath = (cx, cy, baseR, salt, stretchX = 1, stretchY = 1, t = 0) => {
     const n = 10;
     const pts = Array.from({ length: n }).map((_, i) => {
       const ang = (i / n) * Math.PI * 2;
-      const r = baseR * (0.7 + seeded(i, salt) * 0.55);
+      const wobble = Math.sin(t * 0.9 + i * 1.9 + salt) * 0.16 + Math.sin(t * 0.45 + i * 3.1 + salt * 2.3) * 0.1;
+      const r = baseR * (0.7 + seeded(i, salt) * 0.55 + wobble);
       return [cx + Math.cos(ang) * r * stretchX, cy + Math.sin(ang) * r * 0.85 * stretchY];
     });
     let d = `M${(pts[0][0] + pts[n - 1][0]) / 2},${(pts[0][1] + pts[n - 1][1]) / 2} `;
@@ -21804,9 +21818,10 @@ function VlabDiffusionExperiment({ onReading }) {
             ))}
           </g>
           <path
-            d={blobPath(160, 90, diffusionRadius, 3, cloudStretchX, cloudStretchY)}
+            d={blobPath(160, 90, diffusionRadius, 3, cloudStretchX, cloudStretchY, elapsed)}
             fill="rgba(47,111,226,0.10)"
             opacity={patternOpacity * ribbonFrac}
+            style={{ transition: "d 0.2s linear" }}
           />
           {ribbons.map((r) => (
             <g
@@ -21840,8 +21855,8 @@ function VlabDiffusionExperiment({ onReading }) {
               />
             ))}
           </g>
-          <path d={blobPath(160, 90, coreR, 11)} fill="url(#diffusionCoreGrad)" opacity={patternOpacity} />
-          <path d={blobPath(160, 90, coreR * 0.55, 13)} fill="#5fa8e0" opacity={0.55 * patternOpacity} />
+          <path d={blobPath(160, 90, coreR, 11, 1, 1, elapsed)} fill="url(#diffusionCoreGrad)" opacity={patternOpacity} style={{ transition: "d 0.2s linear" }} />
+          <path d={blobPath(160, 90, coreR * 0.55, 13, 1, 1, elapsed)} fill="#5fa8e0" opacity={0.55 * patternOpacity} style={{ transition: "d 0.2s linear" }} />
           {/* مرحله‌ی نهایی: محلولِ کاملاً یک‌نواخت — کلِ ظرف را به‌طورِ یک‌دست آبی می‌کند */}
           <rect x="0" y="0" width="320" height="186" fill="#2f6fe2" opacity={mixFrac * 0.58} />
 

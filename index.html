@@ -17996,6 +17996,24 @@ const VLAB_EXPERIMENTS = [
     intro: "دمای محیط را تغییر بده و ببین آنزیم کاتالاز (در تجزیه‌ی آب اکسیژنه) در چه دمایی بیشترین فعالیت را دارد و در دمای بالا چرا غیرفعال (دناتوره) می‌شود.",
     tools: ["آب اکسیژنه (H2O2)", "نمونه‌ی حاوی کاتالاز (مثل جگر یا سیب‌زمینی)", "لوله‌ی آزمایش", "حمام آب با دماهای مختلف"],
   },
+  {
+    id: "heat-transfer",
+    subject: "فیزیک",
+    level: "متوسطه اول",
+    title: "انتقال گرما (رسانش، همرفت، تابش)",
+    icon: "🔥",
+    intro: "هر سه روشِ انتقالِ گرما را ببین: رسانش (در میله‌ی فلزیِ جامد)، همرفت (در آبِ در حالِ گرم‌شدن) و تابش (بدونِ نیاز به هیچ ماده‌ای، مثل گرمایِ خورشید).",
+    tools: ["میله‌ی فلزی", "شعله", "ظرفِ آب", "دماسنج", "منبعِ تابشیِ گرما"],
+  },
+  {
+    id: "electricity-conduction",
+    subject: "فیزیک",
+    level: "ابتدایی",
+    title: "رسانا و نارسانای الکتریسیته",
+    icon: "🔌",
+    intro: "یک ماده را در شکافِ مدار قرار بده و ببین مدار بسته می‌شود و لامپ روشن می‌شود (رسانا) یا نه (نارسانا/عایق).",
+    tools: ["باتری", "لامپ", "سیم", "نمونه‌های مختلفِ مواد"],
+  },
 ];
 
 function vlabClamp(v, min, max) {
@@ -21072,14 +21090,16 @@ function VlabDensityFloatingExperiment({ onReading }) {
     // eslint-disable-next-line
   }, [material]);
 
-  // کاربر عکس‌های واقعیِ سنگ/فلز/چوب/یخ را فرستاد و گفت: «چوب باید در سطح آب شناور باشد نه در فضای
-  // خارج از آب، فلز و سنگ باید به کف ظرف برسند، اما یخ باید قسمتی در آب و قسمتی خارج از آب شناور
-  // باشد». قبلاً یک objY ساختگی و یکسان برای همه استفاده می‌شد که اجسامِ شناور را کاملاً بالای خطِ آب
-  // (نه روی آن) و اجسامِ ته‌رونده را فقط نزدیکِ سطح (نه کفِ ظرف) نشان می‌داد — از نظرِ فیزیکی نادرست.
-  // حالا: برای هر جسمِ شناور، دقیقاً به‌اندازه‌ی چگالی‌اش زیرِ آب می‌رود (چگالی = کسرِ غوطه‌وری، چون
-  // چگالیِ آب=۱)؛ برای هر جسمِ ته‌رونده، رویِ کفِ واقعیِ ظرف می‌نشیند.
+  // بازخوردِ دومِ کاربر روی همین اسکرین‌شات‌ها: ۱) چون ظرف دوبعدی است، خطِ سطحِ آب نباید موج‌دار/منحنی
+  // باشد — باید کاملاً صاف و افقی باشد. ۲) فلز و سنگ باید دقیقاً به کفِ ظرف بچسبند. ۳) چوب باید تقریباً
+  // کاملاً روی آب باشد (نه نیمه‌غرق — نسبتِ دقیقِ فیزیکیِ ۶۰٪زیرِ‌آب در این مقیاسِ کوچک قابلِ‌تشخیص
+  // نبود و شبیهِ نیمه‌غرق‌شدن به‌نظر می‌رسید). ۴) یخ باید سهمِ آشکارترا و بزرگ‌تری بالایِ آب داشته باشد
+  // (حالتِ قبلی فقط ۸٪ بالا بود که عملاً نامرئی بود). برایِ وضوحِ آموزشی (سطحِ ابتدایی)، به‌جایِ نسبتِ
+  // دقیقِ فیزیکیِ چگالی، از یک نسبتِ غوطه‌وریِ ساده‌شده و واضح استفاده شد که هنوز با ترتیبِ چگالی‌ها
+  // سازگار است (چوب کمترین، یخ و پلاستیک بیشتر غوطه‌ورند) اما سهمِ قابل‌دیدن بالایِ آب را تضمین می‌کند.
   const waterTopY = 98;
-  const floorY = 148;
+  const floorY = 152;
+  const visualSubmergedFrac = { چوب: 0.1, یخ: 0.4, پلاستیک: 0.6 };
   const photoMap = {
     چوب: { src: VLAB_DENSITY_PHOTO_WOOD, ratio: VLAB_DENSITY_PHOTO_WOOD_RATIO, w: 50 },
     یخ: { src: VLAB_DENSITY_PHOTO_ICE, ratio: VLAB_DENSITY_PHOTO_ICE_RATIO, w: 38 },
@@ -21089,7 +21109,7 @@ function VlabDensityFloatingExperiment({ onReading }) {
   const isPhoto = material !== "پلاستیک";
   const photo = photoMap[material];
   const h = isPhoto ? photo.w * photo.ratio : 34; // ارتفاعِ واقعیِ بصریِ شکل (پلاستیک برداری، h ثابت)
-  const objY = floats ? waterTopY - h * (1 - density) : floorY - h;
+  const objY = floats ? waterTopY - h * (1 - visualSubmergedFrac[material]) : floorY - h;
 
   return (
     <div className="vlab-exp">
@@ -21099,7 +21119,7 @@ function VlabDensityFloatingExperiment({ onReading }) {
       <svg viewBox="0 0 320 170" className="vlab-svg" style={{ background: "#0b1330", borderRadius: "10px" }}>
         <path d="M60,42 L60,152 Q60,160 68,160 L252,160 Q260,160 260,152 L260,42" fill="none" stroke="#8fb4e0" strokeWidth="2" />
         <path d="M62,98 L62,152 Q62,158 68,158 L252,158 Q258,158 258,152 L258,98 Z" fill="#2f6fe2" opacity="0.28" />
-        <path d="M62,98 Q90,93 120,98 T180,98 T240,98 T258,98" fill="none" stroke="#8fb4e0" strokeWidth="1.2" opacity="0.55" />
+        <line x1="62" y1="98" x2="258" y2="98" stroke="#8fb4e0" strokeWidth="1.2" opacity="0.55" />
         <line x1="70" y1="46" x2="70" y2="152" stroke="#eaf3ff" strokeWidth="3" opacity="0.15" />
 
         {isPhoto && <VlabDensityPhoto x={160 - photo.w / 2} y={objY} width={photo.w} src={photo.src} ratio={photo.ratio} />}
@@ -21127,9 +21147,10 @@ function VlabDensityFloatingExperiment({ onReading }) {
       <div className="vlab-readout">
         چگالی {material} = <b>{density} g/cm³</b> | چگالی آب = ۱ g/cm³
         <br />
-        {floats
-          ? `✅ چون چگالی‌اش از آب کمتر است، شناور می‌ماند — حدود ${Math.round(density * 100)}٪ آن زیرِ آب و بقیه بیرون از آب است.`
-          : "⬇️ چون چگالی‌اش از آب بیشتر است، ته می‌رود و به کفِ ظرف می‌رسد."}
+        {floats && material === "چوب" && "✅ چون چگالی‌اش خیلی از آب کمتر است، تقریباً کاملاً روی آب شناور می‌ماند."}
+        {floats && material === "یخ" && "✅ چون چگالی‌اش از آب کمتر است، شناور می‌ماند — اما چون چگالی‌اش به آب نزدیک است، بخشِ بزرگی از آن زیرِ آب و فقط بخشی از آن بیرون از آب می‌ماند."}
+        {floats && material === "پلاستیک" && "✅ چون چگالی‌اش از آب کمتر است، شناور می‌ماند — بیشترِ آن زیرِ آب و بخشِ کوچکی از آن بیرون از آب است."}
+        {!floats && "⬇️ چون چگالی‌اش از آب بیشتر است، ته می‌رود و به کفِ ظرف می‌رسد."}
       </div>
     </div>
   );
@@ -21486,6 +21507,256 @@ function VlabEnzymeActivityExperiment({ onReading }) {
         {temp > 60
           ? "⚠️ در دمای بالا، آنزیم دناتوره (تخریب ساختاری) می‌شود و فعالیتش تقریباً متوقف می‌شود."
           : "بهترین فعالیت آنزیم نزدیک به دمای بدن (۳۷ درجه) است؛ دمای خیلی کم یا خیلی زیاد فعالیت را کاهش می‌دهد."}
+      </div>
+    </div>
+  );
+}
+
+/* ---------- ۲۵. انتقال گرما (رسانش، همرفت، تابش) ---------- */
+function VlabHeatTransferExperiment({ onReading }) {
+  const [mode, setMode] = useState("رسانش");
+
+  // ---- رسانش: میله‌ی فلزیِ جامد با شعله در یک سر؛ جبهه‌ی گرما با گذشتِ زمان در طولِ میله جلو می‌رود ----
+  const [conductTime, setConductTime] = useState(0);
+  const heatFrac = vlabClamp(conductTime / 30, 0, 1);
+  const farEndTemp = Math.round(20 + vlabClamp((conductTime - 10) / 20, 0, 1) * 75);
+
+  // ---- همرفت: آب در حالِ گرم‌شدن؛ ذرات در یک مسیرِ بیضی‌شکل می‌چرخند — آبِ گرم بالا می‌رود، آبِ
+  // سرد پایین می‌آید. طبقِ الگویِ ثابتِ این آزمایشگاه برایِ هر چرخشِ واقعی: زاویه با rAF+ref به‌طورِ
+  // پیوسته افزایش می‌یابد (نه CSS transition که فقط خط‌مستقیم را درون‌یابی می‌کند).
+  const [heatOn, setHeatOn] = useState(false);
+  const convAngleRef = React.useRef(0);
+  const [, setConvTick] = useState(0);
+  useEffect(() => {
+    if (mode !== "همرفت" || !heatOn) return undefined;
+    let raf;
+    let last = null;
+    const step = (t) => {
+      if (last != null) convAngleRef.current += ((t - last) / 1000) * 1.7;
+      last = t;
+      setConvTick((n) => (n + 1) % 1000);
+      raf = requestAnimationFrame(step);
+    };
+    raf = requestAnimationFrame(step);
+    return () => cancelAnimationFrame(raf);
+  }, [mode, heatOn]);
+  const PARTICLE_COUNT = 7;
+
+  // ---- تابش: منبعِ گرماییِ تابشی و جسمی در فاصله‌ی قابل‌تنظیم — بدونِ نیاز به هیچ واسطه‌ای ----
+  const [distance, setDistance] = useState(40);
+  const radTemp = Math.round(20 + vlabClamp(3200 / (distance * distance), 0, 80));
+  const objX = 90 + ((distance - 10) / 140) * 180;
+
+  useEffect(() => {
+    if (mode === "رسانش") {
+      if (onReading) onReading(`رسانش | زمانِ گرم‌شدن: ${conductTime} ثانیه | دمایِ انتهایِ دورِ میله ≈ ${farEndTemp}°C`);
+    } else if (mode === "همرفت") {
+      if (onReading)
+        onReading(
+          `همرفت | شعله: ${heatOn ? "روشن" : "خاموش"} | ${heatOn ? "آبِ گرم از نزدیکِ شعله بالا می‌رود، آبِ سردتر جایش را می‌گیرد و پایین می‌آید — یک گردشِ همرفتی" : "بدونِ گرما، جریانِ همرفتی وجود ندارد"}`
+        );
+    } else {
+      if (onReading) onReading(`تابش | فاصله از منبعِ گرما: ${distance} سانتی‌متر | دمایِ جسم ≈ ${radTemp}°C | گرمایِ تابشی حتی در خلأ و بدونِ هیچ واسطه‌ای هم منتقل می‌شود`);
+    }
+    // eslint-disable-next-line
+  }, [mode, conductTime, heatOn, distance]);
+
+  return (
+    <div className="vlab-exp">
+      <div className="vlab-num-row" style={{ marginBottom: "8px" }}>
+        {["رسانش", "همرفت", "تابش"].map((m) => (
+          <button key={m} type="button" className={"vlab-num-btn" + (mode === m ? " active" : "")} onClick={() => setMode(m)}>
+            {m}
+          </button>
+        ))}
+      </div>
+      <svg viewBox="0 0 320 190" className="vlab-svg" style={{ background: "#0b1330", borderRadius: "10px" }}>
+        {mode === "رسانش" && (
+          <g>
+            <defs>
+              <linearGradient id="heatRodGrad" x1="0" y1="0" x2="1" y2="0">
+                <stop offset="0%" stopColor="#ff6a2b" />
+                <stop offset={`${vlabClamp(heatFrac * 100 - 4, 0, 100)}%`} stopColor="#ff8c42" />
+                <stop offset={`${vlabClamp(heatFrac * 100 + 4, 0, 100)}%`} stopColor="#5b6472" />
+                <stop offset="100%" stopColor="#5b6472" />
+              </linearGradient>
+            </defs>
+            <rect x="38" y="96" width="34" height="10" rx="2" fill="#3a2f22" />
+            <ellipse cx="55" cy="84" rx="10" ry="15" fill="#1e88e5" opacity="0.85" />
+            <path d="M55,96 C46,86 47,74 55,62 C63,74 64,86 55,96 Z" fill="#ffb347" opacity="0.92" />
+            <rect x="70" y="86" width="220" height="14" rx="3" fill="url(#heatRodGrad)" stroke="#2c3140" strokeWidth="1.5" />
+            <line x1="70" y1="89" x2="290" y2="89" stroke="#fff" strokeWidth="1" opacity="0.22" />
+            <VlabThermometerMini x={298} y={60} temp={farEndTemp} minT={0} maxT={100} h={55} />
+            <text x="180" y="130" fontSize="9" fill="#9aa3c0" textAnchor="middle">جبهه‌ی داغ (نارنجی) با گذشتِ زمان در طولِ میله‌ی فلزی جلو می‌رود</text>
+          </g>
+        )}
+        {mode === "همرفت" && (
+          <g>
+            <path d="M100,30 L100,120 Q100,140 120,140 L240,140 Q260,140 260,120 L260,30" fill="none" stroke="#8fb4e0" strokeWidth="2" />
+            <path d="M102,45 L102,120 Q102,138 120,138 L240,138 Q258,138 258,120 L258,45 Z" fill="#2f6fe2" opacity="0.22" />
+            <rect x="148" y="150" width="34" height="10" rx="2" fill="#3a2f22" />
+            {heatOn && (
+              <>
+                <ellipse cx="165" cy="138" rx="10" ry="15" fill="#1e88e5" opacity="0.85" />
+                <path d="M165,150 C156,140 157,128 165,116 C173,128 174,140 165,150 Z" fill="#ffb347" opacity="0.92" />
+              </>
+            )}
+            {Array.from({ length: PARTICLE_COUNT }).map((_, i) => {
+              const phase = (i / PARTICLE_COUNT) * Math.PI * 2;
+              const ang = convAngleRef.current + phase;
+              const cx = 180, cy = 88, rx = 52, ry = 42;
+              const px = cx + rx * Math.cos(ang);
+              const py = cy + ry * Math.sin(ang);
+              const t = vlabClamp((py - (cy - ry)) / (ry * 2), 0, 1); // پایین‌تر = داغ‌تر
+              const color = heatOn ? vlabMixHexColor("#5fb0e0", "#ff6a2b", t) : "#7f8bab";
+              return <circle key={i} cx={px} cy={py} r="4" fill={color} opacity="0.9" />;
+            })}
+            <text x="180" y="170" fontSize="9" fill="#9aa3c0" textAnchor="middle">
+              {heatOn ? "آبِ گرم بالا می‌رود، آبِ سردتر پایین می‌آید (گردشِ همرفتی)" : "شعله را روشن کن تا گردشِ همرفتی را ببینی"}
+            </text>
+          </g>
+        )}
+        {mode === "تابش" && (
+          <g>
+            <circle cx="70" cy="90" r="20" fill="#ffb347" />
+            <circle cx="70" cy="90" r="20" fill="#ff8c42" opacity="0.5">
+              <animate attributeName="r" values="20;34;20" dur="2.2s" repeatCount="indefinite" />
+              <animate attributeName="opacity" values="0.5;0;0.5" dur="2.2s" repeatCount="indefinite" />
+            </circle>
+            {[0, 0.5, 1].map((d) => (
+              <circle key={d} cx="70" cy="90" r="22" fill="none" stroke="#ffb347" strokeWidth="1.6" opacity="0.5" style={{ animation: `vlabRadiatePulse 2.2s ease-out ${d}s infinite` }} />
+            ))}
+            <VlabThermometerMini x={objX} y={60} temp={radTemp} minT={0} maxT={100} h={55} />
+            <text x="180" y="150" fontSize="9" fill="#9aa3c0" textAnchor="middle">بینِ منبع و جسم هیچ ماده‌ای نیست — گرمایِ تابشی مثلِ نورِ خورشید، در فضایِ خالی هم منتقل می‌شود</text>
+          </g>
+        )}
+      </svg>
+      <div className="vlab-controls">
+        {mode === "رسانش" && (
+          <div className="vlab-ctrl-col" style={{ flex: 1 }}>
+            <label className="vlab-ctrl-label">زمانِ گرم‌شدن (ثانیه): {conductTime}</label>
+            <input type="range" min="0" max="30" value={conductTime} onChange={(e) => setConductTime(+e.target.value)} />
+          </div>
+        )}
+        {mode === "همرفت" && (
+          <button type="button" className={"vlab-toggle-btn" + (heatOn ? " active" : "")} onClick={() => setHeatOn((h) => !h)}>
+            🔥 شعله {heatOn ? "روشن" : "خاموش"}
+          </button>
+        )}
+        {mode === "تابش" && (
+          <div className="vlab-ctrl-col" style={{ flex: 1 }}>
+            <label className="vlab-ctrl-label">فاصله از منبعِ گرما (سانتی‌متر): {distance}</label>
+            <input type="range" min="10" max="150" value={distance} onChange={(e) => setDistance(+e.target.value)} />
+          </div>
+        )}
+      </div>
+      <div className="vlab-readout">
+        {mode === "رسانش" && (
+          <>
+            دمایِ انتهایِ دورِ میله ≈ <b>{farEndTemp}°C</b>
+            <br />
+            رسانش فقط در موادِ جامد (به‌خصوص فلزات) و با تماسِ مستقیم اتفاق می‌افتد.
+          </>
+        )}
+        {mode === "همرفت" && (
+          <>
+            دما: در این آزمایش فقط جهتِ جریان نشان داده می‌شود.
+            <br />
+            همرفت فقط در سیالات (مایعات و گازها) رخ می‌دهد؛ چون بخشِ گرم‌شده سبک‌تر می‌شود و بالا می‌رود.
+          </>
+        )}
+        {mode === "تابش" && (
+          <>
+            دمایِ جسم ≈ <b>{radTemp}°C</b>
+            <br />
+            هرچه فاصله بیشتر شود، گرمایِ دریافتی به‌سرعت کم می‌شود؛ تابش تنها روشِ انتقالِ گرمایی است که به ماده نیاز ندارد.
+          </>
+        )}
+      </div>
+      <style>{`
+        @keyframes vlabRadiatePulse { 0% { r: 20px; opacity: 0.6; } 100% { r: 48px; opacity: 0; } }
+      `}</style>
+    </div>
+  );
+}
+
+/* ---------- ۲۶. رسانا و نارسانای الکتریسیته ---------- */
+function VlabElectricityConductionExperiment({ onReading }) {
+  const MATERIALS = {
+    "میخِ آهنی": { conducts: true, color: "#9aa3b0" },
+    "سیمِ مسی": { conducts: true, color: "#c87f4a" },
+    "قاشقِ فلزی": { conducts: true, color: "#c9d1de" },
+    چوب: { conducts: false, color: "#c8862b" },
+    پلاستیک: { conducts: false, color: "#5fb0e0" },
+    لاستیک: { conducts: false, color: "#3a3f4a" },
+    شیشه: { conducts: false, color: "#bfe3f0" },
+  };
+  const [material, setMaterial] = useState("میخِ آهنی");
+  const conducts = MATERIALS[material].conducts;
+  const current = conducts ? 1.1 : 0;
+  const t = Math.pow(vlabClamp(current / 1.5, 0, 1), 0.5);
+  const filamentColor = vlabMixHexColor("#2a2a30", "#ffffff", t);
+
+  useEffect(() => {
+    if (onReading)
+      onReading(`ماده‌ی آزمایش‌شده: ${material} | نتیجه: ${conducts ? "رسانا — مدار بسته می‌شود و لامپ روشن می‌شود" : "نارسانا (عایق) — مدار باز می‌ماند و لامپ خاموش است"}`);
+    // eslint-disable-next-line
+  }, [material]);
+
+  return (
+    <div className="vlab-exp">
+      <svg viewBox="0 0 320 200" className="vlab-svg" style={{ background: "#0b1330", borderRadius: "10px" }}>
+        <circle cx="222" cy="52" r={28 + t * 30} fill="#f3f6ff" opacity={0.03 + t * 0.3} />
+        <circle cx="222" cy="52" r={16 + t * 20} fill="#f3f6ff" opacity={0.06 + t * 0.48} />
+
+        <VlabBatteryPhoto x={30} y={58} width={40} />
+        <text x="50" y="155" fontSize="10" fill="#aab3cc" textAnchor="middle">باتری</text>
+
+        {/* سیمِ مثبت تا شکافِ آزمایش */}
+        <path d="M50,58 L50,38 L108,38" fill="none" stroke="#f2c548" strokeWidth="3" strokeLinecap="round" />
+        {/* شکافِ مدار: دو سرِ فلزیِ ثابت که نمونه‌ی موردِ آزمایش بینشان قرار می‌گیرد */}
+        <circle cx="108" cy="38" r="3.5" fill="#c9d1de" stroke="#5b6472" strokeWidth="1" />
+        <circle cx="150" cy="38" r="3.5" fill="#c9d1de" stroke="#5b6472" strokeWidth="1" />
+        {/* نمونه‌ی موردِ آزمایش، بینِ دو سرِ شکاف */}
+        <rect x="112" y="31" width="34" height="14" rx="3" fill={MATERIALS[material].color} stroke="#1c2540" strokeWidth="1.2" />
+        <text x="129" y="22" fontSize="8" fill="#eaf0fb" textAnchor="middle" fontWeight="700">{material}</text>
+        {/* ادامه‌ی سیمِ مثبت تا پایه‌ی لامپ، فقط وقتی مدار واقعاً رسانا باشد پررنگ‌تر دیده می‌شود */}
+        <path d="M150,38 L222,38 L222,38" fill="none" stroke="#f2c548" strokeWidth="3" strokeLinecap="round" opacity={conducts ? 1 : 0.35} />
+
+        {/* سیمِ منفی از باتری تا پایه‌ی لامپ */}
+        <path d="M50,145 L50,168 L204,168 L204,112" fill="none" stroke="#5b7fb8" strokeWidth="3" strokeLinecap="round" />
+
+        <rect x="206" y="100" width="32" height="24" fill="#9aa3b0" stroke="#5b6472" strokeWidth="1" />
+        <line x1="206" y1="106" x2="238" y2="106" stroke="#5b6472" strokeWidth="1" />
+        <line x1="206" y1="112" x2="238" y2="112" stroke="#5b6472" strokeWidth="1" />
+        <line x1="206" y1="118" x2="238" y2="118" stroke="#5b6472" strokeWidth="1" />
+        <circle cx="222" cy="130" r="6" fill="#c9d1de" stroke="#5b6472" strokeWidth="1" />
+        <path
+          d="M 206,100 C 206,80 194,72 194,50 C 194,26 206,10 222,10 C 238,10 250,26 250,50 C 250,72 238,80 238,100 Z"
+          fill="rgba(255,255,255,0.08)"
+          stroke="#cfd8e8"
+          strokeWidth="1.5"
+        />
+        <path d="M 214,94 L 214,58 L 222,73 L 230,58 L 230,94" fill="none" stroke={filamentColor} strokeWidth="2.4" strokeLinecap="round" />
+        <circle cx="222" cy="55" r={3 + t * 8} fill="#ffffff" opacity={0.1 + t * 0.85} />
+
+        {!conducts && (
+          <text x="129" y="58" fontSize="8" fill="#e2622f" textAnchor="middle" fontWeight="700">مدار باز است ⛔</text>
+        )}
+      </svg>
+      <div className="vlab-controls">
+        <div className="vlab-toggle-row" style={{ flexWrap: "wrap" }}>
+          {Object.keys(MATERIALS).map((m) => (
+            <button key={m} type="button" className={"vlab-toggle-btn" + (material === m ? " active" : "")} onClick={() => setMaterial(m)}>
+              {m}
+            </button>
+          ))}
+        </div>
+      </div>
+      <div className="vlab-readout">
+        {conducts ? "✅ این ماده رسانا است: الکترون‌ها می‌توانند آزادانه در آن حرکت کنند، پس مدار بسته می‌شود و لامپ روشن می‌شود." : "⛔ این ماده نارسانا (عایق) است: الکترون‌ها در آن آزادانه حرکت نمی‌کنند، پس مدار باز می‌ماند و جریانی برقرار نمی‌شود."}
+        <br />
+        فلزها معمولاً رسانای خوبی برای الکتریسیته‌اند؛ چوب، پلاستیک، لاستیک و شیشه معمولاً عایق‌اند.
       </div>
     </div>
   );

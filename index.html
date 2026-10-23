@@ -17237,10 +17237,14 @@ function pqbShuffleMcqOptionLetters(q, seedStr) {
 // جلسه‌ی جبرانی شب: همان سطح دشواری، اما ~۱۰٪ سؤالات با سؤال هم‌سطح دیگری عوض می‌شوند،
 // باقی سؤالات در جای دیگری قرار می‌گیرند و گزینه‌های سؤالات تستیِ باقی‌مانده نیز جابجا می‌شوند —
 // همه‌ی این‌ها به‌صورت seeded، یعنی هر شرکت‌کننده‌ی جلسه‌ی جبرانی دقیقاً همین یک آزمون را می‌بیند.
-function pqbBuildMandatoryExamSet(pool, seedBase, session) {
+function pqbBuildMandatoryExamSet(pool, seedBase, session, examSize) {
   const morningSeed = seedBase + ":morning";
   const morningShuffled = pqbSeededShuffle(pool, morningSeed);
-  const morningSet = morningShuffled.slice(0, Math.min(15, morningShuffled.length));
+  // وقتی بودجه‌بندیِ واقعیِ کنکور برای این درس/پایه در دست است، اندازه‌ی آزمون باید دقیقاً
+  // برابر همان تعداد واقعی سؤالِ آن کتاب در کنکور باشد (مثلاً ۲۰ برای زیست‌شناسی ۲)، نه یک
+  // سقفِ ثابتِ ۱۵ — تا هم تعداد و هم نسبتِ فصل‌ها دقیقاً مطابق خودِ کنکور بماند.
+  const size = typeof examSize === "number" && examSize > 0 ? examSize : 15;
+  const morningSet = morningShuffled.slice(0, Math.min(size, morningShuffled.length));
   if (session !== "evening") return morningSet;
 
   const nightSeed = seedBase + ":evening";
@@ -17283,11 +17287,66 @@ function pqbBuildMandatoryExamSet(pool, seedBase, session) {
   });
 }
 
+// بودجه‌بندی واقعیِ کنکور سراسری: تعداد دقیق سؤالات هر فصل، برای هر پایه/کتاب، طوری که
+// جمعِ هر پایه با تعداد واقعیِ سؤالاتِ آن کتاب در کنکور یکی باشد. این اعداد از کنکور سراسری
+// ۱۴۰۰ (آخرین سالی که داده‌ی فصل‌به‌فصلِ کامل و قابل‌اطمینان برایش در دسترس بود) گرفته شده‌اند.
+// وقتی بودجه‌ای برای یک درس/پایه در این جدول نباشد، رهیار طبق روش قبلی (پوشش متنوع، بدون
+// بودجه‌ی فصلی دقیق) عمل می‌کند — یعنی نبودِ داده هرگز ساختِ سؤال را متوقف نمی‌کند.
+const PQB_KONKUR_BUDGET = {
+  "زیست‌شناسی": {
+    // زیست‌شناسی ۱ — مجموع ۱۵ سؤال در کنکور ۱۴۰۰
+    "دهم": [
+      { chapter: "گردش مواد در بدن", count: 5 },
+      { chapter: "گوارش و جذب مواد", count: 4 },
+      { chapter: "تبادلات گازی", count: 4 },
+      { chapter: "تنظیم اسمزی و دفع مواد زائد", count: 2 },
+    ],
+    // زیست‌شناسی ۲ — مجموع ۲۰ سؤال در کنکور ۱۴۰۰
+    "یازدهم": [
+      { chapter: "تولید مثل", count: 4 },
+      { chapter: "تنظیم شیمیایی", count: 3 },
+      { chapter: "ایمنی", count: 3 },
+      { chapter: "تنظیم عصبی", count: 2 },
+      { chapter: "حواس", count: 2 },
+      { chapter: "دستگاه حرکتی", count: 2 },
+      { chapter: "تولید مثل نهان‌دانگان", count: 2 },
+      { chapter: "تقسیم یاخته", count: 1 },
+      { chapter: "پاسخ گیاهان به محرک‌ها", count: 1 },
+    ],
+    // زیست‌شناسی ۳ — مجموع ۱۵ سؤال در کنکور ۱۴۰۰
+    "دوازدهم": [
+      { chapter: "انتقال اطلاعات در نسل‌ها", count: 4 },
+      { chapter: "مولکول‌های اطلاعاتی", count: 2 },
+      { chapter: "تغییر در اطلاعات وراثتی", count: 2 },
+      { chapter: "از ماده به انرژی", count: 2 },
+      { chapter: "از انرژی به ماده", count: 2 },
+      { chapter: "جریان اطلاعات در یاخته‌ها", count: 1 },
+      { chapter: "فناوری‌های نوین زیستی", count: 1 },
+      { chapter: "رفتارهای جانوران", count: 1 },
+    ],
+  },
+};
+
 // استخر سؤالات آزمون الزامی کنکور را با رهیار می‌سازد — کاملاً مستقل از بانک رسمی هر معلم،
 // مدیر یا مدرسه‌ی خاص. خروجی هر سؤال دقیقاً هم‌ساختار سؤالات تستیِ بانک معلم است (متن با گزینه‌های
 // الف/ب/ج/د داخل خودش، و توضیحِ پاسخ با جمله‌ی صریح «گزینه‌ی X درست است») تا همان منطق
 // جابجاییِ گزینه‌ها و ضدتقلبِ جلسه‌ی جبرانی روی آن هم کار کند.
 async function pqbGenerateKonkurAiPool(subject, grade) {
+  const budget = PQB_KONKUR_BUDGET[subject] && PQB_KONKUR_BUDGET[subject][grade];
+  const totalFromBudget = budget ? budget.reduce((sum, b) => sum + b.count, 0) : null;
+  const budgetInstruction = budget
+    ? "تعداد و درصد سؤالات باید دقیقاً مطابق بودجه‌بندیِ واقعیِ کنکور سراسری برای همین پایه و درس باشد — " +
+      "یعنی دقیقاً همین تعداد سؤال از هر فصل طراحی کن، نه بیشتر و نه کمتر: " +
+      budget.map((b) => "«" + b.chapter + "»: " + b.count + " سؤال").join("، ") +
+      ". در مجموع دقیقاً " +
+      totalFromBudget +
+      " سؤال طراحی کن (" +
+      budget.map((b) => b.count + " از «" + b.chapter + "»").join(" + ") +
+      " = " +
+      totalFromBudget +
+      ")."
+    : "۲۴ سؤال چهارگزینه‌ای (تستی) طراحی کن، با پوشش متنوع از فصل‌های مختلف.";
+  const totalCount = totalFromBudget || 24;
   const response = await fetch("https://api.anthropic.com/v1/messages", {
     method: "POST",
     headers: { "Content-Type": "application/json" },
@@ -17301,15 +17360,17 @@ async function pqbGenerateKonkurAiPool(subject, grade) {
         "» در درس «" +
         subject +
         "» است و به هیچ معلم، مدیر یا مدرسه‌ی خاصی وابسته نیست — یعنی باید کاملاً بر اساس کتاب درسی رسمی " +
-        "ایران برای این پایه و درس باشد، با پوشش متنوع از فصل‌های مختلف. ۲۴ سؤال چهارگزینه‌ای (تستی) طراحی کن، " +
-        "با ترکیبی تقریباً مساوی از سطح دشواری آسان، متوسط و سخت (هر سطح حدود ۸ سؤال). " +
+        "ایران برای این پایه و درس باشد. " +
+        budgetInstruction +
+        " نام فیلد «chapter» برای هر سؤال باید دقیقاً یکی از همین نام‌های فصل باشد (کپی دقیق، بدون تغییر املایی). " +
+        "دشواری سؤالات هر فصل را متنوع کن (ترکیبی از آسان/متوسط/سخت)، نه همه یک سطح. " +
         'یک آرایه‌ی JSON به نام "items" برگردان. هر عضو دقیقاً این ساختار را داشته باشد: ' +
-        '{"chapter": "نام فصل/موضوع", ' +
+        '{"chapter": "نام فصل/موضوع — دقیقاً از لیست بالا", ' +
         '"text": "متن کامل سؤال، و بلافاصله بعد از آن چهار گزینه دقیقاً با همین قالب داخل همان رشته متنی: الف) ... ب) ... ج) ... د) ...", ' +
         '"difficulty": "یکی از: آسان/متوسط/سخت", ' +
         '"explanation": "دقیقاً با این قالب شروع شود: «گزینه‌ی X درست است» (X یکی از الف/ب/ج/د — همان حرفی که در متن سؤال گزینه‌ی درست است)، سپس استدلال یا مراحل حل کامل"}. ' +
         "فقط همان شیء JSON را برگردان، بدون هیچ توضیح اضافه یا Markdown.",
-      messages: [{ role: "user", content: "لطفاً سؤالات آزمون الزامی کنکور را آماده کن." }],
+      messages: [{ role: "user", content: "لطفاً سؤالات آزمون الزامی کنکور را آماده کن — دقیقاً " + totalCount + " سؤال، با همان بودجه‌بندیِ فصلی که در دستور آمد." }],
     }),
   });
   const data = await response.json();
@@ -17665,7 +17726,9 @@ function StudentQuestionBankView({ onBack, prefillSchoolCode, prefillGrade, pref
       // حدود ۱۰٪ سؤالات جلسه‌ی جبرانی با سؤال هم‌سطح دیگری عوض می‌شود، ترتیب سؤالات جابجا می‌شود،
       // و گزینه‌های سؤالات تستیِ باقی‌مانده نیز در جای دیگری قرار می‌گیرند — همه‌چیز seeded است، پس
       // همه‌ی شرکت‌کنندگانِ یک جلسه دقیقاً همان یک آزمون را می‌بینند.
-      const examSetBuilt = pqbBuildMandatoryExamSet(pool, fridayStatus.dateKey + ":" + skey(subject) + ":" + grade, fridayStatus.session);
+      const subjectBudget = PQB_KONKUR_BUDGET[subject] && PQB_KONKUR_BUDGET[subject][grade];
+      const budgetExamSize = subjectBudget ? subjectBudget.reduce((sum, b) => sum + b.count, 0) : null;
+      const examSetBuilt = pqbBuildMandatoryExamSet(pool, fridayStatus.dateKey + ":" + skey(subject) + ":" + grade, fridayStatus.session, budgetExamSize);
       // آزمون الزامی کنکور دقیقاً مثل خودِ کنکور سراسری نمره‌گذاری می‌شود (درصد، با نمره‌ی منفی
       // یک‌سومی) نه «از ۲۰ نمره» — نمره‌دهی اینجا لازم نیست، چون نتیجه از خودِ پاسخ‌های واقعی
       // دانش‌آموز در پایان آزمون محاسبه می‌شود (نگاه کنید به handleFinishExam/pqbComputeKonkurPercent)

@@ -19378,12 +19378,13 @@ function VlabDissolvingExperiment({ onReading }) {
     // eslint-disable-next-line
   }, [material, stirCount]);
 
-  // روغن: با هر هم‌زدن بلافاصله به‌صورت ابرِ پراکنده با آب مخلوط می‌شود، سپس به‌تدریج (طی ~۲ ثانیه)
-  // دوباره بالا می‌آید و لایه‌ی یکپارچه‌اش را روی سطح آب تشکیل می‌دهد — نه ناگهان، بلکه تدریجی.
+  // روغن: با هر هم‌زدن بلافاصله به‌صورت ابرِ پراکنده (با اجزای در حالِ تکان‌خوردنِ واقعی) با آب
+  // مخلوط می‌شود، مدتی در همان حالت می‌ماند، و فقط بعد از آن، خیلی به‌آرامی و تدریجی دوباره بالا
+  // می‌آید و لایه‌ی یکپارچه‌اش را روی سطح آب تشکیل می‌دهد — نه ناگهان.
   useEffect(() => {
     if (material === "روغن" && stirCount > 0) {
       setOilMixing(true);
-      const t = setTimeout(() => setOilMixing(false), 1300);
+      const t = setTimeout(() => setOilMixing(false), 2200);
       return () => clearTimeout(t);
     }
     // eslint-disable-next-line
@@ -19436,6 +19437,9 @@ function VlabDissolvingExperiment({ onReading }) {
   // کسری از توده که هنوز باقی مانده: شن هیچ‌وقت کم نمی‌شود، شکر/نمک با هر هم‌زدن کوچک‌تر می‌شوند تا کامل حل شوند
   const pileFrac = !dissolves ? 1 : dissolved ? 0 : Math.max(0.12, 1 - stirCount / 3);
   const visiblePile = pileParticles.slice(0, Math.round(pileParticles.length * pileFrac));
+  // برای روغن، همزن نباید تا کفِ ظرف برود (آنجا چیزی برای هم‌زدن نیست)؛ باید داخلِ ناحیه‌ی
+  // روغن+آب (نزدیکِ سطح تا میانه‌ی ظرف) بماند — برای بقیه‌ی مواد که ته‌نشین می‌شوند، تا کف می‌رود.
+  const spoonReach = material === "روغن" ? 62 : 88;
 
   return (
     <div className="vlab-exp">
@@ -19480,26 +19484,30 @@ function VlabDissolvingExperiment({ onReading }) {
         )}
         {!dissolves && material === "روغن" && (
           <>
-            {/* لایه‌ی روغنِ ضخیم‌تر (معادل یک لایه‌ی واقعیِ ~۵ میلی‌متری)، همیشه با فاصله‌ی امن از درِ
-                ظرف. وقتی هم‌زدن تمام می‌شود، دیگر فقط محو (fade) نمی‌شود — واقعاً از عمقِ آب به‌سمتِ
-                سطح، به‌آرامی (۲ ثانیه) بالا می‌آید (حرکتِ cy، نه فقط opacity) تا تدریجی به‌نظر برسد. */}
-            <ellipse cx="160" cy={oilMixing ? 88 : 53} rx="57" ry="13" fill="#e8c35a" opacity={oilMixing ? 0 : 0.93} style={{ transition: `cy ${oilMixing ? "0.3s" : "2s"} ease, opacity ${oilMixing ? "0.3s" : "2s"} ease` }} />
-            <ellipse cx="160" cy={oilMixing ? 82 : 44} rx="50" ry="3.6" fill="#f4dd8c" opacity={oilMixing ? 0 : 0.55} style={{ transition: `cy ${oilMixing ? "0.3s" : "2s"} ease, opacity ${oilMixing ? "0.3s" : "2s"} ease` }} />
-            {/* هنگام هم‌زدن: به‌جای قطره‌های جداجدا، یک ابرِ پیوسته و محوشده از روغن در آب پخش می‌شود */}
-            <g opacity={oilMixing ? 0.82 : 0} style={{ transition: "opacity 0.9s ease" }} filter="url(#vlabOilBlur)">
-              <ellipse cx="128" cy="90" rx="24" ry="15" fill="#e8c35a" />
-              <ellipse cx="158" cy="112" rx="28" ry="17" fill="#e8c35a" />
-              <ellipse cx="189" cy="88" rx="21" ry="14" fill="#e8c35a" />
-              <ellipse cx="146" cy="134" rx="19" ry="12" fill="#e8c35a" />
-              <ellipse cx="176" cy="127" rx="17" ry="11" fill="#e8c35a" />
-              <ellipse cx="162" cy="70" rx="22" ry="12" fill="#e8c35a" />
+            {/* لایه‌ی روغنِ ضخیم‌تر، همیشه با فاصله‌ی امن از درِ ظرف. وقتی هم‌زدن تمام می‌شود، دیگر
+                فقط محو (fade) نمی‌شود — واقعاً از عمقِ آب به‌سمتِ سطح، خیلی به‌آرامی (۲٫۸ ثانیه)
+                بالا می‌آید (حرکتِ cy، نه فقط opacity) تا کاملاً تدریجی به‌نظر برسد، نه ناگهانی. */}
+            <ellipse cx="160" cy={oilMixing ? 95 : 53} rx="57" ry="13" fill="#e8c35a" opacity={oilMixing ? 0 : 0.93} style={{ transition: `cy ${oilMixing ? "0.3s" : "2.8s"} ease, opacity ${oilMixing ? "0.3s" : "2.8s"} ease` }} />
+            <ellipse cx="160" cy={oilMixing ? 89 : 44} rx="50" ry="3.6" fill="#f4dd8c" opacity={oilMixing ? 0 : 0.55} style={{ transition: `cy ${oilMixing ? "0.3s" : "2.8s"} ease, opacity ${oilMixing ? "0.3s" : "2.8s"} ease` }} />
+            {/* هنگام هم‌زدن: به‌جای قطره‌های جداجدا، یک تودهٔ بزرگ و پُرحجمِ به‌هم‌پیوسته از روغن
+                (با آبِ کمتر بینِ تکه‌ها — تکه‌ها بزرگ‌تر و نزدیک‌ترند) در آب پخش می‌شود، و خودِ تکه‌ها
+                هم مدام کمی تکان می‌خورند (نه مثلِ یک اسفنجِ بی‌حرکت). */}
+            <g opacity={oilMixing ? 0.9 : 0} style={{ transition: "opacity 1.3s ease" }} filter="url(#vlabOilBlur)">
+              <ellipse className="vlab-oil-blob-a" cx="126" cy="92" rx="30" ry="20" fill="#e8c35a" />
+              <ellipse className="vlab-oil-blob-b" cx="160" cy="114" rx="34" ry="22" fill="#e8c35a" />
+              <ellipse className="vlab-oil-blob-c" cx="192" cy="90" rx="27" ry="19" fill="#e8c35a" />
+              <ellipse className="vlab-oil-blob-b" cx="144" cy="138" rx="24" ry="16" fill="#e8c35a" />
+              <ellipse className="vlab-oil-blob-a" cx="178" cy="132" rx="23" ry="15" fill="#e8c35a" />
+              <ellipse className="vlab-oil-blob-c" cx="160" cy="72" rx="28" ry="16" fill="#e8c35a" />
+              <ellipse className="vlab-oil-blob-b" cx="132" cy="118" rx="20" ry="14" fill="#e8c35a" />
             </g>
           </>
         )}
         {dissolved && <path d="M102,48 L102,166 Q102,172 108,172 L212,172 Q218,172 218,166 L218,48 Z" fill="#eef6f0" opacity="0.18" />}
-        {/* قاشق هم‌زدن: دسته‌اش از شکافِ در بیرون می‌زند، هم‌اندازه‌ی یک همزنِ واقعی تا کفِ ظرف می‌رسد،
-            و با هر کلیکِ «هم بزن» یک چرخشِ کاملِ دایره‌ای (مثل هم‌زدنِ واقعی) انجام می‌دهد */}
-        <VlabStirSpoonMini x={160} y={78} reach={88} stirKey={stirCount} handleTop={-70} />
+        {/* قاشق هم‌زدن: دسته‌اش از شکافِ در بیرون می‌زند؛ برای شکر/نمک/شن تا کفِ ظرف می‌رسد (جایی که
+            توده نشسته)، اما برای روغن فقط تا داخلِ ناحیه‌ی روغن+آب می‌رود، نه کفِ خالیِ ظرف. با هر
+            کلیکِ «هم بزن» یک حرکتِ مدارِ کوچکِ دایره‌ای (مثل هم‌زدنِ واقعی، داخلِ لیوان) انجام می‌دهد */}
+        <VlabStirSpoonMini x={160} y={78} reach={spoonReach} stirKey={stirCount} handleTop={-70} />
       </svg>
       <div className="vlab-controls">
         <div className="vlab-ctrl-col">
@@ -20508,6 +20516,14 @@ function StudentVirtualLabView({ onBack, grade, studentCode, schoolCode }) {
           100% { transform: translate(0px, 0px) scale(1); }
         }
         .vlab-stir-spinning { animation: vlab-stir-orbit 0.42s linear 4; transform-origin: center; }
+        /* تکانِ پیوسته‌ی اجزای ابرِ روغن هنگامِ هم‌زدن — تا «مثل اسفنجِ ثابت» نماند و واقعاً
+           زنده/در حالِ حرکت به‌نظر برسد؛ سه الگوی کمی متفاوت تا حرکتِ تکه‌ها هماهنگ/یکنواخت نباشد. */
+        @keyframes vlab-oil-wobble-a { 0%,100% { transform: translate(0px,0px) scale(1); } 33% { transform: translate(4px,-3px) scale(1.05); } 66% { transform: translate(-3px,3px) scale(0.96); } }
+        @keyframes vlab-oil-wobble-b { 0%,100% { transform: translate(0px,0px) scale(1); } 33% { transform: translate(-4px,2px) scale(0.95); } 66% { transform: translate(3px,-3px) scale(1.06); } }
+        @keyframes vlab-oil-wobble-c { 0%,100% { transform: translate(0px,0px) scale(1); } 50% { transform: translate(3px,3px) scale(1.04); } }
+        .vlab-oil-blob-a { animation: vlab-oil-wobble-a 1.1s ease-in-out infinite; }
+        .vlab-oil-blob-b { animation: vlab-oil-wobble-b 1.3s ease-in-out infinite; }
+        .vlab-oil-blob-c { animation: vlab-oil-wobble-c 0.9s ease-in-out infinite; }
         .vlab-svg { width: 100%; max-width: 420px; height: auto; margin: 0 auto; background: #fbf7ec; border-radius: 12px; border: 1px solid rgba(28,37,64,0.08); }
         .vlab-scope-circle { max-width: 260px; background: #0b1330; }
         .vlab-micro-layout { display: flex; gap: 16px; flex-wrap: wrap; justify-content: center; align-items: flex-start; }

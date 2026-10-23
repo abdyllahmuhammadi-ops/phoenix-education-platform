@@ -18720,6 +18720,14 @@ function VlabAcidBaseExperiment({ onReading }) {
 }
 
 /* ---------- ۷. رشد گیاه ---------- */
+// نور/آب نه یک «عدد جادویی» بلکه یک بازه‌ی مناسب دارند — خیلی کم یا خیلی زیاد از این بازه رشد را کند می‌کند؛
+// این دقیقاً مثل نیاز واقعی گیاه است: هم کمبود نور/آب و هم زیاده‌روی در آبیاری به رشد لطمه می‌زند.
+function vlabPlantBandFactor(value, min, max, denom) {
+  if (value >= min && value <= max) return 1;
+  const dist = value < min ? min - value : value - max;
+  return vlabClamp(1 - dist / denom, 0, 1);
+}
+
 function VlabPlantGrowthExperiment({ onReading }) {
   const [light, setLight] = useState(50);
   const [water, setWater] = useState(50);
@@ -18727,9 +18735,15 @@ function VlabPlantGrowthExperiment({ onReading }) {
   const [height, setHeight] = useState(0);
   const [lastGrowth, setLastGrowth] = useState(0);
 
+  const LIGHT_MIN = 55, LIGHT_MAX = 90;
+  const WATER_MIN = 35, WATER_MAX = 70;
+  const lightFactor = vlabPlantBandFactor(light, LIGHT_MIN, LIGHT_MAX, 55);
+  const waterFactor = vlabPlantBandFactor(water, WATER_MIN, WATER_MAX, 35);
+  const lightStatus = light < LIGHT_MIN ? "کم" : light > LIGHT_MAX ? "زیاد" : "مناسب";
+  const waterStatus = water < WATER_MIN ? "کم" : water > WATER_MAX ? "زیاد" : "مناسب";
+
   const passDay = () => {
-    const distance = Math.abs(light - 70) + Math.abs(water - 60);
-    const growth = Math.max(0, 8 - distance / 10);
+    const growth = 6 * lightFactor * waterFactor;
     setHeight((h) => Math.min(100, h + growth));
     setLastGrowth(growth);
     setDay((d) => d + 1);
@@ -18740,38 +18754,128 @@ function VlabPlantGrowthExperiment({ onReading }) {
     setLastGrowth(0);
   };
 
-  let status = "🌱 جوانه زده";
+  let status = "🌱 دانه کاشته شده — روی «یک روز بگذرد» بزن";
   if (day > 0) {
-    if (lastGrowth >= 6) status = "😊 رشد عالی";
-    else if (lastGrowth >= 3) status = "🙂 رشد متوسط";
-    else status = "🥀 رشد ضعیف — نور یا آب را تنظیم کن";
+    if (lastGrowth >= 4.5) status = "😊 رشد عالی";
+    else if (lastGrowth >= 2) status = "🙂 رشد متوسط";
+    else if (lastGrowth > 0) status = "🥀 رشد کم — نور/آب را به بازه‌ی مناسب نزدیک کن";
+    else status = "😵 رشد متوقف — نور یا آب خیلی نامناسب است";
   }
 
   useEffect(() => {
-    if (onReading) onReading(`روز ${day} | قد گیاه: ${height.toFixed(1)} سانتی‌متر | نور: ${light}٪ | آب: ${water}٪ | وضعیت: ${status}`);
+    if (onReading) onReading(`روز ${day} | قد گیاه: ${height.toFixed(1)} سانتی‌متر | نور: ${light}٪ (${lightStatus}) | آب: ${water}٪ (${waterStatus}) | وضعیت: ${status}`);
     // eslint-disable-next-line
   }, [day, height]);
 
-  const leafCount = Math.floor(height / 20);
-  const leaves = [];
-  for (let i = 0; i < leafCount; i++) {
-    const y = 160 - i * 20 - 10;
-    leaves.push(<ellipse key={"l" + i} cx="150" cy={y} rx="14" ry="7" fill={lastGrowth >= 3 || day === 0 ? "#3fae4e" : "#b5b544"} />);
-    leaves.push(<ellipse key={"r" + i} cx="170" cy={y} rx="14" ry="7" fill={lastGrowth >= 3 || day === 0 ? "#3fae4e" : "#b5b544"} />);
+  const healthy = lastGrowth >= 2 || day === 0;
+  const leafColor = healthy ? "#3fae4e" : "#c7b23a";
+
+  // مرحله‌ی رشد بر اساس قد: دانه → جوانه → نهال → گیاه بزرگ → شکوفه — نه فقط یک خط و چند بیضی که فرقی با هم ندارند.
+  const stage = height <= 0 ? "seed" : height < 12 ? "sprout" : height < 40 ? "young" : height < 90 ? "grown" : "flowering";
+
+  const potCx = 160;
+  const potTopY = 158, potBottomY = 175, potTopW = 60, potBottomW = 44;
+  const soilY = potTopY + 2;
+  const stemBaseY = soilY;
+  const stemTopY = stemBaseY - height * 0.9;
+
+  // تعداد جفت‌برگ را بر اساس قد تعیین می‌کنیم، نه فاصله‌ی ثابتِ پیکسلی روی ساقه — چون روی ساقه‌های کوتاه
+  // (نهال تازه) فاصله‌ی ثابت اصلاً جایی برای حتی یک برگ باقی نمی‌گذاشت و ساقه کاملاً خالی دیده می‌شد.
+  const leafPairCount = vlabClamp(Math.floor(height / 13), 0, 6);
+  const leafYs = [];
+  const stemLen = stemBaseY - stemTopY;
+  for (let i = 1; i <= leafPairCount; i++) {
+    const frac = i / (leafPairCount + 1);
+    leafYs.push(stemBaseY - frac * stemLen);
+  }
+
+  const sunRays = [];
+  for (let i = 0; i < 8; i++) {
+    const angle = (i / 8) * Math.PI * 2;
+    const rLen = 6 + (light / 100) * 13;
+    sunRays.push(
+      <line
+        key={i}
+        x1={262 + Math.cos(angle) * 16}
+        y1={32 + Math.sin(angle) * 16}
+        x2={262 + Math.cos(angle) * (16 + rLen)}
+        y2={32 + Math.sin(angle) * (16 + rLen)}
+        stroke="#ffb703"
+        strokeWidth="2.5"
+        opacity={0.3 + (light / 100) * 0.6}
+        strokeLinecap="round"
+      />
+    );
   }
 
   return (
     <div className="vlab-exp">
-      <svg viewBox="0 0 320 180" className="vlab-svg">
-        <rect x="90" y="160" width="140" height="16" fill="#8a6d3b" />
-        <line x1="160" y1="160" x2="160" y2={160 - height} stroke="#2c6e3f" strokeWidth="5" />
-        {leaves}
+      <svg viewBox="0 0 320 190" className="vlab-svg">
+        <defs>
+          <linearGradient id="vlab-plant-sky" x1="0" y1="0" x2="0" y2="1">
+            <stop offset="0%" stopColor="#bfe3ff" />
+            <stop offset="100%" stopColor="#eef8ff" />
+          </linearGradient>
+        </defs>
+        <rect x="0" y="0" width="320" height="190" fill="url(#vlab-plant-sky)" />
+        {/* خورشید — هرچه نور بیشتر، پرتوها بلندتر و پررنگ‌تر؛ این‌طور همان لحظه که اسلایدر نور را حرکت می‌دهی، نتیجه را می‌بینی. */}
+        <g>
+          {sunRays}
+          <circle cx="262" cy="32" r="16" fill="#ffc93c" opacity={0.55 + (light / 100) * 0.45} />
+        </g>
+        {/* شاخص رطوبت خاک — هرچه آب بیشتر، نوار آبی بالاتر می‌آید */}
+        <rect x="18" y="58" width="13" height="102" rx="4" fill="#dce8f5" stroke="#8fa3c4" strokeWidth="1" opacity="0.85" />
+        <rect x="19.5" y={159 - water} width="10" height={water} rx="3" fill="#3a9bd5" opacity="0.88" />
+        <text x="24.5" y="50" textAnchor="middle" fontSize="8.5" fill="#355a7a" fontWeight="700">رطوبت خاک</text>
+
+        {/* زمین و گلدان */}
+        <rect x="0" y="172" width="320" height="18" fill="#8db36b" />
+        <path
+          d={`M${potCx - potTopW / 2},${potTopY} L${potCx + potTopW / 2},${potTopY} L${potCx + potBottomW / 2},${potBottomY} L${potCx - potBottomW / 2},${potBottomY} Z`}
+          fill="#c8703f"
+          stroke="#8a4a26"
+          strokeWidth="1.5"
+        />
+        <rect x={potCx - potTopW / 2 - 3} y={potTopY - 5} width={potTopW + 6} height="7" rx="2" fill="#d98650" stroke="#8a4a26" strokeWidth="1.2" />
+        <ellipse cx={potCx} cy={potTopY} rx={potTopW / 2 - 2} ry="4" fill="#5a3b24" />
+
+        {stage === "seed" ? (
+          <ellipse cx={potCx} cy={potTopY - 1} rx="4" ry="3" fill="#8a6d3b" stroke="#5a3b24" strokeWidth="1" />
+        ) : (
+          <line x1={potCx} y1={stemBaseY} x2={potCx} y2={stemTopY} stroke="#2c6e3f" strokeWidth="4" strokeLinecap="round" />
+        )}
+
+        {stage === "sprout" && (
+          <g>
+            <path d={`M${potCx},${stemTopY} Q${potCx - 12},${stemTopY - 4} ${potCx - 16},${stemTopY + 2} Q${potCx - 10},${stemTopY + 6} ${potCx},${stemTopY} Z`} fill={leafColor} stroke="#2c6e3f" strokeWidth="0.6" />
+            <path d={`M${potCx},${stemTopY} Q${potCx + 12},${stemTopY - 4} ${potCx + 16},${stemTopY + 2} Q${potCx + 10},${stemTopY + 6} ${potCx},${stemTopY} Z`} fill={leafColor} stroke="#2c6e3f" strokeWidth="0.6" />
+          </g>
+        )}
+
+        {(stage === "young" || stage === "grown" || stage === "flowering") &&
+          leafYs.map((y, i) => (
+            <g key={i}>
+              <path d={`M${potCx},${y} Q${potCx - 11},${y - 7} ${potCx - 21},${y} Q${potCx - 11},${y + 7} ${potCx},${y} Z`} fill={leafColor} stroke="#2c6e3f" strokeWidth="0.6" />
+              <line x1={potCx} y1={y} x2={potCx - 18} y2={y} stroke="#2c6e3f" strokeWidth="0.6" opacity="0.5" />
+              <path d={`M${potCx},${y - 7} Q${potCx + 11},${y - 14} ${potCx + 21},${y - 7} Q${potCx + 11},${y} ${potCx},${y - 7} Z`} fill={leafColor} stroke="#2c6e3f" strokeWidth="0.6" />
+              <line x1={potCx} y1={y - 7} x2={potCx + 18} y2={y - 7} stroke="#2c6e3f" strokeWidth="0.6" opacity="0.5" />
+            </g>
+          ))}
+
+        {stage === "flowering" && (
+          <g transform={`translate(${potCx},${stemTopY})`}>
+            {[0, 72, 144, 216, 288].map((a) => (
+              <ellipse key={a} cx="0" cy="-9" rx="4.5" ry="7" fill="#ff8fb3" stroke="#d1517a" strokeWidth="0.5" transform={`rotate(${a})`} />
+            ))}
+            <circle cx="0" cy="0" r="5" fill="#ffcf4d" />
+          </g>
+        )}
       </svg>
       <div className="vlab-controls">
         <div className="vlab-ctrl-col" style={{ flex: 1 }}>
-          <label className="vlab-ctrl-label">☀️ نور (٪): {light}</label>
+          <label className="vlab-ctrl-label">☀️ نور (٪): {light} — {lightStatus}</label>
           <input type="range" min="0" max="100" value={light} onChange={(e) => setLight(+e.target.value)} />
-          <label className="vlab-ctrl-label">💧 آب (٪): {water}</label>
+          <label className="vlab-ctrl-label">💧 آب (٪): {water} — {waterStatus}</label>
           <input type="range" min="0" max="100" value={water} onChange={(e) => setWater(+e.target.value)} />
         </div>
         <div className="vlab-ctrl-col">
@@ -18784,7 +18888,7 @@ function VlabPlantGrowthExperiment({ onReading }) {
       <div className="vlab-readout">
         روز {day} | قد گیاه: <b>{height.toFixed(1)} سانتی‌متر</b> | {status}
         <br />
-        بهترین رشد نزدیک نور ۷۰٪ و آب ۶۰٪ اتفاق می‌افتد.
+        برای این گیاه، نور بین ۵۵٪ تا ۹۰٪ و آب بین ۳۵٪ تا ۷۰٪ «مناسب» است (کنار برچسب هر اسلایدر نشان داده می‌شود)؛ خیلی کم یا خیلی زیادِ هرکدام، رشد روزانه را کم می‌کند — درست مثل گیاه واقعی که هم به نور و هم به آب نیاز دارد، نه فقط یکی از آن‌ها.
       </div>
     </div>
   );

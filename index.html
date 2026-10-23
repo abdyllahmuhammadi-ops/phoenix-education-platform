@@ -17998,7 +17998,7 @@ function VlabSpringScale({ x, y, force, maxForce, label, unit }) {
         <line key={i} x1={i % 2 === 0 ? -7 : 7} y1={14 + (stretch / 5) * i} x2={i % 2 === 0 ? 7 : -7} y2={14 + (stretch / 5) * (i + 1)} stroke="#c8862b" strokeWidth="1.6" />
       ))}
       <rect x="-10" y={14 + stretch} width="20" height="10" rx="2" fill="#5b4636" />
-      <text x="0" y={14 + stretch + 23} fontSize="9.5" fill="#1c2540" textAnchor="middle" fontWeight="700">{force.toFixed(1)} {unit || "N"}</text>
+      <text x="0" y={14 + stretch + 23} fontSize="9.5" fill="#1c2540" textAnchor="middle" fontWeight="700" style={{ direction: "ltr", unicodeBidi: "isolate" }}>{`${force.toFixed(1)} ${unit || "N"}`}</text>
       {label && <text x="0" y="-6" fontSize="8.5" fill="#6b7399" textAnchor="middle">{label}</text>}
     </g>
   );
@@ -19534,28 +19534,88 @@ function VlabPulleyExperiment({ onReading }) {
     // eslint-disable-next-line
   }, [load, pulleyType]);
 
+  const pulleyWheel = (cx, cy, r) => (
+    <g>
+      <circle cx={cx} cy={cy} r={r} fill="#efe6d0" stroke="#5b4636" strokeWidth="3.2" />
+      {[0, 45, 90, 135].map((ang) => (
+        <line
+          key={ang}
+          x1={cx - (r - 3) * Math.cos((ang * Math.PI) / 180)}
+          y1={cy - (r - 3) * Math.sin((ang * Math.PI) / 180)}
+          x2={cx + (r - 3) * Math.cos((ang * Math.PI) / 180)}
+          y2={cy + (r - 3) * Math.sin((ang * Math.PI) / 180)}
+          stroke="#c8b98a"
+          strokeWidth="1.4"
+        />
+      ))}
+      <circle cx={cx} cy={cy} r={3.2} fill="#3a2f22" />
+    </g>
+  );
+  const crate = (cx, topY, w = 40, h = 30) => (
+    <g>
+      <rect x={cx - w / 2} y={topY} width={w} height={h} rx="3" fill="#c8862b" stroke="#8a6d3b" strokeWidth="1.4" />
+      <line x1={cx - w / 2} y1={topY + h / 3} x2={cx + w / 2} y2={topY + h / 3} stroke="#8a6d3b" strokeWidth="1" />
+      <line x1={cx - w / 2} y1={topY + (2 * h) / 3} x2={cx + w / 2} y2={topY + (2 * h) / 3} stroke="#8a6d3b" strokeWidth="1" />
+      {[-1, 1].map((sx) =>
+        [-1, 1].map((sy) => (
+          <circle key={`${sx}-${sy}`} cx={cx + sx * (w / 2 - 5)} cy={topY + h / 2 + sy * (h / 2 - 5)} r="1.3" fill="#5b4636" />
+        ))
+      )}
+    </g>
+  );
+
   return (
     <div className="vlab-exp">
-      <svg viewBox="0 0 320 190" className="vlab-svg">
-        <line x1="160" y1="10" x2="160" y2="30" stroke="#5b4636" strokeWidth="4" />
-        <circle cx="160" cy="45" r="16" fill="none" stroke="#5b4636" strokeWidth="5" />
+      {/* بازطراحی کامل (به‌خواست کاربر): قبلاً قرقره فقط یک دایره‌ی توخالیِ ساده بود (بدون چرخ‌دنده/محور)،
+          طناب‌ها خط‌چین و خط‌ِ ساده‌ی ناهماهنگ بودند، بار یک مستطیلِ تخت بود، و مهم‌تر از همه: در حالتِ
+          «قرقره‌ی متحرک»، چرخِ متحرک اصلاً به طناب وصل نبود (فقط کنارِ بار شناور بود) — از نظر فیزیکی
+          نادرست بود. حالا: سقف/تیرِ نصبِ واقعی، چرخ‌های قرقره با پره و محورِ واقعی، بارِ چوبیِ واقعی
+          (با خط‌های تخته و میخ)، و طنابِ یکپارچه (بدون خط‌چین) که واقعاً از روی/زیرِ چرخ‌ها عبور می‌کند —
+          در حالتِ متحرک: یک سرِ طناب به سقف گره می‌خورد، از زیرِ قرقره‌ی متحرک (که به بار وصل است) رد
+          می‌شود، از روی قرقره‌ی ثابت عبور می‌کند و به نیروسنج می‌رسد؛ همین مسیر است که مزیتِ مکانیکیِ ۲
+          را واقعاً نشان می‌دهد. */}
+      <svg viewBox="0 0 320 200" className="vlab-svg">
         {pulleyType === "ثابت" ? (
           <>
-            <line x1="160" y1="61" x2="160" y2="120" stroke="#8a6d3b" strokeWidth="2" />
-            <rect x="140" y="120" width="40" height="30" rx="4" fill="#c8862b" />
-            <line x1="148" y1="45" x2="80" y2="140" stroke="#8a6d3b" strokeWidth="2" strokeDasharray="4 3" />
+            <rect x="110" y="6" width="100" height="10" fill="#5b4636" />
+            {Array.from({ length: 10 }).map((_, i) => (
+              <line key={i} x1={116 + i * 9} y1="6" x2={110 + i * 9} y2="16" stroke="#3a2f22" strokeWidth="1" />
+            ))}
+            <rect x="152" y="14" width="16" height="10" fill="#3a2f22" />
+            {pulleyWheel(160, 45, 16)}
+            <path d="M140,165 L140,51.5 A20,20 0 0 1 180,51.5 L180,130" fill="none" stroke="#8a6d3b" strokeWidth="2.4" strokeLinecap="round" />
+            {crate(180, 130)}
+            <text x="180" y="174" fontSize="10" fill="#1c2540" textAnchor="middle">{`${load} کیلوگرم`}</text>
+            <VlabSpringScale x={140} y={100} force={forceNeeded} maxForce={10} unit="kgf" label="نیروسنج" />
           </>
         ) : (
           <>
-            <line x1="148" y1="45" x2="148" y2="110" stroke="#8a6d3b" strokeWidth="2" />
-            <line x1="172" y1="45" x2="90" y2="100" stroke="#8a6d3b" strokeWidth="2" strokeDasharray="4 3" />
-            <circle cx="160" cy="125" r="14" fill="none" stroke="#5b4636" strokeWidth="5" />
-            <rect x="140" y="139" width="40" height="28" rx="4" fill="#c8862b" />
+            <rect x="70" y="6" width="160" height="10" fill="#5b4636" />
+            {Array.from({ length: 16 }).map((_, i) => (
+              <line key={i} x1={76 + i * 9} y1="6" x2={70 + i * 9} y2="16" stroke="#3a2f22" strokeWidth="1" />
+            ))}
+            {/* قرقره‌ی ثابت (سمت چپ، وصل به سقف) */}
+            <rect x="112" y="14" width="16" height="10" fill="#3a2f22" />
+            {pulleyWheel(120, 45, 15)}
+            {/* گره‌ی ثابتِ انتهای طناب (سمت راست سقف) */}
+            <circle cx="205" cy="20" r="4" fill="none" stroke="#3a2f22" strokeWidth="2.2" />
+            <line x1="205" y1="16" x2="205" y2="6" stroke="#3a2f22" strokeWidth="2.2" />
+            {/* قرقره‌ی متحرک + بار (آویزان از طناب، نه شناور) */}
+            {pulleyWheel(165, 120, 13)}
+            <line x1="165" y1="133" x2="165" y2="140" stroke="#5b4636" strokeWidth="2.4" />
+            {crate(165, 140, 40, 28)}
+            <text x="165" y="182" fontSize="10" fill="#1c2540" textAnchor="middle">{`${load} کیلوگرم`}</text>
+            {/* طناب: گره‌ی سقف → زیرِ قرقره‌ی متحرک → روی قرقره‌ی ثابت → نیروسنج */}
+            <path
+              d="M205,20 L178,117 A14,14 0 0 1 152,117 L134,51.5 A15,15 0 0 1 106,51.5 L106,150"
+              fill="none"
+              stroke="#8a6d3b"
+              strokeWidth="2.4"
+              strokeLinecap="round"
+            />
+            <VlabSpringScale x={106} y={100} force={forceNeeded} maxForce={10} unit="kgf" label="نیروسنج" />
           </>
         )}
-        <text x="160" y={pulleyType === "متحرک" ? 182 : 165} fontSize="11" fill="#1c2540" textAnchor="middle">{load} kg</text>
-        {/* نیروسنج (دینامومتر) که در فهرست «ابزار و وسایل» بود ولی هیچ‌وقت دیده نمی‌شد — سر طناب به آن وصل می‌شود */}
-        <VlabSpringScale x={pulleyType === "ثابت" ? 80 : 90} y={pulleyType === "ثابت" ? 140 : 100} force={forceNeeded} maxForce={10} unit="kgf" label="نیروسنج" />
       </svg>
       <div className="vlab-controls">
         <div className="vlab-ctrl-col" style={{ flex: 1 }}>

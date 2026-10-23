@@ -17768,7 +17768,7 @@ const VLAB_EXPERIMENTS = [
     level: "ابتدایی",
     title: "اهرم‌ها و تعادل",
     icon: "⚖️",
-    intro: "با تغییر وزن و فاصله‌ی دو طرف اهرم از تکیه‌گاه، ببین چه زمانی اهرم تعادل پیدا می‌کند. قانون: گشتاور = وزن × فاصله.",
+    intro: "هر سه نوعِ اهرم را امتحان کن: نوعِ اول (تکیه‌گاه وسط، مثل الاکلنگ)، نوعِ دوم (بار وسط، مثل فرغون) و نوعِ سوم (نیرو وسط، مثل انبر). با تغییر وزن و فاصله، ببین چه زمانی اهرم تعادل پیدا می‌کند یا بار بالا می‌رود. قانون: گشتاور = نیرو × فاصله.",
     tools: ["اهرم (میله‌ی تعادل)", "تکیه‌گاه", "وزنه‌های مختلف", "خط‌کش برای اندازه‌گیری فاصله"],
   },
   {
@@ -17874,10 +17874,10 @@ const VLAB_EXPERIMENTS = [
     id: "pulley",
     subject: "فیزیک",
     level: "ابتدایی",
-    title: "قرقره‌ی ثابت و متحرک",
+    title: "قرقره‌ی ثابت، متحرک و مرکب",
     icon: "🪢",
-    intro: "با قرقره‌ی ثابت یا متحرک، بار را بالا بکش و ببین چطور قرقره‌ی متحرک نیروی لازم را کم می‌کند (مزیت مکانیکی).",
-    tools: ["قرقره‌ی ثابت", "قرقره‌ی متحرک", "طناب", "وزنه‌ی بار", "نیروسنج"],
+    intro: "با قرقره‌ی ثابت، متحرک یا مرکب، بار را بالا بکش و ببین چطور هر نوع قرقره نیروی لازم را تغییر می‌دهد (مزیت مکانیکی): ثابت=۱، متحرک=۲، مرکب (دو ثابت+یک متحرکِ دوشیاره)=۳.",
+    tools: ["قرقره‌ی ثابت", "قرقره‌ی متحرک", "قرقره‌ی مرکب", "طناب", "وزنه‌ی بار", "نیروسنج"],
   },
   {
     id: "friction",
@@ -18210,22 +18210,52 @@ function VlabBatteryPhoto({ x, y, width, height, label }) {
 
 /* ---------- ۱. اهرم‌ها و تعادل ---------- */
 function VlabLeverExperiment({ onReading }) {
+  // سه نوعِ اهرم طبق درخواستِ کاربر: نوعِ اول (تکیه‌گاه وسط، مثل الاکلنگ/قیچی)، نوعِ دوم (بار وسط،
+  // مثل فرغون/فندق‌شکن) و نوعِ سوم (نیرو وسط، مثل انبر/چوبِ ماهیگیری/بازویِ انسان).
+  const [leverType, setLeverType] = useState("یک");
+
+  // ---- نوعِ اول: شبیه‌سازیِ اصلیِ الاکلنگ — دو بازویِ مستقل که تکیه‌گاه بینشان است ----
   const [leftMass, setLeftMass] = useState(5);
   const [leftDist, setLeftDist] = useState(5);
   const [rightMass, setRightMass] = useState(5);
   const [rightDist, setRightDist] = useState(5);
-
   const torqueLeft = leftMass * leftDist;
   const torqueRight = rightMass * rightDist;
-  const tiltDeg = vlabClamp((torqueRight - torqueLeft) * 0.6, -22, 22);
-  let status = "⚖️ اهرم در تعادل است";
-  if (torqueLeft > torqueRight) status = "⬅️ سمت چپ سنگین‌تر است";
-  else if (torqueRight > torqueLeft) status = "➡️ سمت راست سنگین‌تر است";
+  const tiltDeg1 = vlabClamp((torqueRight - torqueLeft) * 0.6, -22, 22);
+  let status1 = "⚖️ اهرم در تعادل است";
+  if (torqueLeft > torqueRight) status1 = "⬅️ سمت چپ سنگین‌تر است";
+  else if (torqueRight > torqueLeft) status1 = "➡️ سمت راست سنگین‌تر است";
+
+  // ---- نوعِ دوم و سوم: تکیه‌گاه در یک سرِ میله است؛ بار و نیرو هر دو روی همان بازو قرار می‌گیرند،
+  // فقط ترتیبشان عوض می‌شود (در نوعِ دوم بار نزدیک‌تر به تکیه‌گاه، در نوعِ سوم نیرو نزدیک‌تر است). ----
+  const [loadMass, setLoadMass] = useState(6);
+  const [loadDist, setLoadDist] = useState(3);
+  const [effortDist, setEffortDist] = useState(8);
+  const [appliedForce, setAppliedForce] = useState(20);
+  const loadTorque = loadMass * 10 * loadDist;
+  const effortTorque = appliedForce * effortDist;
+  const tiltDeg2 = vlabClamp((effortTorque - loadTorque) * 0.015, -22, 22);
+  const minForce = loadTorque / effortDist;
+  const mechAdvantage = effortDist / loadDist;
+  let status2 = "⚖️ در آستانه‌ی تعادل";
+  if (effortTorque > loadTorque + 5) status2 = "🔼 بار بالا می‌رود";
+  else if (effortTorque < loadTorque - 5) status2 = "⛔ نیرو کافی نیست";
+
+  const selectType = (type) => {
+    setLeverType(type);
+    if (type === "دو") { setLoadDist(3); setEffortDist(8); }
+    else if (type === "سه") { setLoadDist(8); setEffortDist(3); }
+  };
 
   useEffect(() => {
-    if (onReading) onReading(`چپ: جرم ${leftMass} × فاصله ${leftDist} = گشتاور ${torqueLeft} | راست: جرم ${rightMass} × فاصله ${rightDist} = گشتاور ${torqueRight} | ${status}`);
+    if (leverType === "یک") {
+      if (onReading) onReading(`نوعِ اول (تکیه‌گاه وسط) | چپ: جرم ${leftMass} × فاصله ${leftDist} = گشتاور ${torqueLeft} | راست: جرم ${rightMass} × فاصله ${rightDist} = گشتاور ${torqueRight} | ${status1}`);
+    } else {
+      const typeLabel = leverType === "دو" ? "نوعِ دوم (بار وسط)" : "نوعِ سوم (نیرو وسط)";
+      if (onReading) onReading(`${typeLabel} | بار: ${loadMass}kg در فاصله‌ی ${loadDist} | نیرویِ اعمالی: ${appliedForce}N در فاصله‌ی ${effortDist} | کمترین نیرویِ لازم ≈ ${minForce.toFixed(1)}N | مزیتِ مکانیکی ≈ ${mechAdvantage.toFixed(2)} | ${status2}`);
+    }
     // eslint-disable-next-line
-  }, [leftMass, leftDist, rightMass, rightDist]);
+  }, [leverType, leftMass, leftDist, rightMass, rightDist, loadMass, loadDist, effortDist, appliedForce]);
 
   // به‌جای یک دایره‌ی بزرگ، هر کیلوگرم یک «وزنه» (پلاکِ فلزیِ آویزان با قلاب) جداگانه رسم می‌شود — مثلاً
   // ۵ کیلوگرم یعنی دقیقاً ۵ وزنه‌ی روی هم. فاصله از تکیه‌گاه هم مثل یک خط‌کش با خط‌های کوچک درجه‌بندی‌شده
@@ -18263,8 +18293,66 @@ function VlabLeverExperiment({ onReading }) {
     );
   };
 
+  // رسمِ میله‌ی نوعِ دوم/سوم: تکیه‌گاه در سرِ چپ (x=30)، بار و نیرو هر دو روی همین بازو با فاصله‌ی
+  // متفاوت از تکیه‌گاه. نیرو با یک فلشِ روبه‌بالا (طولش متناسب با مقدار نیرو) نشان داده می‌شود.
+  const singlePivotX = 30;
+  const unit = 24;
+  const renderSingleBeam = () => {
+    const loadX = singlePivotX + loadDist * unit;
+    const effortX = singlePivotX + effortDist * unit;
+    const ticks = [];
+    for (let i = 1; i <= 10; i++) {
+      const x = singlePivotX + i * unit;
+      ticks.push(<line key={"st" + i} x1={x} y1="106" x2={x} y2={i % 5 === 0 ? 98 : 102} stroke="#8a6d3b" strokeWidth={i % 5 === 0 ? 1.4 : 0.8} opacity={i % 5 === 0 ? 0.8 : 0.4} />);
+    }
+    const plates = [];
+    for (let j = 0; j < loadMass; j++) {
+      const y = 138 + j * 8;
+      plates.push(
+        <g key={"lp" + j}>
+          <rect x={loadX - 11} y={y} width="22" height="9" rx="3" fill="#2f6fe2" stroke="rgba(0,0,0,0.28)" />
+          <rect x={loadX - 9} y={y + 1} width="18" height="2.4" rx="1.2" fill="rgba(255,255,255,0.3)" />
+          <ellipse cx={loadX} cy={y + 4.6} rx="3" ry="2" fill="rgba(0,0,0,0.25)" />
+        </g>
+      );
+    }
+    const arrowLen = 14 + appliedForce * 1.1;
+    return (
+      <g>
+        {ticks}
+        <text x={loadX} y="92" fontSize="9" fontWeight="700" fill="#2f6fe2" textAnchor="middle">بار</text>
+        <line x1={loadX} y1="114" x2={loadX} y2="120" stroke="#2f6fe2" strokeWidth="2" />
+        <circle cx={loadX} cy="120" r="3.2" fill="none" stroke="#2f6fe2" strokeWidth="1.6" />
+        <text x={loadX} y="133" fontSize="10" fontWeight="700" fill="#2f6fe2" textAnchor="middle">{loadMass} kg</text>
+        {plates}
+        {/* نیرویِ اعمالی: فلشِ روبه‌بالا از دستِ کاربر، طولش با مقدارِ نیرو متناسب است */}
+        <g>
+          <line x1={effortX} y1="106" x2={effortX} y2={106 - arrowLen} stroke="#e2622f" strokeWidth="3" strokeLinecap="round" />
+          <polygon points={`${effortX - 6},${106 - arrowLen + 10} ${effortX + 6},${106 - arrowLen + 10} ${effortX},${106 - arrowLen}`} fill="#e2622f" />
+          <text x={effortX} y={106 - arrowLen - 6} fontSize="9" fontWeight="700" fill="#e2622f" textAnchor="middle">نیرو</text>
+        </g>
+      </g>
+    );
+  };
+
   return (
     <div className="vlab-exp">
+      <div className="vlab-num-row" style={{ marginBottom: "8px" }}>
+        {[
+          { v: "یک", l: "نوعِ اول: تکیه‌گاه وسط" },
+          { v: "دو", l: "نوعِ دوم: بار وسط" },
+          { v: "سه", l: "نوعِ سوم: نیرو وسط" },
+        ].map((o) => (
+          <button key={o.v} type="button" className={"vlab-num-btn" + (leverType === o.v ? " active" : "")} onClick={() => selectType(o.v)}>
+            {o.l}
+          </button>
+        ))}
+      </div>
+      <div style={{ fontSize: "11px", color: "#6b7399", marginBottom: "6px" }}>
+        {leverType === "یک" && "مثال‌های واقعی: الاکلنگ، قیچی، دوچرخه (ترمز)، انبردست"}
+        {leverType === "دو" && "مثال‌های واقعی: فرغون، فندق‌شکن، درِ بطری (بازکن)، پاروی قایق"}
+        {leverType === "سه" && "مثال‌های واقعی: انبرِ غذا، چوبِ ماهی‌گیری، بازویِ انسان، جارو"}
+      </div>
       <svg viewBox="0 0 320 230" className="vlab-svg">
         <defs>
           <linearGradient id="lvr-beam-grad" x1="0" y1="0" x2="0" y2="1">
@@ -18277,35 +18365,72 @@ function VlabLeverExperiment({ onReading }) {
             <stop offset="100%" stopColor="#6b4e28" />
           </linearGradient>
         </defs>
-        {/* خط تراز — یک مرجع افقی ثابت (خارج از چرخش بازو) تا تعادل اهرم با آن سنجیده شود. عمداً کم‌رنگ،
-            نازک و نقطه‌چین است و زیر بازو کشیده می‌شود تا دیده شود اما توجه دانش‌آموز را از خود اهرم نگیرد. */}
+        {/* خط تراز — یک مرجع افقی ثابت (خارج از چرخش بازو) تا تعادل اهرم با آن سنجیده شود. */}
         <line x1="18" y1="110" x2="302" y2="110" stroke="#b9bfce" strokeWidth="1" strokeDasharray="4 4" opacity="0.55" />
-        <polygon points="150,140 170,140 160,110" fill="url(#lvr-fulcrum-grad)" />
-        <g transform={`rotate(${tiltDeg} 160 110)`}>
-          <rect x="30" y="106" width="260" height="8" rx="4" fill="url(#lvr-beam-grad)" />
-          {renderArm(leftMass, leftDist, 30 + (10 - leftDist) * 8, "#e2622f")}
-          {renderArm(rightMass, rightDist, 290 - (10 - rightDist) * 8, "#2f6fe2")}
-        </g>
+        {leverType === "یک" ? (
+          <>
+            <polygon points="150,140 170,140 160,110" fill="url(#lvr-fulcrum-grad)" />
+            <g transform={`rotate(${tiltDeg1} 160 110)`}>
+              <rect x="30" y="106" width="260" height="8" rx="4" fill="url(#lvr-beam-grad)" />
+              {renderArm(leftMass, leftDist, 30 + (10 - leftDist) * 8, "#e2622f")}
+              {renderArm(rightMass, rightDist, 290 - (10 - rightDist) * 8, "#2f6fe2")}
+            </g>
+          </>
+        ) : (
+          <>
+            <polygon points="20,140 40,140 30,110" fill="url(#lvr-fulcrum-grad)" />
+            <g transform={`rotate(${tiltDeg2} 30 110)`}>
+              <rect x="26" y="106" width="268" height="8" rx="4" fill="url(#lvr-beam-grad)" />
+              {renderSingleBeam()}
+            </g>
+          </>
+        )}
       </svg>
-      <div className="vlab-controls">
-        <div className="vlab-ctrl-col">
-          <label className="vlab-ctrl-label" style={{ color: "#e2622f" }}>وزن چپ (کیلوگرم): {leftMass}</label>
-          <input type="range" min="1" max="10" value={leftMass} onChange={(e) => setLeftMass(+e.target.value)} />
-          <label className="vlab-ctrl-label" style={{ color: "#e2622f" }}>فاصله از تکیه‌گاه (چپ): {leftDist}</label>
-          <input type="range" min="1" max="10" value={leftDist} onChange={(e) => setLeftDist(+e.target.value)} />
-        </div>
-        <div className="vlab-ctrl-col">
-          <label className="vlab-ctrl-label" style={{ color: "#2f6fe2" }}>وزن راست (کیلوگرم): {rightMass}</label>
-          <input type="range" min="1" max="10" value={rightMass} onChange={(e) => setRightMass(+e.target.value)} />
-          <label className="vlab-ctrl-label" style={{ color: "#2f6fe2" }}>فاصله از تکیه‌گاه (راست): {rightDist}</label>
-          <input type="range" min="1" max="10" value={rightDist} onChange={(e) => setRightDist(+e.target.value)} />
-        </div>
-      </div>
-      <div className="vlab-readout">
-        گشتاور چپ = {torqueLeft} | گشتاور راست = {torqueRight}
-        <br />
-        <b>{status}</b>
-      </div>
+      {leverType === "یک" ? (
+        <>
+          <div className="vlab-controls">
+            <div className="vlab-ctrl-col">
+              <label className="vlab-ctrl-label" style={{ color: "#e2622f" }}>وزن چپ (کیلوگرم): {leftMass}</label>
+              <input type="range" min="1" max="10" value={leftMass} onChange={(e) => setLeftMass(+e.target.value)} />
+              <label className="vlab-ctrl-label" style={{ color: "#e2622f" }}>فاصله از تکیه‌گاه (چپ): {leftDist}</label>
+              <input type="range" min="1" max="10" value={leftDist} onChange={(e) => setLeftDist(+e.target.value)} />
+            </div>
+            <div className="vlab-ctrl-col">
+              <label className="vlab-ctrl-label" style={{ color: "#2f6fe2" }}>وزن راست (کیلوگرم): {rightMass}</label>
+              <input type="range" min="1" max="10" value={rightMass} onChange={(e) => setRightMass(+e.target.value)} />
+              <label className="vlab-ctrl-label" style={{ color: "#2f6fe2" }}>فاصله از تکیه‌گاه (راست): {rightDist}</label>
+              <input type="range" min="1" max="10" value={rightDist} onChange={(e) => setRightDist(+e.target.value)} />
+            </div>
+          </div>
+          <div className="vlab-readout">
+            گشتاور چپ = {torqueLeft} | گشتاور راست = {torqueRight}
+            <br />
+            <b>{status1}</b>
+          </div>
+        </>
+      ) : (
+        <>
+          <div className="vlab-controls">
+            <div className="vlab-ctrl-col">
+              <label className="vlab-ctrl-label" style={{ color: "#2f6fe2" }}>جرم بار (کیلوگرم): {loadMass}</label>
+              <input type="range" min="1" max="10" value={loadMass} onChange={(e) => setLoadMass(+e.target.value)} />
+              <label className="vlab-ctrl-label" style={{ color: "#2f6fe2" }}>فاصله‌ی بار از تکیه‌گاه: {loadDist}</label>
+              <input type="range" min="1" max="10" value={loadDist} onChange={(e) => setLoadDist(+e.target.value)} />
+            </div>
+            <div className="vlab-ctrl-col">
+              <label className="vlab-ctrl-label" style={{ color: "#e2622f" }}>نیرویِ اعمالی (نیوتن): {appliedForce}</label>
+              <input type="range" min="1" max="100" value={appliedForce} onChange={(e) => setAppliedForce(+e.target.value)} />
+              <label className="vlab-ctrl-label" style={{ color: "#e2622f" }}>فاصله‌ی نیرو از تکیه‌گاه: {effortDist}</label>
+              <input type="range" min="1" max="10" value={effortDist} onChange={(e) => setEffortDist(+e.target.value)} />
+            </div>
+          </div>
+          <div className="vlab-readout">
+            کمترین نیرویِ لازم برایِ بالابردنِ بار ≈ <b>{minForce.toFixed(1)} نیوتن</b> | مزیتِ مکانیکی = فاصله‌ی نیرو ÷ فاصله‌ی بار ≈ <b>{mechAdvantage.toFixed(2)}</b>
+            <br />
+            <b>{status2}</b>
+          </div>
+        </>
+      )}
     </div>
   );
 }
@@ -19841,7 +19966,10 @@ function VlabPulleyExperiment({ onReading }) {
   const [load, setLoad] = useState(6);
   const [pulleyType, setPulleyType] = useState("ثابت");
   const [pulled, setPulled] = useState(false);
-  const ma = pulleyType === "متحرک" ? 2 : 1;
+  // کاربر خواست انواع قرقره‌ی مرکب هم اضافه شود: علاوه بر قرقره‌ی ثابت (مزیت=۱) و متحرک (مزیت=۲)،
+  // حالت «مرکب» با دو قرقره‌ی ثابت روی سقف و یک قرقره‌ی متحرکِ دوشیاره (دو شیار، یعنی طناب دوبار
+  // دورش می‌پیچد) روی بار — سه رشته‌ی طناب بار را نگه می‌دارند، پس مزیت مکانیکی = ۳.
+  const ma = pulleyType === "متحرک" ? 2 : pulleyType === "مرکب" ? 3 : 1;
   const forceNeeded = load / ma;
   // کاربر خواست: چرخ‌های قرقره واقعاً بچرخند، نیروی مقاوم (وزن بار) هم همراه بار جابجا شود، میزان
   // جابجایی با خط‌کش اندازه‌گیری شود، و کل صحنه زیباتر/حرفه‌ای‌تر به‌نظر برسد (پس‌زمینه‌ی تیره مثل سایر
@@ -20015,7 +20143,7 @@ function VlabPulleyExperiment({ onReading }) {
             {ruler(195)}
             <VlabSpringScale x={140} y={100} force={forceNeeded} maxForce={10} unit="kgf" label="نیروسنج" textColor="#eaf0fb" labelColor="#9fb0d6" />
           </>
-        ) : (
+        ) : pulleyType === "متحرک" ? (
           <>
             <rect x="70" y="6" width="160" height="10" fill="#5b4636" />
             {Array.from({ length: 16 }).map((_, i) => (
@@ -20049,6 +20177,47 @@ function VlabPulleyExperiment({ onReading }) {
             {ruler(200)}
             <VlabSpringScale x={106} y={100} force={forceNeeded} maxForce={10} unit="kgf" label="نیروسنج" textColor="#eaf0fb" labelColor="#9fb0d6" />
           </>
+        ) : (
+          <>
+            {/* قرقره‌ی مرکب: دو قرقره‌ی ثابت کنار هم روی سقف + یک قرقره‌ی متحرکِ دوشیاره روی بار —
+                طناب از سقف شروع می‌شود، دو بار دور قرقره‌ی متحرک و هر دو قرقره‌ی ثابت می‌پیچد، پس سه
+                رشته‌ی طناب وزنِ بار را تحمل می‌کنند (مزیت مکانیکی = ۳). */}
+            <rect x="60" y="6" width="150" height="10" fill="#5b4636" />
+            {Array.from({ length: 15 }).map((_, i) => (
+              <line key={i} x1={66 + i * 9} y1="6" x2={60 + i * 9} y2="16" stroke="#2c2314" strokeWidth="1" />
+            ))}
+            {/* دو قرقره‌ی ثابت کنار هم */}
+            <rect x="92" y="14" width="14" height="10" fill="#1c2540" />
+            <rect x="152" y="14" width="14" height="10" fill="#1c2540" />
+            {pulleyWheel(99, 44, 13, wheelSpinDeg)}
+            {pulleyWheel(159, 44, 13, wheelSpinDeg)}
+            {/* گره‌ی ثابتِ ابتدای طناب، کنارِ قرقره‌ی ثابتِ اول */}
+            <circle cx="78" cy="20" r="4" fill="none" stroke="#2c2314" strokeWidth="2" />
+            <line x1="78" y1="16" x2="78" y2="6" stroke="#2c2314" strokeWidth="2" />
+            {/* قرقره‌ی متحرکِ دوشیاره (دو چرخ کنار هم روی یک یوغ)، همراه بار بالا می‌رود */}
+            <g style={{ transform: `translateY(${-loadLift}px)`, transition: "transform 1.2s cubic-bezier(.3,.6,.4,1)" }}>
+              <rect x="86" y="108" width="86" height="7" rx="3" fill="#3a2f22" />
+              {pulleyWheel(99, 100, 11, wheelSpinDeg)}
+              {pulleyWheel(159, 100, 11, wheelSpinDeg)}
+              <line x1="129" y1="115" x2="129" y2="140" stroke="#8a6d3b" strokeWidth="2.4" />
+              <ellipse cx="129" cy="176" rx="16" ry="4" fill="#000" opacity="0.22" />
+              {crate(129, 140, 40, 28)}
+              <text x="129" y="182" fontSize="10" fill="#eaf0fb" textAnchor="middle">{`${load} کیلوگرم`}</text>
+              {forceArrows(129, 140, 40, 28)}
+            </g>
+            {/* طناب: گره‌ی سقف → زیرِ قرقره‌ی متحرکِ چپ → رویِ قرقره‌ی ثابتِ چپ → زیرِ قرقره‌ی متحرکِ
+                راست → رویِ قرقره‌ی ثابتِ راست → نیروسنج. */}
+            <path
+              d={`M78,20 L112,${100 - loadLift} A11,11 0 0 1 86,${100 - loadLift} L86,44 A13,13 0 0 1 112,44 L146,${100 - loadLift} A11,11 0 0 1 172,${100 - loadLift} L172,44 A13,13 0 0 1 146,44 L220,80`}
+              fill="none"
+              stroke="#c8a35a"
+              strokeWidth="2.2"
+              strokeLinecap="round"
+              style={{ transition: "d 1.2s cubic-bezier(.3,.6,.4,1)" }}
+            />
+            {ruler(200)}
+            <VlabSpringScale x={200} y={95} force={forceNeeded} maxForce={10} unit="kgf" label="نیروسنج" textColor="#eaf0fb" labelColor="#9fb0d6" />
+          </>
         )}
       </svg>
       <div className="vlab-controls">
@@ -20057,7 +20226,7 @@ function VlabPulleyExperiment({ onReading }) {
           <input type="range" min="1" max="10" value={load} onChange={(e) => setLoad(+e.target.value)} />
         </div>
         <div className="vlab-toggle-row">
-          {["ثابت", "متحرک"].map((t) => (
+          {["ثابت", "متحرک", "مرکب"].map((t) => (
             <button key={t} type="button" className={"vlab-toggle-btn" + (pulleyType === t ? " active" : "")} onClick={() => setPulleyType(t)}>
               قرقره‌ی {t}
             </button>

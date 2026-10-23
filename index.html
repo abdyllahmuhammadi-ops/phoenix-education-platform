@@ -107,6 +107,15 @@ function pqbDistributeScores(list, totalScore) {
   });
 }
 
+// آزمون الزامی کنکور باید دقیقاً مثل خود کنکور سراسری نمره‌گذاری شود، نه «از ۲۰ نمره»:
+// هر ۳ پاسخ غلط معادل حذف نمره‌ی یک پاسخ صحیح است؛ سؤال سفید (بی‌پاسخ) هیچ تأثیری ندارد.
+// نتیجه به‌صورت «درصد» نشان داده می‌شود، دقیقاً مثل کارنامه‌ی واقعی کنکور.
+function pqbComputeKonkurPercent(correctCount, wrongCount, totalCount) {
+  if (!totalCount) return 0;
+  const raw = ((correctCount - wrongCount / 3) / totalCount) * 100;
+  return Math.round(raw * 100) / 100;
+}
+
 // گاهی window.storage درست همان لحظه‌ی بارگذاری صفحه هنوز کاملاً آماده نشده — قبل از اعلام «در دسترس نیست»،
 // چند بار با فاصله‌ی کوتاه دوباره چک می‌کنیم تا اگر مشکل فقط زمان‌بندی بود، خودش برطرف شود.
 async function waitForStorage(maxWaitMs) {
@@ -17518,6 +17527,13 @@ function StudentQuestionBankView({ onBack, prefillSchoolCode, prefillGrade, pref
   const [examRevealedIds, setExamRevealedIds] = useState([]);
   const [examScoreShown, setExamScoreShown] = useState(false);
   const [examAnalysis, setExamAnalysis] = useState(null);
+  // آزمون الزامی کنکور: برخلاف آزمون خودسنجی («بلد بودم/نبودم»)، اینجا دانش‌آموز واقعاً
+  // بین گزینه‌های الف/ب/ج/د انتخاب می‌کند — تا بشود دقیقاً مثل خودِ کنکور، درست/غلط/سفید
+  // را تشخیص داد و درصد واقعی حساب کرد. پاسخ‌ها فقط در پایان آزمون فاش/بررسی می‌شوند.
+  const [examMcqAnswers, setExamMcqAnswers] = useState({});
+  const selectExamAnswer = (qId, letter) => {
+    setExamMcqAnswers((prev) => ({ ...prev, [qId]: letter }));
+  };
   const [examSaving, setExamSaving] = useState(false);
   const [examKnownIds, setExamKnownIds] = useState([]);
   const [isMandatoryExam, setIsMandatoryExam] = useState(false);
@@ -17608,6 +17624,7 @@ function StudentQuestionBankView({ onBack, prefillSchoolCode, prefillGrade, pref
     setExamSet(pqbDistributeScores(picked, examTotalScore));
     setExamRevealedIds([]);
     setExamKnownIds([]);
+    setExamMcqAnswers({});
     setExamScoreShown(false);
     setExamAnalysis(null);
     setIsMandatoryExam(false);
@@ -17649,8 +17666,11 @@ function StudentQuestionBankView({ onBack, prefillSchoolCode, prefillGrade, pref
       // و گزینه‌های سؤالات تستیِ باقی‌مانده نیز در جای دیگری قرار می‌گیرند — همه‌چیز seeded است، پس
       // همه‌ی شرکت‌کنندگانِ یک جلسه دقیقاً همان یک آزمون را می‌بینند.
       const examSetBuilt = pqbBuildMandatoryExamSet(pool, fridayStatus.dateKey + ":" + skey(subject) + ":" + grade, fridayStatus.session);
-      // آزمون الزامی کنکور هم یک آزمون رسمی است؛ طبق اصل سامانه، جمعاً از ۲۰ نمره طرح می‌شود
-      setExamSet(pqbDistributeScores(examSetBuilt, PQB_DEFAULT_EXAM_TOTAL_SCORE));
+      // آزمون الزامی کنکور دقیقاً مثل خودِ کنکور سراسری نمره‌گذاری می‌شود (درصد، با نمره‌ی منفی
+      // یک‌سومی) نه «از ۲۰ نمره» — نمره‌دهی اینجا لازم نیست، چون نتیجه از خودِ پاسخ‌های واقعی
+      // دانش‌آموز در پایان آزمون محاسبه می‌شود (نگاه کنید به handleFinishExam/pqbComputeKonkurPercent)
+      setExamSet(examSetBuilt);
+      setExamMcqAnswers({});
       setExamRevealedIds([]);
       setExamKnownIds([]);
       setExamScoreShown(false);
@@ -17676,19 +17696,46 @@ function StudentQuestionBankView({ onBack, prefillSchoolCode, prefillGrade, pref
 
   const handleFinishExam = async () => {
     setExamSaving(true);
-    // آنالیز کامل بر اساس فصل
+
+    // آزمون الزامی کنکور دقیقاً مثل خودِ کنکور سراسری تصحیح می‌شود: پاسخ هر سؤال با گزینه‌ی
+    // واقعیِ انتخاب‌شده سنجیده می‌شود (نه خودارزیابیِ «بلد بودم»)، و درصد از فرمول واقعیِ
+    // نمره‌ی منفی (هر ۳ غلط = حذف یک درست) حساب می‌شود. سؤال سفید (بی‌پاسخ) بی‌اثر است.
+    let mcqCorrectCount = 0;
+    let mcqWrongCount = 0;
+    let mcqBlankCount = 0;
+    const mcqResultById = {};
+    if (isMandatoryExam) {
+      examSet.forEach((q) => {
+        const selected = examMcqAnswers[q.id];
+        const parsed = pqbParseMcqText(q.text);
+        const correctLetter = pqbFindExplanationLetter(q.explanation);
+        if (!selected) {
+          mcqBlankCount += 1;
+          mcqResultById[q.id] = { selected: null, correctLetter, isCorrect: false, isBlank: true };
+          return;
+        }
+        const isCorrect = !!correctLetter && selected === correctLetter;
+        if (isCorrect) mcqCorrectCount += 1;
+        else mcqWrongCount += 1;
+        mcqResultById[q.id] = { selected, correctLetter, isCorrect, isBlank: false, parsed };
+      });
+    }
+
+    // آنالیز کامل بر اساس فصل — برای آزمون خودسنجی بر مبنای «بلد بودم»، برای آزمون الزامی
+    // کنکور بر مبنای درست/غلط واقعی
     const byChapter = {};
     examSet.forEach((q) => {
-      const ans = examKnownIds.find((a) => a.id === q.id);
+      const known = isMandatoryExam ? !!(mcqResultById[q.id] && mcqResultById[q.id].isCorrect) : !!(examKnownIds.find((a) => a.id === q.id) || {}).known;
       if (!byChapter[q.chapter]) byChapter[q.chapter] = { known: 0, total: 0 };
       byChapter[q.chapter].total += 1;
-      if (ans && ans.known) byChapter[q.chapter].known += 1;
+      if (known) byChapter[q.chapter].known += 1;
     });
-    const totalKnown = examKnownIds.filter((a) => a.known).length;
+    const totalKnown = isMandatoryExam ? mcqCorrectCount : examKnownIds.filter((a) => a.known).length;
     const totalCount = examSet.length;
     const weakChapters = Object.entries(byChapter)
       .filter(([, v]) => v.total > 0 && v.known / v.total < 0.6)
       .map(([chapter]) => chapter);
+    const konkurPercent = isMandatoryExam ? pqbComputeKonkurPercent(mcqCorrectCount, mcqWrongCount, totalCount) : null;
 
     let historyList = [];
     let progressNotes = [];
@@ -17717,6 +17764,7 @@ function StudentQuestionBankView({ onBack, prefillSchoolCode, prefillGrade, pref
           totalKnown,
           totalCount,
           byChapter,
+          konkurPercent,
         };
         const nextHistory = [...historyList, newEntry].slice(-20);
         await window.storage.set(historyKey, JSON.stringify(nextHistory), true);
@@ -17739,7 +17787,19 @@ function StudentQuestionBankView({ onBack, prefillSchoolCode, prefillGrade, pref
       // تلاش‌محور — حتی اگر ذخیره ناموفق بود، نمایش نتیجه به دانش‌آموز مختل نشود
     }
 
-    setExamAnalysis({ byChapter, totalKnown, totalCount, weakChapters, progressNotes });
+    setExamAnalysis({
+      byChapter,
+      totalKnown,
+      totalCount,
+      weakChapters,
+      progressNotes,
+      isMandatoryExam,
+      konkurPercent,
+      mcqCorrectCount,
+      mcqWrongCount,
+      mcqBlankCount,
+      mcqResultById,
+    });
     setExamScoreShown(true);
     setExamSaving(false);
   };
@@ -17844,6 +17904,17 @@ function StudentQuestionBankView({ onBack, prefillSchoolCode, prefillGrade, pref
         .pqb-exam-session { margin-top: 10px; }
         .pqb-exam-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 14px; }
         .pqb-exam-answer-row { display: flex; gap: 10px; margin-top: 10px; }
+        .pqb-mcq-options { display: flex; flex-direction: column; gap: 8px; margin-top: 10px; }
+        .pqb-mcq-option {
+          display: flex; align-items: flex-start; gap: 6px; text-align: right; width: 100%;
+          padding: 10px 14px; border-radius: 10px; border: 1.3px solid #d9c9a0; background: #fff;
+          color: #1c2540; font-size: 13px; line-height: 1.7; cursor: pointer;
+        }
+        .pqb-mcq-option:hover { background: #fff8e8; }
+        .pqb-mcq-option.selected { border-color: #c8862b; background: #fff3dc; font-weight: 700; }
+        .pqb-mcq-option.correct { border-color: #2c6e3f; background: #eefaf0; color: #1f7a3c; font-weight: 800; }
+        .pqb-mcq-option.wrong { border-color: #c0392b; background: #fdecec; color: #c0392b; font-weight: 700; }
+        .pqb-mcq-option:disabled { cursor: default; }
         .pqb-exam-score { background: #eef6f0; border: 1px solid #bfe0c8; border-radius: 12px; padding: 16px; text-align: center; font-weight: 800; color: #2c6e3f; font-size: 14px; margin-top: 10px; }
         .pqb-export-btn { flex: 1; height: 42px; border-radius: 10px; border: 1px solid #e0a83e; background: transparent; color: #a8741f; font-weight: 700; font-size: 12.5px; cursor: pointer; }
         @media print {
@@ -18094,57 +18165,114 @@ function StudentQuestionBankView({ onBack, prefillSchoolCode, prefillGrade, pref
           <div className="pqb-exam-session">
             <div className="pqb-exam-header">
               <h2 className="pqb-section-title">
-                {isMandatoryExam ? "📅 آزمون الزامی کنکور در حال اجرا" : "📝 آزمون در حال اجرا"} ({examSet.length} سؤال — از {examSet.reduce((sum, q) => sum + (q.score || 0), 0)} نمره)
+                {isMandatoryExam
+                  ? "📅 آزمون الزامی کنکور در حال اجرا (" + examSet.length + " سؤال — نتیجه به‌صورت درصد، دقیقاً مثل خودِ کنکور)"
+                  : "📝 آزمون در حال اجرا (" + examSet.length + " سؤال — از " + examSet.reduce((sum, q) => sum + (q.score || 0), 0) + " نمره)"}
               </h2>
               <button type="button" className="pqb-export-btn" onClick={() => setExamMode(false)}>
                 ✖️ بستن آزمون
               </button>
             </div>
-            {examSet.map((q, idx) => {
-              const answer = examKnownIds.find((a) => a.id === q.id);
-              return (
-                <div key={q.id} className="pqb-question-item">
-                  <div className="pqb-question-meta">
-                    {q.aiGenerated && <span className="pqb-tag pqb-tag-ai">🤖 تولید خودکار</span>}
-                    <span className="pqb-tag">{q.chapter}</span>
-                    <span className="pqb-tag">{q.difficulty}</span>
-                    {typeof q.score === "number" && <span className="pqb-tag">{q.score} نمره</span>}
-                  </div>
-                  <div className="pqb-question-text">{idx + 1}. {q.text}</div>
-                  {!examRevealedIds.includes(q.id) ? (
-                    <button type="button" className="pqb-reveal-btn" onClick={() => toggleExamReveal(q.id)}>
-                      💡 خودت جواب بده، بعد پاسخ را ببین
-                    </button>
-                  ) : (
-                    <>
-                      {q.explanation && (
+            {isMandatoryExam
+              ? examSet.map((q, idx) => {
+                  const parsed = pqbParseMcqText(q.text);
+                  const selected = examMcqAnswers[q.id];
+                  const resultForQ = examScoreShown && examAnalysis ? examAnalysis.mcqResultById[q.id] : null;
+                  return (
+                    <div key={q.id} className="pqb-question-item">
+                      <div className="pqb-question-meta">
+                        <span className="pqb-tag">{q.chapter}</span>
+                        <span className="pqb-tag">{q.difficulty}</span>
+                      </div>
+                      <div className="pqb-question-text">{idx + 1}. {parsed ? parsed.stem : q.text}</div>
+                      {parsed ? (
+                        <div className="pqb-mcq-options">
+                          {parsed.options.map((opt) => {
+                            const isSelected = selected === opt.letter;
+                            const isCorrectOpt = resultForQ && resultForQ.correctLetter === opt.letter;
+                            let cls = "pqb-mcq-option";
+                            if (!examScoreShown) {
+                              if (isSelected) cls += " selected";
+                            } else {
+                              if (isCorrectOpt) cls += " correct";
+                              else if (isSelected && !isCorrectOpt) cls += " wrong";
+                            }
+                            return (
+                              <button
+                                key={opt.letter}
+                                type="button"
+                                className={cls}
+                                disabled={examScoreShown}
+                                onClick={() => selectExamAnswer(q.id, opt.letter)}
+                              >
+                                <b>{opt.letter})</b> {opt.content}
+                              </button>
+                            );
+                          })}
+                        </div>
+                      ) : (
+                        <p className="pqb-load-error">این سؤال قابل نمایشِ چهارگزینه‌ای نیست و از نتیجه‌ی این آزمون کنار گذاشته شد.</p>
+                      )}
+                      {examScoreShown && q.explanation && (
                         <div className="pqb-explanation-box">
                           <b>پاسخ و توضیح:</b> {q.explanation}
                         </div>
                       )}
-                      <div className="pqb-exam-answer-row">
-                        <button
-                          type="button"
-                          className={"pqb-chip" + (answer && answer.known ? " active" : "")}
-                          onClick={() => markExamAnswer(q.id, true)}
-                        >
-                          ✅ بلد بودم
-                        </button>
-                        <button
-                          type="button"
-                          className={"pqb-chip" + (answer && answer.known === false ? " active" : "")}
-                          onClick={() => markExamAnswer(q.id, false)}
-                        >
-                          ❌ بلد نبودم
-                        </button>
+                    </div>
+                  );
+                })
+              : examSet.map((q, idx) => {
+                  const answer = examKnownIds.find((a) => a.id === q.id);
+                  return (
+                    <div key={q.id} className="pqb-question-item">
+                      <div className="pqb-question-meta">
+                        {q.aiGenerated && <span className="pqb-tag pqb-tag-ai">🤖 تولید خودکار</span>}
+                        <span className="pqb-tag">{q.chapter}</span>
+                        <span className="pqb-tag">{q.difficulty}</span>
+                        {typeof q.score === "number" && <span className="pqb-tag">{q.score} نمره</span>}
                       </div>
-                    </>
-                  )}
-                </div>
-              );
-            })}
+                      <div className="pqb-question-text">{idx + 1}. {q.text}</div>
+                      {!examRevealedIds.includes(q.id) ? (
+                        <button type="button" className="pqb-reveal-btn" onClick={() => toggleExamReveal(q.id)}>
+                          💡 خودت جواب بده، بعد پاسخ را ببین
+                        </button>
+                      ) : (
+                        <>
+                          {q.explanation && (
+                            <div className="pqb-explanation-box">
+                              <b>پاسخ و توضیح:</b> {q.explanation}
+                            </div>
+                          )}
+                          <div className="pqb-exam-answer-row">
+                            <button
+                              type="button"
+                              className={"pqb-chip" + (answer && answer.known ? " active" : "")}
+                              onClick={() => markExamAnswer(q.id, true)}
+                            >
+                              ✅ بلد بودم
+                            </button>
+                            <button
+                              type="button"
+                              className={"pqb-chip" + (answer && answer.known === false ? " active" : "")}
+                              onClick={() => markExamAnswer(q.id, false)}
+                            >
+                              ❌ بلد نبودم
+                            </button>
+                          </div>
+                        </>
+                      )}
+                    </div>
+                  );
+                })}
 
-            {examKnownIds.length === examSet.length && examSet.length > 0 && !examScoreShown && (
+            {!examScoreShown && isMandatoryExam && examSet.length > 0 && (
+              <button type="button" className="pqb-submit-btn" onClick={handleFinishExam} disabled={examSaving}>
+                {examSaving
+                  ? "در حال تحلیل..."
+                  : "🏁 پایان آزمون و مشاهده‌ی نتیجه (" + Object.keys(examMcqAnswers).length + " از " + examSet.length + " پاسخ‌داده‌شده — سؤال بی‌پاسخ اشکالی ندارد)"}
+              </button>
+            )}
+            {!isMandatoryExam && examKnownIds.length === examSet.length && examSet.length > 0 && !examScoreShown && (
               <button type="button" className="pqb-submit-btn" onClick={handleFinishExam} disabled={examSaving}>
                 {examSaving ? "در حال تحلیل..." : "🏁 پایان آزمون و مشاهده‌ی نتیجه"}
               </button>
@@ -18152,9 +18280,22 @@ function StudentQuestionBankView({ onBack, prefillSchoolCode, prefillGrade, pref
 
             {examScoreShown && examAnalysis && (
               <div className="pqb-exam-score" style={{ textAlign: "right" }}>
-                <p style={{ textAlign: "center", fontSize: 15 }}>
-                  نتیجه: از {examAnalysis.totalCount} سؤال، {examAnalysis.totalKnown} تا رو بلد بودی 🎉
-                </p>
+                {isMandatoryExam ? (
+                  <>
+                    <p style={{ textAlign: "center", fontSize: 20, fontWeight: 800, color: examAnalysis.konkurPercent >= 0 ? "#2c6e3f" : "#c0392b" }}>
+                      درصد شما: {examAnalysis.konkurPercent}٪
+                    </p>
+                    <p style={{ textAlign: "center", fontSize: 12.5, color: "#8a8060" }}>
+                      {examAnalysis.mcqCorrectCount} درست، {examAnalysis.mcqWrongCount} غلط، {examAnalysis.mcqBlankCount} سفید — از {examAnalysis.totalCount} سؤال
+                      <br />
+                      (دقیقاً مثل کنکور سراسری: هر ۳ پاسخ غلط معادل حذف نمره‌ی یک پاسخ صحیح است)
+                    </p>
+                  </>
+                ) : (
+                  <p style={{ textAlign: "center", fontSize: 15 }}>
+                    نتیجه: از {examAnalysis.totalCount} سؤال، {examAnalysis.totalKnown} تا رو بلد بودی 🎉
+                  </p>
+                )}
 
                 <p style={{ fontWeight: 800, marginTop: 12, marginBottom: 6 }}>📊 آنالیز کامل بر اساس فصل:</p>
                 {Object.entries(examAnalysis.byChapter).map(([chapter, v]) => (

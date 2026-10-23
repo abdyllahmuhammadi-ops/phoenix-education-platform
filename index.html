@@ -17984,6 +17984,77 @@ function vlabClamp(v, min, max) {
   return Math.max(min, Math.min(max, v));
 }
 
+/* ابزارهای بصری مشترک — چند آزمایش به یکی از این وسایل نیاز دارند ولی قبلاً فقط اسمشان در فهرست
+   «ابزار و وسایل» بود و هیچ نمایشی نداشتند؛ این‌جا یک‌بار ساخته می‌شوند تا در چند آزمایش استفاده شوند. */
+
+// نیروسنج (دینامومتر فنری): لوله‌ی شیشه‌ای + فنر که با افزایش نیرو بیشتر کشیده می‌شود + عدد نیرو
+function VlabSpringScale({ x, y, force, maxForce, label, unit }) {
+  const stretch = vlabClamp((force / (maxForce || 1)) * 30, 4, 34);
+  return (
+    <g transform={`translate(${x},${y})`}>
+      <rect x="-9" y="0" width="18" height="14" rx="3" fill="#8a6d3b" />
+      <rect x="-7" y="14" width="14" height={stretch} fill="none" stroke="#c8862b" strokeWidth="1.6" />
+      {Array.from({ length: 5 }).map((_, i) => (
+        <line key={i} x1={i % 2 === 0 ? -7 : 7} y1={14 + (stretch / 5) * i} x2={i % 2 === 0 ? 7 : -7} y2={14 + (stretch / 5) * (i + 1)} stroke="#c8862b" strokeWidth="1.6" />
+      ))}
+      <rect x="-10" y={14 + stretch} width="20" height="10" rx="2" fill="#5b4636" />
+      <text x="0" y={14 + stretch + 23} fontSize="9.5" fill="#1c2540" textAnchor="middle" fontWeight="700">{force.toFixed(1)} {unit || "N"}</text>
+      {label && <text x="0" y="-6" fontSize="8.5" fill="#6b7399" textAnchor="middle">{label}</text>}
+    </g>
+  );
+}
+
+// کرنومتر: بدنه‌ی گرد ساعت + دکمه‌ی بالا + عقربه، برای آزمایش‌هایی که زمان‌سنجی بخشی از روش کارشان است
+function VlabStopwatchIcon({ x, y, readout }) {
+  return (
+    <g transform={`translate(${x},${y})`}>
+      <rect x="-3" y="-15" width="6" height="5" rx="1.5" fill="#5b4636" />
+      <circle cx="0" cy="0" r="15" fill="#f4f1e6" stroke="#5b4636" strokeWidth="2.4" />
+      <circle cx="0" cy="0" r="1.6" fill="#5b4636" />
+      <line x1="0" y1="0" x2="0" y2="-10" stroke="#5b4636" strokeWidth="1.6" strokeLinecap="round" />
+      <line x1="0" y1="0" x2="7" y2="4" stroke="#e2622f" strokeWidth="1.4" strokeLinecap="round" />
+      {readout && <text x="0" y="28" fontSize="9" fill="#1c2540" textAnchor="middle" fontWeight="700">{readout}</text>}
+    </g>
+  );
+}
+
+// دماسنج کوچک: برای آزمایش‌هایی که دما بخشی از روش کارشان است ولی دماسنج واقعی نداشتند
+function VlabThermometerMini({ x, y, temp, minT, maxT, h }) {
+  const height = h || 46;
+  const frac = vlabClamp((temp - minT) / (maxT - minT), 0, 1);
+  const fillH = frac * height;
+  const col = vlabMixHexColor("#3a9bd5", "#e2622f", frac);
+  return (
+    <g transform={`translate(${x},${y})`}>
+      <rect x="-3" y="0" width="6" height={height} rx="3" fill="#fff" stroke="#8a93a8" strokeWidth="1" />
+      <rect x="-3" y={height - fillH} width="6" height={fillH} rx="3" fill={col} />
+      <circle cx="0" cy={height + 6} r="6.5" fill={col} stroke="#8a93a8" strokeWidth="1" />
+      <text x="10" y={height + 9} fontSize="8.5" fill="#1c2540">{Math.round(temp)}°</text>
+    </g>
+  );
+}
+
+// قطره‌چکان کوچک: نسخه‌ی ساده‌ترِ قطره‌چکان آزمایش اسید-باز، برای آزمایش‌هایی که فقط یک چکیدن ساده لازم دارند
+function VlabDropperMini({ x, y, rotate, color }) {
+  return (
+    <g transform={`translate(${x},${y}) rotate(${rotate || 0})`}>
+      <ellipse cx="0" cy="-16" rx="5" ry="7" fill={color || "#d1517a"} opacity="0.85" />
+      <rect x="-2.2" y="-9" width="4.4" height="16" fill="#cfd8e8" opacity="0.5" stroke="#8fa3c4" strokeWidth="0.6" />
+      <path d="M-2.2,7 L2.2,7 L0,13 Z" fill="#cfd8e8" opacity="0.6" stroke="#8fa3c4" strokeWidth="0.6" />
+    </g>
+  );
+}
+
+// قاشق هم‌زدن: برای آزمایش‌هایی که «هم زدن» بخشی از روش کار است ولی قاشق واقعی دیده نمی‌شد
+function VlabStirSpoonMini({ x, y, stirring }) {
+  return (
+    <g transform={`translate(${x},${y}) rotate(${stirring ? 18 : 0})`} style={{ transition: "transform 0.25s" }}>
+      <line x1="0" y1="-22" x2="0" y2="2" stroke="#8a93a8" strokeWidth="2.2" strokeLinecap="round" />
+      <ellipse cx="0" cy="6" rx="5" ry="7" fill="#c7cedd" stroke="#8a93a8" strokeWidth="1" />
+    </g>
+  );
+}
+
 /* ---------- ۱. اهرم‌ها و تعادل ---------- */
 function VlabLeverExperiment({ onReading }) {
   const [leftMass, setLeftMass] = useState(5);
@@ -19020,21 +19091,39 @@ function VlabMicroscopeExperiment({ onReading }) {
 
   return (
     <div className="vlab-exp">
-      <svg viewBox="0 0 200 200" className="vlab-svg vlab-scope-circle">
+      {/* بدنه‌ی واقعی میکروسکوپ (لوله‌ی چشمی، بازو، صفحه‌ی نمونه، پایه) دور دایره‌ی دیدِ قبلی کشیده شد تا این
+          آزمایش فقط یک دایره‌ی انتزاعی نباشد؛ لام‌ولامل، پنس و قطره‌چکان هم که در فهرست «ابزار و وسایل» بودند
+          ولی هیچ‌وقت دیده نمی‌شدند، کنار صفحه‌ی نمونه قرار گرفتند — دقیقاً وسایلی که برای آماده‌کردن لام لازم‌اند. */}
+      <svg viewBox="0 0 240 280" className="vlab-svg">
+        <rect x="0" y="0" width="240" height="280" fill="#f4efe0" />
+        <rect x="70" y="240" width="100" height="14" rx="4" fill="#5b4636" />
+        <rect x="112" y="150" width="16" height="92" fill="#8a93a8" />
+        <path d="M120,150 C120,110 150,95 150,70" fill="none" stroke="#8a93a8" strokeWidth="16" strokeLinecap="round" />
+        <circle cx="150" cy="60" r="20" fill="#5b4636" />
+        <rect x="100" y="180" width="60" height="10" rx="2" fill="#c7cedd" stroke="#8a93a8" strokeWidth="1" />
+        <rect x="108" y="183" width="44" height="4" fill="#dff0ff" opacity="0.8" />
+        <g transform="translate(60,215)">
+          <line x1="0" y1="0" x2="10" y2="-26" stroke="#8a93a8" strokeWidth="2.4" strokeLinecap="round" />
+          <line x1="10" y1="0" x2="0" y2="-26" stroke="#8a93a8" strokeWidth="2.4" strokeLinecap="round" />
+          <text x="5" y="16" fontSize="8" fill="#6b7399" textAnchor="middle">پنس</text>
+        </g>
+        <VlabDropperMini x={190} y={235} rotate={25} color="#6fae52" />
+        <text x="190" y="216" fontSize="8" fill="#6b7399" textAnchor="middle">قطره‌چکان</text>
         <defs>
           <clipPath id="vlabScopeClip">
-            <circle cx="100" cy="100" r="95" />
+            <circle cx="150" cy="60" r="19" />
           </clipPath>
         </defs>
-        <circle cx="100" cy="100" r="95" fill="#eef6f0" />
         <g clipPath="url(#vlabScopeClip)" style={{ filter: `blur(${blurAmount}px)` }}>
-          <VlabSlideSvg slideId={slideId} zoomScale={zoom} />
+          <g transform="translate(50,-40)">
+            <VlabSlideSvg slideId={slideId} zoomScale={zoom} />
+          </g>
         </g>
-        <circle cx="100" cy="100" r="95" fill="none" stroke="#5b4636" strokeWidth="4" />
+        <circle cx="150" cy="60" r="19" fill="none" stroke="#2c2f3a" strokeWidth="3" />
       </svg>
       <div className="vlab-controls">
         <div className="vlab-ctrl-col">
-          <label className="vlab-ctrl-label">نمونه</label>
+          <label className="vlab-ctrl-label">نمونه (روی لام)</label>
           <select className="pqb-select" value={slideId} onChange={(e) => setSlideId(e.target.value)}>
             {VLAB_SLIDES.map((s) => (
               <option key={s.id} value={s.id}>{s.name}</option>
@@ -19050,6 +19139,8 @@ function VlabMicroscopeExperiment({ onReading }) {
       </div>
       <div className="vlab-readout">
         {isClear ? "✅ تصویر واضح است" : "🔍 فوکوس را تنظیم کن تا تصویر واضح شود"}
+        <br />
+        نمونه با پنس روی لام گذاشته می‌شود، با قطره‌چکان یک قطره آب/رنگ‌آمیزی روی آن می‌چکد و لامل روی آن قرار می‌گیرد — بعد زیر میکروسکوپ قرار می‌گیرد.
       </div>
     </div>
   );
@@ -19072,12 +19163,22 @@ function VlabFreeFallExperiment({ onReading }) {
 
   return (
     <div className="vlab-exp">
+      {/* خط‌چین قبلی فقط مسیر سقوط را نشان می‌داد ولی «متر یا ارتفاع‌سنج» و «کرنومتر» که در فهرست وسایل بودند
+          هیچ‌وقت دیده نمی‌شدند — یک متر واقعی با خط‌کشیِ درجه‌بندی‌شده کنار مسیر و یک کرنومتر با عدد زمان سقوط اضافه شد. */}
       <svg viewBox="0 0 320 200" className="vlab-svg">
+        <rect x="58" y="16" width="10" height="164" rx="2" fill="#f2c572" stroke="#c8862b" strokeWidth="1" />
+        {Array.from({ length: 9 }).map((_, i) => (
+          <g key={i}>
+            <line x1="58" y1={16 + i * 20.5} x2={i % 2 === 0 ? 50 : 54} y2={16 + i * 20.5} stroke="#8a6d3b" strokeWidth="1" />
+            {i % 2 === 0 && <text x="46" y={16 + i * 20.5 + 3} fontSize="6.5" fill="#6b7399" textAnchor="end">{80 - i * 20}</text>}
+          </g>
+        ))}
         <line x1="40" y1="20" x2="40" y2="180" stroke="#d9c9a0" strokeWidth="2" strokeDasharray="4 4" />
         <rect x="20" y="180" width="280" height="10" fill="#8a6d3b" />
         <circle cx="40" cy="30" r="12" fill="#e2622f">
           <animate attributeName="cy" from="30" to="170" dur={`${animDuration}s`} repeatCount="indefinite" />
         </circle>
+        <VlabStopwatchIcon x={270} y={50} readout={`${time.toFixed(2)}s`} />
       </svg>
       <div className="vlab-controls">
         <div className="vlab-ctrl-col" style={{ flex: 1 }}>
@@ -19113,24 +19214,30 @@ function VlabSimpleSwitchExperiment({ onReading }) {
     // eslint-disable-next-line
   }, [closed]);
 
+  {/* این مدار هم مثل آزمایش قانون اهم و مدار سری/موازی حرفه‌ای شد: زمینه‌ی تیره، باتری با قطب‌های مشخص،
+      سیم‌های رنگی قطب‌دار و یک لامپ واقعی به‌جای دایره‌ی تخت زرد. */}
   return (
     <div className="vlab-exp">
-      <svg viewBox="0 0 320 170" className="vlab-svg">
-        <rect x="30" y="60" width="26" height="50" fill="#5b4636" />
-        <text x="43" y="90" fontSize="11" fill="#fff" textAnchor="middle">+/−</text>
-        <line x1="56" y1="70" x2="150" y2="70" stroke="#5b4636" strokeWidth="3" />
+      <svg viewBox="0 -20 320 190" className="vlab-svg" style={{ background: "#0b1330", borderRadius: "10px" }}>
+        <rect x="30" y="70" width="26" height="50" rx="3" fill="#2c2f3a" stroke="#4a4f60" strokeWidth="1" />
+        <rect x="30" y="70" width="26" height="10" fill="#3a9bd5" />
+        <text x="43" y="78" fontSize="9" fill="#fff" textAnchor="middle" fontWeight="700">−</text>
+        <rect x="30" y="110" width="26" height="10" fill="#f2c572" />
+        <text x="43" y="118" fontSize="9" fill="#1c2540" textAnchor="middle" fontWeight="700">+</text>
+        {/* سیم طلایی (+): باتری → کلید → نوک لامپ */}
+        <path d="M43,120 L43,160 L150,160 L150,130" fill="none" stroke="#f2c572" strokeWidth="2.6" />
         {closed ? (
-          <line x1="150" y1="70" x2="200" y2="70" stroke="#5b4636" strokeWidth="3" />
+          <line x1="150" y1="130" x2="196" y2="105" stroke="#f2c572" strokeWidth="2.6" />
         ) : (
-          <line x1="150" y1="70" x2="185" y2="45" stroke="#5b4636" strokeWidth="3" />
+          <line x1="150" y1="130" x2="180" y2="88" stroke="#f2c572" strokeWidth="2.6" />
         )}
-        <circle cx="150" cy="70" r="3" fill="#5b4636" />
-        <circle cx="200" cy="70" r="3" fill="#5b4636" />
-        <line x1="200" y1="70" x2="260" y2="70" stroke="#5b4636" strokeWidth="3" />
-        <line x1="30" y1="110" x2="30" y2="70" stroke="#5b4636" strokeWidth="3" />
-        <line x1="30" y1="110" x2="260" y2="110" stroke="#5b4636" strokeWidth="3" />
-        <line x1="260" y1="70" x2="260" y2="110" stroke="#5b4636" strokeWidth="3" />
-        <circle cx="230" cy="90" r="18" fill={closed ? "rgba(242,197,72,0.95)" : "rgba(242,197,72,0.08)"} stroke="#c8862b" strokeWidth="2" />
+        <circle cx="150" cy="130" r="3.5" fill="#cfd8e8" />
+        <circle cx="196" cy="105" r="3.5" fill="#cfd8e8" opacity={closed ? 1 : 0.4} />
+        <text x="150" y="146" fontSize="8" fill="#9aa3c0" textAnchor="middle">کلید</text>
+        {closed && <line x1="196" y1="105" x2="240" y2="119" stroke="#f2c572" strokeWidth="2.6" />}
+        <VlabMiniBulb cx={240} baseTopY={100} t={closed ? 0.9 : 0} />
+        {/* سیم آبی (−): بدنه‌ی فلزی لامپ → باتری */}
+        <path d="M230,110 L230,40 L43,40 L43,70" fill="none" stroke="#3a9bd5" strokeWidth="2.6" />
       </svg>
       <div className="vlab-controls">
         <div className="vlab-ctrl-col">
@@ -19182,6 +19289,8 @@ function VlabDissolvingExperiment({ onReading }) {
           </g>
         )}
         {dissolved && <rect x="100" y="30" width="120" height="120" rx="8" fill="#eef6f0" opacity="0.4" />}
+        {/* قاشق هم‌زدن قبلاً فقط اسم دکمه بود («🥄 هم بزن») و خودش در لیوان دیده نمی‌شد */}
+        <VlabStirSpoonMini x={160} y={70} stirring={stirCount > 0 && stirCount % 2 === 1} />
       </svg>
       <div className="vlab-controls">
         <div className="vlab-ctrl-col">
@@ -19234,18 +19343,37 @@ function VlabPhotosynthesisExperiment({ onReading }) {
 
   return (
     <div className="vlab-exp">
-      <svg viewBox="0 0 320 190" className="vlab-svg">
-        <rect x="0" y="0" width="320" height="190" fill={`rgba(242,197,72,${light / 180})`} />
+      {/* «منبع نور» و «استوانه‌ی مدرج برای شمارش حباب» قبلاً فقط اسم بودند؛ الان یک لامپ واقعی بالای ظرف
+          (با پرتوهایی که با درصد نور پررنگ‌تر می‌شوند) و یک قیف‌واژگون + استوانه‌ی مدرج که حباب‌های اکسیژن
+          را جمع می‌کند (با خط‌های درجه‌بندی و سطح گاز جمع‌شده‌ی بالارونده) اضافه شدند. */}
+      <svg viewBox="0 -34 320 224" className="vlab-svg">
+        <rect x="0" y="-34" width="320" height="224" fill={`rgba(242,197,72,${light / 180})`} />
+        <g transform="translate(252,-22)">
+          <ellipse cx="0" cy="0" rx="14" ry="9" fill={`rgba(255,214,90,${0.3 + (light / 100) * 0.65})`} stroke="#c8862b" strokeWidth="1.4" />
+          <line x1="0" y1="9" x2="0" y2="16" stroke="#8a6d3b" strokeWidth="2" />
+          {[-16, -8, 0, 8, 16].map((dx) => (
+            <line key={dx} x1={dx * 0.5} y1="12" x2={dx} y2={30 + (light / 100) * 14} stroke="#ffd65a" strokeWidth="1.3" opacity={0.25 + (light / 100) * 0.6} />
+          ))}
+          <text x="0" y="-16" fontSize="7.5" fill="#6b7399" textAnchor="middle">منبع نور</text>
+        </g>
         <rect x="110" y="60" width="100" height="110" rx="6" fill="#dff0ff" stroke="#5b4636" strokeWidth="2" />
         <ellipse cx="160" cy="130" rx="30" ry="10" fill="#2c6e3f" />
         <path d="M160,130 C150,100 130,90 120,70" stroke="#2c6e3f" strokeWidth="4" fill="none" />
         <path d="M160,130 C170,95 190,85 200,65" stroke="#2c6e3f" strokeWidth="4" fill="none" />
+        {/* قیف‌واژگون روی گیاه که حباب‌ها را به سمت استوانه‌ی مدرج هدایت می‌کند */}
+        <path d="M140,95 L180,95 L168,78 L152,78 Z" fill="rgba(255,255,255,0.12)" stroke="#8fa3c4" strokeWidth="1" />
+        <rect x="155" y="62" width="10" height="20" fill="rgba(255,255,255,0.12)" stroke="#8fa3c4" strokeWidth="1" />
+        <rect x="155" y={62 + 20 * (1 - vlabClamp(light / 100, 0.08, 1))} width="10" height={20 * vlabClamp(light / 100, 0.08, 1)} fill="#dff6ff" opacity="0.7" />
+        {Array.from({ length: 5 }).map((_, i) => (
+          <line key={i} x1="165" y1={64 + i * 4} x2="158" y2={64 + i * 4} stroke="#5b6472" strokeWidth="0.6" />
+        ))}
         {bubbles.map((_, i) => (
           <circle key={i} cx={140 + i * 12} cy="150" r="3" fill="#fff" opacity="0.8">
             <animate attributeName="cy" from="150" to="65" dur={`${bubbleDuration}s`} begin={`${i * 0.3}s`} repeatCount="indefinite" />
             <animate attributeName="opacity" from="0.8" to="0" dur={`${bubbleDuration}s`} begin={`${i * 0.3}s`} repeatCount="indefinite" />
           </circle>
         ))}
+        <text x="178" y="72" fontSize="7" fill="#6b7399">استوانه‌ی مدرج</text>
       </svg>
       <div className="vlab-controls">
         <div className="vlab-ctrl-col" style={{ flex: 1 }}>
@@ -19283,17 +19411,19 @@ function VlabPulleyExperiment({ onReading }) {
           <>
             <line x1="160" y1="61" x2="160" y2="120" stroke="#8a6d3b" strokeWidth="2" />
             <rect x="140" y="120" width="40" height="30" rx="4" fill="#c8862b" />
-            <line x1="148" y1="45" x2="90" y2="150" stroke="#8a6d3b" strokeWidth="2" strokeDasharray="4 3" />
+            <line x1="148" y1="45" x2="80" y2="140" stroke="#8a6d3b" strokeWidth="2" strokeDasharray="4 3" />
           </>
         ) : (
           <>
             <line x1="148" y1="45" x2="148" y2="110" stroke="#8a6d3b" strokeWidth="2" />
-            <line x1="172" y1="45" x2="172" y2="110" stroke="#8a6d3b" strokeWidth="2" />
+            <line x1="172" y1="45" x2="90" y2="100" stroke="#8a6d3b" strokeWidth="2" strokeDasharray="4 3" />
             <circle cx="160" cy="125" r="14" fill="none" stroke="#5b4636" strokeWidth="5" />
             <rect x="140" y="139" width="40" height="28" rx="4" fill="#c8862b" />
           </>
         )}
         <text x="160" y={pulleyType === "متحرک" ? 182 : 165} fontSize="11" fill="#1c2540" textAnchor="middle">{load} kg</text>
+        {/* نیروسنج (دینامومتر) که در فهرست «ابزار و وسایل» بود ولی هیچ‌وقت دیده نمی‌شد — سر طناب به آن وصل می‌شود */}
+        <VlabSpringScale x={pulleyType === "ثابت" ? 80 : 90} y={pulleyType === "ثابت" ? 140 : 100} force={forceNeeded} maxForce={10} unit="kgf" label="نیروسنج" />
       </svg>
       <div className="vlab-controls">
         <div className="vlab-ctrl-col" style={{ flex: 1 }}>
@@ -19341,9 +19471,13 @@ function VlabFrictionExperiment({ onReading }) {
         {surface === "شن" &&
           Array.from({ length: 20 }).map((_, i) => <circle key={i} cx={10 + i * 16} cy={112 + (i % 2) * 4} r="2" fill="#8a6d3b" />)}
         <rect x="120" y={110 - 10 - mass * 3} width="60" height={10 + mass * 3} fill="#2f6fe2" rx="4" />
-        <line x1="180" y1={105 - mass * 1.5} x2={180 + arrowLen} y2={105 - mass * 1.5} stroke="#e2622f" strokeWidth="4" />
+        {/* به‌جای یک فلش انتزاعی، نیروسنج واقعی (که در فهرست وسایل بود) بین جسم و دست کشیدن قرار گرفت —
+            با ارتفاع ثابت بالای سطح تا با تغییر جرم روی زمین قرار نگیرد */}
+        <line x1="180" y1={110 - 10 - mass * 3 + (10 + mass * 3) / 2} x2="200" y2="40" stroke="#5b4636" strokeWidth="2" />
+        <VlabSpringScale x={225} y={10} force={frictionForce} maxForce={100} unit="N" label="نیروسنج" />
+        <line x1="200" y1="40" x2={200 + Math.min(arrowLen, 60)} y2="40" stroke="#e2622f" strokeWidth="3" />
         <polygon
-          points={`${180 + arrowLen},${105 - mass * 1.5 - 6} ${180 + arrowLen},${105 - mass * 1.5 + 6} ${180 + arrowLen + 10},${105 - mass * 1.5}`}
+          points={`${200 + Math.min(arrowLen, 60)},34 ${200 + Math.min(arrowLen, 60)},46 ${200 + Math.min(arrowLen, 60) + 9},40`}
           fill="#e2622f"
         />
       </svg>
@@ -19384,17 +19518,23 @@ function VlabNewtonSecondLawExperiment({ onReading }) {
 
   return (
     <div className="vlab-exp">
-      <svg viewBox="0 0 320 150" className="vlab-svg">
+      {/* قبلاً فقط اندازه‌ی خودِ گاری با جرم بزرگ‌تر می‌شد؛ حالا «وزنه‌های مختلف» واقعاً به‌صورت بلوک‌های
+          جداگانه روی گاری چیده می‌شوند (یکی از وسایل فهرست‌شده که دیده نمی‌شد) و یک ردیاب حرکت/کرنومتر هم اضافه شد. */}
+      <svg viewBox="0 -10 320 160" className="vlab-svg">
         <line x1="0" y1="120" x2="320" y2="120" stroke="#5b4636" strokeWidth="3" />
-        <rect x="60" y={120 - 14 - mass * 3} width={30 + mass * 4} height={14 + mass * 3} rx="6" fill="#c8862b" />
-        <circle cx="75" cy="122" r="7" fill="#1c2540" />
-        <circle cx={60 + 15 + mass * 4 - 10} cy="122" r="7" fill="#1c2540" />
-        <line x1={60 + 30 + mass * 4 + 6} y1={120 - 10 - mass * 1.5} x2={60 + 30 + mass * 4 + 6 + arrowLen} y2={120 - 10 - mass * 1.5} stroke="#2f6fe2" strokeWidth="4" />
+        <rect x="65" y="100" width="55" height="20" rx="5" fill="#c8862b" />
+        {Array.from({ length: vlabClamp(Math.ceil(mass / 2), 1, 8) }).map((_, i) => (
+          <rect key={i} x={70 + i * 11} y={96 - Math.min(i, 3) * 9} width="9" height="9" fill="#2f6fe2" stroke="#1c2540" strokeWidth="0.6" />
+        ))}
+        <circle cx="78" cy="122" r="7" fill="#1c2540" />
+        <circle cx="107" cy="122" r="7" fill="#1c2540" />
+        <line x1="126" y1={106} x2={126 + arrowLen} y2={106} stroke="#2f6fe2" strokeWidth="4" />
         <polygon
-          points={`${60 + 30 + mass * 4 + 6 + arrowLen},${120 - 10 - mass * 1.5 - 6} ${60 + 30 + mass * 4 + 6 + arrowLen},${120 - 10 - mass * 1.5 + 6} ${60 + 30 + mass * 4 + 6 + arrowLen + 10},${120 - 10 - mass * 1.5}`}
+          points={`${126 + arrowLen},100 ${126 + arrowLen},112 ${126 + arrowLen + 10},106`}
           fill="#2f6fe2"
         />
-        <text x={60 + 30 + mass * 4 + 6 + arrowLen / 2} y={120 - 10 - mass * 1.5 - 12} fontSize="11" fill="#2f6fe2" textAnchor="middle">F</text>
+        <text x={126 + arrowLen / 2} y="94" fontSize="11" fill="#2f6fe2" textAnchor="middle">F</text>
+        <VlabStopwatchIcon x={270} y={30} readout="ردیاب حرکت" />
       </svg>
       <div className="vlab-controls">
         <div className="vlab-ctrl-col" style={{ flex: 1 }}>
@@ -19427,17 +19567,25 @@ function VlabLedVoltageExperiment({ onReading }) {
 
   return (
     <div className="vlab-exp">
-      <svg viewBox="0 0 320 150" className="vlab-svg">
-        <rect x="20" y="55" width="24" height="40" fill="#5b4636" />
-        <line x1="44" y1="75" x2="130" y2="75" stroke="#5b4636" strokeWidth="3" />
-        <line x1="20" y1="115" x2="20" y2="75" stroke="#5b4636" strokeWidth="3" />
-        <line x1="20" y1="115" x2="280" y2="115" stroke="#5b4636" strokeWidth="3" />
-        <line x1="190" y1="75" x2="280" y2="75" stroke="#5b4636" strokeWidth="3" />
-        <line x1="280" y1="75" x2="280" y2="115" stroke="#5b4636" strokeWidth="3" />
-        <polygon points="130,65 130,85 160,75" fill={isOn ? `rgba(255,214,90,${brightness / 100})` : "#e9e4d4"} stroke="#c8862b" strokeWidth="2" />
-        <line x1="160" y1="75" x2="190" y2="75" stroke="#5b4636" strokeWidth="3" />
+      {/* «مقاومت محافظ» در فهرست وسایل بود ولی هیچ‌وقت کشیده نمی‌شد؛ نماد زیگزاگی واقعی مقاومت بین باتری و
+          LED اضافه شد، همراه با زمینه‌ی تیره‌ی هم‌خانواده با بقیه‌ی مدارهای این آزمایشگاه. */}
+      <svg viewBox="0 0 320 150" className="vlab-svg" style={{ background: "#0b1330", borderRadius: "10px" }}>
+        <rect x="20" y="55" width="24" height="40" rx="3" fill="#2c2f3a" stroke="#4a4f60" strokeWidth="1" />
+        <rect x="20" y="55" width="24" height="12" fill="#3a9bd5" />
+        <rect x="20" y="83" width="24" height="12" fill="#f2c572" />
+        <line x1="44" y1="75" x2="70" y2="75" stroke="#f2c572" strokeWidth="2.6" />
+        <path d="M70,75 L75,67 L82,83 L89,67 L96,83 L103,67 L108,75" fill="none" stroke="#f2c572" strokeWidth="2.6" />
+        <text x="89" y="56" fontSize="7.5" fill="#9aa3c0" textAnchor="middle">مقاومت محافظ</text>
+        <line x1="108" y1="75" x2="130" y2="75" stroke="#f2c572" strokeWidth="2.6" />
+        <line x1="20" y1="115" x2="20" y2="67" stroke="#3a9bd5" strokeWidth="2.6" />
+        <line x1="20" y1="115" x2="280" y2="115" stroke="#3a9bd5" strokeWidth="2.6" />
+        <line x1="190" y1="75" x2="280" y2="75" stroke="#f2c572" strokeWidth="2.6" />
+        <line x1="280" y1="75" x2="280" y2="115" stroke="#3a9bd5" strokeWidth="2.6" />
+        <circle cx="145" cy="75" r={15 + (brightness / 100) * 10} fill="#ff5c7a" opacity={isOn ? 0.08 + (brightness / 100) * 0.3 : 0} />
+        <polygon points="130,65 130,85 160,75" fill={isOn ? `rgba(255,92,122,${0.4 + (brightness / 100) * 0.6})` : "#2c2f3a"} stroke="#cfd8e8" strokeWidth="1.4" />
+        <line x1="160" y1="75" x2="190" y2="75" stroke="#f2c572" strokeWidth="2.6" />
         {isOn && Array.from({ length: 4 }).map((_, i) => (
-          <line key={i} x1={145 + i * 3} y1={55 - i * 2} x2={150 + i * 3} y2={45 - i * 2} stroke="#f2c572" strokeWidth="2" opacity={brightness / 100} />
+          <line key={i} x1={145 + i * 3} y1={55 - i * 2} x2={150 + i * 3} y2={45 - i * 2} stroke="#ff8fa3" strokeWidth="2" opacity={brightness / 100} />
         ))}
       </svg>
       <div className="vlab-controls">
@@ -19469,13 +19617,27 @@ function VlabElectromagnetExperiment({ onReading }) {
 
   return (
     <div className="vlab-exp">
+      {/* «میخ آهنی» سر نوک‌دار واقعی گرفت و «باتری» که در فهرست وسایل بود ولی هیچ‌وقت کشیده نمی‌شد، به دو
+          سر سیم‌پیچ وصل شد تا منبع جریان واقعاً دیده شود؛ گیره‌ها هم به‌جای مستطیل، شکل گیره‌ی واقعی گرفتند. */}
       <svg viewBox="0 0 320 170" className="vlab-svg">
-        <rect x="140" y="30" width="18" height="100" fill="#8a8a8a" rx="3" />
+        <rect x="140" y="30" width="18" height="90" fill="#8a8a8a" rx="2" />
+        <polygon points="140,120 158,120 149,138" fill="#8a8a8a" />
         {Array.from({ length: Math.min(14, Math.round(turns / 8)) }).map((_, i) => (
-          <ellipse key={i} cx="149" cy={40 + i * 6} rx="22" ry="5" fill="none" stroke="#c8862b" strokeWidth="2" />
+          <ellipse key={i} cx="149" cy={38 + i * 5.6} rx="22" ry="5" fill="none" stroke="#c8862b" strokeWidth="2" />
         ))}
+        <line x1="127" y1="38" x2="60" y2="38" stroke="#c8862b" strokeWidth="2.4" />
+        <line x1="171" y1="38" x2="235" y2="38" stroke="#c8862b" strokeWidth="2.4" />
+        <line x1="60" y1="38" x2="60" y2="60" stroke="#c8862b" strokeWidth="2.4" />
+        <line x1="235" y1="38" x2="235" y2="60" stroke="#c8862b" strokeWidth="2.4" />
+        <rect x="44" y="60" width="32" height="46" rx="3" fill="#5b4636" />
+        <rect x="44" y="60" width="32" height="10" fill="#3a9bd5" />
+        <rect x="44" y="96" width="32" height="10" fill="#f2c572" />
+        <text x="60" y="80" fontSize="7.5" fill="#fff" textAnchor="middle">باتری</text>
+        <path d="M44,96 L44,120 L235,120 L235,60" fill="none" stroke="#3a9bd5" strokeWidth="2.4" />
         {Array.from({ length: clipCount }).map((_, i) => (
-          <rect key={i} x={160 + (i % 5) * 16} y={140 + Math.floor(i / 5) * 14} width="12" height="4" rx="2" fill="#2f6fe2" />
+          <g key={i} transform={`translate(${170 + (i % 5) * 17},${140 + Math.floor(i / 5) * 16})`}>
+            <path d="M0,0 L10,0 Q14,0 14,4 Q14,8 10,8 L2,8 Q0,8 0,6" fill="none" stroke="#2f6fe2" strokeWidth="2" strokeLinecap="round" />
+          </g>
         ))}
       </svg>
       <div className="vlab-controls">
@@ -19510,12 +19672,36 @@ function VlabCapacitorExperiment({ onReading }) {
 
   return (
     <div className="vlab-exp">
-      <svg viewBox="0 0 320 150" className="vlab-svg">
-        <rect x="40" y="40" width="240" height="26" rx="6" fill="#e9e4d4" stroke="#c8862b" strokeWidth="2" />
-        <rect x="40" y="40" width={2.4 * chargePercent} height="26" rx="6" fill="#2f6fe2" opacity="0.75" />
-        <text x="160" y="58" fontSize="13" fill="#1c2540" textAnchor="middle" fontWeight="700">{chargePercent.toFixed(0)}٪</text>
-        <line x1="150" y1="90" x2="150" y2="120" stroke="#5b4636" strokeWidth="5" />
-        <line x1="170" y1="90" x2="170" y2="120" stroke="#5b4636" strokeWidth="5" />
+      {/* مقاومت، باتری، کلید و ولت‌متر — چهار وسیله‌ی فهرست‌شده که قبلاً هیچ‌کدام در مدار دیده نمی‌شدند —
+          حالا به‌صورت یک مدار RC واقعی (باتری → کلید → مقاومت زیگزاگی → خازن) با ولت‌متر روی خازن کشیده شده‌اند. */}
+      <svg viewBox="0 0 320 170" className="vlab-svg" style={{ background: "#0b1330", borderRadius: "10px" }}>
+        <rect x="20" y="55" width="24" height="40" rx="3" fill="#2c2f3a" stroke="#4a4f60" strokeWidth="1" />
+        <rect x="20" y="55" width="24" height="12" fill="#3a9bd5" />
+        <rect x="20" y="83" width="24" height="12" fill="#f2c572" />
+        <line x1="44" y1="65" x2="70" y2="65" stroke="#f2c572" strokeWidth="2.4" />
+        <circle cx="75" cy="65" r="3.5" fill="#cfd8e8" />
+        <line x1="78" y1="65" x2="100" y2="50" stroke="#f2c572" strokeWidth="2.4" />
+        <circle cx="103" cy="48" r="3.5" fill="#cfd8e8" opacity="0.6" />
+        <text x="90" y="40" fontSize="7.5" fill="#9aa3c0" textAnchor="middle">کلید</text>
+        <path d="M103,48 L115,48 L120,38 L128,58 L136,38 L144,58 L150,48 L160,48" fill="none" stroke="#f2c572" strokeWidth="2.4" />
+        <text x="130" y="30" fontSize="7.5" fill="#9aa3c0" textAnchor="middle">مقاومت</text>
+        <line x1="160" y1="48" x2="200" y2="48" stroke="#f2c572" strokeWidth="2.4" />
+        <line x1="200" y1="48" x2="200" y2="75" stroke="#f2c572" strokeWidth="2.4" />
+        <line x1="190" y1="75" x2="210" y2="75" stroke="#cfd8e8" strokeWidth="3.4" />
+        <line x1="190" y1="88" x2="210" y2="88" stroke="#cfd8e8" strokeWidth="3.4" />
+        <rect x="190" y="75" width={20 * (chargePercent / 100)} height="13" fill="#3a9bd5" opacity="0.7" />
+        <text x="200" y="106" fontSize="8" fill="#9aa3c0" textAnchor="middle">خازن</text>
+        <line x1="200" y1="88" x2="200" y2="120" stroke="#3a9bd5" strokeWidth="2.4" />
+        <line x1="200" y1="120" x2="44" y2="120" stroke="#3a9bd5" strokeWidth="2.4" />
+        <line x1="44" y1="120" x2="44" y2="95" stroke="#3a9bd5" strokeWidth="2.4" />
+        {/* ولت‌متر — صفحه‌ی گرد با عقربه‌ای که با درصد شارژ می‌چرخد */}
+        <g transform="translate(260,75)">
+          <circle cx="0" cy="0" r="26" fill="#1a2140" stroke="#cfd8e8" strokeWidth="2" />
+          <text x="0" y="-8" fontSize="7" fill="#9aa3c0" textAnchor="middle">ولت‌متر</text>
+          <line x1="0" y1="0" x2={Math.cos((Math.PI * (180 - chargePercent * 1.8)) / 180) * 18} y2={-Math.sin((Math.PI * (180 - chargePercent * 1.8)) / 180) * 18} stroke="#ff5c7a" strokeWidth="2" strokeLinecap="round" />
+          <circle cx="0" cy="0" r="2" fill="#cfd8e8" />
+          <text x="0" y="16" fontSize="9" fill="#fff" textAnchor="middle" fontWeight="700">{chargePercent.toFixed(0)}٪</text>
+        </g>
       </svg>
       <div className="vlab-controls">
         <div className="vlab-ctrl-col" style={{ flex: 1 }}>
@@ -19549,14 +19735,27 @@ function VlabDensityFloatingExperiment({ onReading }) {
   }, [material]);
 
   const objY = floats ? 55 - (1 - density) * 25 : 95;
+  // به‌جای یک مستطیل قهوه‌ای ثابت برای همه‌ی مواد، هر ماده رنگ/بافت واقعی‌تر خودش را می‌گیرد
+  const MATERIAL_LOOK = {
+    "چوب": { fill: "#c8862b", stroke: "#8a5a1c" },
+    "یخ": { fill: "#d7f0fb", stroke: "#8fc6e0" },
+    "پلاستیک": { fill: "#5fb0e0", stroke: "#2f6f97" },
+    "فلز": { fill: "#9aa3b0", stroke: "#5b6472" },
+    "سنگ": { fill: "#8a7a6a", stroke: "#5b4d40" },
+  };
+  const look = MATERIAL_LOOK[material];
 
   return (
     <div className="vlab-exp">
       <svg viewBox="0 0 320 160" className="vlab-svg">
         <rect x="60" y="40" width="200" height="110" rx="6" fill="#dff0ff" stroke="#5b4636" strokeWidth="2" />
         <rect x="62" y={95} width="196" height="53" fill="#9fd3f5" opacity="0.7" />
-        <rect x="140" y={objY} width="40" height="28" rx="5" fill="#c8862b" />
-        <text x="160" y={objY + 18} fontSize="10" fill="#1c2540" textAnchor="middle">{material}</text>
+        {material === "سنگ" ? (
+          <path d={`M${160 - 22},${objY + 28} L${160 - 18},${objY + 4} L${160 - 2},${objY} L${160 + 20},${objY + 10} L${160 + 18},${objY + 28} Z`} fill={look.fill} stroke={look.stroke} strokeWidth="1.5" />
+        ) : (
+          <rect x="140" y={objY} width="40" height="28" rx="5" fill={look.fill} stroke={look.stroke} strokeWidth="1.5" />
+        )}
+        <text x="160" y={objY + 18} fontSize="10" fill="#1c2540" textAnchor="middle" fontWeight="700">{material}</text>
       </svg>
       <div className="vlab-controls">
         <div className="vlab-toggle-row">
@@ -19591,10 +19790,13 @@ function VlabDissolveTemperatureExperiment({ onReading }) {
 
   return (
     <div className="vlab-exp">
+      {/* قاشق هم‌زدن و دماسنج که در فهرست وسایل بودند، اضافه شدند */}
       <svg viewBox="0 0 320 150" className="vlab-svg">
         <rect x="110" y="40" width="100" height="90" rx="8" fill="#dff0ff" stroke="#5b4636" strokeWidth="2" />
         <rect x="113" y={60 - temp / 5} width="94" height={90 - (60 - temp / 5) + 38} fill={`rgba(226,98,47,${0.15 + temp / 250})`} />
         <rect x="150" y="60" width="20" height="20" fill="#fff" opacity={vlabClamp(1 - (150 - dissolveTime) / 150, 0.15, 1)} />
+        <VlabThermometerMini x={225} y={45} temp={temp} minT={0} maxT={100} h={60} />
+        <VlabStirSpoonMini x={160} y={55} stirring={stirring} />
       </svg>
       <div className="vlab-controls">
         <div className="vlab-ctrl-col" style={{ flex: 1 }}>
@@ -19630,9 +19832,16 @@ function VlabReactionRateExperiment({ onReading }) {
 
   return (
     <div className="vlab-exp">
+      {/* دو محلول واکنش‌گر، کرنومتر و دماسنج که در فهرست وسایل بودند، اضافه شدند */}
       <svg viewBox="0 0 320 150" className="vlab-svg">
         <path d="M140,30 L140,80 L110,135 L210,135 L180,80 L180,30 Z" fill="none" stroke="#5b4636" strokeWidth="3" />
         <path d="M140,80 L117,130 L203,130 L180,80 Z" fill={`rgba(226,98,47,${colorProgress})`} />
+        <VlabDropperMini x={100} y={55} rotate={-20} color="#2f6fe2" />
+        <VlabDropperMini x={222} y={55} rotate={20} color="#e2622f" />
+        <text x="88" y="30" fontSize="7" fill="#6b7399" textAnchor="middle">واکنش‌گر ۱</text>
+        <text x="232" y="30" fontSize="7" fill="#6b7399" textAnchor="middle">واکنش‌گر ۲</text>
+        <VlabThermometerMini x={255} y={85} temp={temp} minT={0} maxT={80} h={46} />
+        <VlabStopwatchIcon x={270} y={25} readout={`${reactionTime.toFixed(0)}s`} />
       </svg>
       <div className="vlab-controls">
         <div className="vlab-ctrl-col" style={{ flex: 1 }}>
@@ -19665,6 +19874,7 @@ function VlabHeartRateExperiment({ onReading }) {
 
   return (
     <div className="vlab-exp">
+      {/* «ساعت یا کرنومتر» و «انگشت برای حس ضربان» که در فهرست وسایل بودند، اضافه شدند */}
       <svg viewBox="0 0 320 150" className="vlab-svg">
         <g style={{ transformOrigin: "160px 75px", animation: `vlabHeartbeat ${pulseDuration}s ease-in-out infinite` }}>
           <path
@@ -19672,6 +19882,12 @@ function VlabHeartRateExperiment({ onReading }) {
             fill="#e2622f"
           />
         </g>
+        <g transform="translate(245,95)">
+          <path d="M-6,20 Q-9,0 -5,-18 Q-2,-26 3,-24 Q7,-22 6,-10 L6,10 Q6,20 0,22 Z" fill="#e8c3a0" stroke="#c8926a" strokeWidth="1" />
+          <circle cx="0" cy="-20" r="3" fill="#e2622f" style={{ animation: `vlabHeartbeat ${pulseDuration}s ease-in-out infinite` }} />
+          <text x="0" y="36" fontSize="7" fill="#6b7399" textAnchor="middle">حس ضربان</text>
+        </g>
+        <VlabStopwatchIcon x={60} y={100} readout={`${heartRate} bpm`} />
       </svg>
       <div className="vlab-controls">
         <div className="vlab-ctrl-col" style={{ flex: 1 }}>
@@ -19702,10 +19918,13 @@ function VlabDiffusionExperiment({ onReading }) {
 
   return (
     <div className="vlab-exp">
-      <svg viewBox="0 0 320 170" className="vlab-svg">
+      {/* قطره‌چکان (برای چکاندن رنگ خوراکی) و دماسنج که در فهرست وسایل بودند، اضافه شدند */}
+      <svg viewBox="0 -16 320 186" className="vlab-svg">
         <rect x="60" y="30" width="200" height="120" rx="8" fill="#dff0ff" stroke="#5b4636" strokeWidth="2" />
         <circle cx="160" cy="90" r={diffusionRadius} fill="rgba(47,111,226,0.5)" />
         <circle cx="160" cy="90" r="5" fill="#1a3fa0" />
+        <VlabDropperMini x={160} y={16} rotate={0} color="#1a3fa0" />
+        <VlabThermometerMini x={275} y={40} temp={temp} minT={0} maxT={90} h={60} />
       </svg>
       <div className="vlab-controls">
         <div className="vlab-ctrl-col" style={{ flex: 1 }}>
@@ -19737,9 +19956,14 @@ function VlabEnzymeActivityExperiment({ onReading }) {
 
   return (
     <div className="vlab-exp">
+      {/* حمام آب با دماهای مختلف و نمونه‌ی حاوی کاتالاز (جگر/سیب‌زمینی) که در فهرست وسایل بودند، اضافه شدند */}
       <svg viewBox="0 0 320 170" className="vlab-svg">
+        <rect x="70" y="55" width="180" height="95" rx="10" fill={vlabMixHexColor("#3a9bd5", "#e2622f", vlabClamp(temp / 90, 0, 1))} opacity="0.25" stroke="#8a93a8" strokeWidth="1.5" />
+        <text x="160" y="160" fontSize="7.5" fill="#6b7399" textAnchor="middle">حمام آب (دمای قابل‌تنظیم)</text>
         <path d="M130,40 L130,90 L105,140 L215,140 L190,90 L190,40 Z" fill="none" stroke="#5b4636" strokeWidth="3" />
         <path d="M130,90 L108,135 L212,135 L190,90 Z" fill="rgba(47,160,111,0.35)" />
+        <ellipse cx="160" cy="120" rx="16" ry="9" fill="#a85a3f" stroke="#7a3f2a" strokeWidth="1" />
+        <text x="160" y="29" fontSize="7" fill="#6b7399" textAnchor="middle">نمونه‌ی کاتالاز (جگر/سیب‌زمینی) در لوله‌ی آزمایش</text>
         {Array.from({ length: bubbleCount }).map((_, i) => (
           <circle key={i} cx={130 + (i % 5) * 14} cy={125 - Math.floor(i / 5) * 16} r="3.5" fill="#fff" opacity="0.85">
             <animate attributeName="cy" from="125" to="45" dur="1.4s" begin={`${i * 0.18}s`} repeatCount="indefinite" />

@@ -21627,7 +21627,8 @@ function VlabHeatTransferExperiment({ onReading }) {
               <circle key={d} cx="70" cy="90" r="22" fill="none" stroke="#ffb347" strokeWidth="1.6" opacity="0.5" style={{ animation: `vlabRadiatePulse 2.2s ease-out ${d}s infinite` }} />
             ))}
             <VlabThermometerMini x={objX} y={60} temp={radTemp} minT={0} maxT={100} h={55} />
-            <text x="180" y="150" fontSize="9" fill="#9aa3c0" textAnchor="middle">بینِ منبع و جسم هیچ ماده‌ای نیست — گرمایِ تابشی مثلِ نورِ خورشید، در فضایِ خالی هم منتقل می‌شود</text>
+            <text x="180" y="145" fontSize="9" fill="#9aa3c0" textAnchor="middle">بینِ منبع و جسم هیچ ماده‌ای نیست</text>
+            <text x="180" y="160" fontSize="9" fill="#9aa3c0" textAnchor="middle">گرمایِ تابشی مثلِ نورِ خورشید، در فضایِ خالی هم منتقل می‌شود</text>
           </g>
         )}
       </svg>
@@ -21789,6 +21790,8 @@ const VLAB_COMPONENTS = {
   "heart-rate": VlabHeartRateExperiment,
   diffusion: VlabDiffusionExperiment,
   "enzyme-activity": VlabEnzymeActivityExperiment,
+  "heat-transfer": VlabHeatTransferExperiment,
+  "electricity-conduction": VlabElectricityConductionExperiment,
 };
 
 function StudentVirtualLabView({ onBack, grade, studentCode, schoolCode }) {

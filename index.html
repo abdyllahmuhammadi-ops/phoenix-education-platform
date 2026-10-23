@@ -18089,15 +18089,23 @@ function VlabStopwatchIcon({ x, y, readout, scale, seconds, maxSeconds, extra })
         <line x1="0" y1="0" x2="7" y2="4" stroke="#e2622f" strokeWidth="1.4" strokeLinecap="round" />
       )}
       <circle cx="0" cy="0" r="1.8" fill="#3a2f22" />
-      {readout && (
-        <text x="0" y="30" fontSize="9.5" fill="#1c2540" textAnchor="middle" fontWeight="700" style={{ direction: "ltr", unicodeBidi: "isolate" }}>
-          {readout}
-        </text>
-      )}
-      {extra && (
-        <text x="0" y="42" fontSize="8.5" fill="#2f6fe2" textAnchor="middle" fontWeight="700" style={{ direction: "ltr", unicodeBidi: "isolate" }}>
-          {extra}
-        </text>
+      {/* کاربر گفت عدد زیرِ ساعت دیده نمی‌شود — چون رنگِ تیرهٔ قبلی روی پس‌زمینه‌ی تیره‌ی برخی آزمایش‌ها
+          محو می‌شد. حالا یک چیپِ تیره با حاشیه‌ی آبی و متنِ روشن، مستقل از رنگِ پس‌زمینه‌ی صحنه، زیرِ
+          ساعت رسم می‌شود تا عددِ دقیق همیشه خوانا باشد. */}
+      {(readout || extra) && (
+        <g transform={`translate(0,${22 + (extra ? 34 : 20) / 2})`}>
+          <rect x="-35" y={-(extra ? 34 : 20) / 2} width="70" height={extra ? 34 : 20} rx="5" fill="#0b1330" stroke="#2f6fe2" strokeWidth="1.4" />
+          {readout && (
+            <text x="0" y={extra ? -4 : 3.5} fontSize="10.5" fill="#eaf0fb" textAnchor="middle" fontWeight="700" style={{ direction: "ltr", unicodeBidi: "isolate" }}>
+              {readout}
+            </text>
+          )}
+          {extra && (
+            <text x="0" y="11" fontSize="9.5" fill="#7fb2ff" textAnchor="middle" fontWeight="700" style={{ direction: "ltr", unicodeBidi: "isolate" }}>
+              {extra}
+            </text>
+          )}
+        </g>
       )}
     </g>
   );
@@ -20199,7 +20207,7 @@ function VlabNewtonSecondLawExperiment({ onReading }) {
   const TRAVEL_M = vlabClamp(0.15 + Math.sqrt(acceleration) * 0.2, 0.15, 1.8);
   const TRAVEL_PX = vlabClamp(TRAVEL_M * 70, 20, 150);
   const RULER_MAX_M = 2;
-  const RULER_W = 260;
+  const RULER_W = 320;
   const DEMO_MS = 1400;
   const wheelSpinDeg = pulled ? 620 : 0;
   const arrowLen = vlabClamp(force * 1.6, 16, 60);
@@ -20256,12 +20264,12 @@ function VlabNewtonSecondLawExperiment({ onReading }) {
         {/* نیروسنجِ عقربه‌ای، نزدیکِ نقطه‌ی شروع، همان‌طور که دست یک نفر گاری را می‌کشد */}
         <VlabSpringScale x={40} y={30} force={force} maxForce={50} unit="N" label="نیروسنج" textColor="#eaf0fb" labelColor="#9fb0d6" />
         <VlabStopwatchIcon
-          x={352}
-          y={52}
+          x={320}
+          y={50}
           scale={2}
           seconds={elapsed}
           maxSeconds={DEMO_MS / 1000}
-          readout={`${elapsed.toFixed(1)}s`}
+          readout={`${elapsed.toFixed(2)}s`}
           extra={`${(pulled ? TRAVEL_M : 0).toFixed(2)} m`}
         />
         {/* گاری + چرخ‌ها + فلشِ نیرو + وزنه‌ها، همگی در یک گروهِ متحرک تا دقیقاً با هم جابجا شوند */}

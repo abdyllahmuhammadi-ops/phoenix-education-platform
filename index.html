@@ -18163,6 +18163,52 @@ function VlabThermometerMini({ x, y, temp, minT, maxT, h }) {
   );
 }
 
+// دماسنجِ آزمایشگاهیِ واقعی و دقیق: لوله‌ی شیشه‌ایِ مدرج با خط‌کشیِ عددی (شبیهِ دماسنجِ جیوه‌ایِ
+// آزمایشگاهی)، به‌جایِ VlabThermometerMini که یک کپسولِ ساده‌ی بدونِ درجه‌بندی بود — برایِ
+// آزمایش‌هایی که خودِ دما نقشِ اصلی را دارد و دقتِ نمایشِ آن مهم است.
+function VlabThermometerReal({ x, y, temp, minT = 0, maxT = 100, h = 80 }) {
+  const frac = vlabClamp((temp - minT) / (maxT - minT), 0, 1);
+  const tubeW = 9;
+  const bulbR = 9;
+  const fillH = frac * h;
+  const col = vlabMixHexColor("#3a9bd5", "#e2432f", frac);
+  const range = maxT - minT;
+  const step = range <= 50 ? 10 : 20;
+  const ticks = [];
+  for (let v = minT; v <= maxT + 0.01; v += step) {
+    const f = vlabClamp((v - minT) / range, 0, 1);
+    const ty = h - f * h;
+    const major = Math.round((v - minT) / step) % 2 === 0;
+    ticks.push(
+      <g key={"vtt" + v}>
+        <line x1={tubeW / 2 + 1.5} y1={ty} x2={tubeW / 2 + (major ? 8 : 4.5)} y2={ty} stroke="#5b6472" strokeWidth={major ? 1.1 : 0.7} />
+        {major && (
+          <text x={tubeW / 2 + 11} y={ty + 3} fontSize="7.5" fill="#c7cfe6">
+            {Math.round(v)}
+          </text>
+        )}
+      </g>
+    );
+  }
+  return (
+    <g transform={`translate(${x},${y})`}>
+      {/* لوله‌ی شیشه‌ای */}
+      <rect x={-tubeW / 2 - 1.5} y="-2" width={tubeW + 3} height={h + 4} rx={tubeW / 2 + 1.5} fill="#eef3fb" stroke="#8a93a8" strokeWidth="1" opacity="0.92" />
+      {/* ستونِ مایعِ دماسنج */}
+      <rect x={-tubeW / 2} y={h - fillH} width={tubeW} height={fillH + bulbR + 2} rx={tubeW / 2} fill={col} />
+      {/* مخزنِ کروی در انتها */}
+      <circle cx="0" cy={h + bulbR - 1} r={bulbR} fill={col} stroke="#5b6472" strokeWidth="1.1" />
+      {/* خط‌کشیِ عددی */}
+      {ticks}
+      {/* هایلایتِ شیشه */}
+      <line x1={-tubeW / 2 + 1.8} y1="2" x2={-tubeW / 2 + 1.8} y2={h - 2} stroke="#fff" strokeWidth="1.2" opacity="0.4" />
+      <text x="0" y={h + bulbR + 17} fontSize="9" fill="#eaf3ff" textAnchor="middle" fontWeight="700">
+        {Math.round(temp)}°C
+      </text>
+    </g>
+  );
+}
+
 // قطره‌چکان کوچک: نسخه‌ی ساده‌ترِ قطره‌چکان آزمایش اسید-باز، برای آزمایش‌هایی که فقط یک چکیدن ساده لازم دارند
 function VlabDropperMini({ x, y, rotate, color }) {
   return (
@@ -21172,7 +21218,6 @@ function VlabDensityFloatingExperiment({ onReading }) {
 function VlabDissolveTemperatureExperiment({ onReading }) {
   const [temp, setTemp] = useState(25);
   const [stirring, setStirring] = useState(false);
-  const [spinTick, setSpinTick] = useState(0);
   let dissolveTime = 150 - temp * 1.2;
   if (stirring) dissolveTime = dissolveTime / 2;
   dissolveTime = vlabClamp(dissolveTime, 5, 150);
@@ -21182,17 +21227,31 @@ function VlabDissolveTemperatureExperiment({ onReading }) {
     // eslint-disable-next-line
   }, [temp, stirring]);
 
-  // هر بار هم‌زدن روشن می‌شود، یک چرخشِ کاملِ قاشق را فعال کن
-  useEffect(() => {
-    if (stirring) setSpinTick((t) => t + 1);
-  }, [stirring]);
-
   // به‌جایِ یک مکعبِ سفیدِ ثابت، چند دانه‌ی قندِ کوچک که هرچه زمانِ حل‌شدن کمتر (یعنی سریع‌تر حل
-  // می‌شود) باشد، سریع‌تر محو/کوچک می‌شوند — تصویری از خودِ فرایندِ حل‌شدن، نه فقط یک عدد.
-  const dissolveFrac = vlabClamp(1 - (150 - dissolveTime) / 150, 0.1, 1);
+  // می‌شود) باشد، کوچک‌تر/کم‌رنگ‌تر می‌شوند — اما سقفِ پایینِ آن بالا برده شد (0.1→0.35) و تعدادِ
+  // دانه‌ها بیشتر شد تا حتی در سریع‌ترین حالت، توده‌ای قابلِ‌دیدن از ماده روی کفِ ظرف بماند و حسِ
+  // «همین الان همه‌چیز حل شد» ندهد — طبقِ خواسته‌ی کاربر. دانه‌ها به‌شکلِ یک توده‌ی کپه‌ای روی خودِ
+  // کفِ لیوان (نه معلق در وسط) چیده شده‌اند.
+  const dissolveFrac = vlabClamp(1 - (150 - dissolveTime) / 130, 0.35, 1);
   const grains = [
-    { x: -9, y: -6 }, { x: 4, y: -8 }, { x: 10, y: 2 }, { x: -4, y: 6 }, { x: -10, y: 8 }, { x: 8, y: 9 },
+    { x: -12, y: 2 }, { x: -6, y: 5 }, { x: 0, y: 1 }, { x: 6, y: 5 }, { x: 12, y: 2 },
+    { x: -9, y: 7 }, { x: -2, y: 8 }, { x: 4, y: 8 }, { x: 10, y: 7 }, { x: 0, y: 10 },
   ];
+
+  // ذراتِ آب که با افزایشِ دما سریع‌تر می‌لرزند/حرکت می‌کنند — تصویری از افزایشِ انرژیِ جنبشیِ
+  // مولکول‌ها با دما؛ از سه الگویِ لرزشِ از پیش‌موجود (vlab-oil-wobble-a/b/c) با مدتِ متغیر استفاده
+  // می‌شود، نه یک کلاسِ ثابت، چون سرعت باید به‌طورِ پیوسته با اسلایدرِ دما تغییر کند.
+  const particleDur = vlabClamp(1.5 - temp / 75, 0.3, 1.5);
+  const particles = [
+    { x: 133, y: 78 }, { x: 152, y: 72 }, { x: 172, y: 76 }, { x: 191, y: 84 },
+    { x: 138, y: 96 }, { x: 182, y: 100 }, { x: 148, y: 112 }, { x: 178, y: 115 },
+  ];
+  const wobbleVariant = ["vlab-oil-wobble-a", "vlab-oil-wobble-b", "vlab-oil-wobble-c"];
+
+  // رنگِ آب: با افزایشِ دما کمی به‌سمتِ قرمز/گرم متمایل می‌شود (نه کاملاً قرمز — فقط یک گرایشِ
+  // ملایم، طبقِ خواسته‌ی کاربر)؛ دامنه‌ی ترکیب محدود به حداکثر ۳۵٪ نگه داشته شده تا آب همچنان
+  // واضح «آبی» بماند.
+  const waterColor = vlabMixHexColor("#2f6fe2", "#e2432f", (temp / 100) * 0.35);
 
   return (
     <div className="vlab-exp">
@@ -21202,11 +21261,24 @@ function VlabDissolveTemperatureExperiment({ onReading }) {
         <path d="M112,42 L116,128 Q117,136 125,136 L195,136 Q203,136 204,128 L208,42" fill="none" stroke="#8fb4e0" strokeWidth="2" />
         <path
           d="M114,66 L117,128 Q118,134 125,134 L195,134 Q202,134 203,128 L206,66 Z"
-          fill="#2f6fe2"
+          fill={waterColor}
           opacity={0.22 + temp / 400}
         />
+        {/* ذراتِ آبِ لرزان — سرعتِ لرزش با دما زیاد می‌شود */}
+        {particles.map((p, i) => (
+          <circle
+            key={"pt" + i}
+            cx={p.x}
+            cy={p.y}
+            r="1.6"
+            fill="#cfe3ff"
+            opacity="0.55"
+            style={{ animation: `${wobbleVariant[i % 3]} ${particleDur}s ease-in-out infinite`, animationDelay: `${(i % 4) * 0.12}s` }}
+          />
+        ))}
         <line x1="120" y1="46" x2="117" y2="128" stroke="#eaf3ff" strokeWidth="3" opacity="0.18" />
-        <g transform="translate(160,82)">
+        {/* توده‌ی دانه‌هایِ قند — دقیقاً روی کفِ لیوان (نزدیکِ y=124)، نه معلق در وسطِ آب */}
+        <g transform="translate(160,124)">
           {grains.map((g, i) => (
             <rect
               key={i}
@@ -21215,12 +21287,17 @@ function VlabDissolveTemperatureExperiment({ onReading }) {
               width={5 * dissolveFrac}
               height={5 * dissolveFrac}
               fill="#fff"
-              opacity={vlabClamp(dissolveFrac, 0.12, 1)}
+              opacity={vlabClamp(dissolveFrac, 0.35, 1)}
             />
           ))}
         </g>
-        <VlabThermometerMini x={225} y={45} temp={temp} minT={0} maxT={100} h={60} />
-        <VlabStirSpoonMini x={160} y={55} reach={75} stirKey={spinTick} />
+        <VlabThermometerReal x={232} y={38} temp={temp} minT={0} maxT={100} h={66} />
+        {/* قاشق: reach کم شد (۷۵→۵۶) تا سرِ قاشق از کفِ لیوان فاصله‌ی امن داشته باشد و با چرخشِ
+            دایره‌ای دیگر از ظرف بیرون نزند. وقتی «هم‌زدن» فعال است، کلِ قاشق — نه فقط یک تکانِ
+            کوتاهِ رفت‌وبرگشتی — در یک مسیرِ واقعاً دایره‌ای و پیوسته نزدیکِ کفِ لیوان می‌چرخد. */}
+        <g style={{ animation: stirring ? "vlabDissolveStirCircle 0.8s linear infinite" : "none" }}>
+          <VlabStirSpoonMini x={160} y={55} reach={56} handleTop={-48} />
+        </g>
       </svg>
       <div className="vlab-controls">
         <div className="vlab-ctrl-col" style={{ flex: 1 }}>
@@ -21236,6 +21313,19 @@ function VlabDissolveTemperatureExperiment({ onReading }) {
         <br />
         دمای بالاتر و هم‌زدن، سرعت حل‌شدن را بیشتر می‌کنند.
       </div>
+      <style>{`
+        @keyframes vlabDissolveStirCircle {
+          0% { transform: translate(8px, 0px); }
+          12.5% { transform: translate(5.7px, 5.7px); }
+          25% { transform: translate(0px, 8px); }
+          37.5% { transform: translate(-5.7px, 5.7px); }
+          50% { transform: translate(-8px, 0px); }
+          62.5% { transform: translate(-5.7px, -5.7px); }
+          75% { transform: translate(0px, -8px); }
+          87.5% { transform: translate(5.7px, -5.7px); }
+          100% { transform: translate(8px, 0px); }
+        }
+      `}</style>
     </div>
   );
 }

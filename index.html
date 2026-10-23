@@ -20710,44 +20710,127 @@ function VlabElectromagnetExperiment({ onReading }) {
 function VlabCapacitorExperiment({ onReading }) {
   const [capacitance, setCapacitance] = useState(100);
   const [resistance, setResistance] = useState(10);
-  const [elapsed, setElapsed] = useState(0);
-  const tau = (resistance * 1000 * (capacitance / 1e6)) * 1000; // milliseconds
-  const chargePercent = vlabClamp((1 - Math.exp(-elapsed / tau)) * 100, 0, 100);
+  const [chargePercent, setChargePercent] = useState(0);
+  const [mode, setMode] = useState("idle"); // idle | charging | discharging — موقعیتِ ماندگارِ تیغه‌ی کلید
+  const [animating, setAnimating] = useState(false);
+  const tau = resistance * 1000 * (capacitance / 1e6) * 1000; // ms
+  // کاربر خواست آزمایش واقعاً «شارژ و دشارژ» را نشان دهد؛ قبلاً فقط یک اسلایدرِ دستیِ «زمان» وجود داشت
+  // و کلید هیچ‌وقت کار نمی‌کرد. حالا یک کلیدِ دوحالته‌ی واقعی اضافه شد: در حالتِ «شارژ» تیغه به باتری
+  // وصل می‌شود، در حالتِ «تخلیه» باتری را کنار می‌زند و مستقیماً مدارِ مقاومت-خازن را می‌بندد تا خازن
+  // از رویِ مقاومت دشارژ شود — دقیقاً مثلِ مدارِ واقعیِ این آزمایش. درصدِ شارژ هم با زمانِ واقعی (نه
+  // اسلایدرِ دستی) و فرمولِ نمایی محاسبه می‌شود. تیغه پس از رسیدن به مقدارِ نهایی همان‌جا می‌ماند (فقط
+  // انیمیشن متوقف می‌شود) — نه اینکه خودش دوباره باز شود، چون در واقعیت کلید تا کاربر عوضش نکند سرِ جایش می‌ماند.
+  const startRef = React.useRef({ t0: 0, v0: 0 });
 
   useEffect(() => {
-    if (onReading) onReading(`ظرفیت: ${capacitance} میکروفاراد | مقاومت: ${resistance} کیلواهم | ثابت زمانی τ ≈ ${tau.toFixed(0)} میلی‌ثانیه | درصد شارژ در t=${elapsed}ms: ${chargePercent.toFixed(0)}٪`);
+    setMode("idle");
+    setAnimating(false);
     // eslint-disable-next-line
-  }, [capacitance, resistance, elapsed]);
+  }, [capacitance, resistance]);
+
+  useEffect(() => {
+    if (!animating) return undefined;
+    startRef.current = { t0: Date.now(), v0: chargePercent };
+    const id = setInterval(() => {
+      const dt = Date.now() - startRef.current.t0;
+      const v0 = startRef.current.v0;
+      const v = mode === "charging" ? 100 - (100 - v0) * Math.exp(-dt / tau) : v0 * Math.exp(-dt / tau);
+      const clamped = vlabClamp(v, 0, 100);
+      setChargePercent(clamped);
+      if ((mode === "charging" && clamped > 99.4) || (mode === "discharging" && clamped < 0.6)) {
+        setAnimating(false);
+        clearInterval(id);
+      }
+    }, 60);
+    return () => clearInterval(id);
+    // eslint-disable-next-line
+  }, [animating, mode]);
+
+  const startMode = (next) => {
+    setMode(next);
+    setAnimating(true);
+  };
+
+  const statusText =
+    mode === "charging" ? (animating ? "در حالِ شارژ" : "شارژِ کامل") : mode === "discharging" ? (animating ? "در حالِ تخلیه" : "تخلیه‌ی کامل") : "ایستا (کلید باز)";
+
+  useEffect(() => {
+    if (onReading)
+      onReading(
+        `ظرفیت: ${capacitance} میکروفاراد | مقاومت: ${resistance} کیلواهم | ثابت زمانی τ ≈ ${tau.toFixed(0)} میلی‌ثانیه | درصد شارژ: ${chargePercent.toFixed(0)}٪ | حالت: ${statusText}`
+      );
+    // eslint-disable-next-line
+  }, [capacitance, resistance, chargePercent, mode, animating]);
+
+  const pivot = { x: 100, y: 52 };
+  const throwA = { x: 76, y: 38 }; // باتری (شارژ)
+  const throwB = { x: 118, y: 72 }; // کوتاه‌کردنِ باتری (تخلیه)
+  const angA = (Math.atan2(throwA.y - pivot.y, throwA.x - pivot.x) * 180) / Math.PI;
+  const angB = (Math.atan2(throwB.y - pivot.y, throwB.x - pivot.x) * 180) / Math.PI;
+  const leverAngle = mode === "charging" ? angA : mode === "discharging" ? angB : 90;
+  const leverLen = 24;
 
   return (
     <div className="vlab-exp">
-      {/* مقاومت، باتری، کلید و ولت‌متر — چهار وسیله‌ی فهرست‌شده که قبلاً هیچ‌کدام در مدار دیده نمی‌شدند —
-          حالا به‌صورت یک مدار RC واقعی (باتری → کلید → مقاومت زیگزاگی → خازن) با ولت‌متر روی خازن کشیده شده‌اند. */}
-      <svg viewBox="0 0 320 170" className="vlab-svg" style={{ background: "#0b1330", borderRadius: "10px" }}>
+      <svg viewBox="0 0 320 175" className="vlab-svg" style={{ background: "#0b1330", borderRadius: "10px" }}>
+        {/* باتری با قطب‌های مشخص: نوارِ آبی=− بالا، نوارِ طلایی=+ پایین (الگوی استانداردِ این آزمایشگاه) */}
         <rect x="20" y="55" width="24" height="40" rx="3" fill="#2c2f3a" stroke="#4a4f60" strokeWidth="1" />
         <rect x="20" y="55" width="24" height="12" fill="#3a9bd5" />
+        <text x="32" y="64" fontSize="8" fill="#fff" textAnchor="middle" fontWeight="700">−</text>
         <rect x="20" y="83" width="24" height="12" fill="#f2c572" />
-        <line x1="44" y1="65" x2="70" y2="65" stroke="#f2c572" strokeWidth="2.4" />
-        <circle cx="75" cy="65" r="3.5" fill="#cfd8e8" />
-        <line x1="78" y1="65" x2="100" y2="50" stroke="#f2c572" strokeWidth="2.4" />
-        <circle cx="103" cy="48" r="3.5" fill="#cfd8e8" opacity="0.6" />
-        <text x="90" y="40" fontSize="7.5" fill="#9aa3c0" textAnchor="middle">کلید</text>
-        <path d="M103,48 L115,48 L120,38 L128,58 L136,38 L144,58 L150,48 L160,48" fill="none" stroke="#f2c572" strokeWidth="2.4" />
-        <text x="130" y="30" fontSize="7.5" fill="#9aa3c0" textAnchor="middle">مقاومت</text>
-        <line x1="160" y1="48" x2="200" y2="48" stroke="#f2c572" strokeWidth="2.4" />
-        <line x1="200" y1="48" x2="200" y2="75" stroke="#f2c572" strokeWidth="2.4" />
-        <line x1="190" y1="75" x2="210" y2="75" stroke="#cfd8e8" strokeWidth="3.4" />
-        <line x1="190" y1="88" x2="210" y2="88" stroke="#cfd8e8" strokeWidth="3.4" />
-        <rect x="190" y="75" width={20 * (chargePercent / 100)} height="13" fill="#3a9bd5" opacity="0.7" />
-        <text x="200" y="106" fontSize="8" fill="#9aa3c0" textAnchor="middle">خازن</text>
+        <text x="32" y="92" fontSize="8" fill="#1c2540" textAnchor="middle" fontWeight="700">+</text>
+        {/* سیمِ + از باتری به تماسِ «شارژ»ِ کلید */}
+        <line x1="44" y1="89" x2="60" y2="89" stroke="#f2c572" strokeWidth="2.4" />
+        <line x1="60" y1="89" x2="60" y2="38" stroke="#f2c572" strokeWidth="2.4" />
+        <line x1="60" y1="38" x2={throwA.x} y2={throwA.y} stroke="#f2c572" strokeWidth="2.4" />
+        <circle cx={throwA.x} cy={throwA.y} r="3.2" fill="#f2c572" opacity={mode === "charging" ? 1 : 0.45} />
+        {/* سیمِ کوتاه‌کننده از تماسِ «تخلیه» مستقیم به ریلِ بازگشت (باتری دور زده می‌شود) */}
+        <line x1={throwB.x} y1={throwB.y} x2={throwB.x} y2="120" stroke="#9aa3c0" strokeWidth="2" strokeDasharray="3,2" />
+        <circle cx={throwB.x} cy={throwB.y} r="3.2" fill="#9aa3c0" opacity={mode === "discharging" ? 1 : 0.45} />
+        {/* تیغه‌ی کلید: می‌چرخد تا به تماسِ شارژ یا تخلیه برسد */}
+        <circle cx={pivot.x} cy={pivot.y} r="3" fill="#cfd8e8" />
+        <line
+          x1={pivot.x}
+          y1={pivot.y}
+          x2={pivot.x}
+          y2={pivot.y - leverLen}
+          stroke="#cfd8e8"
+          strokeWidth="2.6"
+          strokeLinecap="round"
+          style={{ transformOrigin: `${pivot.x}px ${pivot.y}px`, transform: `rotate(${leverAngle + 90}deg)`, transition: "transform 0.4s ease-out" }}
+        />
+        <text x="90" y="30" fontSize="7.5" fill="#9aa3c0" textAnchor="middle">
+          کلید ({mode === "charging" ? "شارژ" : mode === "discharging" ? "تخلیه" : "باز"})
+        </text>
+        {/* مقاومتِ زیگزاگی، همیشه بینِ کلید و خازن */}
+        <path d={`M${pivot.x},${pivot.y} L115,52 L120,42 L128,62 L136,42 L144,62 L150,52 L160,52`} fill="none" stroke="#f2c572" strokeWidth="2.4" />
+        <text x="130" y="34" fontSize="7.5" fill="#9aa3c0" textAnchor="middle">مقاومت</text>
+        <line x1="160" y1="52" x2="200" y2="52" stroke="#f2c572" strokeWidth="2.4" />
+        <line x1="200" y1="52" x2="200" y2="75" stroke="#f2c572" strokeWidth="2.4" />
+        {/* خازن: دو صفحه با قطبِ مشخص و نواری که با درصدِ شارژ پر می‌شود */}
+        <line x1="188" y1="75" x2="212" y2="75" stroke="#cfd8e8" strokeWidth="3.4" />
+        <line x1="188" y1="88" x2="212" y2="88" stroke="#cfd8e8" strokeWidth="3.4" />
+        <rect x="190" y="75.5" width="20" height="12" fill="#3a9bd5" opacity={0.25 + (chargePercent / 100) * 0.65} />
+        <text x="200" y="69" fontSize="7.5" fill="#f2c572" textAnchor="middle" fontWeight="700">+</text>
+        <text x="200" y="98" fontSize="7.5" fill="#3a9bd5" textAnchor="middle" fontWeight="700">−</text>
+        <text x="200" y="110" fontSize="8" fill="#9aa3c0" textAnchor="middle">خازن</text>
         <line x1="200" y1="88" x2="200" y2="120" stroke="#3a9bd5" strokeWidth="2.4" />
         <line x1="200" y1="120" x2="44" y2="120" stroke="#3a9bd5" strokeWidth="2.4" />
-        <line x1="44" y1="120" x2="44" y2="95" stroke="#3a9bd5" strokeWidth="2.4" />
+        <line x1="44" y1="120" x2="44" y2="67" stroke="#3a9bd5" strokeWidth="2.4" />
         {/* ولت‌متر — صفحه‌ی گرد با عقربه‌ای که با درصد شارژ می‌چرخد */}
-        <g transform="translate(260,75)">
+        <g transform="translate(265,70)">
           <circle cx="0" cy="0" r="26" fill="#1a2140" stroke="#cfd8e8" strokeWidth="2" />
           <text x="0" y="-8" fontSize="7" fill="#9aa3c0" textAnchor="middle">ولت‌متر</text>
-          <line x1="0" y1="0" x2={Math.cos((Math.PI * (180 - chargePercent * 1.8)) / 180) * 18} y2={-Math.sin((Math.PI * (180 - chargePercent * 1.8)) / 180) * 18} stroke="#ff5c7a" strokeWidth="2" strokeLinecap="round" />
+          <line
+            x1="0"
+            y1="0"
+            x2={Math.cos((Math.PI * (180 - chargePercent * 1.8)) / 180) * 18}
+            y2={-Math.sin((Math.PI * (180 - chargePercent * 1.8)) / 180) * 18}
+            stroke="#ff5c7a"
+            strokeWidth="2"
+            strokeLinecap="round"
+            style={{ transition: "x2 0.1s linear, y2 0.1s linear" }}
+          />
           <circle cx="0" cy="0" r="2" fill="#cfd8e8" />
           <text x="0" y="16" fontSize="9" fill="#fff" textAnchor="middle" fontWeight="700">{chargePercent.toFixed(0)}٪</text>
         </g>
@@ -20758,14 +20841,18 @@ function VlabCapacitorExperiment({ onReading }) {
           <input type="range" min="10" max="500" step="10" value={capacitance} onChange={(e) => setCapacitance(+e.target.value)} />
           <label className="vlab-ctrl-label">مقاومت (کیلواهم): {resistance}</label>
           <input type="range" min="1" max="50" value={resistance} onChange={(e) => setResistance(+e.target.value)} />
-          <label className="vlab-ctrl-label">زمان سپری‌شده (میلی‌ثانیه): {elapsed}</label>
-          <input type="range" min="0" max={Math.round(tau * 4)} value={Math.min(elapsed, Math.round(tau * 4))} onChange={(e) => setElapsed(+e.target.value)} />
         </div>
+        <button type="button" className="vlab-toggle-btn" onClick={() => startMode("charging")}>
+          ⚡ شارژ کردن
+        </button>
+        <button type="button" className="vlab-toggle-btn" onClick={() => startMode("discharging")}>
+          ⟲ تخلیه کردن
+        </button>
       </div>
       <div className="vlab-readout">
-        ثابت زمانی τ = R × C ≈ <b>{tau.toFixed(0)} میلی‌ثانیه</b>
+        ثابت زمانی τ = R × C ≈ <b>{tau.toFixed(0)} میلی‌ثانیه</b> — درصدِ شارژِ فعلی: <b>{chargePercent.toFixed(0)}٪</b>
         <br />
-        هرچه زمان بیشتری بگذرد، خازن به شارژ کامل (۱۰۰٪) نزدیک‌تر می‌شود.
+        «شارژ کردن» کلید را به باتری وصل می‌کند؛ «تخلیه کردن» باتری را دور می‌زند تا خازن از رویِ مقاومت دشارژ شود.
       </div>
     </div>
   );

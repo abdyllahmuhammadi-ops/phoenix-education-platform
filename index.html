@@ -19465,7 +19465,7 @@ function VlabDissolvingExperiment({ onReading }) {
         <ellipse cx="160" cy="30" rx="64" ry="7" fill="#c7cedd" stroke="#5b6472" strokeWidth="2" opacity="0.95" />
         <ellipse cx="160" cy="30" rx="64" ry="7" fill="none" stroke="#8a93a8" strokeWidth="0.8" opacity="0.6" />
         {material !== "روغن" && (
-          <g opacity={0.95}>
+          <g opacity={0.95} key={stirCount} className={stirCount > 0 ? "vlab-particle-swirling" : ""}>
             {visiblePile.map((p, i) => {
               const lift = suspended ? suspendLift(i) : 0;
               return (
@@ -20524,6 +20524,16 @@ function StudentVirtualLabView({ onBack, grade, studentCode, schoolCode }) {
         .vlab-oil-blob-a { animation: vlab-oil-wobble-a 1.1s ease-in-out infinite; }
         .vlab-oil-blob-b { animation: vlab-oil-wobble-b 1.3s ease-in-out infinite; }
         .vlab-oil-blob-c { animation: vlab-oil-wobble-c 0.9s ease-in-out infinite; }
+        /* حرکتِ چرخشیِ آرام، علاوه بر (نه به‌جای) بالاپریدنِ ذراتِ شکر/نمک/شن هنگامِ هم‌زدن —
+           کلِ توده‌ی ذرات، در کنارِ پریدنِ هرکدام، به‌آرامی یک دورِ چرخشیِ کوچک هم طی می‌کند. */
+        @keyframes vlab-particle-swirl {
+          0% { transform: translate(0px,0px); }
+          25% { transform: translate(5px,-3px); }
+          50% { transform: translate(0px,-5px); }
+          75% { transform: translate(-5px,-2px); }
+          100% { transform: translate(0px,0px); }
+        }
+        .vlab-particle-swirling { animation: vlab-particle-swirl 1.6s ease-in-out 1; }
         .vlab-svg { width: 100%; max-width: 420px; height: auto; margin: 0 auto; background: #fbf7ec; border-radius: 12px; border: 1px solid rgba(28,37,64,0.08); }
         .vlab-scope-circle { max-width: 260px; background: #0b1330; }
         .vlab-micro-layout { display: flex; gap: 16px; flex-wrap: wrap; justify-content: center; align-items: flex-start; }

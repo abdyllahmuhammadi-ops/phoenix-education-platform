@@ -23542,8 +23542,14 @@ function VlabHeatTransferExperiment({ onReading }) {
   const PARTICLE_COUNT = 7;
 
   // ---- تابش: منبعِ گرماییِ تابشی و جسمی در فاصله‌ی قابل‌تنظیم — بدونِ نیاز به هیچ واسطه‌ای ----
+  // توجه: فرمولِ واقعیِ عکسِ مجذورِ فاصله (k/d²) باعث می‌شد دما فقط در فاصله‌هایِ خیلی نزدیک (زیرِ
+  // ۲۰ سانتی‌متر) قابل‌توجه تغییر کند و در بقیه‌ی بازه‌ی اسلایدر (تا ۱۵۰) تقریباً ثابت و نامحسوس بماند
+  // (دماسنج «بی‌تفاوت» به‌نظر می‌رسید). به‌جایش، طبقِ اصلِ همیشگیِ این آزمایشگاه — خوانایی و
+  // محسوس‌بودنِ تغییر برایِ دانش‌آموز مهم‌تر از دقتِ عددیِ لحظه‌به‌لحظه است، تا جهتِ فیزیکی (دورتر=
+  // سردتر) درست بماند — یک افتِ نرم و کاملاً پیوسته در تمامِ بازه‌ی اسلایدر استفاده شده است.
   const [distance, setDistance] = useState(40);
-  const radTemp = Math.round(20 + vlabClamp(3200 / (distance * distance), 0, 80));
+  const radNorm = vlabClamp((distance - 10) / 140, 0, 1);
+  const radTemp = Math.round(20 + 75 * Math.pow(1 - radNorm, 1.4));
   const objX = 90 + ((distance - 10) / 140) * 180;
 
   useEffect(() => {
@@ -23625,9 +23631,9 @@ function VlabHeatTransferExperiment({ onReading }) {
             {[0, 0.5, 1].map((d) => (
               <circle key={d} cx="70" cy="90" r="22" fill="none" stroke="#ffb347" strokeWidth="1.6" opacity="0.5" style={{ animation: `vlabRadiatePulse 2.2s ease-out ${d}s infinite` }} />
             ))}
-            <VlabThermometerMini x={objX} y={60} temp={radTemp} minT={0} maxT={100} h={55} />
-            <text x="180" y="145" fontSize="9" fill="#9aa3c0" textAnchor="middle">بینِ منبع و جسم هیچ ماده‌ای نیست</text>
-            <text x="180" y="160" fontSize="9" fill="#9aa3c0" textAnchor="middle">گرمایِ تابشی مثلِ نورِ خورشید، در فضایِ خالی هم منتقل می‌شود</text>
+            <VlabThermometerReal x={objX} y={58} temp={radTemp} minT={0} maxT={100} h={66} />
+            <text x="180" y="18" fontSize="9" fill="#9aa3c0" textAnchor="middle">بینِ منبع و جسم هیچ ماده‌ای نیست</text>
+            <text x="180" y="30" fontSize="9" fill="#9aa3c0" textAnchor="middle">گرمایِ تابشی مثلِ نورِ خورشید، در فضایِ خالی هم منتقل می‌شود</text>
           </g>
         )}
       </svg>

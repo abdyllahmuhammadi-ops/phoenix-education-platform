@@ -24186,15 +24186,17 @@ async function rahyarGenerateTeachingScript(subject, grade, chapter) {
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify({
       model: "claude-sonnet-4-6",
-      max_tokens: 3000,
+      max_tokens: 4500,
       system:
         "شما رهیار، دستیار آموزشی هوشمند هستید که یک «جلسه‌ی تدریس زنده» برای دانش‌آموز می‌سازید. این تدریس باید کاملاً " +
         "بر اساس کتاب درسی رسمی ایران برای پایه‌ی «" + grade + "»، درس «" + subject + "»، مبحث «" + chapter + "» باشد و مستقل از هر معلم یا مدرسه‌ی خاصی باشد. " +
         "خروجی باید یک شیء JSON با کلید \"segments\" باشد: آرایه‌ای از ۴ تا ۷ بخش آموزشی پشت‌سرهم، هرکدام دقیقاً با این ساختار: " +
         '{"narration": "متنی که رهیار با صدای بلند برای دانش‌آموز توضیح می‌دهد — ساده، گویا و محاوره‌ای‌وار، حدود ۲ تا ۴ جمله", ' +
-        '"visualType": "یکی از: bars / line / labels / timeline / none", ' +
+        '"visualType": "یکی از: diagram / bars / line / labels / timeline / none — تا جای ممکن از diagram استفاده کن: برای هر موضوعی که اصلش تصویری/ساختاری/فرایندی است (مثلاً اندام‌ها و دستگاه‌های بدن مثل دستگاه گردش خون، ساختار سلول، نقشه، چرخه‌ی طبیعی، شکل هندسی، نمودار مداری) حتماً diagram را انتخاب کن تا دانش‌آموز علاوه بر صدا، تصویر و حرکت هم ببیند؛ bars/line فقط برای داده‌های عددی واقعی، labels برای فهرست مفهومی، timeline برای توالی مراحل، none وقتی هیچ‌کدام لازم نیست", ' +
         '"visualTitle": "عنوان کوتاه نمودار یا تصویر (اگر visualType برابر none است، رشته‌ی خالی بگذار)", ' +
-        '"visualData": "داده‌ی متناسب با نوع نمودار — برای bars و line: {\\"labels\\": [...], \\"values\\": [اعداد]}؛ برای labels: {\\"items\\": [{\\"label\\": \\"...\\", \\"desc\\": \\"...\\"}]}؛ برای timeline: {\\"steps\\": [\\"...\\", \\"...\\"]}؛ برای none: {}"}. ' +
+        '"visualData": "داده‌ی متناسب با نوع نمودار — ' +
+        'برای diagram: {\\"svg\\": \\"یک قطعه SVG معتبر و کامل، فقط عناصر داخلیِ تگ svg (بدون خودِ تگ svg، بدون <script>)، با viewBox فرضیِ 0 0 300 220 رسم‌شده؛ از circle/ellipse/rect/path/line/polygon/g/text برای شکل‌ها و برچسب‌های فارسیِ خوانا استفاده کن؛ تا جای ممکن با <animate> یا <animateTransform> یک حرکتِ ساده و تکرارشونده اضافه کن (مثلاً جریان خون در رگ، چرخش زمین، حرکت یک فلش) تا به‌جای یک عکسِ ثابت، شبیه یک انیمیشن/ویدیوی کوتاهِ آموزشی باشد\\"}؛ ' +
+        'برای bars و line: {\\"labels\\": [...], \\"values\\": [اعداد]}؛ برای labels: {\\"items\\": [{\\"label\\": \\"...\\", \\"desc\\": \\"...\\"}]}؛ برای timeline: {\\"steps\\": [\\"...\\", \\"...\\"]}؛ برای none: {}"}. ' +
         "بخش اول باید یک مقدمه‌ی کوتاه و انگیزشی درباره‌ی موضوع باشد و بخش آخر یک جمع‌بندی. فقط همان شیء JSON را برگردان، بدون Markdown یا توضیح اضافه.",
       messages: [{ role: "user", content: "لطفاً جلسه‌ی تدریس را برای مبحث «" + chapter + "» آماده کن." }],
     }),
@@ -24207,7 +24209,7 @@ async function rahyarGenerateTeachingScript(subject, grade, chapter) {
   return segments.map((s, i) => ({
     id: "seg-" + i,
     narration: s.narration || "",
-    visualType: ["bars", "line", "labels", "timeline", "none"].includes(s.visualType) ? s.visualType : "none",
+    visualType: ["diagram", "bars", "line", "labels", "timeline", "none"].includes(s.visualType) ? s.visualType : "none",
     visualTitle: s.visualTitle || "",
     visualData: s.visualData && typeof s.visualData === "object" ? s.visualData : {},
   }));
@@ -24255,17 +24257,17 @@ async function rahyarGenerateLabExperiment(subject, grade, chapter) {
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify({
       model: "claude-sonnet-4-6",
-      max_tokens: 3000,
+      max_tokens: 4500,
       system:
         "شما رهیار، دستیار آموزشی هوشمند هستید که یک «آزمایشگاه مجازی تعاملی» برای یک آزمایش واقعیِ کتاب درسی رسمی ایران " +
         "می‌سازید — پایه‌ی «" + grade + "»، درس «" + subject + "»، مبحث/فصل «" + chapter + "». این باید دقیقاً همان آزمایشی باشد که در کتاب درسی این مبحث آمده (اگر کتاب چند آزمایش دارد، مهم‌ترین و آموزنده‌ترین را انتخاب کن). " +
         "خروجی باید فقط یک شیء JSON با این ساختار دقیق باشد: " +
         '{"title": "نام کوتاه آزمایش", "icon": "یک ایموجی مناسب", "tools": ["وسیله ۱", "وسیله ۲", "..."], ' +
-        '"segments": [ {"narration": "توضیح گام‌به‌گام این مرحله از آزمایش — ساده و محاوره‌ای، ۲ تا ۴ جمله", "visualType": "یکی از: bars / line / labels / timeline / none", "visualTitle": "عنوان کوتاه", "visualData": {...متناسب با نوع...}} ] (۴ تا ۶ مرحله: معرفی آزمایش، نحوه‌ی چیدن وسایل، نحوه‌ی انجام، مشاهده و نتیجه)، ' +
+        '"segments": [ {"narration": "توضیح گام‌به‌گام این مرحله از آزمایش — ساده و محاوره‌ای، ۲ تا ۴ جمله", "visualType": "یکی از: diagram / bars / line / labels / timeline / none — برای نشان‌دادن خودِ وسایل، چیدمان آزمایش یا پدیده‌ی در حال وقوع از diagram استفاده کن تا دانش‌آموز تصویر و حرکت هم ببیند، نه فقط صدا", "visualTitle": "عنوان کوتاه", "visualData": {...متناسب با نوع...}} ] (۴ تا ۶ مرحله: معرفی آزمایش، نحوه‌ی چیدن وسایل، نحوه‌ی انجام، مشاهده و نتیجه)، ' +
         '"variableLabel": "نام متغیری که دانش‌آموز در بخش تعاملی تغییر می‌دهد (مثلاً دما، غلظت، زاویه)", "variableUnit": "واحد (اگر ندارد رشته‌ی خالی)", "variableMin": عدد, "variableMax": عدد, "variableDefault": عدد, ' +
         '"outcomeLow": "چه اتفاقی می‌افتد وقتی متغیر در کمترین مقدار است", "outcomeMid": "در مقدار میانی", "outcomeHigh": "در بیشترین مقدار", ' +
         '"conclusion": "جمع‌بندی علمی کوتاه — این آزمایش چه قانون یا مفهومی را نشان می‌دهد"}. ' +
-        'برای visualData: برای bars و line از {"labels": [...], "values": [اعداد]} استفاده کن؛ برای labels از {"items": [{"label": "...", "desc": "..."}]}؛ برای timeline از {"steps": ["...", "..."]}؛ برای none مقدار {} بگذار. ' +
+        'برای visualData: برای diagram از {"svg": "یک قطعه SVG معتبر، فقط عناصر داخلیِ تگ svg (بدون خودِ تگ svg، بدون <script>)، با viewBox فرضیِ 0 0 300 220، شامل شکل‌ها/برچسب‌های فارسی، و تا جای ممکن با <animate> یا <animateTransform> یک حرکتِ ساده و تکرارشونده (شبیه یک انیمیشن/ویدیوی کوتاه، نه عکس ثابت)"} استفاده کن؛ برای bars و line از {"labels": [...], "values": [اعداد]} استفاده کن؛ برای labels از {"items": [{"label": "...", "desc": "..."}]}؛ برای timeline از {"steps": ["...", "..."]}؛ برای none مقدار {} بگذار. ' +
         "فقط همان شیء JSON را برگردان، بدون Markdown یا توضیح اضافه.",
       messages: [{ role: "user", content: "لطفاً آزمایش مجازی مبحث «" + chapter + "» را بساز." }],
     }),
@@ -24278,7 +24280,7 @@ async function rahyarGenerateLabExperiment(subject, grade, chapter) {
     ? parsed.segments.map((s, i) => ({
         id: "seg-" + i,
         narration: s.narration || "",
-        visualType: ["bars", "line", "labels", "timeline", "none"].includes(s.visualType) ? s.visualType : "none",
+        visualType: ["diagram", "bars", "line", "labels", "timeline", "none"].includes(s.visualType) ? s.visualType : "none",
         visualTitle: s.visualTitle || "",
         visualData: s.visualData && typeof s.visualData === "object" ? s.visualData : {},
       }))
@@ -24333,10 +24335,64 @@ function RahyarAvatarFace({ speaking }) {
   );
 }
 
-// نمایش نموداری یک بخش — میله‌ای، خطی، برچسب‌دار یا جدول‌زمانی؛ هر بار ورود یک بخش تازه، با انیمیشن ساده ظاهر می‌شود
+// پاک‌سازیِ یک قطعه SVG که هوش مصنوعی برای «دیاگرام/تصویر جانبی» ساخته — قبل از نمایش، هر تگ یا
+// ویژگیِ خطرناک (اسکریپت، لینک به بیرون، رویدادهای on*) حذف می‌شود تا محتوای تولیدشده همیشه امن باشد.
+function rahyarSanitizeDiagramSvg(raw) {
+  if (typeof raw !== "string" || !raw.trim()) return "";
+  if (typeof window === "undefined" || !window.DOMParser || !window.XMLSerializer) return "";
+  const RTL_SVG_BLOCKED_TAGS = ["script", "foreignobject", "image", "iframe", "a", "use", "style", "object", "embed", "video", "audio", "link"];
+  try {
+    const doc = new window.DOMParser().parseFromString(
+      '<svg xmlns="http://www.w3.org/2000/svg">' + raw + "</svg>",
+      "image/svg+xml"
+    );
+    if (doc.getElementsByTagName("parsererror").length > 0) return "";
+    const root = doc.documentElement;
+    const cleanNode = (node) => {
+      Array.from(node.childNodes).forEach((child) => {
+        if (child.nodeType === 1) {
+          const tag = (child.tagName || "").toLowerCase();
+          if (RTL_SVG_BLOCKED_TAGS.indexOf(tag) !== -1) {
+            node.removeChild(child);
+            return;
+          }
+          Array.from(child.attributes || []).forEach((attr) => {
+            const name = attr.name.toLowerCase();
+            const value = String(attr.value || "");
+            if (name.indexOf("on") === 0 || name === "href" || name === "xlink:href" || /javascript:/i.test(value)) {
+              child.removeAttribute(attr.name);
+            }
+          });
+          cleanNode(child);
+        } else if (child.nodeType === 8) {
+          node.removeChild(child);
+        }
+      });
+    };
+    cleanNode(root);
+    return Array.from(root.childNodes)
+      .map((n) => new window.XMLSerializer().serializeToString(n))
+      .join("");
+  } catch (e) {
+    return "";
+  }
+}
+
+// نمایش نموداری یک بخش — دیاگرام تصویری/متحرک، میله‌ای، خطی، برچسب‌دار یا جدول‌زمانی؛ هر بار ورود یک بخش تازه، با انیمیشن ساده ظاهر می‌شود
 function RahyarSegmentVisual({ visualType, visualTitle, visualData, animKey }) {
   if (!visualType || visualType === "none") return null;
   const data = visualData || {};
+
+  if (visualType === "diagram") {
+    const safeSvg = rahyarSanitizeDiagramSvg(data.svg || "");
+    if (!safeSvg) return null;
+    return (
+      <div className="rtl-visual-box" key={animKey}>
+        {visualTitle && <div className="rtl-visual-title">{visualTitle}</div>}
+        <svg viewBox="0 0 300 220" className="rtl-diagram-svg" dangerouslySetInnerHTML={{ __html: safeSvg }} />
+      </div>
+    );
+  }
 
   if (visualType === "bars") {
     const labels = Array.isArray(data.labels) ? data.labels : [];
@@ -24679,6 +24735,7 @@ function RahyarTeachingLibraryView({ onBack, grade, studentCode, schoolCode }) {
         .rtl-bar-value { color: #fff; font-size: 10px; font-weight: 800; margin-top: 2px; }
         .rtl-bar-label { font-size: 10.5px; color: #6b7399; font-weight: 700; text-align: center; }
         .rtl-line-svg { width: 100%; max-width: 320px; display: block; margin: 0 auto; }
+        .rtl-diagram-svg { width: 100%; max-width: 360px; height: auto; display: block; margin: 0 auto; background: #fff; border-radius: 10px; }
         .rtl-line-draw { stroke-dasharray: 600; stroke-dashoffset: 600; animation: rtl-line-anim 1.2s ease forwards; }
         @keyframes rtl-line-anim { to { stroke-dashoffset: 0; } }
         .rtl-line-labels { display: flex; justify-content: space-between; font-size: 10.5px; color: #6b7399; max-width: 280px; margin: 4px auto 0; }
@@ -25093,6 +25150,7 @@ function RahyarDynamicLabView({ onBack, grade, studentCode, schoolCode }) {
         .rtl-bar-value { color: #fff; font-size: 10px; font-weight: 800; margin-top: 2px; }
         .rtl-bar-label { font-size: 10.5px; color: #6b7399; font-weight: 700; text-align: center; }
         .rtl-line-svg { width: 100%; max-width: 320px; display: block; margin: 0 auto; }
+        .rtl-diagram-svg { width: 100%; max-width: 360px; height: auto; display: block; margin: 0 auto; background: #fff; border-radius: 10px; }
         .rtl-line-draw { stroke-dasharray: 600; stroke-dashoffset: 600; animation: rtl-line-anim 1.2s ease forwards; }
         @keyframes rtl-line-anim { to { stroke-dashoffset: 0; } }
         .rtl-line-labels { display: flex; justify-content: space-between; font-size: 10.5px; color: #6b7399; max-width: 280px; margin: 4px auto 0; }

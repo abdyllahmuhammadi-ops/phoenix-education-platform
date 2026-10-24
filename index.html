@@ -8537,7 +8537,7 @@ function AdminRegistration({ onBack, onContinue, prefillPhone }) {
    داشبورد مدیر مدرسه — بدون دسترسی به شهریه/پرداخت
    ============================================================ */
 
-function AdminDashboardStep({ onBack, onOpenMessaging, onOpenSuggestionBox, onOpenQuestionBank, schoolCode: initialSchoolCode, schoolName: initialSchoolName }) {
+function AdminDashboardStep({ onBack, onOpenMessaging, onOpenSuggestionBox, onOpenSystemSuggestionBox, onOpenQuestionBank, schoolCode: initialSchoolCode, schoolName: initialSchoolName }) {
   const [schoolCode, setSchoolCode] = useState(initialSchoolCode || "");
   const [schoolName, setSchoolName] = useState(initialSchoolName || "");
   const [classes, setClasses] = useState([]);
@@ -8923,6 +8923,11 @@ function AdminDashboardStep({ onBack, onOpenMessaging, onOpenSuggestionBox, onOp
               {onOpenSuggestionBox && (
                 <button type="button" className="pad2-messaging-btn" onClick={onOpenSuggestionBox} style={{ marginTop: 10, background: "transparent", color: "#a8741f", border: "1px solid #e0a83e" }}>
                   💡 ثبت پیشنهاد من به‌عنوان مدیر مدرسه
+                </button>
+              )}
+              {onOpenSystemSuggestionBox && (
+                <button type="button" className="pad2-messaging-btn" onClick={onOpenSystemSuggestionBox} style={{ marginTop: 10, background: "transparent", color: "#6a4aa8", border: "1px solid #c29fe8" }}>
+                  📣 پیشنهاد برای بهبود سامانه
                 </button>
               )}
               {onOpenQuestionBank && (
@@ -11318,7 +11323,7 @@ function TeacherGradebookStep({ onBack, onFinish, teacherClasses, prefillSchoolC
    (فقط کلاس‌هایی که معلم صراحتاً به اشتراک گذاشته باشد نمایش داده می‌شود)
    ============================================================ */
 
-function PerformanceViewStep({ onBack, selfStudentNationalCode, authenticatedGuardian, onOpenSuggestionBox, onOpenQuestionBank }) {
+function PerformanceViewStep({ onBack, selfStudentNationalCode, authenticatedGuardian, onOpenSuggestionBox, onOpenSystemSuggestionBox, onOpenQuestionBank }) {
   const [viewerRole, setViewerRole] = useState(selfStudentNationalCode ? "student" : "guardian"); // "guardian" | "admin" | "student"
   const [schoolCode, setSchoolCode] = useState("");
   const [className, setClassName] = useState("");
@@ -11899,6 +11904,16 @@ function PerformanceViewStep({ onBack, selfStudentNationalCode, authenticatedGua
                   onClick={() => onOpenSuggestionBox(schoolCode)}
                 >
                   💡 ثبت پیشنهاد من به‌عنوان ولی
+                </button>
+              )}
+              {viewerRole === "guardian" && onOpenSystemSuggestionBox && (
+                <button
+                  type="button"
+                  className="ppv-load-btn ppv-no-print"
+                  style={{ marginBottom: 20, background: "transparent", color: "#6a4aa8", border: "1px solid #c29fe8" }}
+                  onClick={onOpenSystemSuggestionBox}
+                >
+                  📣 پیشنهاد برای بهبود سامانه
                 </button>
               )}
               {viewerRole === "guardian" && onOpenQuestionBank && roster.length === 1 && (
@@ -13200,7 +13215,7 @@ function SystemAdminRegistration({ onBack, onContinue }) {
    داشبورد مدیر سامانه — تنها نقشی که به شهریه/پرداخت دسترسی دارد
    ============================================================ */
 
-function SystemAdminDashboardStep({ onBack, onOpenQuestionBank }) {
+function SystemAdminDashboardStep({ onBack, onOpenQuestionBank, onOpenSystemSuggestionBox }) {
   const [schoolCodes, setSchoolCodes] = useState([]);
   const [paymentsBySchool, setPaymentsBySchool] = useState({});
   const [loading, setLoading] = useState(true);
@@ -13755,6 +13770,19 @@ function SystemAdminDashboardStep({ onBack, onOpenQuestionBank }) {
               🗂️ مشاهده‌ی بانک سؤال هوشمند (همه‌ی مدارس)
             </button>
           )}
+
+          {onOpenSystemSuggestionBox && (
+            <button
+              type="button"
+              className="psad-query-btn"
+              style={{ width: "100%", marginBottom: 20, background: "transparent", color: "#6a4aa8", border: "1px solid #c29fe8" }}
+              onClick={onOpenSystemSuggestionBox}
+            >
+              📣 ثبت پیشنهاد من به‌عنوان مدیر سامانه
+            </button>
+          )}
+
+          <SystemSuggestionAdminView />
 
           <h2 style={{ fontSize: 15, fontWeight: 800, color: "#1c2540", margin: "26px 0 12px" }}>
             📋 دفتر نمره‌ی مدارس — دسترسی کامل مدیر سامانه
@@ -15440,6 +15468,7 @@ function StudentDashboard({
   onOpenRecitationPractice,
   onOpenVirtualLab,
   onOpenTeachingLibrary,
+  onOpenSystemSuggestionBox,
   onLogout,
 }) {
   const [todaySchedule, setTodaySchedule] = useState([]);
@@ -16245,6 +16274,12 @@ function StudentDashboard({
               <button type="button" className="sdb-quick-btn" onClick={onOpenTeachingLibrary}>
                 <span className="sdb-quick-icon">🤖</span>
                 <span className="sdb-quick-label">تدریس زنده‌ی رهیار</span>
+              </button>
+            )}
+            {onOpenSystemSuggestionBox && (
+              <button type="button" className="sdb-quick-btn" onClick={onOpenSystemSuggestionBox}>
+                <span className="sdb-quick-icon">📣</span>
+                <span className="sdb-quick-label">پیشنهاد برای بهبود سامانه</span>
               </button>
             )}
           </div>
@@ -25731,7 +25766,7 @@ function TeacherLessonPlanStep({ onBack, prefillSchoolCode, teacherSchools, teac
    داشبورد مراقب سلامت — ثبت اطلاعات پایه‌ی سلامت و واکسیناسیون
    ============================================================ */
 
-function HealthMonitorDashboardStep({ onBack, onOpenMessaging, onOpenQuestionBank }) {
+function HealthMonitorDashboardStep({ onBack, onOpenMessaging, onOpenQuestionBank, onOpenSystemSuggestionBox }) {
   const [schoolCode, setSchoolCode] = useState("");
   const [className, setClassName] = useState("");
   const [roster, setRoster] = useState([]);
@@ -25947,6 +25982,17 @@ function HealthMonitorDashboardStep({ onBack, onOpenMessaging, onOpenQuestionBan
               </button>
             )}
 
+            {onOpenSystemSuggestionBox && (
+              <button
+                type="button"
+                className="phm2-submit-btn"
+                style={{ marginBottom: 14, background: "transparent", color: "#6a4aa8", border: "1px solid #c29fe8" }}
+                onClick={onOpenSystemSuggestionBox}
+              >
+                📣 پیشنهاد برای بهبود سامانه
+              </button>
+            )}
+
             {loading ? (
               <p className="phm2-empty">در حال بارگذاری...</p>
             ) : !loaded ? (
@@ -25981,7 +26027,7 @@ function HealthMonitorDashboardStep({ onBack, onOpenMessaging, onOpenQuestionBan
 
 const PHI_HYGIENE_ITEMS = ["نظافت سرویس‌های بهداشتی", "ضدعفونی نیمکت‌ها و میزها", "بررسی سلامت آبخوری", "کنترل زباله‌دان‌های کلاس", "بررسی تهویه‌ی کلاس‌ها"];
 
-function HealthInstructorDashboardStep({ onBack, onOpenQuestionBank }) {
+function HealthInstructorDashboardStep({ onBack, onOpenQuestionBank, onOpenSystemSuggestionBox }) {
   const [schoolCode, setSchoolCode] = useState("");
   const [className, setClassName] = useState("");
   const [roster, setRoster] = useState([]);
@@ -26149,6 +26195,17 @@ function HealthInstructorDashboardStep({ onBack, onOpenQuestionBank }) {
             onClick={() => onOpenQuestionBank(schoolCode, className)}
           >
             🗂️ مشاهده‌ی بانک سؤال هوشمند
+          </button>
+        )}
+
+        {onOpenSystemSuggestionBox && (
+          <button
+            type="button"
+            className="phi2-submit-btn"
+            style={{ marginBottom: 14, background: "transparent", color: "#6a4aa8", border: "1px solid #c29fe8" }}
+            onClick={onOpenSystemSuggestionBox}
+          >
+            📣 پیشنهاد برای بهبود سامانه
           </button>
         )}
 
@@ -26484,6 +26541,271 @@ function SuggestionAdminView({ schoolCode }) {
 
 /* ============================================================
    ققنوس — آموزش برای فردا
+   بانک پیشنهاد سامانه — سراسری (نه مخصوص یک مدرسه)؛ هر هفت نقش می‌توانند
+   ثبت کنند، فقط مدیر سامانه می‌تواند همه را ببیند (در آینده قابل تفویض
+   به یک «مسئول بررسی پیشنهادها» که مدیر سامانه معرفی کند — هنوز ساخته نشده)
+   ============================================================ */
+
+const SSGB_CATEGORIES = ["امکانات جدید", "رفع اشکال و باگ", "بهبود رابط کاربری و تجربه‌ی کاربری", "سرعت و عملکرد سامانه", "سایر"];
+const SSGB_ROLE_LABELS = {
+  student: "دانش‌آموز",
+  teacher: "معلم",
+  guardian: "ولی",
+  admin: "مدیر مدرسه",
+  healthInstructor: "کاردان بهداشت",
+  healthMonitor: "بهورز / مراقب سلامت",
+  systemAdmin: "مدیر سامانه",
+};
+const SSGB_STORAGE_KEY = "system-suggestions";
+
+function SystemSuggestionBoxStep({ role, onBack }) {
+  const [category, setCategory] = useState(SSGB_CATEGORIES[0]);
+  const [text, setText] = useState("");
+  const [suggestions, setSuggestions] = useState([]);
+  const [similarMatch, setSimilarMatch] = useState(null);
+  const [saveMsg, setSaveMsg] = useState("");
+
+  const roleLabel = SSGB_ROLE_LABELS[role] || "کاربر";
+
+  const loadSuggestions = async () => {
+    try {
+      if (typeof window !== "undefined" && window.storage) {
+        const r = await window.storage.get(SSGB_STORAGE_KEY, true);
+        setSuggestions(r && r.value ? JSON.parse(r.value) : []);
+      }
+    } catch (e) {
+      setSuggestions([]);
+    }
+  };
+
+  useEffect(() => {
+    loadSuggestions();
+    // eslint-disable-next-line
+  }, []);
+
+  const handleTextChange = (val) => {
+    setText(val);
+    setSimilarMatch(null);
+    if (val.trim().length < 6) return;
+    const sameCategory = suggestions.filter((s) => s.category === category);
+    let best = null;
+    let bestScore = 0;
+    sameCategory.forEach((s) => {
+      const score = sgbSimilarity(val, s.text);
+      if (score > bestScore) {
+        bestScore = score;
+        best = s;
+      }
+    });
+    if (best && bestScore >= 0.4) {
+      setSimilarMatch(best);
+    }
+  };
+
+  const persistList = async (list) => {
+    try {
+      if (typeof window !== "undefined" && window.storage) {
+        await window.storage.set(SSGB_STORAGE_KEY, JSON.stringify(list), true);
+      }
+    } catch (e) {
+      // تلاش‌محور
+    }
+  };
+
+  const handleConfirmSimilar = async () => {
+    const next = suggestions.map((s) => (s.id === similarMatch.id ? { ...s, count: (s.count || 1) + 1 } : s));
+    setSuggestions(next);
+    await persistList(next);
+    setText("");
+    setSimilarMatch(null);
+    setSaveMsg("✅ پیشنهاد شما به پیشنهاد مشابه‌ی موجود افزوده شد.");
+    setTimeout(() => setSaveMsg(""), 2500);
+  };
+
+  const handleSubmitNew = async () => {
+    if (text.trim().length < 6) return;
+    const newItem = {
+      id: Date.now() + "-" + Math.floor(Math.random() * 10000),
+      category,
+      text: text.trim(),
+      role: role || "",
+      roleLabel,
+      count: 1,
+      submittedAt: new Date().toLocaleDateString("fa-IR"),
+    };
+    const next = [...suggestions, newItem];
+    setSuggestions(next);
+    await persistList(next);
+    setText("");
+    setSimilarMatch(null);
+    setSaveMsg("✅ پیشنهاد شما برای بهبود سامانه ثبت شد. سپاسگزاریم.");
+    setTimeout(() => setSaveMsg(""), 2500);
+  };
+
+  return (
+    <div dir="rtl" className="ssgb-root">
+      <style>{`
+        @import url('https://fonts.googleapis.com/css2?family=Vazirmatn:wght@400;500;600;700;800&display=swap');
+        .ssgb-root, .ssgb-root * { box-sizing: border-box; font-family: 'Vazirmatn', Tahoma, Arial, sans-serif; -webkit-tap-highlight-color: transparent; }
+        .ssgb-root {
+          min-height: 100vh; min-height: 100dvh; width: 100%;
+          background: radial-gradient(1100px 550px at 18% -10%, rgba(98,160,226,0.16), transparent 60%),
+            radial-gradient(900px 500px at 100% 10%, rgba(197,159,242,0.10), transparent 55%),
+            linear-gradient(180deg, #060b1f 0%, #0b1330 45%, #0d1735 100%);
+          padding: max(20px, env(safe-area-inset-top)) max(14px, env(safe-area-inset-right)) max(28px, env(safe-area-inset-bottom)) max(14px, env(safe-area-inset-left));
+          display: flex; justify-content: center;
+        }
+        .ssgb-card { width: 100%; max-width: 1080px; background: linear-gradient(180deg, #fbf7ec 0%, #f6efdc 100%); border-radius: 22px; padding: 24px 22px 28px; box-shadow: 0 20px 50px rgba(0,0,0,0.32); border: 1px solid rgba(143,95,201,0.25); min-width: 0; }
+        @media (max-width: 480px) { .ssgb-card { padding: 18px 14px 22px; border-radius: 18px; } }
+        .ssgb-back { background: none; border: none; color: #6a4aa8; font-weight: 700; font-size: 13px; cursor: pointer; padding: 0; margin-bottom: 10px; }
+        .ssgb-title { color: #1c2540; font-size: clamp(18px, 4vw, 22px); font-weight: 800; margin: 0 0 4px; }
+        .ssgb-kicker { color: #6a4aa8; font-size: 12.5px; font-weight: 700; margin: 0 0 18px; line-height: 1.8; }
+        .ssgb-field { display: flex; flex-direction: column; gap: 6px; margin-bottom: 14px; }
+        .ssgb-label { font-size: 12px; font-weight: 700; color: #6b7399; }
+        .ssgb-select, .ssgb-textarea { height: 42px; border-radius: 10px; border: 1.3px solid #d9c9a0; background: #fff; padding: 0 12px; font-size: 13.5px; }
+        .ssgb-select { width: 260px; max-width: 100%; }
+        .ssgb-textarea { height: auto; min-height: 90px; padding: 10px 12px; resize: vertical; width: 100%; }
+        .ssgb-submit-btn { height: 44px; padding: 0 22px; border: none; border-radius: 10px; background: linear-gradient(135deg, #c29fe8, #6a4aa8); color: #fff; font-weight: 800; font-size: 13.5px; cursor: pointer; }
+        .ssgb-similar-box { background: #f1e9fb; border: 1px solid #d8c2f0; border-radius: 12px; padding: 14px; margin-top: 12px; margin-bottom: 12px; }
+        .ssgb-similar-text { color: #4a3270; font-size: 13px; line-height: 1.9; margin-bottom: 10px; }
+        .ssgb-similar-actions { display: flex; gap: 8px; flex-wrap: wrap; }
+        .ssgb-similar-btn { height: 44px; padding: 0 16px; border-radius: 8px; font-weight: 700; font-size: 12.5px; cursor: pointer; }
+        .ssgb-similar-btn.primary { background: linear-gradient(135deg, #c29fe8, #6a4aa8); color: #fff; border: none; }
+        .ssgb-similar-btn.secondary { background: transparent; color: #6a4aa8; border: 1px solid #c29fe8; }
+        .ssgb-save-msg { color: #2c6e3f; font-weight: 700; font-size: 12.5px; margin-top: 8px; }
+      `}</style>
+
+      <div className="ssgb-card">
+        <button type="button" className="ssgb-back" onClick={onBack}>→ بازگشت</button>
+        <h1 className="ssgb-title">📣 پیشنهاد برای بهبود خودِ سامانه‌ی ققنوس</h1>
+        <p className="ssgb-kicker">
+          این پیشنهاد فقط به مدیر سامانه می‌رسد و برای اصلاح، بازبینی و توسعه‌ی خودِ برنامه استفاده می‌شود — نه مربوط به یک مدرسه‌ی خاص.
+          شما به‌عنوان «{roleLabel}» این پیشنهاد را ثبت می‌کنید.
+        </p>
+
+        <div className="ssgb-field">
+          <label className="ssgb-label">دسته‌بندی پیشنهاد</label>
+          <select className="ssgb-select" value={category} onChange={(e) => { setCategory(e.target.value); setSimilarMatch(null); }}>
+            {SSGB_CATEGORIES.map((c) => (
+              <option key={c} value={c}>{c}</option>
+            ))}
+          </select>
+        </div>
+        <div className="ssgb-field">
+          <label className="ssgb-label">متن پیشنهاد</label>
+          <textarea className="ssgb-textarea" placeholder="پیشنهادتان را کوتاه و مشخص بنویسید..." value={text} onChange={(e) => handleTextChange(e.target.value)} />
+        </div>
+
+        {similarMatch && (
+          <div className="ssgb-similar-box">
+            <p className="ssgb-similar-text">
+              📌 پیشنهادی مشابه با این قبلاً ثبت شده («{similarMatch.text}» — تاکنون {similarMatch.count} نفر این را خواسته‌اند). آیا منظور شما همین است؟
+            </p>
+            <div className="ssgb-similar-actions">
+              <button type="button" className="ssgb-similar-btn primary" onClick={handleConfirmSimilar}>
+                بله، همین است — به آن اضافه کن
+              </button>
+              <button type="button" className="ssgb-similar-btn secondary" onClick={handleSubmitNew}>
+                خیر، پیشنهاد من متفاوت است
+              </button>
+            </div>
+          </div>
+        )}
+
+        {!similarMatch && (
+          <button type="button" className="ssgb-submit-btn" onClick={handleSubmitNew} disabled={text.trim().length < 6}>
+            ثبت پیشنهاد
+          </button>
+        )}
+        {saveMsg && <p className="ssgb-save-msg">{saveMsg}</p>}
+      </div>
+    </div>
+  );
+}
+
+/* ============================================================
+   نمای مدیریتی بانک پیشنهاد سامانه — فقط مدیر سامانه (مستقل از مدرسه)
+   ============================================================ */
+
+function SystemSuggestionAdminView() {
+  const [allSuggestions, setAllSuggestions] = useState([]);
+  const [activeRole, setActiveRole] = useState("all");
+  const [loading, setLoading] = useState(true);
+
+  const loadAll = async () => {
+    setLoading(true);
+    try {
+      if (typeof window !== "undefined" && window.storage) {
+        const r = await window.storage.get(SSGB_STORAGE_KEY, true);
+        setAllSuggestions(r && r.value ? JSON.parse(r.value) : []);
+      }
+    } catch (e) {
+      setAllSuggestions([]);
+    }
+    setLoading(false);
+  };
+
+  useEffect(() => {
+    loadAll();
+    // eslint-disable-next-line
+  }, []);
+
+  const roleOptions = ["all", "student", "teacher", "guardian", "admin", "healthInstructor", "healthMonitor", "systemAdmin"];
+  const countFor = (r) => (r === "all" ? allSuggestions.length : allSuggestions.filter((s) => s.role === r).length);
+  const filtered = activeRole === "all" ? allSuggestions : allSuggestions.filter((s) => s.role === activeRole);
+  const sorted = [...filtered].sort((a, b) => (b.count || 1) - (a.count || 1));
+
+  return (
+    <div className="ssgba-root">
+      <style>{`
+        .ssgba-root, .ssgba-root * { box-sizing: border-box; font-family: 'Vazirmatn', Tahoma, Arial, sans-serif; }
+        .ssgba-title { font-size: 15px; font-weight: 800; color: #1c2540; margin: 26px 0 12px; }
+        .ssgba-toggle { display: flex; gap: 8px; margin-bottom: 14px; flex-wrap: wrap; }
+        .ssgba-btn { height: 36px; padding: 0 14px; border-radius: 20px; border: 1.3px solid #d8c2f0; background: #fff; color: #6a4aa8; font-weight: 700; font-size: 12.5px; cursor: pointer; }
+        .ssgba-btn.active { background: linear-gradient(135deg, #c29fe8, #6a4aa8); color: #fff; border-color: transparent; }
+        .ssgba-empty { color: #8a8060; font-size: 13px; text-align: center; padding: 20px 0; }
+        .ssgba-list { display: flex; flex-direction: column; gap: 10px; }
+        .ssgba-item { background: #f6efdc; border: 1px solid #e3d4ab; border-radius: 12px; padding: 12px 14px; }
+        .ssgba-meta { display: flex; gap: 8px; flex-wrap: wrap; margin-bottom: 6px; }
+        .ssgba-tag { font-size: 11px; font-weight: 700; padding: 3px 9px; border-radius: 10px; background: #fff; color: #a8741f; border: 1px solid #e0a83e; }
+        .ssgba-tag.role { color: #6a4aa8; border-color: #c29fe8; }
+        .ssgba-tag.count { color: #2c6e3f; border-color: #9fe3bd; }
+        .ssgba-date { font-size: 11px; color: #8a8060; }
+        .ssgba-text { font-size: 13.5px; color: #3a2f1a; line-height: 1.8; }
+      `}</style>
+      <h2 className="ssgba-title">📣 بانک پیشنهاد سامانه — همه‌ی نقش‌ها</h2>
+      <div className="ssgba-toggle">
+        {roleOptions.map((r) => (
+          <button key={r} type="button" className={"ssgba-btn" + (activeRole === r ? " active" : "")} onClick={() => setActiveRole(r)}>
+            {r === "all" ? "همه" : (SSGB_ROLE_LABELS[r] || r)} ({countFor(r)})
+          </button>
+        ))}
+      </div>
+      {loading ? (
+        <p className="ssgba-empty">در حال بارگذاری...</p>
+      ) : sorted.length === 0 ? (
+        <p className="ssgba-empty">هنوز پیشنهادی برای بهبود سامانه ثبت نشده است.</p>
+      ) : (
+        <div className="ssgba-list">
+          {sorted.map((s) => (
+            <div key={s.id} className="ssgba-item">
+              <div className="ssgba-meta">
+                <span className="ssgba-tag">{s.category}</span>
+                <span className="ssgba-tag role">{s.roleLabel || SSGB_ROLE_LABELS[s.role] || "؟"}</span>
+                <span className="ssgba-tag count">{s.count || 1} نفر</span>
+                <span className="ssgba-date">{s.submittedAt}</span>
+              </div>
+              <div className="ssgba-text">{s.text}</div>
+            </div>
+          ))}
+        </div>
+      )}
+    </div>
+  );
+}
+
+/* ============================================================
+   ققنوس — آموزش برای فردا
    داشبورد اصلی معلم — نمای کلی زیبا و ورودی به همه‌ی ابزارها
    ============================================================ */
 
@@ -26497,6 +26819,7 @@ function TeacherHomeDashboard({
   onOpenQuestionBank,
   onOpenLessonPlan,
   onOpenSuggestionBox,
+  onOpenSystemSuggestionBox,
   onOpenRahyar,
   onLogout,
 }) {
@@ -26545,6 +26868,7 @@ function TeacherHomeDashboard({
     { key: "qbank", icon: "🗂️", label: "بانک سؤال هوشمند", desc: "افزودن سؤال و ساخت آزمون", onClick: onOpenQuestionBank, color: "linear-gradient(135deg, #8ec9e8, #4a90c9)" },
     { key: "lessonplan", icon: "📘", label: "طرح درس هوشمند", desc: "برنامه‌ریزی جلسات درسی", onClick: onOpenLessonPlan, color: "linear-gradient(135deg, #9fe3bd, #2c9e6a)" },
     { key: "suggestion", icon: "💡", label: "بانک پیشنهادات", desc: "ثبت ایده برای بهبود مدرسه", onClick: onOpenSuggestionBox, color: "linear-gradient(135deg, #f3b9d8, #c9569a)" },
+    { key: "systemSuggestion", icon: "📣", label: "پیشنهاد برای سامانه", desc: "ایده برای بهبود خودِ ققنوس", onClick: onOpenSystemSuggestionBox, color: "linear-gradient(135deg, #c29fe8, #6a4aa8)" },
     { key: "rahyar", icon: "🧑‍🏫", label: "معلم هوشمند", desc: "ایده‌ی تدریس، مدیریت کلاس و مشاوره‌ی آموزشی", onClick: onOpenRahyar, color: "linear-gradient(135deg, #d8c2f0, #8f5fc9)" },
   ];
 
@@ -26880,6 +27204,8 @@ function PhoenixApp() {
   const [performanceViewFromStudent, setPerformanceViewFromStudent] = useState(false);
   const [guardianAuthenticated, setGuardianAuthenticated] = useState(false);
   const [guardianSuggestionSchoolCode, setGuardianSuggestionSchoolCode] = useState("");
+  const [systemSuggestionRole, setSystemSuggestionRole] = useState("");
+  const [systemSuggestionReturnScreen, setSystemSuggestionReturnScreen] = useState("welcome");
   const [messagingInitialMode, setMessagingInitialMode] = useState("");
   const [messagingInitialAiQuestion, setMessagingInitialAiQuestion] = useState("");
   const [messagingPreviewSubjects, setMessagingPreviewSubjects] = useState(null);
@@ -27064,6 +27390,7 @@ function PhoenixApp() {
         onOpenRecitationPractice={() => setScreen("studentRecitation")}
         onOpenVirtualLab={() => setScreen("studentVirtualLab")}
         onOpenTeachingLibrary={() => setScreen("rahyarTeachingLibrary")}
+        onOpenSystemSuggestionBox={() => { setSystemSuggestionRole("student"); setSystemSuggestionReturnScreen("studentDashboard"); setScreen("systemSuggestionBox"); }}
         onLogout={() => setScreen("welcome")}
       />
     );
@@ -27094,6 +27421,7 @@ function PhoenixApp() {
       <SystemAdminDashboardStep
         onBack={() => setScreen("welcome")}
         onOpenQuestionBank={() => setScreen("systemAdminQuestionBank")}
+        onOpenSystemSuggestionBox={() => { setSystemSuggestionRole("systemAdmin"); setSystemSuggestionReturnScreen("systemAdminDashboard"); setScreen("systemSuggestionBox"); }}
       />
     );
   }
@@ -27150,6 +27478,7 @@ function PhoenixApp() {
         selfStudentNationalCode={performanceViewFromStudent ? info.nationalCode : null}
         authenticatedGuardian={guardianAuthenticated}
         onOpenSuggestionBox={(schoolCode) => { setGuardianSuggestionSchoolCode(schoolCode || ""); setScreen("guardianSuggestionBox"); }}
+        onOpenSystemSuggestionBox={() => { setSystemSuggestionRole("guardian"); setSystemSuggestionReturnScreen("performanceView"); setScreen("systemSuggestionBox"); }}
         onOpenQuestionBank={(schoolCode, grade, className) => {
           setGuardianQbSchoolCode(schoolCode || "");
           setGuardianQbGrade(grade || "");
@@ -27174,6 +27503,7 @@ function PhoenixApp() {
           setHealthStaffQbReturnScreen("healthMonitorDashboard");
           setScreen("healthStaffQuestionBank");
         }}
+        onOpenSystemSuggestionBox={() => { setSystemSuggestionRole("healthMonitor"); setSystemSuggestionReturnScreen("healthMonitorDashboard"); setScreen("systemSuggestionBox"); }}
       />
     );
   }
@@ -27198,6 +27528,7 @@ function PhoenixApp() {
           setHealthStaffQbReturnScreen("healthInstructorDashboard");
           setScreen("healthStaffQuestionBank");
         }}
+        onOpenSystemSuggestionBox={() => { setSystemSuggestionRole("healthInstructor"); setSystemSuggestionReturnScreen("healthInstructorDashboard"); setScreen("systemSuggestionBox"); }}
       />
     );
   }
@@ -27277,6 +27608,15 @@ function PhoenixApp() {
     );
   }
 
+  if (screen === "systemSuggestionBox") {
+    return (
+      <SystemSuggestionBoxStep
+        role={systemSuggestionRole}
+        onBack={() => setScreen(systemSuggestionReturnScreen)}
+      />
+    );
+  }
+
   if (screen === "teacherQuestionBank") {
     return (
       <TeacherQuestionBankStep
@@ -27321,6 +27661,7 @@ function PhoenixApp() {
         onOpenQuestionBank={() => setScreen("teacherQuestionBank")}
         onOpenLessonPlan={() => setScreen("teacherLessonPlan")}
         onOpenSuggestionBox={() => setScreen("teacherSuggestionBox")}
+        onOpenSystemSuggestionBox={() => { setSystemSuggestionRole("teacher"); setSystemSuggestionReturnScreen("teacherHome"); setScreen("systemSuggestionBox"); }}
         onOpenRahyar={() => {
           setMessagingInitialRole("teacher");
           setMessagingInitialMode("ai");
@@ -27377,6 +27718,7 @@ function PhoenixApp() {
           setScreen("messaging");
         }}
         onOpenSuggestionBox={() => setScreen("adminSuggestionBox")}
+        onOpenSystemSuggestionBox={() => { setSystemSuggestionRole("admin"); setSystemSuggestionReturnScreen("adminDashboard"); setScreen("systemSuggestionBox"); }}
         onOpenQuestionBank={() => setScreen("adminQuestionBank")}
       />
     );

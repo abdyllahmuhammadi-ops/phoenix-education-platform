@@ -25827,6 +25827,266 @@ function TeacherLessonPlanStep({ onBack, prefillSchoolCode, teacherSchools, teac
 
 /* ============================================================
    ققنوس — آموزش برای فردا
+   پانلِ نظارتِ تغذیه و مکمل‌یاری (قرصِ آهن و ویتامینِ D) — مشترک بینِ «مربی بهداشت»
+   و «مراقب سلامت»؛ طبقِ خواسته‌ی کاربر هر دو نقش باید به بهداشت، تغذیه و مصرفِ این دو
+   مکمل در مدرسه نظارت داشته باشند. ثبت هم در سطحِ فردیِ هر دانش‌آموز است و هم یک
+   خلاصه‌ی کلاسی نشان داده می‌شود؛ یادآوری هم به‌صورتِ بنرِ داخلیِ خودکار در روزِ موعد
+   (بر اساسِ برنامه‌ی زمانیِ قابل‌تنظیم) و هم امکانِ ارسالِ پیامِ یادآوری به اولیا.
+   ============================================================ */
+const PQB_WEEKDAY_NAMES_FA = ["یکشنبه", "دوشنبه", "سه‌شنبه", "چهارشنبه", "پنجشنبه", "جمعه", "شنبه"]; // getDay(): 0=یکشنبه
+
+function pqbTodayJalaliDayOfMonth() {
+  try {
+    const parts = new Date().toLocaleDateString("fa-IR").split("/");
+    const lastPart = parts[parts.length - 1] || "";
+    const latin = lastPart.replace(/[۰-۹]/g, (d) => "0123456789"["۰۱۲۳۴۵۶۷۸۹".indexOf(d)]);
+    const n = parseInt(latin, 10);
+    return Number.isFinite(n) ? n : null;
+  } catch (e) {
+    return null;
+  }
+}
+
+function SupplementTrackingPanel({ schoolCode, className, roster, roleLabel }) {
+  const [settings, setSettings] = useState({ ironWeekday: "شنبه", vitaminDMonthDay: 1 });
+  const [settingsLoaded, setSettingsLoaded] = useState(false);
+  const [settingsOpen, setSettingsOpen] = useState(false);
+  const [log, setLog] = useState({});
+  const [reminderText, setReminderText] = useState("");
+  const [sendingReminder, setSendingReminder] = useState(false);
+  const [reminderResult, setReminderResult] = useState(null);
+
+  const todayKey = new Date().toLocaleDateString("fa-IR");
+  const todayWeekday = PQB_WEEKDAY_NAMES_FA[new Date().getDay()];
+  const todayMonthDay = pqbTodayJalaliDayOfMonth();
+  const isIronDay = todayWeekday === settings.ironWeekday;
+  const isVitaminDDay = todayMonthDay != null && todayMonthDay === Number(settings.vitaminDMonthDay);
+
+  const settingsKey = "supplement-settings:" + schoolCode;
+  const logKey = "supplement-log:" + schoolCode + ":" + skey(className) + ":" + todayKey;
+
+  useEffect(() => {
+    if (!schoolCode) return;
+    let cancelled = false;
+    (async () => {
+      try {
+        const r = await window.storage.get(settingsKey, true).catch(() => null);
+        if (!cancelled && r && r.value) setSettings(JSON.parse(r.value));
+      } catch (e) {
+        // تنظیماتی ثبت نشده — پیش‌فرض باقی می‌ماند
+      }
+      setSettingsLoaded(true);
+    })();
+    return () => {
+      cancelled = true;
+    };
+    // eslint-disable-next-line
+  }, [schoolCode]);
+
+  useEffect(() => {
+    if (!schoolCode || !className) return;
+    let cancelled = false;
+    (async () => {
+      try {
+        const r = await window.storage.get(logKey, true).catch(() => null);
+        if (!cancelled) setLog(r && r.value ? JSON.parse(r.value) : {});
+      } catch (e) {
+        if (!cancelled) setLog({});
+      }
+    })();
+    return () => {
+      cancelled = true;
+    };
+    // eslint-disable-next-line
+  }, [schoolCode, className, todayKey]);
+
+  useEffect(() => {
+    if (isIronDay && isVitaminDDay) setReminderText("یادآوری: امروز روزِ مصرفِ قرصِ آهن و ویتامینِ D در مدرسه است — لطفاً مطمئن شوید فرزندتان صبحانه خورده باشد.");
+    else if (isIronDay) setReminderText("یادآوری: امروز روزِ مصرفِ قرصِ آهن در مدرسه است — لطفاً مطمئن شوید فرزندتان صبحانه خورده باشد.");
+    else if (isVitaminDDay) setReminderText("یادآوری: امروز روزِ مصرفِ قطره/قرصِ ویتامینِ D در مدرسه است.");
+    else setReminderText("یادآوری: لطفاً به تغذیه و سلامتِ فرزندتان در این هفته توجه داشته باشید.");
+    // eslint-disable-next-line
+  }, [isIronDay, isVitaminDDay]);
+
+  const saveSettings = async (next) => {
+    setSettings(next);
+    try {
+      if (schoolCode) await window.storage.set(settingsKey, JSON.stringify(next), true);
+    } catch (e) {
+      // تلاش‌محور
+    }
+  };
+
+  const toggleLog = async (studentCode, field) => {
+    const rec = log[studentCode] || { iron: false, vitaminD: false };
+    const nextLog = { ...log, [studentCode]: { ...rec, [field]: !rec[field] } };
+    setLog(nextLog);
+    try {
+      await window.storage.set(logKey, JSON.stringify(nextLog), true);
+    } catch (e) {
+      // تلاش‌محور
+    }
+  };
+
+  const ironCount = roster.filter((s) => log[s.studentCode] && log[s.studentCode].iron).length;
+  const vitaminDCount = roster.filter((s) => log[s.studentCode] && log[s.studentCode].vitaminD).length;
+
+  const sendReminderToGuardians = async () => {
+    if (!reminderText.trim() || roster.length === 0) return;
+    setSendingReminder(true);
+    setReminderResult(null);
+    const verdict = await moderateSchoolMessage(reminderText.trim());
+    if (!verdict.allowed) {
+      setReminderResult({ sent: 0, blocked: true, reason: verdict.reason || "این پیام مجاز نیست." });
+      setSendingReminder(false);
+      return;
+    }
+    let sentCount = 0;
+    for (const s of roster) {
+      if (!s.guardianPhone) continue;
+      try {
+        const key = "messages:guardianPrivate:" + s.guardianPhone;
+        let list = [];
+        try {
+          const r = await window.storage.get(key, true);
+          if (r && r.value) list = JSON.parse(r.value);
+        } catch (e) {
+          list = [];
+        }
+        list.push({ senderRole: roleLabel, senderName: roleLabel + "ی مدرسه", text: reminderText.trim(), time: new Date().toLocaleString("fa-IR") });
+        await window.storage.set(key, JSON.stringify(list), true);
+        sentCount += 1;
+      } catch (e) {
+        // ادامه با دانش‌آموز بعدی
+      }
+    }
+    setReminderResult({ sent: sentCount, blocked: false });
+    setSendingReminder(false);
+  };
+
+  if (!schoolCode || !className) return null;
+
+  return (
+    <div className="pstp-box">
+      {(isIronDay || isVitaminDDay) && (
+        <div className="pstp-banner">
+          🔔 {isIronDay && isVitaminDDay ? "امروز روزِ مصرفِ قرصِ آهن و ویتامینِ D است." : isIronDay ? "امروز روزِ مصرفِ قرصِ آهن است." : "امروز روزِ مصرفِ ویتامینِ D است."}
+        </div>
+      )}
+
+      <div className="pstp-head-row">
+        <h2 className="pstp-title">🍎 نظارتِ تغذیه و مکمل‌یاری (آهن / ویتامینِ D) — {todayKey}</h2>
+        <button type="button" className="pstp-settings-btn" onClick={() => setSettingsOpen((o) => !o)}>
+          ⚙️ برنامه‌ی زمانی
+        </button>
+      </div>
+
+      {settingsOpen && (
+        <div className="pstp-settings-panel">
+          <div className="pstp-settings-field">
+            <label className="pstp-settings-label">روزِ هفته‌ی مصرفِ قرصِ آهن</label>
+            <select
+              className="pstp-settings-select"
+              value={settings.ironWeekday}
+              onChange={(e) => saveSettings({ ...settings, ironWeekday: e.target.value })}
+            >
+              {PQB_WEEKDAY_NAMES_FA.slice().reverse().map((d) => (
+                <option key={d} value={d}>{d}</option>
+              ))}
+            </select>
+          </div>
+          <div className="pstp-settings-field">
+            <label className="pstp-settings-label">روزِ ماه (شمسی) برایِ مصرفِ ویتامینِ D</label>
+            <input
+              type="number"
+              min="1"
+              max="31"
+              className="pstp-settings-input"
+              value={settings.vitaminDMonthDay}
+              onChange={(e) => saveSettings({ ...settings, vitaminDMonthDay: e.target.value })}
+            />
+          </div>
+          <p className="pstp-settings-note">این برنامه برایِ کلِ مدرسه مشترک است — هر دو نقشِ مربی بهداشت و مراقب سلامت همین تنظیمات را می‌بینند.</p>
+        </div>
+      )}
+
+      {roster.length === 0 ? (
+        <p className="pstp-empty">کلاسی بارگذاری نشده — برای ثبتِ فردی، اول کلاس را بارگذاری کنید.</p>
+      ) : (
+        <>
+          <div className="pstp-summary-row">
+            <span className="pstp-summary-chip">💊 آهن: {ironCount} از {roster.length}</span>
+            <span className="pstp-summary-chip">☀️ ویتامینِ D: {vitaminDCount} از {roster.length}</span>
+          </div>
+          <div className="pstp-student-list">
+            {roster.map((s) => {
+              const rec = log[s.studentCode] || { iron: false, vitaminD: false };
+              return (
+                <div key={s.studentCode} className="pstp-student-row">
+                  <span className="pstp-student-name">{s.lastName} {s.firstName}</span>
+                  <div className="pstp-student-toggles">
+                    <button type="button" className={"pstp-toggle-btn" + (rec.iron ? " on" : "")} onClick={() => toggleLog(s.studentCode, "iron")}>
+                      {rec.iron ? "✅" : "⬜"} آهن
+                    </button>
+                    <button type="button" className={"pstp-toggle-btn" + (rec.vitaminD ? " on" : "")} onClick={() => toggleLog(s.studentCode, "vitaminD")}>
+                      {rec.vitaminD ? "✅" : "⬜"} ویتامینِ D
+                    </button>
+                  </div>
+                </div>
+              );
+            })}
+          </div>
+
+          <div className="pstp-reminder-box">
+            <label className="pstp-settings-label">پیامِ یادآوری به اولیایِ کلاس</label>
+            <textarea className="pstp-reminder-textarea" value={reminderText} onChange={(e) => setReminderText(e.target.value)} maxLength={300} />
+            <button type="button" className="pstp-settings-btn primary" onClick={sendReminderToGuardians} disabled={sendingReminder || !reminderText.trim()}>
+              {sendingReminder ? "در حال ارسال و بررسیِ محتوا..." : "ارسالِ یادآوری به همه‌ی اولیایِ این کلاس"}
+            </button>
+            {reminderResult && (
+              reminderResult.blocked ? (
+                <div className="pstp-result-box blocked">⛔ {reminderResult.reason}</div>
+              ) : (
+                <div className="pstp-result-box ok">✅ یادآوری برای {reminderResult.sent} خانواده ارسال شد.</div>
+              )
+            )}
+          </div>
+        </>
+      )}
+
+      <style>{`
+        .pstp-box { background: #fffaf0; border: 1px solid rgba(28,37,64,0.08); border-radius: 14px; padding: 16px; margin-bottom: 18px; }
+        .pstp-banner { background: linear-gradient(135deg, #f2c572, #c8862b); color: #241503; font-weight: 800; font-size: 13px; padding: 10px 14px; border-radius: 10px; margin-bottom: 12px; }
+        .pstp-head-row { display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 8px; margin-bottom: 10px; }
+        .pstp-title { font-size: 14.5px; font-weight: 800; color: #1c2540; margin: 0; }
+        .pstp-settings-btn { height: 36px; padding: 0 14px; border-radius: 10px; border: 1px solid #e0a83e; background: transparent; color: #a8741f; font-weight: 700; font-size: 12.5px; cursor: pointer; }
+        .pstp-settings-btn.primary { background: linear-gradient(135deg, #f2c572, #c8862b); color: #241503; border-color: transparent; height: 42px; margin-top: 8px; }
+        .pstp-settings-panel { background: #fff; border: 1px solid rgba(28,37,64,0.08); border-radius: 10px; padding: 12px; margin-bottom: 14px; display: flex; flex-direction: column; gap: 10px; }
+        .pstp-settings-field { display: flex; flex-direction: column; gap: 6px; }
+        .pstp-settings-label { font-size: 12px; font-weight: 700; color: #6b7399; }
+        .pstp-settings-select, .pstp-settings-input { height: 40px; border-radius: 8px; border: 1.3px solid #d9c9a0; background: #fff; padding: 0 10px; font-size: 13px; width: 160px; }
+        .pstp-settings-note { font-size: 11px; color: #8a8060; margin: 0; }
+        .pstp-summary-row { display: flex; gap: 10px; margin-bottom: 12px; flex-wrap: wrap; }
+        .pstp-summary-chip { background: #fff; border: 1px solid rgba(28,37,64,0.08); border-radius: 999px; padding: 6px 14px; font-size: 12.5px; font-weight: 700; color: #1c2540; }
+        .pstp-student-list { display: flex; flex-direction: column; gap: 6px; margin-bottom: 14px; }
+        .pstp-student-row { display: flex; justify-content: space-between; align-items: center; background: #fff; border: 1px solid rgba(28,37,64,0.08); border-radius: 10px; padding: 8px 12px; flex-wrap: wrap; gap: 6px; }
+        .pstp-student-name { font-weight: 700; font-size: 12.5px; color: #1c2540; }
+        .pstp-student-toggles { display: flex; gap: 8px; }
+        .pstp-toggle-btn { height: 30px; padding: 0 10px; border-radius: 8px; border: 1px solid #d9c9a0; background: #fdf8ee; color: #6b7399; font-weight: 700; font-size: 11.5px; cursor: pointer; }
+        .pstp-toggle-btn.on { background: #eef6f0; border-color: #bfe0c8; color: #2c6e3f; }
+        .pstp-reminder-box { background: #fff; border: 1px solid rgba(28,37,64,0.08); border-radius: 10px; padding: 12px; }
+        .pstp-reminder-textarea { width: 100%; min-height: 70px; border-radius: 10px; border: 1.3px solid #d9c9a0; background: #fff; padding: 10px 12px; font-size: 13px; resize: vertical; margin-top: 6px; }
+        .pstp-result-box { margin-top: 10px; padding: 10px; border-radius: 10px; font-weight: 700; font-size: 12px; }
+        .pstp-result-box.ok { background: #eef6f0; color: #2c6e3f; border: 1px solid #bfe0c8; }
+        .pstp-result-box.blocked { background: #fdecec; color: #c0392b; border: 1px solid #f3b9b9; }
+        .pstp-empty { color: #8a8060; font-size: 12.5px; text-align: center; padding: 10px 0; }
+      `}</style>
+    </div>
+  );
+}
+
+/* ============================================================
+   ققنوس — آموزش برای فردا
    داشبورد مراقب سلامت — ثبت اطلاعات پایه‌ی سلامت و واکسیناسیون
    ============================================================ */
 
@@ -26057,6 +26317,10 @@ function HealthMonitorDashboardStep({ onBack, onOpenMessaging, onOpenQuestionBan
               </button>
             )}
 
+            {loaded && (
+              <SupplementTrackingPanel schoolCode={schoolCode} className={className} roster={roster} roleLabel="مراقب سلامت" />
+            )}
+
             {loading ? (
               <p className="phm2-empty">در حال بارگذاری...</p>
             ) : !loaded ? (
@@ -26271,6 +26535,10 @@ function HealthInstructorDashboardStep({ onBack, onOpenQuestionBank, onOpenSyste
           >
             📣 پیشنهاد برای بهبود سامانه
           </button>
+        )}
+
+        {loaded && (
+          <SupplementTrackingPanel schoolCode={schoolCode} className={className} roster={roster} roleLabel="مربی بهداشت" />
         )}
 
         {loading ? (

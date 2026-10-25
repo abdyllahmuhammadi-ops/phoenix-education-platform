@@ -14121,6 +14121,52 @@ function MessageAudioPlayback({ audio }) {
   return <audio controls src={audio.dataUrl} className="voice-record-audio" style={{ marginTop: 6 }} />;
 }
 
+// نرمال‌سازیِ سؤالِ آزادِ دانش‌آموز از رهیار — برای اینکه بشود دو نوشتارِ متفاوت از «همان سؤال»
+// (فاصله‌ی اضافه، علامتِ نگارشی، پیشوندِ محاوره‌ایِ رایج) را به هم نزدیک دید، بدونِ نیاز به هوش مصنوعی.
+function rahyarNormalizeQuestion(text) {
+  if (typeof text !== "string") return "";
+  return text
+    .trim()
+    .replace(/[۰-۹]/g, (d) => "0123456789"["۰۱۲۳۴۵۶۷۸۹".indexOf(d)])
+    .replace(/[؟?!.,،؛:«»"'()[\]{}]/g, " ")
+    .replace(/\s+/g, " ")
+    .toLowerCase()
+    .replace(/^(لطفا|لطفاً|میشه|می‌شه|ببخشید|سلام)\s+/, "")
+    .trim();
+}
+
+// شباهتِ دو سؤالِ نرمال‌شده، فقط بر اساسِ هم‌پوشانیِ کلمات (Jaccard) — بدونِ تماس با هوش مصنوعی.
+// آستانه در rahyarFindCachedAnswer عمداً بالاست: بهتر است کمتر از کش استفاده شود تا هیچ‌وقت
+// جوابِ یک سؤالِ کمی متفاوت، اشتباهاً به‌جایِ جوابِ درست به دانش‌آموز داده نشود.
+function rahyarQaSimilarity(a, b) {
+  const wa = a.split(" ").filter(Boolean);
+  const wb = b.split(" ").filter(Boolean);
+  if (!wa.length || !wb.length) return 0;
+  const setA = new Set(wa);
+  const setB = new Set(wb);
+  let shared = 0;
+  setA.forEach((w) => {
+    if (setB.has(w)) shared++;
+  });
+  const union = new Set([...setA, ...setB]).size;
+  return union ? shared / union : 0;
+}
+
+function rahyarFindCachedAnswer(bank, normalizedQuestion) {
+  if (!Array.isArray(bank) || !normalizedQuestion) return null;
+  let best = null;
+  let bestScore = 0;
+  bank.forEach((item) => {
+    if (!item || !item.q || !item.a) return;
+    const score = item.q === normalizedQuestion ? 1 : rahyarQaSimilarity(item.q, normalizedQuestion);
+    if (score > bestScore) {
+      best = item;
+      bestScore = score;
+    }
+  });
+  return bestScore >= 0.86 ? best : null;
+}
+
 function MessagingStep({ onBack, initialInboxMode, initialGuardianPhone, initialSenderRole, initialMode, initialSchoolCode, initialClassName, initialStudentCode, initialAiQuestion, initialUserGender, initialUserGrade, initialUserField, previewSubjects, compensationSubjects }) {
   const [mode, setMode] = useState(initialMode || (initialInboxMode ? "inbox" : "send")); // "send" | "inbox" | "ai"
   const [senderRole, setSenderRole] = useState(initialSenderRole || "student"); // student | guardian | healthInstructor | healthMonitor | principal
@@ -14407,6 +14453,30 @@ function MessagingStep({ onBack, initialInboxMode, initialGuardianPhone, initial
     const nextConversation = [...aiConversation, { role: "user", text: question }];
     setAiConversation(nextConversation);
     setAiThinking(true);
+
+    // فقط برایِ اولین سؤالِ مستقلِ دانش‌آموز در یک گفت‌وگوی تازه (نه ادامه‌ی گفت‌وگو، که به
+    // زمینه‌ی قبلیِ همان گفت‌وگو وابسته است)، اول حافظه‌ی مشترکِ سؤال‌وجواب‌هایِ همین درس/پایه را
+    // چک می‌کنیم — شاید دانش‌آموزی دیگر (حتی در شهری دیگر) دقیقاً همین سؤال را قبلاً پرسیده باشد.
+    // توجه: حافظه‌ی «مشترک» فعلاً فقط داخلِ همین مرورگر واقعاً مشترک است؛ وقتی بک‌اندِ واقعی وصل
+    // شود، همین منطق بدونِ تغییر، بینِ شهرهای مختلف هم کار خواهد کرد.
+    const isStandaloneFirstQuestion = senderRole === "student" && nextConversation.length === 1;
+    const qaCacheKey = "rahyar-qa-bank:" + skey(rahyarSubject) + ":" + (initialUserGrade || "نامشخص");
+    if (isStandaloneFirstQuestion) {
+      try {
+        const normalizedQ = rahyarNormalizeQuestion(question);
+        const bankRaw = await authStorageGet(qaCacheKey, true);
+        const bank = bankRaw ? JSON.parse(bankRaw) : [];
+        const cached = rahyarFindCachedAnswer(bank, normalizedQ);
+        if (cached) {
+          setAiConversation((prev) => [...prev, { role: "assistant", text: cached.a, fromCache: true }]);
+          setAiThinking(false);
+          return;
+        }
+      } catch (e) {
+        // کش موجود نبود یا خراب بود — ادامه به پرسیدن از هوش مصنوعی
+      }
+    }
+
     try {
       const timeCapNote =
         senderRole === "student" && teachingCapReached
@@ -14436,6 +14506,18 @@ function MessagingStep({ onBack, initialInboxMode, initialGuardianPhone, initial
           ? data.content[0].text
           : "متاسفانه در حال حاضر امکان پاسخ‌گویی نیست.";
       setAiConversation((prev) => [...prev, { role: "assistant", text: answerText }]);
+
+      if (isStandaloneFirstQuestion && answerText && answerText.indexOf("متاسفانه") !== 0) {
+        try {
+          const normalizedQ = rahyarNormalizeQuestion(question);
+          const bankRaw = await authStorageGet(qaCacheKey, true);
+          const bank = bankRaw ? JSON.parse(bankRaw) : [];
+          bank.push({ q: normalizedQ, a: answerText, createdAt: Date.now() });
+          await authStorageSet(qaCacheKey, JSON.stringify(bank.slice(-200)), true);
+        } catch (e) {
+          // تلاش‌محور — نبودِ کش مشکلی در روندِ اصلیِ گفت‌وگو ایجاد نمی‌کند
+        }
+      }
 
       if (senderRole === "student" && sessionStartRef.current && !teachingCapReached) {
         const elapsedThisVisit = Math.round((Date.now() - sessionStartRef.current) / 60000);
@@ -15321,6 +15403,11 @@ function MessagingStep({ onBack, initialInboxMode, initialGuardianPhone, initial
                 )}
                 {aiConversation.map((m, i) => (
                   <div key={i} className={"pmg-ai-bubble " + (m.role === "user" ? "pmg-ai-user" : "pmg-ai-assistant")}>
+                    {m.fromCache && (
+                      <div style={{ fontSize: 10.5, color: "#a8741f", fontWeight: 700, marginBottom: 4 }}>
+                        💾 این جواب به سؤالِ مشابهی که قبلاً پرسیده شده، از حافظه‌ی مشترک آمد — فوری و بدون نیاز به ساختِ دوباره.
+                      </div>
+                    )}
                     {m.text}
                   </div>
                 ))}

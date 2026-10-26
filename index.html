@@ -18057,6 +18057,39 @@ function StudentQuestionBankView({ onBack, prefillSchoolCode, prefillGrade, pref
   const [aiPracticeQuestions, setAiPracticeQuestions] = useState([]);
   const [aiPracticeRevealedIds, setAiPracticeRevealedIds] = useState([]);
 
+  // فلش‌کارت‌هایِ مرور — هر سؤالی که دانش‌آموز در پایانِ یک آزمون غلط زد یا «بلد نبودم» گفت،
+  // خودکار به این فهرست اضافه می‌شود تا بعداً مرور کند (بدونِ نمره، بدونِ فشار) — به‌جایِ اینکه
+  // اشتباه فقط در آمارِ فصل ثبت شود و فراموش شود. کلید بر اساسِ دانش‌آموز+درس، مشترکِ بینِ همه‌ی
+  // آزمون‌های همان درس. دانش‌آموز هر کارت را که «دیگر لازم نیست» بزند، از فهرست حذف می‌شود.
+  const flashcardsKey = () => "flashcards:" + (studentCode || "ناشناس") + ":" + skey(subject);
+  const [flashcards, setFlashcards] = useState([]);
+  const [showFlashcards, setShowFlashcards] = useState(false);
+  const [flashcardRevealedIds, setFlashcardRevealedIds] = useState([]);
+
+  const loadFlashcards = async () => {
+    try {
+      if (typeof window === "undefined" || !window.storage) return;
+      const raw = await authStorageGet(flashcardsKey(), true);
+      setFlashcards(raw ? JSON.parse(raw) : []);
+    } catch (e) {
+      setFlashcards([]);
+    }
+  };
+
+  const dismissFlashcard = async (id) => {
+    const next = flashcards.filter((f) => f.id !== id);
+    setFlashcards(next);
+    try {
+      await authStorageSet(flashcardsKey(), JSON.stringify(next), true);
+    } catch (e) {
+      // تلاش‌محور
+    }
+  };
+
+  const toggleFlashcardReveal = (id) => {
+    setFlashcardRevealedIds((prev) => (prev.includes(id) ? prev.filter((x) => x !== id) : [...prev, id]));
+  };
+
   const handleGenerateAiPractice = async () => {
     if (!grade || !subject) return;
     setAiPracticeLoading(true);
@@ -18233,12 +18266,48 @@ function StudentQuestionBankView({ onBack, prefillSchoolCode, prefillGrade, pref
     // آنالیز کامل بر اساس فصل — برای آزمون خودسنجی بر مبنای «بلد بودم»، برای آزمون الزامی
     // کنکور بر مبنای درست/غلط واقعی
     const byChapter = {};
+    // آنالیزِ دومِ مکمل: بر اساسِ سطحِ دشواریِ سؤال (آسان/متوسط/سخت) — فیلدِ «difficulty» از قبل
+    // رویِ همه‌ی سؤالات (بانکِ معلم، بانکِ شروعِ خودکار، استخرِ کنکور) وجود دارد؛ این فقط یک
+    // تجمیعِ تازه از رویِ همان داده‌ی موجود است، نه نیاز به تغییرِ ساختِ سؤال.
+    const byDifficulty = {};
+    const missedForFlashcards = [];
     examSet.forEach((q) => {
       const known = isMandatoryExam ? !!(mcqResultById[q.id] && mcqResultById[q.id].isCorrect) : !!(examKnownIds.find((a) => a.id === q.id) || {}).known;
       if (!byChapter[q.chapter]) byChapter[q.chapter] = { known: 0, total: 0 };
       byChapter[q.chapter].total += 1;
       if (known) byChapter[q.chapter].known += 1;
+
+      const diffLabel = q.difficulty || "نامشخص";
+      if (!byDifficulty[diffLabel]) byDifficulty[diffLabel] = { known: 0, total: 0 };
+      byDifficulty[diffLabel].total += 1;
+      if (known) byDifficulty[diffLabel].known += 1;
+
+      if (!known) {
+        missedForFlashcards.push({
+          id: "fc-" + q.id + "-" + Date.now(),
+          chapter: q.chapter || "",
+          question: q.text || "",
+          answer: q.explanation || "",
+          createdAt: Date.now(),
+        });
+      }
     });
+
+    // فلش‌کارت‌هایِ تازه را به فهرستِ موجودِ همین درس اضافه می‌کنیم — بدونِ تکرارِ سؤالِ کاملاً
+    // یکسان (بر اساسِ متنِ سؤال)، و سقفِ ۶۰ موردِ آخر تا فهرست خیلی طولانی نشود.
+    if (missedForFlashcards.length > 0 && studentCode) {
+      try {
+        const existingRaw = await authStorageGet(flashcardsKey(), true);
+        const existing = existingRaw ? JSON.parse(existingRaw) : [];
+        const existingTexts = new Set(existing.map((f) => f.question));
+        const newOnes = missedForFlashcards.filter((f) => !existingTexts.has(f.question));
+        const merged = [...existing, ...newOnes].slice(-60);
+        await authStorageSet(flashcardsKey(), JSON.stringify(merged), true);
+        setFlashcards(merged);
+      } catch (e) {
+        // تلاش‌محور — نبودِ فلش‌کارت مشکلی در نمایشِ نتیجه‌ی اصلیِ آزمون ایجاد نمی‌کند
+      }
+    }
     const totalKnown = isMandatoryExam ? mcqCorrectCount : examKnownIds.filter((a) => a.known).length;
     const totalCount = examSet.length;
     const weakChapters = Object.entries(byChapter)
@@ -18298,6 +18367,8 @@ function StudentQuestionBankView({ onBack, prefillSchoolCode, prefillGrade, pref
 
     setExamAnalysis({
       byChapter,
+      byDifficulty,
+      flashcardsAdded: missedForFlashcards.length,
       totalKnown,
       totalCount,
       weakChapters,
@@ -18434,6 +18505,9 @@ function StudentQuestionBankView({ onBack, prefillSchoolCode, prefillGrade, pref
         }
         .pqb-explanation-box { background: #eef6f0; border: 1px solid #bfe0c8; border-radius: 10px; padding: 10px 12px; margin-top: 8px; color: #2c6e3f; font-size: 12.5px; line-height: 1.9; }
         .pqb-reveal-btn { background: none; border: 1px solid #e0a83e; color: #a8741f; font-size: 11.5px; font-weight: 700; cursor: pointer; margin-top: 10px; padding: 6px 12px; border-radius: 999px; }
+        .pqb-flashcard-overlay { position: fixed; inset: 0; background: rgba(10,15,35,0.55); display: flex; align-items: center; justify-content: center; padding: 16px; z-index: 50; }
+        .pqb-flashcard-box { width: 100%; max-width: 460px; max-height: 80vh; overflow-y: auto; background: #fbf7ec; border-radius: 16px; padding: 18px; box-shadow: 0 20px 50px rgba(0,0,0,0.32); }
+        .pqb-flashcard-item { background: #fff; border: 1.3px solid #d8c2f0; border-radius: 12px; padding: 12px 14px; margin-bottom: 10px; cursor: pointer; text-align: right; }
       `}</style>
 
       <div className="pqb-card">
@@ -18814,6 +18888,22 @@ function StudentQuestionBankView({ onBack, prefillSchoolCode, prefillGrade, pref
                   </div>
                 ))}
 
+                {examAnalysis.byDifficulty && Object.keys(examAnalysis.byDifficulty).length > 1 && (
+                  <>
+                    <p style={{ fontWeight: 800, marginTop: 12, marginBottom: 6 }}>🎯 آنالیز بر اساس سطح دشواری:</p>
+                    {["آسان", "متوسط", "سخت", "نامشخص"]
+                      .filter((d) => examAnalysis.byDifficulty[d])
+                      .map((d) => {
+                        const v = examAnalysis.byDifficulty[d];
+                        return (
+                          <div key={d} style={{ fontSize: 12.5, marginBottom: 4 }}>
+                            {d}: {v.known} از {v.total} ({Math.round((v.known / v.total) * 100)}٪)
+                          </div>
+                        );
+                      })}
+                  </>
+                )}
+
                 {examAnalysis.progressNotes.length > 0 && (
                   <>
                     <p style={{ fontWeight: 800, marginTop: 12, marginBottom: 6 }}>📈 نقاط پیشرفت و افت (نسبت به آزمون قبلی):</p>
@@ -18832,9 +18922,69 @@ function StudentQuestionBankView({ onBack, prefillSchoolCode, prefillGrade, pref
                   </p>
                 )}
 
+                {examAnalysis.flashcardsAdded > 0 && (
+                  <p style={{ fontSize: 12, color: "#6b3fa0", marginTop: 8 }}>
+                    📇 {examAnalysis.flashcardsAdded} فلش‌کارتِ مرور از سؤالاتی که بلد نبودی، به فهرستِ مرورت اضافه شد.
+                  </p>
+                )}
+
                 <div style={{ textAlign: "center" }}>
                   <button type="button" className="pqb-export-btn" style={{ marginTop: 10 }} onClick={handleStartExam}>
                     🔁 آزمون تصادفی جدید بگیر
+                  </button>
+                  {studentCode && (
+                    <button
+                      type="button"
+                      className="pqb-export-btn"
+                      style={{ marginTop: 10, marginRight: 8, background: "transparent", color: "#6b3fa0", border: "1px solid #d8c2f0" }}
+                      onClick={() => {
+                        loadFlashcards();
+                        setFlashcardRevealedIds([]);
+                        setShowFlashcards(true);
+                      }}
+                    >
+                      📇 فلش‌کارت‌های مرورِ من{flashcards.length > 0 ? " (" + flashcards.length + ")" : ""}
+                    </button>
+                  )}
+                </div>
+              </div>
+            )}
+
+            {showFlashcards && (
+              <div className="pqb-flashcard-overlay" onClick={() => setShowFlashcards(false)}>
+                <div className="pqb-flashcard-box" onClick={(e) => e.stopPropagation()}>
+                  <p style={{ fontWeight: 800, marginBottom: 4 }}>📇 فلش‌کارت‌های مرورِ «{subject}»</p>
+                  <p style={{ fontSize: 11.5, color: "#8a8060", marginBottom: 12 }}>
+                    این‌ها سؤالاتی هستند که قبلاً بلد نبودی — بدونِ نمره، فقط برای مرور. رویِ کارت بزن تا جوابش را ببینی.
+                  </p>
+                  {flashcards.length === 0 ? (
+                    <p className="pqb-empty">فعلاً فلش‌کارتی نداری — عالی!</p>
+                  ) : (
+                    flashcards.map((f) => (
+                      <div key={f.id} className="pqb-flashcard-item" onClick={() => toggleFlashcardReveal(f.id)}>
+                        {f.chapter && <span className="pqb-tag" style={{ marginBottom: 6 }}>{f.chapter}</span>}
+                        <div style={{ fontSize: 13, fontWeight: 700 }}>{f.question}</div>
+                        {flashcardRevealedIds.includes(f.id) && (
+                          <div style={{ fontSize: 12.5, color: "#2c6e3f", marginTop: 8, borderTop: "1px dashed #d8c2f0", paddingTop: 8 }}>
+                            {f.answer}
+                          </div>
+                        )}
+                        <button
+                          type="button"
+                          className="pqb-delete-btn"
+                          style={{ marginTop: 8 }}
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            dismissFlashcard(f.id);
+                          }}
+                        >
+                          ✅ دیگر لازم نیست
+                        </button>
+                      </div>
+                    ))
+                  )}
+                  <button type="button" className="pqb-submit-btn" style={{ marginTop: 14 }} onClick={() => setShowFlashcards(false)}>
+                    بستن
                   </button>
                 </div>
               </div>

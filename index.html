@@ -2790,6 +2790,24 @@ function StudentRegistration({ language, onBack, onContinue, prefillPhone }) {
           classList.push(className);
           await authStorageSet(classesKey, JSON.stringify(classList), true);
         }
+
+        // ثبت کد مدرسه در فهرست سراسریِ «مدارس ثبت‌نام‌شده» همین لحظه‌ی ثبت‌نام (نه لحظه‌ی پرداخت)،
+        // تا آمار ثبت‌نام‌کنندگان برای مدیر سامانه، دانش‌آموزانی را هم که هنوز شهریه پرداخت نکرده‌اند دربرگیرد.
+        try {
+          let regSchools = [];
+          try {
+            const rawReg = await authStorageGet("all-registered-schools", true);
+            if (rawReg) regSchools = JSON.parse(rawReg);
+          } catch (e) {
+            regSchools = [];
+          }
+          if (!regSchools.includes(schoolCode)) {
+            regSchools.push(schoolCode);
+            await authStorageSet("all-registered-schools", JSON.stringify(regSchools), true);
+          }
+        } catch (e) {
+          // ثبت این فهرست تلاش‌محور است؛ خطا نباید ثبت‌نام دانش‌آموز را مختل کند
+        }
       } catch (e) {
         console.error("Storage operation failed:", e);
       }
@@ -13215,7 +13233,7 @@ function SystemAdminRegistration({ onBack, onContinue }) {
    داشبورد مدیر سامانه — تنها نقشی که به شهریه/پرداخت دسترسی دارد
    ============================================================ */
 
-function SystemAdminDashboardStep({ onBack, onOpenQuestionBank, onOpenSystemSuggestionBox }) {
+function SystemAdminDashboardStep({ onBack, onOpenQuestionBank, onOpenSystemSuggestionBox, onOpenRegistrationStats }) {
   const [schoolCodes, setSchoolCodes] = useState([]);
   const [paymentsBySchool, setPaymentsBySchool] = useState({});
   const [loading, setLoading] = useState(true);
@@ -13782,6 +13800,17 @@ function SystemAdminDashboardStep({ onBack, onOpenQuestionBank, onOpenSystemSugg
             </button>
           )}
 
+          {onOpenRegistrationStats && (
+            <button
+              type="button"
+              className="psad-query-btn"
+              style={{ width: "100%", marginBottom: 20, background: "transparent", color: "#2c6e3f", border: "1px solid #9fcfa9" }}
+              onClick={onOpenRegistrationStats}
+            >
+              📊 آمار ثبت‌نام‌کنندگان (کلاس، مدرسه، منطقه، رشته، پایه، جنسیت)
+            </button>
+          )}
+
           <SystemSuggestionAdminView />
 
           <h2 style={{ fontSize: 15, fontWeight: 800, color: "#1c2540", margin: "26px 0 12px" }}>
@@ -13884,6 +13913,205 @@ function SystemAdminDashboardStep({ onBack, onOpenQuestionBank, onOpenSystemSugg
             )}
           </div>
         </div>
+      </div>
+    </div>
+  );
+}
+
+// آمارِ ثبت‌نام‌کنندگان برای مدیر سامانه — تفکیک بر اساس کلاس، مدرسه، بخش، شهرستان، استان،
+// کشور، رشته، پایه و جنسیت. منبعِ فهرستِ مدارس، اجتماعِ دو فهرستِ موجود است: «all-registered-schools»
+// (نوشته‌شده همان لحظه‌ی ثبت‌نام، شاملِ دانش‌آموزانی که هنوز شهریه پرداخت نکرده‌اند) و
+// «all-schools-registry» (فهرستِ قدیمی‌ترِ مبتنی‌بر پرداخت، برای سازگاری با داده‌های قبلی).
+function SystemAdminRegistrationStats({ onBack }) {
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState("");
+  const [records, setRecords] = useState([]);
+  const [dim, setDim] = useState("province"); // province | county | bakhsh | school | class | grade | field | gender | country
+
+  useEffect(() => {
+    (async () => {
+      try {
+        if (!(await waitForStorage())) {
+          setLoading(false);
+          setError("سامانه‌ی ذخیره‌سازی در دسترس نیست.");
+          return;
+        }
+        let codes = [];
+        try {
+          const r1 = await window.storage.get("all-registered-schools", true);
+          const list1 = r1 && r1.value ? JSON.parse(r1.value) : [];
+          const r2 = await window.storage.get("all-schools-registry", true);
+          const list2 = r2 && r2.value ? JSON.parse(r2.value) : [];
+          codes = Array.from(new Set([...list1, ...list2]));
+        } catch (e) {
+          codes = [];
+        }
+
+        const all = [];
+        for (const code of codes) {
+          let info = {};
+          try {
+            const ir = await window.storage.get("school-info:" + code, true);
+            info = ir && ir.value ? JSON.parse(ir.value) : {};
+          } catch (e) {
+            info = {};
+          }
+
+          let classes = [];
+          try {
+            const cr = await window.storage.get("school-classes:" + code, true);
+            classes = cr && cr.value ? JSON.parse(cr.value) : [];
+          } catch (e) {
+            classes = [];
+          }
+
+          for (const cls of classes) {
+            let roster = [];
+            try {
+              const rr = await window.storage.get("gradebook-roster:" + code + ":" + skey(cls), true);
+              roster = rr && rr.value ? JSON.parse(rr.value) : [];
+            } catch (e) {
+              roster = [];
+            }
+            for (const s of roster) {
+              all.push({
+                schoolCode: code,
+                schoolName: info.schoolName || "بدون‌نام",
+                province: info.province || "نامشخص",
+                county: info.county || "نامشخص",
+                bakhsh: info.bakhsh || info.district || "نامشخص",
+                country: "ایران",
+                className: cls,
+                grade: s.grade || "نامشخص",
+                fieldOfStudy: s.fieldOfStudy || "—",
+                gender: s.gender === "male" ? "پسر" : s.gender === "female" ? "دختر" : "نامشخص",
+                firstName: s.firstName || "",
+                lastName: s.lastName || "",
+                studentCode: s.studentCode || "",
+              });
+            }
+          }
+        }
+        setRecords(all);
+      } catch (e) {
+        setError("خطا در بارگذاری آمار ثبت‌نام‌کنندگان.");
+      }
+      setLoading(false);
+    })();
+  }, []);
+
+  const countBy = (keyFn) => {
+    const m = {};
+    for (const r of records) {
+      const k = keyFn(r) || "نامشخص";
+      m[k] = (m[k] || 0) + 1;
+    }
+    return Object.entries(m).sort((a, b) => b[1] - a[1]);
+  };
+
+  const dimensions = {
+    province: { label: "استان", rows: countBy((r) => r.province) },
+    county: { label: "شهرستان", rows: countBy((r) => r.province + " / " + r.county) },
+    bakhsh: { label: "بخش", rows: countBy((r) => r.province + " / " + r.county + " / " + r.bakhsh) },
+    school: { label: "مدرسه", rows: countBy((r) => r.schoolName + "  —  کد " + r.schoolCode) },
+    class: { label: "کلاس", rows: countBy((r) => r.schoolName + "  /  " + r.className) },
+    grade: { label: "پایه", rows: countBy((r) => r.grade) },
+    field: { label: "رشته", rows: countBy((r) => r.fieldOfStudy) },
+    gender: { label: "جنسیت", rows: countBy((r) => r.gender) },
+    country: { label: "کشور", rows: countBy((r) => r.country) },
+  };
+
+  const active = dimensions[dim];
+  const total = records.length;
+
+  return (
+    <div dir="rtl" className="prs-root">
+      <style>{`
+        @import url('https://fonts.googleapis.com/css2?family=Vazirmatn:wght@400;500;600;700;800&display=swap');
+        .prs-root, .prs-root * { box-sizing: border-box; font-family: 'Vazirmatn', Tahoma, Arial, sans-serif; }
+        .prs-root { min-height: 100vh; min-height: 100dvh; width: 100%; background: linear-gradient(180deg, #060b1f 0%, #0b1330 45%, #0d1735 100%); padding: max(20px, env(safe-area-inset-top)) 14px 28px; display: flex; justify-content: center; }
+        .prs-card { width: 100%; max-width: 1080px; background: linear-gradient(180deg, #fbf7ec 0%, #f6efdc 100%); border-radius: 22px; padding: 24px 22px 28px; box-shadow: 0 20px 50px rgba(0,0,0,0.32); border: 1px solid rgba(224,168,62,0.25); }
+        .prs-back { background: none; border: none; color: #a8741f; font-weight: 700; font-size: 13px; cursor: pointer; padding: 0; margin-bottom: 10px; }
+        .prs-title { color: #1c2540; font-size: clamp(18px, 4vw, 22px); font-weight: 800; margin: 0 0 4px; }
+        .prs-kicker { color: #a8741f; font-size: 12.5px; font-weight: 700; margin: 0 0 16px; }
+        .prs-total-box { background: #eef6f0; border: 1px solid #bfe0c8; border-radius: 14px; padding: 16px; text-align: center; margin-bottom: 18px; }
+        .prs-total-num { color: #2c6e3f; font-weight: 800; font-size: 22px; }
+        .prs-total-label { color: #4a7a5c; font-size: 12px; font-weight: 700; margin-top: 4px; }
+        .prs-tabs { display: flex; gap: 6px; flex-wrap: wrap; margin-bottom: 16px; }
+        .prs-tab { height: 36px; padding: 0 12px; border-radius: 8px; border: 1px solid #e0a83e; background: transparent; color: #a8741f; font-weight: 700; font-size: 12px; cursor: pointer; }
+        .prs-tab.active { background: linear-gradient(135deg, #f2c572, #c8862b); color: #241503; border-color: transparent; }
+        .prs-table-wrap { overflow-x: auto; border-radius: 14px; border: 1px solid rgba(28,37,64,0.09); }
+        .prs-table { border-collapse: collapse; width: 100%; min-width: 320px; }
+        .prs-table th { background: #f3ead2; color: #7a4a12; font-size: 12.5px; font-weight: 800; padding: 10px 6px; text-align: center; border-bottom: 1px solid rgba(28,37,64,0.09); }
+        .prs-table td { padding: 8px 6px; text-align: center; border-bottom: 1px solid rgba(28,37,64,0.06); font-size: 12.5px; color: #1c2540; }
+        .prs-table td.prs-name { text-align: right; padding-right: 12px; }
+        .prs-note { background: rgba(224,168,62,0.12); border: 1px solid rgba(224,168,62,0.35); border-radius: 10px; padding: 10px 12px; color: #7a4a12; font-size: 11.5px; line-height: 1.8; margin-top: 18px; }
+        .prs-empty { color: #8a8060; font-size: 13px; text-align: center; padding: 30px 0; }
+      `}</style>
+
+      <div className="prs-card">
+        <button type="button" className="prs-back" onClick={onBack}>→ بازگشت</button>
+        <h1 className="prs-title">آمار ثبت‌نام‌کنندگان</h1>
+        <p className="prs-kicker">تفکیک بر اساس کلاس، مدرسه، بخش، شهرستان، استان، کشور، رشته، پایه و جنسیت.</p>
+
+        {loading && <p className="prs-empty">در حال بارگذاری...</p>}
+        {!loading && error && <p className="prs-empty">{error}</p>}
+
+        {!loading && !error && (
+          <>
+            <div className="prs-total-box">
+              <div className="prs-total-num">{total.toLocaleString("fa-IR")}</div>
+              <div className="prs-total-label">مجموع دانش‌آموزان ثبت‌نام‌شده در سامانه</div>
+            </div>
+
+            <div className="prs-tabs">
+              {Object.entries(dimensions).map(([key, d]) => (
+                <button
+                  key={key}
+                  type="button"
+                  className={"prs-tab" + (dim === key ? " active" : "")}
+                  onClick={() => setDim(key)}
+                >
+                  {d.label}
+                </button>
+              ))}
+            </div>
+
+            <div className="prs-table-wrap">
+              <table className="prs-table">
+                <thead>
+                  <tr>
+                    <th style={{ textAlign: "right", paddingRight: 12 }}>{active.label}</th>
+                    <th>تعداد ثبت‌نام‌کننده</th>
+                    <th>سهم از کل</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {active.rows.map(([k, count]) => (
+                    <tr key={k}>
+                      <td className="prs-name">{k}</td>
+                      <td>{count.toLocaleString("fa-IR")}</td>
+                      <td>{total ? ((count / total) * 100).toFixed(1) + "٪" : "—"}</td>
+                    </tr>
+                  ))}
+                  {active.rows.length === 0 && (
+                    <tr>
+                      <td colSpan={3} style={{ padding: 20, color: "#8a8060" }}>هنوز هیچ دانش‌آموزی ثبت‌نام نکرده است.</td>
+                    </tr>
+                  )}
+                </tbody>
+              </table>
+            </div>
+
+            <p className="prs-note">
+              ⚠️ این آمار فقط دانش‌آموزان را دربرمی‌گیرد (نه معلم/مدیر/سایر نقش‌ها)، چون «کلاس»، «رشته» و
+              «پایه» ویژه‌ی دانش‌آموزان است. ستون «کشور» فعلاً همیشه «ایران» نشان می‌دهد، چون فرایندِ ثبت‌نامِ
+              دانش‌آموزانِ غیرایرانی هنوز داده‌اش را ذخیره نمی‌کند — در صورتِ نیاز، این بخش قابلِ تکمیل است.
+              دانش‌آموزانی که پیش از افزودنِ این آمار ثبت‌نام کرده‌اند و هنوز شهریه پرداخت نکرده‌اند، ممکن است
+              در این فهرست نباشند، چون پیش از این فقط لحظه‌ی پرداخت ثبت می‌شد.
+            </p>
+          </>
+        )}
       </div>
     </div>
   );
@@ -28022,8 +28250,13 @@ function PhoenixApp() {
         onBack={() => setScreen("welcome")}
         onOpenQuestionBank={() => setScreen("systemAdminQuestionBank")}
         onOpenSystemSuggestionBox={() => { setSystemSuggestionRole("systemAdmin"); setSystemSuggestionReturnScreen("systemAdminDashboard"); setScreen("systemSuggestionBox"); }}
+        onOpenRegistrationStats={() => setScreen("systemAdminRegistrationStats")}
       />
     );
+  }
+
+  if (screen === "systemAdminRegistrationStats") {
+    return <SystemAdminRegistrationStats onBack={() => setScreen("systemAdminDashboard")} />;
   }
 
   if (screen === "systemAdminRegistration") {

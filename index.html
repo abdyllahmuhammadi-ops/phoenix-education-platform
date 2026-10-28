@@ -357,7 +357,7 @@ const T = {
     formKicker: "اطلاعات دانش‌آموز اتباع خارجی را وارد کنید.",
     back: "→ بازگشت",
     sec1: "زبان و تابعیت", sec2: "مشخصات فردی", sec3: "ولی و راه‌های تماس",
-    sec4: "نشانی محل سکونت", sec5: "مدرسه و اطلاعات تکمیلی",
+    sec4: "نشانی محل سکونت", sec5: "مدرسه و اطلاعات تکمیلی", sec6: "اطلاعات تحصیلی",
     lang: "زبان / Language", residenceCountry: "کشور محل زندگی فعلی",
     nationality: "ملیت", motherLang: "زبان مادری",
     firstName: "نام", middleName: "نام میانی (در صورت وجود)",
@@ -370,10 +370,16 @@ const T = {
     mother: "مادر", father: "پدر", legalGuardian: "سرپرست قانونی",
     province: "استان", county: "شهرستان", city: "شهر / بخش", address: "آدرس محل سکونت",
     schoolName: "نام کامل مدرسه", schoolCode: "کد مدرسه", bloodGroup: "گروه خونی",
-    choose: "انتخاب کنید", submit: "ادامه ثبت‌نام",
+    educationLevel: "مقطع تحصیلی", grade: "پایه", fieldOfStudy: "رشته", className: "نام کلاس",
+    choose: "انتخاب کنید", submit: "ثبت نهایی و اتمام ثبت‌نام",
     phNationality: "ملیت دانش‌آموز", phMotherLang: "زبان مادری",
     phSchoolCode: "۸ رقم", phForeignId: "کد اتباع", phPassport: "شماره پاسپورت",
     phGuardianName: "نام ولی یا سرپرست قانونی", phPhone: "09xxxxxxxxx",
+    phClassName: "مثلاً هفتم/۲",
+    submitSuccessTitle: "ثبت‌نام با موفقیت انجام شد",
+    submitErrorTitle: "لطفاً این فیلدهای اجباری را تکمیل کنید:",
+    identifierError: "باید حداقل یکی از «کد اتباع» یا «شماره پاسپورت» را وارد کنید.",
+    studentCodeLabel: "کد دانش‌آموزی", loginCodeLabel: "رمز ورود یک‌بارمصرف",
   },
   "English": {
     dir: "ltr",
@@ -385,7 +391,7 @@ const T = {
     formKicker: "Enter the information of the foreign national student.",
     back: "→ Back",
     sec1: "Language & Nationality", sec2: "Personal Details", sec3: "Guardian & Contact",
-    sec4: "Residential Address", sec5: "School & Additional Info",
+    sec4: "Residential Address", sec5: "School & Additional Info", sec6: "Academic Info",
     lang: "Language", residenceCountry: "Current Country of Residence",
     nationality: "Nationality", motherLang: "Mother Tongue",
     firstName: "First Name", middleName: "Middle Name (if any)",
@@ -398,10 +404,16 @@ const T = {
     mother: "Mother", father: "Father", legalGuardian: "Legal Guardian",
     province: "Province", county: "County", city: "City / District", address: "Residential Address",
     schoolName: "Full School Name", schoolCode: "School Code", bloodGroup: "Blood Type",
-    choose: "Select", submit: "Continue Registration",
+    educationLevel: "Education Level", grade: "Grade", fieldOfStudy: "Field of Study", className: "Class Name",
+    choose: "Select", submit: "Submit & Finish Registration",
     phNationality: "Student's nationality", phMotherLang: "Mother tongue",
     phSchoolCode: "8 digits", phForeignId: "Foreign ID code", phPassport: "Passport number",
     phGuardianName: "Guardian or legal representative's name", phPhone: "09xxxxxxxxx",
+    phClassName: "e.g. 7/2",
+    submitSuccessTitle: "Registration completed successfully",
+    submitErrorTitle: "Please complete these required fields:",
+    identifierError: "You must enter at least one of the Foreign ID code or Passport number.",
+    studentCodeLabel: "Student Code", loginCodeLabel: "One-time login code",
   },
   "العربية": {
     dir: "rtl",
@@ -5302,15 +5314,186 @@ function ForeignStudentRegistration({ language, onBack }) {
     schoolName: "",
     schoolCode: "",
     bloodGroup: "",
+    educationLevel: "",
+    grade: "",
+    fieldOfStudy: "",
+    className: "",
   });
 
-  const t = T[language] || T["فارسی"];
+  // نامِ مقطع/پایه/رشته بخشی از برنامه‌ی درسیِ ایران است و باید با همان نامِ فارسی در دفترِ نمره/آمار
+  // سازگار بماند، پس این سه فیلد همیشه با برچسبِ فارسی نشان داده می‌شوند (فارغ از زبانِ انتخابی فرم).
+  const t = { ...T["فارسی"], ...(T[language] || {}) };
 
   const changeHandler = (e) => {
     setForm({ ...form, [e.target.name]: e.target.value });
   };
 
   const bloodGroups = ["A+", "A-", "B+", "B-", "AB+", "AB-", "O+", "O-"];
+
+  const educationLevels = ["ابتدایی", "متوسطه اول", "متوسطه دوم"];
+  const gradesByLevel = {
+    "ابتدایی": ["اول", "دوم", "سوم", "چهارم", "پنجم", "ششم"],
+    "متوسطه اول": ["هفتم", "هشتم", "نهم"],
+    "متوسطه دوم": ["دهم", "یازدهم", "دوازدهم"],
+  };
+  const theoreticalFields = ["علوم تجربی", "ریاضی و فیزیک", "انسانی", "فرهنگ و معارف اسلامی"];
+
+  const [validationError, setValidationError] = useState("");
+  const [submitting, setSubmitting] = useState(false);
+  const [submitted, setSubmitted] = useState(null); // null | { studentCode, loginCode, phone }
+  const [testModeReveal, setTestModeReveal] = useState(false);
+
+  // اتباع غیرایرانی معمولاً کدِ شناساییِ ایرانی (شماره شناسنامه) ندارند؛ به‌جای آن از کدِ اتباع
+  // یا شماره‌ی پاسپورت (هرکدام که وارد شده) یک شناسه‌ی دانش‌آموزیِ پایدار می‌سازیم.
+  const computeForeignStudentCode = () => {
+    const raw = (form.foreignId || form.passportNumber || "").trim();
+    const cleaned = raw.replace(/[^A-Za-z0-9۰-۹]/g, "").toUpperCase();
+    if (cleaned) return "F-" + cleaned;
+    if (form.studentPhone.trim().length >= 4) return "F-" + form.studentPhone.trim().slice(-8);
+    return "";
+  };
+
+  const handleSubmit = async () => {
+    const missing = [];
+    if (!form.nationality.trim()) missing.push(t.nationality);
+    if (!form.motherLanguage.trim()) missing.push(t.motherLang);
+    if (!form.firstName.trim()) missing.push(t.firstName);
+    if (!form.lastName.trim()) missing.push(t.lastName);
+    if (!form.fatherName.trim()) missing.push(t.fatherName);
+    if (!form.gender) missing.push(t.gender);
+    if (!form.birthDay || !form.birthMonth || !form.birthYear) missing.push(t.birthDate);
+    if (!form.studentPhone.trim()) missing.push(t.studentPhone);
+    if (!form.guardianPhone.trim()) missing.push(t.guardianPhone);
+    if (!form.guardianName.trim()) missing.push(t.guardianName);
+    if (!form.guardianRelation) missing.push(t.guardianRelation);
+    if (!form.province.trim()) missing.push(t.province);
+    if (!form.county.trim()) missing.push(t.county);
+    if (!form.city.trim()) missing.push(t.city);
+    if (!form.address.trim()) missing.push(t.address);
+    if (!form.schoolName.trim()) missing.push(t.schoolName);
+    if (form.schoolCode.trim().length !== 8) missing.push(t.schoolCode);
+    if (!form.bloodGroup) missing.push(t.bloodGroup);
+    if (!form.educationLevel) missing.push(t.educationLevel);
+    if (!form.grade) missing.push(t.grade);
+    if (form.educationLevel === "متوسطه دوم" && !form.fieldOfStudy) missing.push(t.fieldOfStudy);
+    if (!form.className.trim()) missing.push(t.className);
+
+    if (missing.length > 0) {
+      setValidationError(t.submitErrorTitle + "\n• " + missing.join("\n• "));
+      return;
+    }
+    if (!form.foreignId.trim() && !form.passportNumber.trim()) {
+      setValidationError(t.identifierError);
+      return;
+    }
+
+    setValidationError("");
+    setSubmitting(true);
+    try {
+      const schoolCode = form.schoolCode.trim();
+      const studentCode = computeForeignStudentCode();
+      const countryLabel = form.country.trim() || form.nationality.trim();
+
+      // ۱) ادغام با اطلاعاتِ احتمالاً از قبل موجودِ مدرسه (بدونِ پاک‌کردنِ استان/شهرستان/بخشی که
+      // دانش‌آموزانِ ایرانیِ همان مدرسه قبلاً ثبت کرده‌اند).
+      let existingInfo = {};
+      try {
+        const rawInfo = await authStorageGet("school-info:" + schoolCode, true);
+        if (rawInfo) existingInfo = JSON.parse(rawInfo);
+      } catch (e) {
+        existingInfo = {};
+      }
+      const mergedInfo = {
+        province: existingInfo.province || form.province.trim(),
+        county: existingInfo.county || form.county.trim(),
+        district: existingInfo.district || existingInfo.bakhsh || form.city.trim(),
+        bakhsh: existingInfo.bakhsh || existingInfo.district || form.city.trim(),
+        schoolName: existingInfo.schoolName || form.schoolName.trim(),
+      };
+      await authStorageSet("school-info:" + schoolCode, JSON.stringify(mergedInfo), true);
+
+      // ۲) افزودن به دفترِ نمره‌ی کلاس — همان کلیدی که دانش‌آموزانِ ایرانی هم در آن ذخیره می‌شوند،
+      // تا این دانش‌آموز برایِ معلم/مدیرِ مدرسه هم مثلِ بقیه قابل‌مشاهده باشد.
+      const rosterKey = "gradebook-roster:" + schoolCode + ":" + skey(form.className.trim());
+      let roster = [];
+      try {
+        const rawRoster = await authStorageGet(rosterKey, true);
+        if (rawRoster) roster = JSON.parse(rawRoster);
+      } catch (e) {
+        roster = [];
+      }
+      const entry = {
+        firstName: form.firstName.trim(),
+        lastName: form.lastName.trim(),
+        studentCode,
+        guardianPhone: form.guardianPhone.trim(),
+        nationalCode: (form.foreignId.trim() || form.passportNumber.trim()),
+        gender: form.gender,
+        grade: form.grade,
+        fieldOfStudy: form.educationLevel === "متوسطه دوم" ? form.fieldOfStudy : "—",
+        isForeignStudent: true,
+        country: countryLabel || "نامشخص",
+      };
+      const existingIdx = roster.findIndex((r) => r.studentCode === studentCode);
+      if (existingIdx >= 0) {
+        roster[existingIdx] = entry;
+      } else {
+        roster.push(entry);
+      }
+      roster.sort((a, b) => (a.lastName || "").localeCompare(b.lastName || "", "fa"));
+      await authStorageSet(rosterKey, JSON.stringify(roster), true);
+
+      // ۳) ثبتِ کلاس در فهرستِ کلاس‌هایِ مدرسه
+      const classesKey = "school-classes:" + schoolCode;
+      let classList = [];
+      try {
+        const rawClasses = await authStorageGet(classesKey, true);
+        if (rawClasses) classList = JSON.parse(rawClasses);
+      } catch (e) {
+        classList = [];
+      }
+      if (!classList.includes(form.className.trim())) {
+        classList.push(form.className.trim());
+        await authStorageSet(classesKey, JSON.stringify(classList), true);
+      }
+
+      // ۴) ثبتِ کدِ مدرسه در فهرستِ سراسریِ «مدارسِ ثبت‌نام‌شده» — همان فهرستی که آمارِ مدیرِ سامانه از آن می‌خواند.
+      try {
+        let regSchools = [];
+        const rawReg = await authStorageGet("all-registered-schools", true);
+        if (rawReg) regSchools = JSON.parse(rawReg);
+        if (!regSchools.includes(schoolCode)) {
+          regSchools.push(schoolCode);
+          await authStorageSet("all-registered-schools", JSON.stringify(regSchools), true);
+        }
+      } catch (e) {
+        // تلاش‌محور
+      }
+
+      // ۵) کدِ ورود یک‌بارمصرف، دقیقاً مثلِ دانش‌آموزانِ ایرانی
+      const phone = form.studentPhone.trim();
+      const loginCode = String(Math.floor(100000 + Math.random() * 900000));
+      await authStorageSet("login-code:" + phone, loginCode, true);
+      await saveLoginProfile(phone, "student", {
+        firstName: form.firstName.trim(),
+        lastName: form.lastName.trim(),
+        studentCode,
+        schoolCode,
+        className: form.className.trim(),
+        grade: form.grade,
+        fieldOfStudy: entry.fieldOfStudy,
+        gender: form.gender,
+        isForeignStudent: true,
+        country: countryLabel,
+      });
+
+      setSubmitted({ studentCode, loginCode, phone });
+    } catch (e) {
+      console.error("ForeignStudentRegistration submit failed:", e);
+      setValidationError("ذخیره‌ی ثبت‌نام ناموفق بود. لطفاً دوباره تلاش کنید.");
+    }
+    setSubmitting(false);
+  };
 
   const Field = ({ label, required, children }) => (
     <div className="pfr-field">
@@ -5858,11 +6041,11 @@ function ForeignStudentRegistration({ language, onBack }) {
             </div>
 
             <div className="pfr-row">
-              <Field label={t.schoolName}>
+              <Field label={t.schoolName} required>
                 <input className="pfr-input" name="schoolName" value={form.schoolName} onChange={changeHandler} />
               </Field>
 
-              <Field label={t.schoolCode}>
+              <Field label={t.schoolCode} required>
                 <input className="pfr-input pfr-w-code" name="schoolCode" value={form.schoolCode} maxLength={8} onChange={changeHandler} placeholder={t.phSchoolCode} inputMode="numeric" />
               </Field>
             </div>
@@ -5879,10 +6062,96 @@ function ForeignStudentRegistration({ language, onBack }) {
             </div>
           </div>
 
-          <button type="button" className="pfr-submit">
-            {t.submit}
-            <span style={{ fontSize: 20 }}>{t.dir === "rtl" ? "←" : "→"}</span>
-          </button>
+          <div className="pfr-section">
+            <div className="pfr-section-head">
+              <div className="pfr-section-badge">۶</div>
+              <div className="pfr-section-title">{t.sec6}</div>
+              <div className="pfr-section-line" />
+            </div>
+
+            <div className="pfr-row">
+              <Field label={t.educationLevel} required>
+                <select
+                  className="pfr-select"
+                  name="educationLevel"
+                  value={form.educationLevel}
+                  onChange={(e) => setForm({ ...form, educationLevel: e.target.value, grade: "", fieldOfStudy: "" })}
+                >
+                  <option value="">{t.choose}</option>
+                  {educationLevels.map((item) => (
+                    <option key={item}>{item}</option>
+                  ))}
+                </select>
+              </Field>
+
+              <Field label={t.grade} required>
+                <select
+                  className="pfr-select"
+                  name="grade"
+                  value={form.grade}
+                  onChange={(e) => setForm({ ...form, grade: e.target.value, fieldOfStudy: "" })}
+                  disabled={!form.educationLevel}
+                >
+                  <option value="">{form.educationLevel ? t.choose : "—"}</option>
+                  {(gradesByLevel[form.educationLevel] || []).map((item) => (
+                    <option key={item}>{item}</option>
+                  ))}
+                </select>
+              </Field>
+            </div>
+
+            {form.educationLevel === "متوسطه دوم" && (
+              <div className="pfr-row">
+                <Field label={t.fieldOfStudy} required>
+                  <select className="pfr-select" name="fieldOfStudy" value={form.fieldOfStudy} onChange={changeHandler}>
+                    <option value="">{t.choose}</option>
+                    {theoreticalFields.map((item) => (
+                      <option key={item}>{item}</option>
+                    ))}
+                  </select>
+                </Field>
+              </div>
+            )}
+
+            <div className="pfr-row">
+              <Field label={t.className} required>
+                <input className="pfr-input" name="className" value={form.className} onChange={changeHandler} placeholder={t.phClassName} />
+              </Field>
+            </div>
+          </div>
+
+          {validationError && (
+            <div style={{ background: "#fdecec", border: "1px solid #f3b9b9", color: "#c0392b", borderRadius: 10, padding: "12px 14px", fontSize: 12.5, lineHeight: 1.9, marginBottom: 16, whiteSpace: "pre-line" }}>
+              {validationError}
+            </div>
+          )}
+
+          {submitted ? (
+            <div style={{ background: "#eef6f0", border: "1px solid #bfe0c8", borderRadius: 14, padding: 18, textAlign: "center" }}>
+              <div style={{ color: "#2c6e3f", fontWeight: 800, fontSize: 15, marginBottom: 10 }}>✅ {t.submitSuccessTitle}</div>
+              <div style={{ fontSize: 12.5, color: "#1c2540", marginBottom: 4 }}>{t.studentCodeLabel}: <b style={{ direction: "ltr", display: "inline-block" }}>{submitted.studentCode}</b></div>
+              <button
+                type="button"
+                onClick={() => setTestModeReveal((v) => !v)}
+                style={{ marginTop: 8, background: "none", border: "1px solid #9fcfa9", color: "#2c6e3f", borderRadius: 8, padding: "6px 12px", fontSize: 11.5, cursor: "pointer" }}
+              >
+                {testModeReveal ? "پنهان کردن رمز ورود (فقط حالت آزمایشی)" : "نمایش رمز ورود (فقط حالت آزمایشی — در نسخه‌ی واقعی با پیامک ارسال می‌شود)"}
+              </button>
+              {testModeReveal && (
+                <div style={{ marginTop: 8, fontSize: 13, color: "#1c2540" }}>{t.loginCodeLabel}: <b style={{ direction: "ltr", display: "inline-block" }}>{submitted.loginCode}</b></div>
+              )}
+              <div style={{ marginTop: 14 }}>
+                <button type="button" className="pfr-back" onClick={onBack} style={{ background: "none", border: "1px solid #e0a83e", borderRadius: 10, padding: "8px 16px", color: "#a8741f" }}>
+                  {t.back}
+                </button>
+              </div>
+            </div>
+          ) : (
+            <button type="button" className="pfr-submit" disabled={submitting} onClick={handleSubmit}>
+              {submitting ? "…" : t.submit}
+              <span style={{ fontSize: 20 }}>{t.dir === "rtl" ? "←" : "→"}</span>
+            </button>
+          )}
         </div>
       </div>
     </div>
@@ -13980,7 +14249,7 @@ function SystemAdminRegistrationStats({ onBack }) {
                 province: info.province || "نامشخص",
                 county: info.county || "نامشخص",
                 bakhsh: info.bakhsh || info.district || "نامشخص",
-                country: "ایران",
+                country: s.isForeignStudent ? (s.country || "نامشخص") : "ایران",
                 className: cls,
                 grade: s.grade || "نامشخص",
                 fieldOfStudy: s.fieldOfStudy || "—",
@@ -14105,10 +14374,11 @@ function SystemAdminRegistrationStats({ onBack }) {
 
             <p className="prs-note">
               ⚠️ این آمار فقط دانش‌آموزان را دربرمی‌گیرد (نه معلم/مدیر/سایر نقش‌ها)، چون «کلاس»، «رشته» و
-              «پایه» ویژه‌ی دانش‌آموزان است. ستون «کشور» فعلاً همیشه «ایران» نشان می‌دهد، چون فرایندِ ثبت‌نامِ
-              دانش‌آموزانِ غیرایرانی هنوز داده‌اش را ذخیره نمی‌کند — در صورتِ نیاز، این بخش قابلِ تکمیل است.
-              دانش‌آموزانی که پیش از افزودنِ این آمار ثبت‌نام کرده‌اند و هنوز شهریه پرداخت نکرده‌اند، ممکن است
-              در این فهرست نباشند، چون پیش از این فقط لحظه‌ی پرداخت ثبت می‌شد.
+              «پایه» ویژه‌ی دانش‌آموزان است. ستون «کشور» برایِ دانش‌آموزانِ ایرانی همیشه «ایران» است؛
+              برایِ دانش‌آموزانِ غیرایرانی، از کشوری که در فرمِ ثبت‌نامِ اتباع وارد شده خوانده می‌شود (این
+              فرم اکنون تکمیل و داده‌اش ذخیره می‌شود). دانش‌آموزانی که پیش از افزودنِ این آمار ثبت‌نام
+              کرده‌اند و هنوز شهریه پرداخت نکرده‌اند، ممکن است در این فهرست نباشند، چون پیش از این فقط
+              لحظه‌ی پرداخت ثبت می‌شد.
             </p>
           </>
         )}

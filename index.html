@@ -5316,7 +5316,9 @@ function ForeignStudentRegistration({ language, onBack }) {
     bloodGroup: "",
     educationLevel: "",
     grade: "",
+    branch: "",
     fieldOfStudy: "",
+    customFieldOfStudy: "",
     className: "",
   });
 
@@ -5336,7 +5338,33 @@ function ForeignStudentRegistration({ language, onBack }) {
     "متوسطه اول": ["هفتم", "هشتم", "نهم"],
     "متوسطه دوم": ["دهم", "یازدهم", "دوازدهم"],
   };
-  const theoreticalFields = ["علوم تجربی", "ریاضی و فیزیک", "انسانی", "فرهنگ و معارف اسلامی"];
+  const branches = ["نظری", "فنی و حرفه‌ای", "کار و دانش"];
+  const theoreticalFields = [
+    "علوم تجربی", "ریاضی و فیزیک", "انسانی", "فرهنگ و معارف اسلامی",
+    "سایر / وارد کردن دستی",
+  ];
+  const technicalFields = [
+    "طراحی و دوخت", "نقاشی", "فتوگرافیک", "سینما", "نمایش",
+    "معماری داخلی", "گرافیک", "صنایع دستی", "نواختن سازهای جهانی و ایرانی",
+    "برق و رایانه", "مکانیک", "صنایع چوب و مبلمان", "صنایع فلزی",
+    "متالورژی", "صنایع شیمیایی", "صنایع نساجی", "معدن", "سرامیک",
+    "مکاترونیک", "چاپ", "ناوبری و صنایع دریایی", "سایر / وارد کردن دستی",
+  ];
+  const karDaneshFields = [
+    "برق ساختمان و برق صنعتی", "الکترونیک صنعتی", "نقشه کشی ساختمان",
+    "تعمیر لوازم خانگی برقی", "کارهای عمومی و فلزی ساختمان", "تابلوسازی",
+    "عکاسی", "معماری داخلی", "تصویرسازی و جلوه‌های رایانه‌ای",
+    "تولید محتوا و انیمیشن", "گرافیک و طراحی لباس", "سازسازی",
+    "حسابداری مالی و امور اداری", "هتلداری", "ایمنی و آتش‌نشانی",
+    "مددیاری سالمندان و افراد با نیازهای ویژه", "هوانوردی",
+    "تولید نهال، جنگل‌کاری و زراعت غلات", "سایر / وارد کردن دستی",
+  ];
+  const getFieldsByBranch = () => {
+    if (form.branch === "نظری") return theoreticalFields;
+    if (form.branch === "فنی و حرفه‌ای") return technicalFields;
+    if (form.branch === "کار و دانش") return karDaneshFields;
+    return [];
+  };
 
   const [validationError, setValidationError] = useState("");
   const [submitting, setSubmitting] = useState(false);
@@ -5375,7 +5403,9 @@ function ForeignStudentRegistration({ language, onBack }) {
     if (!form.bloodGroup) missing.push(t.bloodGroup);
     if (!form.educationLevel) missing.push(t.educationLevel);
     if (!form.grade) missing.push(t.grade);
+    if (form.educationLevel === "متوسطه دوم" && !form.branch) missing.push("شاخه");
     if (form.educationLevel === "متوسطه دوم" && !form.fieldOfStudy) missing.push(t.fieldOfStudy);
+    if (form.fieldOfStudy === "سایر / وارد کردن دستی" && !form.customFieldOfStudy.trim()) missing.push("نام رشته");
     if (!form.className.trim()) missing.push(t.className);
 
     if (missing.length > 0) {
@@ -5430,7 +5460,10 @@ function ForeignStudentRegistration({ language, onBack }) {
         nationalCode: (form.foreignId.trim() || form.passportNumber.trim()),
         gender: form.gender,
         grade: form.grade,
-        fieldOfStudy: form.educationLevel === "متوسطه دوم" ? form.fieldOfStudy : "—",
+        fieldOfStudy:
+          form.educationLevel === "متوسطه دوم"
+            ? (form.fieldOfStudy === "سایر / وارد کردن دستی" ? form.customFieldOfStudy.trim() : form.fieldOfStudy)
+            : "—",
         isForeignStudent: true,
         country: countryLabel || "نامشخص",
       };
@@ -6101,16 +6134,56 @@ function ForeignStudentRegistration({ language, onBack }) {
             </div>
 
             {form.educationLevel === "متوسطه دوم" && (
-              <div className="pfr-row">
-                <Field label={t.fieldOfStudy} required>
-                  <select className="pfr-select" name="fieldOfStudy" value={form.fieldOfStudy} onChange={changeHandler}>
-                    <option value="">{t.choose}</option>
-                    {theoreticalFields.map((item) => (
-                      <option key={item}>{item}</option>
-                    ))}
-                  </select>
-                </Field>
-              </div>
+              <>
+                <div className="pfr-row">
+                  <Field label="شاخه" required>
+                    <select
+                      className="pfr-select"
+                      value={form.branch}
+                      onChange={(e) => setForm({ ...form, branch: e.target.value, fieldOfStudy: "", customFieldOfStudy: "" })}
+                    >
+                      <option value="">{t.choose}</option>
+                      {branches.map((item) => (
+                        <option key={item}>{item}</option>
+                      ))}
+                    </select>
+                  </Field>
+
+                  <Field label={t.fieldOfStudy} required>
+                    <select
+                      className="pfr-select"
+                      value={form.fieldOfStudy}
+                      onChange={(e) => {
+                        const value = e.target.value;
+                        setForm((prev) => ({
+                          ...prev,
+                          fieldOfStudy: value,
+                          customFieldOfStudy: value === "سایر / وارد کردن دستی" ? prev.customFieldOfStudy : "",
+                        }));
+                      }}
+                      disabled={!form.branch}
+                    >
+                      <option value="">{form.branch ? t.choose : "—"}</option>
+                      {getFieldsByBranch().map((item) => (
+                        <option key={item}>{item}</option>
+                      ))}
+                    </select>
+                  </Field>
+                </div>
+
+                {form.fieldOfStudy === "سایر / وارد کردن دستی" && (
+                  <div className="pfr-row">
+                    <Field label="نام رشته" required>
+                      <input
+                        className="pfr-input"
+                        value={form.customFieldOfStudy}
+                        onChange={(e) => setForm({ ...form, customFieldOfStudy: e.target.value })}
+                        placeholder="نام رشته را وارد کنید"
+                      />
+                    </Field>
+                  </div>
+                )}
+              </>
             )}
 
             <div className="pfr-row">

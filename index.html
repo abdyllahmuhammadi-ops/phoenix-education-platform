@@ -17251,6 +17251,10 @@ function TeacherQuestionBankStep({ onBack, prefillSchoolCode, teacherSchools, te
   // طبق اصل سامانه، نمره‌ی کل آزمون پیش‌فرض ۲۰ است؛ معلم هر وقت لازم بداند می‌تواند آن را تغییر دهد
   const [genTotalScore, setGenTotalScore] = useState(PQB_DEFAULT_EXAM_TOTAL_SCORE);
   const [generatedSet, setGeneratedSet] = useState(null);
+  // اطلاعاتِ تکمیلیِ برگه‌ی چاپیِ امتحان — اختیاری، فقط برای نوشتن روی سربرگِ چاپ‌شده، ذخیره نمی‌شوند
+  const [examClassName, setExamClassName] = useState("");
+  const [examTeacherName, setExamTeacherName] = useState("");
+  const [examDuration, setExamDuration] = useState("");
 
   const bankKey = () => "question-bank:" + schoolCode + ":" + skey(subject) + ":" + grade;
 
@@ -17437,6 +17441,28 @@ function TeacherQuestionBankStep({ onBack, prefillSchoolCode, teacherSchools, te
     setGeneratedSet(pqbDistributeScores(picked, genTotalScore));
   };
 
+  // چاپِ برگه‌ی امتحان آماده برای توزیع در کلاس — فقط همین بلوک (سربرگ+سؤالات) چاپ می‌شود،
+  // نه کلِ صفحه و نه بانکِ کاملِ سؤالات؛ بعد از چاپ/لغو، حالتِ نمایشِ عادیِ صفحه برمی‌گردد.
+  const handlePrintExamPaper = () => {
+    document.body.classList.add("pqb-print-exam-mode");
+    const cleanup = () => {
+      document.body.classList.remove("pqb-print-exam-mode");
+      window.removeEventListener("afterprint", cleanup);
+    };
+    window.addEventListener("afterprint", cleanup);
+    window.print();
+  };
+
+  const handlePrintTeacherBank = () => {
+    document.body.classList.add("pqb-print-bank-mode");
+    const cleanup = () => {
+      document.body.classList.remove("pqb-print-bank-mode");
+      window.removeEventListener("afterprint", cleanup);
+    };
+    window.addEventListener("afterprint", cleanup);
+    window.print();
+  };
+
   const schoolOptions = teacherSchools && teacherSchools.length > 0 ? teacherSchools : [{ code: prefillSchoolCode || "", name: "" }];
 
   return (
@@ -17481,9 +17507,14 @@ function TeacherQuestionBankStep({ onBack, prefillSchoolCode, teacherSchools, te
         .pqb-export-row { display: flex; gap: 10px; margin-bottom: 14px; }
         .pqb-export-btn { flex: 1; height: 42px; border-radius: 10px; border: 1px solid #e0a83e; background: transparent; color: #a8741f; font-weight: 700; font-size: 12.5px; cursor: pointer; }
         @media print {
-          body * { visibility: hidden; }
-          #pqb-teacher-printable-questions, #pqb-teacher-printable-questions * { visibility: visible; }
-          #pqb-teacher-printable-questions { position: absolute; top: 0; left: 0; width: 100%; }
+          body.pqb-print-bank-mode * { visibility: hidden; }
+          body.pqb-print-bank-mode #pqb-teacher-printable-questions, body.pqb-print-bank-mode #pqb-teacher-printable-questions * { visibility: visible; }
+          body.pqb-print-bank-mode #pqb-teacher-printable-questions { position: absolute; top: 0; left: 0; width: 100%; }
+
+          body.pqb-print-exam-mode * { visibility: hidden; }
+          body.pqb-print-exam-mode #pqb-exam-printable-block, body.pqb-print-exam-mode #pqb-exam-printable-block * { visibility: visible; }
+          body.pqb-print-exam-mode #pqb-exam-printable-block { position: absolute; top: 0; left: 0; width: 100%; border: none; }
+          body.pqb-print-exam-mode .pqb-no-print { display: none !important; }
         }
         .pqb-question-item { background: #fff; border: 1px solid rgba(28,37,64,0.08); border-radius: 12px; padding: 12px 14px; }
         .pqb-question-meta { display: flex; gap: 8px; flex-wrap: wrap; margin-bottom: 6px; }
@@ -17505,6 +17536,11 @@ function TeacherQuestionBankStep({ onBack, prefillSchoolCode, teacherSchools, te
         .pqb-exam-school-code { color: #6b7399; font-size: 11px; margin-top: 2px; direction: ltr; text-align: right; }
         .pqb-exam-brand { color: #2c6e3f; font-size: 10.5px; font-weight: 700; margin-top: 2px; }
         .pqb-exam-meta-row { display: flex; gap: 14px; flex-wrap: wrap; color: #4a7a5c; font-size: 11.5px; font-weight: 700; }
+        .pqb-exam-student-row { display: flex; gap: 20px; flex-wrap: wrap; font-size: 12.5px; font-weight: 700; color: #1c2540; margin: 12px 0; padding: 10px 0; border-top: 1px dashed rgba(28,37,64,0.2); border-bottom: 1px dashed rgba(28,37,64,0.2); }
+        .pqb-exam-answer-space { height: 10px; }
+        .pqb-exam-answer-space-long { height: 60px; border-bottom: 1px dotted rgba(28,37,64,0.25); margin-bottom: 4px; }
+        .pqb-exam-footer-row { display: flex; justify-content: space-between; gap: 20px; flex-wrap: wrap; font-size: 12.5px; font-weight: 700; color: #1c2540; margin-top: 18px; padding-top: 12px; border-top: 2px solid rgba(44,110,63,0.25); }
+        .pqb-w-class { width: 140px; }
         .pqb-upload-hint { color: #6b7399; font-size: 12px; line-height: 1.9; margin: 0 0 12px; }
         .pqb-upload-error { color: #c0392b; font-size: 12.5px; font-weight: 700; margin: 8px 0 0; }
         .pqb-file-input { font-size: 12.5px; color: #6b7399; }
@@ -17836,12 +17872,37 @@ function TeacherQuestionBankStep({ onBack, prefillSchoolCode, teacherSchools, te
               <p className="pqb-upload-hint" style={{ marginTop: -4 }}>
                 طبق استاندارد سامانه، نمره‌ی کل هر آزمون پیش‌فرض ۲۰ است و رهیار آن را بین سؤالات تقسیم می‌کند؛ هر وقت لازم بود همین‌جا عوضش کنید.
               </p>
+              <p className="pqb-upload-hint" style={{ marginTop: 4, fontWeight: 700 }}>
+                اطلاعاتِ زیر فقط برایِ نوشته‌شدن رویِ سربرگِ برگه‌ی چاپی است (ذخیره نمی‌شود) — اختیاری:
+              </p>
+              <div className="pqb-row">
+                <div className="pqb-field">
+                  <label className="pqb-label">نام کلاس (برایِ سربرگ)</label>
+                  <input className="pqb-input pqb-w-class" placeholder="مثلاً 7/1" value={examClassName} onChange={(e) => setExamClassName(e.target.value)} />
+                </div>
+                <div className="pqb-field">
+                  <label className="pqb-label">نام دبیر (اختیاری)</label>
+                  <input className="pqb-input pqb-w-class" placeholder="مثلاً خانم محمدی" value={examTeacherName} onChange={(e) => setExamTeacherName(e.target.value)} />
+                </div>
+                <div className="pqb-field">
+                  <label className="pqb-label">مدتِ زمانِ امتحان (دقیقه)</label>
+                  <input className="pqb-input" style={{ width: 110 }} placeholder="مثلاً ۴۵" value={examDuration} onChange={(e) => setExamDuration(e.target.value)} />
+                </div>
+              </div>
               <button type="button" className="pqb-submit-btn" onClick={handleGenerate}>
                 🎲 ساخت آزمون تصادفی
               </button>
 
+              {generatedSet && generatedSet.length > 0 && (
+                <div className="pqb-export-row pqb-no-print" style={{ marginTop: 14 }}>
+                  <button type="button" className="pqb-export-btn" onClick={handlePrintExamPaper}>
+                    🖨️ چاپِ برگه‌ی امتحان (آماده برایِ پخش در کلاس)
+                  </button>
+                </div>
+              )}
+
               {generatedSet && (
-                <div className="pqb-generated-box">
+                <div className="pqb-generated-box" id="pqb-exam-printable-block">
                   {generatedSet.length === 0 ? (
                     <p className="pqb-empty">سؤالی با این فیلتر در بانک سؤال یافت نشد.</p>
                   ) : (
@@ -17861,23 +17922,37 @@ function TeacherQuestionBankStep({ onBack, prefillSchoolCode, teacherSchools, te
                         <span>پایه: {grade}</span>
                         <span>نوع آزمون: {genExamType}</span>
                         {genChapter && <span>فصل: {genChapter}</span>}
+                        {examClassName.trim() && <span>کلاس: {examClassName.trim()}</span>}
+                        {examTeacherName.trim() && <span>دبیر: {examTeacherName.trim()}</span>}
+                        {examDuration.trim() && <span>مدت: {examDuration.trim()} دقیقه</span>}
                         <span>تاریخ: {new Date().toLocaleDateString("fa-IR")}</span>
+                      </div>
+                      <div className="pqb-exam-student-row">
+                        <span>نام و نام‌خانوادگیِ دانش‌آموز: ........................................</span>
+                        <span>شماره/کدِ دانش‌آموزی: .......................</span>
                       </div>
                       <p style={{ fontWeight: 800, color: "#2c6e3f", margin: "12px 0 8px" }}>
                         {generatedSet.length} سؤال — نمره‌ی کل: از {genTotalScore}
                       </p>
                       {generatedSet.some((q) => q.aiGenerated) && (
-                        <p className="pqb-upload-hint" style={{ color: "#8a5a12", fontWeight: 700 }}>
+                        <p className="pqb-upload-hint pqb-no-print" style={{ color: "#8a5a12", fontWeight: 700 }}>
                           🤖 این آزمون شامل سؤالاتِ تولید خودکار (بازبینی‌نشده) هم هست — پیش از چاپ یا استفاده‌ی رسمی، آن‌ها را مرور کنید.
                         </p>
                       )}
                       {generatedSet.map((q, idx) => (
                         <div key={q.id} className="pqb-generated-item">
-                          <b>{idx + 1}.</b> {q.aiGenerated && <span className="pqb-tag pqb-tag-ai" style={{ marginLeft: 6 }}>🤖</span>} {q.text}
-                          {q.sourceGrade && <span style={{ color: "#a8741f", fontSize: 11, marginRight: 6 }}>(پایه‌ی {q.sourceGrade})</span>}
-                          <span style={{ color: "#2c6e3f", fontWeight: 700, fontSize: 12, marginRight: 8 }}>({q.score} نمره)</span>
+                          <div>
+                            <b>{idx + 1}.</b> {q.aiGenerated && <span className="pqb-tag pqb-tag-ai pqb-no-print" style={{ marginLeft: 6 }}>🤖</span>} {q.text}
+                            {q.sourceGrade && <span style={{ color: "#a8741f", fontSize: 11, marginRight: 6 }}>(پایه‌ی {q.sourceGrade})</span>}
+                            <span style={{ color: "#2c6e3f", fontWeight: 700, fontSize: 12, marginRight: 8 }}>({q.score} نمره)</span>
+                          </div>
+                          <div className={q.type === "تشریحی" ? "pqb-exam-answer-space pqb-exam-answer-space-long" : "pqb-exam-answer-space"} />
                         </div>
                       ))}
+                      <div className="pqb-exam-footer-row">
+                        <span>جمعِ نمره: .............. از {genTotalScore}</span>
+                        <span>امضایِ مصحح: ....................</span>
+                      </div>
                     </>
                   )}
                 </div>
@@ -17888,7 +17963,7 @@ function TeacherQuestionBankStep({ onBack, prefillSchoolCode, teacherSchools, te
               <h2 className="pqb-section-title">📚 سؤالات ثبت‌شده ({questions.length})</h2>
               {questions.length > 0 && (
                 <div className="pqb-export-row">
-                  <button type="button" className="pqb-export-btn" onClick={() => window.print()}>
+                  <button type="button" className="pqb-export-btn" onClick={handlePrintTeacherBank}>
                     🖨️ چاپ سؤالات
                   </button>
                   <button type="button" className="pqb-export-btn" onClick={handleDownloadTeacherQuestions}>

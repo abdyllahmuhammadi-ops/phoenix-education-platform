@@ -25206,17 +25206,24 @@ function rahyarBuildParentDebrief({ subject, grade, chapter, segments }) {
 }
 
 // به‌جای اینکه خودِ هوش‌مصنوعیِ محتواساز یک لینکِ ویدئوی خاص را حدس بزند (که می‌تواند ساختگی/خراب باشد)،
-// فقط یک عبارتِ جست‌وجوی دقیق می‌سازد و ما آن را به لینکِ جست‌وجوی واقعی در پلتفرم‌های رایگانِ معتبر
-// (آپارات به‌عنوانِ اولویتِ داخلی، یوتیوب به‌عنوانِ گزینه‌ی تکمیلی) تبدیل می‌کنیم — همیشه یک نتیجه‌ی
-// واقعی و قابل‌کلیک، هرگز یک لینکِ شکسته یا ساختگی.
+// فقط یک عبارتِ جست‌وجوی دقیق می‌سازد و ما آن را به چندین لینکِ جست‌وجوی واقعی تبدیل می‌کنیم — تا به
+// یک یا دو پلتفرمِ خاص (مثلاً فقط آپارات یا فقط یوتیوب) محدود نشویم: اول یک جست‌وجوی ویدئوییِ سراسری
+// (که خودش همه‌ی پلتفرم‌ها از جمله آپارات، یوتیوب، نماشا و... را هم‌زمان نشان می‌دهد)، بعد یک جست‌وجوی
+// مشخصاً در «رشد» (سامانه‌ی رسمیِ محتوای آموزشیِ وزارتِ آموزش‌وپرورش ایران، معتبرترین منبعِ ممکن)، و در
+// آخر دو میانبرِ مستقیم به آپارات و یوتیوب برای کسی که همان دو را ترجیح می‌دهد. همیشه نتیجه‌ی واقعی و
+// قابل‌کلیک، هرگز یک لینکِ شکسته یا ساختگی.
 function rahyarVideoSearchLinks(query) {
   const q = (query || "").trim();
   if (!q) return null;
   const encoded = encodeURIComponent(q);
   return {
     query: q,
-    aparat: "https://www.aparat.com/search/" + encoded,
-    youtube: "https://www.youtube.com/results?search_query=" + encoded,
+    links: [
+      { label: "🔎 جست‌وجوی ویدئو در همه‌ی پلتفرم‌ها (گوگل)", url: "https://www.google.com/search?tbm=vid&q=" + encoded },
+      { label: "🏫 جست‌وجو در «رشد» (رسمیِ آموزش‌وپرورش)", url: "https://www.google.com/search?q=" + encodeURIComponent("site:roshd.ir " + q) },
+      { label: "آپارات", url: "https://www.aparat.com/search/" + encoded },
+      { label: "یوتیوب", url: "https://www.youtube.com/results?search_query=" + encoded },
+    ],
   };
 }
 
@@ -25885,8 +25892,9 @@ function RahyarTeachingLibraryView({ onBack, grade, studentCode, schoolCode }) {
                   <div className="rtl-video-title">🎬 ویدئوی مستند/تکمیلی (اختیاری — لینکِ جست‌وجوی بیرونی)</div>
                   <div className="rtl-video-desc">اگر دوست داری فیلمِ واقعیِ «{vlinks.query}» را هم ببینی:</div>
                   <div className="rtl-video-links">
-                    <a className="rtl-video-link" href={vlinks.aparat} target="_blank" rel="noopener noreferrer">جست‌وجو در آپارات</a>
-                    <a className="rtl-video-link" href={vlinks.youtube} target="_blank" rel="noopener noreferrer">جست‌وجو در یوتیوب</a>
+                    {vlinks.links.map((lnk, li) => (
+                      <a key={li} className="rtl-video-link" href={lnk.url} target="_blank" rel="noopener noreferrer">{lnk.label}</a>
+                    ))}
                   </div>
                   <div className="rtl-video-note">⚠️ این لینک‌ها به یک جست‌وجوی بیرونی می‌روند؛ بهتر است همراه با یک بزرگ‌تر (والد یا معلم) دیده شود.</div>
                 </div>
@@ -26367,8 +26375,9 @@ function RahyarDynamicLabView({ onBack, grade, studentCode, schoolCode }) {
                   <div className="rtl-video-title">🎬 ویدئوی مستند/تکمیلی (اختیاری — لینکِ جست‌وجوی بیرونی)</div>
                   <div className="rtl-video-desc">اگر دوست داری فیلمِ واقعیِ «{vlinks.query}» را هم ببینی:</div>
                   <div className="rtl-video-links">
-                    <a className="rtl-video-link" href={vlinks.aparat} target="_blank" rel="noopener noreferrer">جست‌وجو در آپارات</a>
-                    <a className="rtl-video-link" href={vlinks.youtube} target="_blank" rel="noopener noreferrer">جست‌وجو در یوتیوب</a>
+                    {vlinks.links.map((lnk, li) => (
+                      <a key={li} className="rtl-video-link" href={lnk.url} target="_blank" rel="noopener noreferrer">{lnk.label}</a>
+                    ))}
                   </div>
                   <div className="rtl-video-note">⚠️ این لینک‌ها به یک جست‌وجوی بیرونی می‌روند؛ بهتر است همراه با یک بزرگ‌تر (والد یا معلم) دیده شود.</div>
                 </div>
@@ -26799,8 +26808,9 @@ function RahyarHomeworkHelperView({ onBack, grade, studentCode, schoolCode }) {
                   <div className="rtl-video-title">🎬 ویدئوی مستند/تکمیلی (اختیاری — لینکِ جست‌وجوی بیرونی)</div>
                   <div className="rtl-video-desc">اگر دوست داری فیلمِ واقعیِ «{vlinks.query}» را هم ببینی:</div>
                   <div className="rtl-video-links">
-                    <a className="rtl-video-link" href={vlinks.aparat} target="_blank" rel="noopener noreferrer">جست‌وجو در آپارات</a>
-                    <a className="rtl-video-link" href={vlinks.youtube} target="_blank" rel="noopener noreferrer">جست‌وجو در یوتیوب</a>
+                    {vlinks.links.map((lnk, li) => (
+                      <a key={li} className="rtl-video-link" href={lnk.url} target="_blank" rel="noopener noreferrer">{lnk.label}</a>
+                    ))}
                   </div>
                   <div className="rtl-video-note">⚠️ این لینک‌ها به یک جست‌وجوی بیرونی می‌روند؛ بهتر است همراه با یک بزرگ‌تر (والد یا معلم) دیده شود.</div>
                 </div>

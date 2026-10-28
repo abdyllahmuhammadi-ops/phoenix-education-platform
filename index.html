@@ -17255,6 +17255,11 @@ function TeacherQuestionBankStep({ onBack, prefillSchoolCode, teacherSchools, te
   const [examClassName, setExamClassName] = useState("");
   const [examTeacherName, setExamTeacherName] = useState("");
   const [examDuration, setExamDuration] = useState("");
+  // سربرگِ رسمیِ وزارتی — ادارهٔ کل/شهرستان در سامانه ذخیره نمی‌شود (هیچ‌جای ثبت‌نام این دو را نمی‌پرسد)،
+  // پس معلم همین‌جا دستی می‌نویسد؛ تعدادِ صفحات هم چون چاپِ واقعی را سامانه کنترل نمی‌کند، دستی است
+  const [examProvinceOffice, setExamProvinceOffice] = useState("");
+  const [examCountyOffice, setExamCountyOffice] = useState("");
+  const [examPagesCount, setExamPagesCount] = useState("۱");
 
   const bankKey = () => "question-bank:" + schoolCode + ":" + skey(subject) + ":" + grade;
 
@@ -17527,16 +17532,32 @@ function TeacherQuestionBankStep({ onBack, prefillSchoolCode, teacherSchools, te
         .pqb-technique-box { background: #fff7e6; border: 1px solid #f0d9a0; border-radius: 10px; padding: 10px 12px; margin-top: 8px; color: #8a5a10; font-size: 12.5px; line-height: 1.9; }
         .pqb-reveal-btn { background: none; border: 1px solid #e0a83e; color: #a8741f; font-size: 11.5px; font-weight: 700; cursor: pointer; margin-top: 10px; padding: 6px 12px; border-radius: 999px; }
         .pqb-empty { color: #8a8060; font-size: 13px; text-align: center; padding: 20px 0; }
-        .pqb-generated-box { background: #eef6f0; border: 1px solid #bfe0c8; border-radius: 14px; padding: 16px; margin-top: 14px; }
+        .pqb-generated-box { background: #eef6f0; border: 1px solid #bfe0c8; border-radius: 14px; padding: 16px; margin-top: 14px; position: relative; overflow: hidden; }
         .pqb-generated-item { padding: 10px 0; border-bottom: 1px solid rgba(28,37,64,0.06); }
         .pqb-generated-item:last-child { border-bottom: none; }
+        .pqb-exam-content { position: relative; z-index: 1; }
+        .pqb-exam-watermark {
+          position: absolute; inset: 0; z-index: 0; display: flex; align-items: center; justify-content: center;
+          font-size: 76px; font-weight: 800; color: #c8382b; opacity: 0.09; transform: rotate(-28deg);
+          pointer-events: none; white-space: nowrap; letter-spacing: 4px;
+          print-color-adjust: exact; -webkit-print-color-adjust: exact;
+        }
+        .pqb-no-select { user-select: none; }
+        .pqb-exam-ministry-header { text-align: center; margin-bottom: 10px; }
+        .pqb-exam-ministry-emblem { font-size: 26px; margin-bottom: 2px; }
+        .pqb-exam-ministry-title { font-weight: 800; font-size: 14.5px; color: #1c2540; }
+        .pqb-exam-ministry-line { font-size: 11.5px; color: #4a4a6a; margin-top: 2px; }
         .pqb-exam-letterhead { display: flex; align-items: center; gap: 12px; padding-bottom: 12px; margin-bottom: 12px; border-bottom: 2px solid rgba(44,110,63,0.25); }
         .pqb-exam-logo { width: 46px; height: auto; flex-shrink: 0; }
         .pqb-exam-school-name { font-weight: 800; color: #1c2540; font-size: 15px; }
-        .pqb-exam-school-code { color: #6b7399; font-size: 11px; margin-top: 2px; direction: ltr; text-align: right; }
+        .pqb-exam-school-code { color: #6b7399; font-size: 11px; font-weight: 600; }
         .pqb-exam-brand { color: #2c6e3f; font-size: 10.5px; font-weight: 700; margin-top: 2px; }
+        .pqb-exam-student-grid {
+          display: grid; grid-template-columns: repeat(2, 1fr); gap: 8px 16px; font-size: 12px; font-weight: 700;
+          color: #1c2540; margin-bottom: 12px; padding: 10px 12px; background: rgba(255,255,255,0.55);
+          border: 1px solid rgba(28,37,64,0.15); border-radius: 10px;
+        }
         .pqb-exam-meta-row { display: flex; gap: 14px; flex-wrap: wrap; color: #4a7a5c; font-size: 11.5px; font-weight: 700; }
-        .pqb-exam-student-row { display: flex; gap: 20px; flex-wrap: wrap; font-size: 12.5px; font-weight: 700; color: #1c2540; margin: 12px 0; padding: 10px 0; border-top: 1px dashed rgba(28,37,64,0.2); border-bottom: 1px dashed rgba(28,37,64,0.2); }
         .pqb-exam-answer-space { height: 10px; }
         .pqb-exam-answer-space-long { height: 60px; border-bottom: 1px dotted rgba(28,37,64,0.25); margin-bottom: 4px; }
         .pqb-exam-footer-row { display: flex; justify-content: space-between; gap: 20px; flex-wrap: wrap; font-size: 12.5px; font-weight: 700; color: #1c2540; margin-top: 18px; padding-top: 12px; border-top: 2px solid rgba(44,110,63,0.25); }
@@ -17889,6 +17910,20 @@ function TeacherQuestionBankStep({ onBack, prefillSchoolCode, teacherSchools, te
                   <input className="pqb-input" style={{ width: 110 }} placeholder="مثلاً ۴۵" value={examDuration} onChange={(e) => setExamDuration(e.target.value)} />
                 </div>
               </div>
+              <div className="pqb-row">
+                <div className="pqb-field">
+                  <label className="pqb-label">ادارهٔ کل آموزش و پرورش استان</label>
+                  <input className="pqb-input pqb-w-class" placeholder="مثلاً خراسان شمالی" value={examProvinceOffice} onChange={(e) => setExamProvinceOffice(e.target.value)} />
+                </div>
+                <div className="pqb-field">
+                  <label className="pqb-label">ادارهٔ آموزش و پرورش شهرستان/ناحیه</label>
+                  <input className="pqb-input pqb-w-class" placeholder="مثلاً بجنورد" value={examCountyOffice} onChange={(e) => setExamCountyOffice(e.target.value)} />
+                </div>
+                <div className="pqb-field">
+                  <label className="pqb-label">تعدادِ صفحات</label>
+                  <input className="pqb-input" style={{ width: 90 }} placeholder="۱" value={examPagesCount} onChange={(e) => setExamPagesCount(e.target.value)} />
+                </div>
+              </div>
               <button type="button" className="pqb-submit-btn" onClick={handleGenerate}>
                 🎲 ساخت آزمون تصادفی
               </button>
@@ -17907,29 +17942,46 @@ function TeacherQuestionBankStep({ onBack, prefillSchoolCode, teacherSchools, te
                     <p className="pqb-empty">سؤالی با این فیلتر در بانک سؤال یافت نشد.</p>
                   ) : (
                     <>
+                      <div className="pqb-exam-watermark pqb-no-select" aria-hidden="true">ققنوس</div>
+                      <div className="pqb-exam-content">
+                      <div className="pqb-exam-ministry-header">
+                        <div className="pqb-exam-ministry-emblem" aria-hidden="true">🛡️</div>
+                        <div className="pqb-exam-ministry-text">
+                          <div className="pqb-exam-ministry-title">وزارتِ آموزش و پرورش</div>
+                          <div className="pqb-exam-ministry-line">
+                            ادارهٔ کلِ آموزش و پرورشِ استانِ {examProvinceOffice.trim() || "................"}
+                          </div>
+                          <div className="pqb-exam-ministry-line">
+                            ادارهٔ آموزش و پرورشِ شهرستان/ناحیهٔ {examCountyOffice.trim() || "................"}
+                          </div>
+                        </div>
+                      </div>
                       <div className="pqb-exam-letterhead">
                         <img src={PHOENIX_LOGO} alt="لوگوی ققنوس" className="pqb-exam-logo" />
                         <div className="pqb-exam-letterhead-text">
                           <div className="pqb-exam-school-name">
                             {(schoolOptions.find((s) => s.code === schoolCode) || {}).name || "مدرسه"}
+                            <span className="pqb-exam-school-code"> — کد مدرسه: {schoolCode}</span>
                           </div>
-                          <div className="pqb-exam-school-code">کد مدرسه: {schoolCode}</div>
                           <div className="pqb-exam-brand">آموزش برای فردا — ققنوس</div>
                         </div>
                       </div>
+                      <div className="pqb-exam-student-grid">
+                        <span>نام: ........................</span>
+                        <span>نام‌خانوادگی: ........................</span>
+                        <span>نامِ پدر: ........................</span>
+                        <span>شماره‌ی داوطلبی: ........................</span>
+                      </div>
                       <div className="pqb-exam-meta-row">
-                        <span>درس: {subject}</span>
+                        <span>نامِ درس: {subject}</span>
                         <span>پایه: {grade}</span>
-                        <span>نوع آزمون: {genExamType}</span>
+                        <span>نوعِ آزمون: {genExamType}</span>
                         {genChapter && <span>فصل: {genChapter}</span>}
                         {examClassName.trim() && <span>کلاس: {examClassName.trim()}</span>}
                         {examTeacherName.trim() && <span>دبیر: {examTeacherName.trim()}</span>}
-                        {examDuration.trim() && <span>مدت: {examDuration.trim()} دقیقه</span>}
-                        <span>تاریخ: {new Date().toLocaleDateString("fa-IR")}</span>
-                      </div>
-                      <div className="pqb-exam-student-row">
-                        <span>نام و نام‌خانوادگیِ دانش‌آموز: ........................................</span>
-                        <span>شماره/کدِ دانش‌آموزی: .......................</span>
+                        <span>تاریخِ امتحان: {new Date().toLocaleDateString("fa-IR")}</span>
+                        <span>مدت: {examDuration.trim() || "................"} دقیقه</span>
+                        <span>تعدادِ صفحات: {examPagesCount.trim() || "۱"}</span>
                       </div>
                       <p style={{ fontWeight: 800, color: "#2c6e3f", margin: "12px 0 8px" }}>
                         {generatedSet.length} سؤال — نمره‌ی کل: از {genTotalScore}
@@ -17952,6 +18004,7 @@ function TeacherQuestionBankStep({ onBack, prefillSchoolCode, teacherSchools, te
                       <div className="pqb-exam-footer-row">
                         <span>جمعِ نمره: .............. از {genTotalScore}</span>
                         <span>امضایِ مصحح: ....................</span>
+                      </div>
                       </div>
                     </>
                   )}

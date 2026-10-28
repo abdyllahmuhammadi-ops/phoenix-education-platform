@@ -25050,23 +25050,33 @@ async function rahyarGenerateTeachingScript(subject, grade, chapter) {
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify({
       model: "claude-sonnet-4-6",
-      max_tokens: 4500,
+      max_tokens: 6500,
       system:
-        "شما رهیار، دستیار آموزشی هوشمند هستید که یک «جلسه‌ی تدریس زنده» برای دانش‌آموز می‌سازید. این تدریس باید کاملاً " +
-        "بر اساس کتاب درسی رسمی ایران برای پایه‌ی «" + grade + "»، درس «" + subject + "»، مبحث «" + chapter + "» باشد و مستقل از هر معلم یا مدرسه‌ی خاصی باشد. " +
+        "شما رهیار هستید: یک معمارِ آموزشی و معلمِ نخبه که وظیفه‌اش نوشتنِ «سناریوی تدریسِ زنده» برای یک جلسه‌ی کاملِ کلاسی است، نه یک خلاصه‌ی خشک. " +
+        "این تدریس باید کمترین فاصله را با تدریسِ یک معلمِ باتجربه‌ی واقعی داشته باشد، اما از آن هم بهتر باشد: دقیق‌تر، گرم‌تر، و با بهترین شیوه‌ی ممکن از نظریه‌های روان‌شناسیِ یادگیری و الگوی رسمیِ طرح‌درس‌نویسی استفاده کند. " +
+        "محتوا باید کاملاً بر اساسِ کتابِ درسی رسمیِ ایران برای پایه‌ی «" + grade + "»، درسِ «" + subject + "»، مبحث/فصل «" + chapter + "» باشد و مستقل از هر معلم یا مدرسه‌ی خاصی. " +
+        "ساختارِ جلسه را دقیقاً بر پایه‌ی گام‌های رسمیِ طرحِ درس در نظامِ آموزشی ایران بچین (نه لزوماً هر گام یک بخش، می‌توانی چند بخش را به یک گام اختصاص دهی): " +
+        "(۱) ایجادِ انگیزه و آماده‌سازی — با یک سؤالِ تحریک‌کننده‌ی ذهن، یک پدیده‌ی واقعی، یا یک داستانِ کوتاه شروع کن، نه با تعریفِ خشک؛ " +
+        "(۲) ارزشیابیِ تشخیصی/مرورِ دانشِ قبلی — طبقِ نظریه‌ی یادگیریِ معنادارِ آزوبل، مطلبِ جدید را به چیزی که دانش‌آموز قبلاً می‌داند یا در زندگیِ واقعی دیده وصل کن؛ " +
+        "(۳) ارائه‌ی مفهومِ جدید — طبقِ نظریه‌ی داربست‌زنیِ ویگوتسکی و اصلِ کاهشِ بارِ شناختی، از ساده به پیچیده برو، هر گام را روی گامِ قبلی بنا کن، و هرگز در یک بخش چند مفهومِ جدید را هم‌زمان نریز؛ " +
+        "(۴) تمرین/مثالِ هدایت‌شده — طبقِ ساختن‌گرایی (Constructivism) و یادگیریِ فعال، به‌جای اینکه فقط بگویی، نشان بده و از دانش‌آموز بخواه در ذهنش پیش‌بینی یا حل کند؛ " +
+        "(۵) تعمیم به زندگیِ واقعی — بگو این مطلب کجای زندگیِ روزمره، طبیعت، یا فناوری دیده می‌شود؛ " +
+        "(۶) جمع‌بندی و ارزشیابیِ پایانی — خلاصه‌ی کوتاه + یک سؤالِ خودسنجی که دانش‌آموز با پاسخ‌دادن به آن بفهمد یاد گرفته یا نه. " +
+        "در بیانِ هر بخش، از زیباترین و گویاترین زبانِ ممکن استفاده کن: تمثیل، مثالِ ملموس، لحنِ قصه‌گویانه و پرسش‌های بلاغی که ذهنِ دانش‌آموز را درگیر نگه دارد؛ هرگز لحنِ کتابی و خشک نداشته باش. " +
         (isElementary
-          ? "این دانش‌آموز در مقطعِ ابتدایی است؛ هدفِ اصلی این است که خودِ دانش‌آموز، بدون نیاز به کمکِ والدینِ خسته یا کم‌سواد، مطلب را بفهمد. پس: جمله‌های بسیار کوتاه بساز (حداکثر ۸ تا ۱۰ کلمه در هر جمله)، فقط کلماتِ روزمره و ساده به‌کار ببر (نه کلماتِ کتابی و رسمی)، لحنِ گرم، صمیمی و تشویقی داشته باش (مثلِ «آفرین»، «ببین چه جالب»)، نکته‌ی اصلی هر بخش را حداقل یک‌بار با کلماتِ دیگر تکرار کن، و مطلب را به بخش‌های بیشتر و ریزتر تقسیم کن (۶ تا ۸ بخش) تا هیچ‌جا یک‌باره اطلاعاتِ زیاد به بچه داده نشود. "
+          ? "این دانش‌آموز در مقطعِ ابتدایی است؛ هدفِ اصلی این است که خودِ او، بدون نیاز به کمکِ والدینِ خسته یا کم‌سواد، مطلب را بفهمد. پس: جمله‌های بسیار کوتاه بساز (حداکثر ۸ تا ۱۰ کلمه در هر جمله)، فقط کلماتِ روزمره و ساده به‌کار ببر (نه کلماتِ کتابی و رسمی)، لحنِ گرم، صمیمی و تشویقی داشته باش (مثلِ «آفرین»، «ببین چه جالب»)، نکته‌ی اصلی هر بخش را حداقل یک‌بار با کلماتِ دیگر تکرار کن، و مطلب را به بخش‌های بیشتر و ریزتر تقسیم کن (۷ تا ۹ بخش) تا هیچ‌جا یک‌باره اطلاعاتِ زیاد به بچه داده نشود. "
           : "") +
-        "خروجی باید یک شیء JSON با کلید \"segments\" باشد: آرایه‌ای از " + (isElementary ? "۶ تا ۸" : "۴ تا ۷") + " بخش آموزشی پشت‌سرهم، هرکدام دقیقاً با این ساختار: " +
-        '{"narration": "متنی که رهیار با صدای بلند برای دانش‌آموز توضیح می‌دهد — ساده، گویا و محاوره‌ای‌وار، حدود ۲ تا ۴ جمله", ' +
-        '"visualType": "یکی از: diagram / bars / line / labels / timeline / none — تا جای ممکن از diagram استفاده کن: برای هر موضوعی که اصلش تصویری/ساختاری/فرایندی است (مثلاً اندام‌ها و دستگاه‌های بدن مثل دستگاه گردش خون، ساختار سلول، نقشه، چرخه‌ی طبیعی، شکل هندسی، نمودار مداری) حتماً diagram را انتخاب کن تا دانش‌آموز علاوه بر صدا، تصویر و حرکت هم ببیند؛ bars/line فقط برای داده‌های عددی واقعی، labels برای فهرست مفهومی، timeline برای توالی مراحل، none وقتی هیچ‌کدام لازم نیست", ' +
+        "خروجی باید یک شیء JSON با کلید \"segments\" باشد: آرایه‌ای از " + (isElementary ? "۷ تا ۹" : "۶ تا ۹") + " بخش آموزشی پشت‌سرهم، هرکدام دقیقاً با این ساختار: " +
+        '{"stepLabel": "نامِ گامِ طرحِ درس که این بخش به آن تعلق دارد — یکی از: ایجاد انگیزه / مرورِ دانشِ قبلی / ارائه‌ی مفهوم / تمرینِ هدایت‌شده / تعمیم به زندگی / جمع‌بندی / ارزشیابیِ پایانی", ' +
+        '"narration": "متنی که رهیار با صدای بلند برای دانش‌آموز توضیح می‌دهد — زیبا، گویا، محاوره‌ای و قصه‌گونه، حدود ۲ تا ۵ جمله، طوری که از تدریسِ یک معلمِ معمولی بهتر و گرم‌تر باشد", ' +
+        '"visualType": "یکی از: diagram / bars / line / labels / timeline / none — تا جای ممکن از diagram استفاده کن، چون نزدیک‌ترین چیزی‌ست که در اختیار داری به یک ویدئوی آموزشیِ کوتاه یا شبیه‌سازیِ سه‌بعدی و تخته‌وایت‌بردِ متحرک: برای هر موضوعی که اصلش تصویری/ساختاری/فرایندی/حرکتی است (اندام‌ها و دستگاه‌های بدن، ساختارِ سلول، نقشه، چرخه‌ی طبیعی، شکلِ هندسی، نمودارِ مداری، واکنشِ شیمیایی، حرکتِ اجسام) حتماً diagram را انتخاب کن تا دانش‌آموز علاوه بر صدا، تصویر و حرکت هم ببیند؛ bars/line فقط برای داده‌های عددیِ واقعی، labels برای فهرستِ مفهومی، timeline برای توالیِ مراحل، none فقط وقتی هیچ‌کدام واقعاً لازم نیست", ' +
         '"visualTitle": "عنوان کوتاه نمودار یا تصویر (اگر visualType برابر none است، رشته‌ی خالی بگذار)", ' +
         '"visualData": "داده‌ی متناسب با نوع نمودار — ' +
-        'برای diagram: {\\"svg\\": \\"یک قطعه SVG معتبر و کامل، فقط عناصر داخلیِ تگ svg (بدون خودِ تگ svg، بدون <script>)، با viewBox فرضیِ 0 0 300 220 رسم‌شده؛ از circle/ellipse/rect/path/line/polygon/g/text برای شکل‌ها و برچسب‌های فارسیِ خوانا استفاده کن؛ تا جای ممکن با <animate> یا <animateTransform> یک حرکتِ ساده و تکرارشونده اضافه کن (مثلاً جریان خون در رگ، چرخش زمین، حرکت یک فلش) تا به‌جای یک عکسِ ثابت، شبیه یک انیمیشن/ویدیوی کوتاهِ آموزشی باشد\\"}؛ ' +
+        'برای diagram: {\\"svg\\": \\"یک قطعه SVG غنی، معتبر و کامل، فقط عناصر داخلیِ تگ svg (بدون خودِ تگ svg، بدون <script>)، با viewBox فرضیِ 0 0 300 220 رسم‌شده؛ از circle/ellipse/rect/path/line/polygon/g/text برای شکل‌ها و برچسب‌های فارسیِ خوانا استفاده کن؛ تا جای ممکن چندین عنصرِ متحرک با <animate> یا <animateTransform> اضافه کن (مثلاً جریان خون در رگ، چرخشِ زمین، حرکتِ یک فلش، ظاهرشدنِ تدریجیِ برچسب‌ها) تا به‌جای یک عکسِ ثابت، شبیهِ یک انیمیشن/ویدیوی کوتاهِ آموزشیِ واقعی باشد، با جزئیاتِ کافی که ارزشِ دیدن داشته باشد\\"}؛ ' +
         'برای bars و line: {\\"labels\\": [...], \\"values\\": [اعداد]}؛ برای labels: {\\"items\\": [{\\"label\\": \\"...\\", \\"desc\\": \\"...\\"}]}؛ برای timeline: {\\"steps\\": [\\"...\\", \\"...\\"]}؛ برای none: {}"}, ' +
         '"quickTechnique": "اگر این بخش به‌طور طبیعی یک میان‌بر یا تکنیکِ تست‌زنیِ سریع مرتبط با کنکور یا امتحان دارد (مثلاً یک قاعده‌ی سرانگشتی، یک الگوی عددی، یک روشِ حذفِ گزینه) آن را اینجا در یک یا دو جمله‌ی کوتاه بنویس؛ این فقط مکملِ narration است و باید بعد از فهمِ عمیقِ مطلب معنا پیدا کند، هرگز نباید جایگزینِ توضیحِ مفهومی شود؛ اگر چنین میان‌بری واقعاً وجود ندارد (مثلاً در مقدمه یا جمع‌بندی)، رشته‌ی خالی بگذار" ' +
         '}. ' +
-        "بخش اول باید یک مقدمه‌ی کوتاه و انگیزشی درباره‌ی موضوع باشد و بخش آخر یک جمع‌بندی. فقط همان شیء JSON را برگردان، بدون Markdown یا توضیح اضافه.",
+        "فقط همان شیء JSON را برگردان، بدون Markdown یا توضیح اضافه.",
       messages: [{ role: "user", content: "لطفاً جلسه‌ی تدریس را برای مبحث «" + chapter + "» آماده کن." }],
     }),
   });
@@ -25077,6 +25087,7 @@ async function rahyarGenerateTeachingScript(subject, grade, chapter) {
   const segments = Array.isArray(parsed.segments) ? parsed.segments : [];
   return segments.map((s, i) => ({
     id: "seg-" + i,
+    stepLabel: s.stepLabel || "",
     narration: s.narration || "",
     visualType: ["diagram", "bars", "line", "labels", "timeline", "none"].includes(s.visualType) ? s.visualType : "none",
     visualTitle: s.visualTitle || "",
@@ -25686,6 +25697,7 @@ function RahyarTeachingLibraryView({ onBack, grade, studentCode, schoolCode }) {
         .rtl-avatar-mouth-speaking { animation: rtl-mouth 0.35s ease-in-out infinite; transform-origin: 80px 112px; }
         .rtl-setup-row { display: flex; gap: 12px; flex-wrap: wrap; margin-bottom: 14px; }
         .rtl-player-box { background: #fff; border: 1px solid rgba(28,37,64,0.08); border-radius: 16px; padding: 20px; }
+        .rtl-step-badge { display: inline-block; background: #eef1fb; color: #3c4a9e; font-weight: 700; font-size: 11.5px; padding: 4px 12px; border-radius: 999px; margin-bottom: 8px; }
         .rtl-narration-box { background: #fdf3e3; border: 1px solid #f0d9a8; border-radius: 12px; padding: 14px 16px; font-size: 14px; color: #5b4636; line-height: 2; margin: 10px 0 14px; min-height: 60px; }
         .rtl-technique-box { background: #fff7e6; border: 1px solid #f0d9a0; border-radius: 10px; padding: 10px 12px; margin: -2px 0 14px; color: #8a5a10; font-size: 13px; line-height: 1.9; }
         .rtl-parent-box { background: #eef6f0; border: 1px solid #bfe0c8; border-radius: 12px; padding: 14px 16px; margin: 6px 0 4px; color: #2c6e3f; font-size: 13px; line-height: 1.95; }
@@ -25819,6 +25831,10 @@ function RahyarTeachingLibraryView({ onBack, grade, studentCode, schoolCode }) {
                 </span>
               ))}
             </div>
+
+            {activeSegment && activeSegment.stepLabel && (
+              <div className="rtl-step-badge">📍 گامِ تدریس: {activeSegment.stepLabel}</div>
+            )}
 
             <div className="rtl-narration-box">{activeSegment ? activeSegment.narration : ""}</div>
 
@@ -26122,6 +26138,7 @@ function RahyarDynamicLabView({ onBack, grade, studentCode, schoolCode }) {
         .rtl-avatar-mouth-speaking { animation: rtl-mouth 0.35s ease-in-out infinite; transform-origin: 80px 112px; }
         .rtl-setup-row { display: flex; gap: 12px; flex-wrap: wrap; margin-bottom: 14px; }
         .rtl-player-box { background: #fff; border: 1px solid rgba(28,37,64,0.08); border-radius: 16px; padding: 20px; }
+        .rtl-step-badge { display: inline-block; background: #eef1fb; color: #3c4a9e; font-weight: 700; font-size: 11.5px; padding: 4px 12px; border-radius: 999px; margin-bottom: 8px; }
         .rtl-narration-box { background: #fdf3e3; border: 1px solid #f0d9a8; border-radius: 12px; padding: 14px 16px; font-size: 14px; color: #5b4636; line-height: 2; margin: 10px 0 14px; min-height: 60px; }
         .rtl-technique-box { background: #fff7e6; border: 1px solid #f0d9a0; border-radius: 10px; padding: 10px 12px; margin: -2px 0 14px; color: #8a5a10; font-size: 13px; line-height: 1.9; }
         .rtl-parent-box { background: #eef6f0; border: 1px solid #bfe0c8; border-radius: 12px; padding: 14px 16px; margin: 6px 0 4px; color: #2c6e3f; font-size: 13px; line-height: 1.95; }
@@ -26274,6 +26291,10 @@ function RahyarDynamicLabView({ onBack, grade, studentCode, schoolCode }) {
                 </span>
               ))}
             </div>
+
+            {activeSegment && activeSegment.stepLabel && (
+              <div className="rtl-step-badge">📍 گامِ تدریس: {activeSegment.stepLabel}</div>
+            )}
 
             <div className="rtl-narration-box">{activeSegment ? activeSegment.narration : ""}</div>
 
@@ -26546,6 +26567,7 @@ function RahyarHomeworkHelperView({ onBack, grade, studentCode, schoolCode }) {
         .rtl-avatar-mouth-speaking { animation: rtl-mouth 0.35s ease-in-out infinite; transform-origin: 80px 112px; }
         .rtl-setup-row { display: flex; gap: 12px; flex-wrap: wrap; margin-bottom: 14px; }
         .rtl-player-box { background: #fff; border: 1px solid rgba(28,37,64,0.08); border-radius: 16px; padding: 20px; }
+        .rtl-step-badge { display: inline-block; background: #eef1fb; color: #3c4a9e; font-weight: 700; font-size: 11.5px; padding: 4px 12px; border-radius: 999px; margin-bottom: 8px; }
         .rtl-narration-box { background: #fdf3e3; border: 1px solid #f0d9a8; border-radius: 12px; padding: 14px 16px; font-size: 14px; color: #5b4636; line-height: 2; margin: 10px 0 14px; min-height: 60px; }
         .rtl-technique-box { background: #fff7e6; border: 1px solid #f0d9a0; border-radius: 10px; padding: 10px 12px; margin: -2px 0 14px; color: #8a5a10; font-size: 13px; line-height: 1.9; }
         .rtl-parent-box { background: #eef6f0; border: 1px solid #bfe0c8; border-radius: 12px; padding: 14px 16px; margin: 6px 0 4px; color: #2c6e3f; font-size: 13px; line-height: 1.95; }
@@ -26679,6 +26701,10 @@ function RahyarHomeworkHelperView({ onBack, grade, studentCode, schoolCode }) {
                 </span>
               ))}
             </div>
+
+            {activeSegment && activeSegment.stepLabel && (
+              <div className="rtl-step-badge">📍 گامِ تدریس: {activeSegment.stepLabel}</div>
+            )}
 
             <div className="rtl-narration-box">{activeSegment ? activeSegment.narration : ""}</div>
 

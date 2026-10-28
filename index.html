@@ -17069,6 +17069,7 @@ function TeacherQuestionBankStep({ onBack, prefillSchoolCode, teacherSchools, te
   const [cognitiveLevel, setCognitiveLevel] = useState("درک مفهومی");
   const [explanation, setExplanation] = useState("");
   const [difficulty, setDifficulty] = useState("متوسط");
+  const [skillType, setSkillType] = useState("");
   const [examTypes, setExamTypes] = useState([]);
   const [saveMsg, setSaveMsg] = useState("");
 
@@ -17108,7 +17109,7 @@ function TeacherQuestionBankStep({ onBack, prefillSchoolCode, teacherSchools, te
             " بساز. نوع سؤال: «" + aiGenQuestionType + "». سطح دشواری: " +
             (aiGenDifficulty === "ترکیبی (آسان تا سخت)" ? "سؤالات را با ترکیبی از سطح‌های آسان، متوسط و سخت بساز." : "همه‌ی سؤالات باید در سطح «" + aiGenDifficulty + "» باشند.") +
             " این فقط یک پیشنهاد است — معلم واقعی هر سؤال را قبل از افزودن به بانک سؤال، کامل مرور و تأیید می‌کند و می‌تواند هرکدام را ویرایش یا رد کند؛ پس در طراحی سؤال دقت و صحت علمی را در اولویت قرار بده. " +
-            'یک آرایه‌ی JSON به نام "items" برگردان. هر عضو دقیقاً این ساختار را داشته باشد: {"chapter": "نام فصل/موضوع", "text": "متن کامل سؤال — اگر تستی چهارگزینه‌ای است، چهار گزینه را هم با علامت الف/ب/ج/د داخل همین متن بیاور", "cognitiveLevel": "یکی از: به‌خاطرسپاری/درک مفهومی/کاربرد/تحلیل/ارزیابی و قضاوت/خلق و ترکیب", "difficulty": "یکی از: آسان/متوسط/سخت", "explanation": "پاسخ درست، همراه با استدلال یا مراحل حل کامل (آموزشِ عمیق و مفهومی)", "quickTechnique": "یک تکنیکِ کوتاهِ تست‌زنیِ سریع مخصوصِ همین نوع سؤال (مثلاً حذفِ گزینه، تخمین، الگوی عددی) — فقط وقتی این نوع سؤال واقعاً چنین میان‌بری دارد؛ در غیرِ این صورت رشته‌ی خالی بگذار. این هرگز نباید جایگزینِ explanation شود، فقط مکملِ آن بعد از فهمِ عمیق است."}. فقط همان شیء JSON را برگردان، بدون هیچ توضیح اضافه یا Markdown.',
+            'یک آرایه‌ی JSON به نام "items" برگردان. هر عضو دقیقاً این ساختار را داشته باشد: {"chapter": "نام فصل/موضوع", "text": "متن کامل سؤال — اگر تستی چهارگزینه‌ای است، چهار گزینه را هم با علامت الف/ب/ج/د داخل همین متن بیاور", "cognitiveLevel": "یکی از: به‌خاطرسپاری/درک مفهومی/کاربرد/تحلیل/ارزیابی و قضاوت/خلق و ترکیب", "difficulty": "یکی از: آسان/متوسط/سخت", "skillType": "یکی از: فرمول/مفهوم/حل‌مسئله/واژگان/دقت/سرعت — همان مهارتِ اصلی‌ای که این سؤال برای پاسخ‌دادن به آن نیاز دارد", "explanation": "پاسخ درست، همراه با استدلال یا مراحل حل کامل (آموزشِ عمیق و مفهومی)", "quickTechnique": "یک تکنیکِ کوتاهِ تست‌زنیِ سریع مخصوصِ همین نوع سؤال (مثلاً حذفِ گزینه، تخمین، الگوی عددی) — فقط وقتی این نوع سؤال واقعاً چنین میان‌بری دارد؛ در غیرِ این صورت رشته‌ی خالی بگذار. این هرگز نباید جایگزینِ explanation شود، فقط مکملِ آن بعد از فهمِ عمیق است."}. فقط همان شیء JSON را برگردان، بدون هیچ توضیح اضافه یا Markdown.',
           messages: [{ role: "user", content: "لطفاً سؤالات را آماده کن." }],
         }),
       });
@@ -17134,6 +17135,7 @@ function TeacherQuestionBankStep({ onBack, prefillSchoolCode, teacherSchools, te
       explanation: item.explanation || "",
       quickTechnique: item.quickTechnique || "",
       difficulty: item.difficulty || "متوسط",
+      skillType: PQB_SKILL_TYPES.includes(item.skillType) ? item.skillType : "",
       examTypes: [aiGenExamType],
       createdAt: new Date().toLocaleDateString("fa-IR"),
       source: "پیشنهاد رهیار",
@@ -17248,6 +17250,7 @@ function TeacherQuestionBankStep({ onBack, prefillSchoolCode, teacherSchools, te
       cognitiveLevel,
       explanation: explanation.trim(),
       difficulty,
+      skillType,
       examTypes: examTypes.length > 0 ? examTypes : ["نوبت اول"],
       createdAt: new Date().toLocaleDateString("fa-IR"),
     };
@@ -17263,6 +17266,7 @@ function TeacherQuestionBankStep({ onBack, prefillSchoolCode, teacherSchools, te
     setQuestionText("");
     setLessonTopic("");
     setExplanation("");
+    setSkillType("");
     setSaveMsg("✅ سؤال اضافه شد.");
     setTimeout(() => setSaveMsg(""), 2000);
   };
@@ -17589,6 +17593,19 @@ function TeacherQuestionBankStep({ onBack, prefillSchoolCode, teacherSchools, te
                       </button>
                     ))}
                   </div>
+                </div>
+              </div>
+              <div className="pqb-field" style={{ marginBottom: 14 }}>
+                <label className="pqb-label">نوعِ مهارت (اختیاری — برای رادارِ مهارتیِ دانش‌آموز)</label>
+                <div className="pqb-diff-row">
+                  <button type="button" className={"pqb-chip" + (skillType === "" ? " active" : "")} onClick={() => setSkillType("")}>
+                    بدون‌برچسب
+                  </button>
+                  {PQB_SKILL_TYPES.map((s) => (
+                    <button key={s} type="button" className={"pqb-chip" + (skillType === s ? " active" : "")} onClick={() => setSkillType(s)}>
+                      {s}
+                    </button>
+                  ))}
                 </div>
               </div>
               <button type="button" className="pqb-submit-btn" onClick={handleAddQuestion} disabled={!chapter.trim() || !questionText.trim()}>
@@ -18419,6 +18436,11 @@ const PQB_KONKUR_BUDGET = {
 // مدیر یا مدرسه‌ی خاص. خروجی هر سؤال دقیقاً هم‌ساختار سؤالات تستیِ بانک معلم است (متن با گزینه‌های
 // الف/ب/ج/د داخل خودش، و توضیحِ پاسخ با جمله‌ی صریح «گزینه‌ی X درست است») تا همان منطق
 // جابجاییِ گزینه‌ها و ضدتقلبِ جلسه‌ی جبرانی روی آن هم کار کند.
+// رادارِ مهارتیِ چندبُعدی: هر سؤال، علاوه‌بر دشواری، یک «نوع مهارت» هم دارد — این‌طور دانش‌آموز
+// می‌فهمد که نه‌فقط «چقدر» بلکه «کجا دقیقاً» ضعیف است (مثلاً فرمول را بلد است ولی در واژگانِ
+// درسِ زیست می‌لنگد، یا مفهوم را می‌فهمد ولی سریع تست نمی‌زند).
+const PQB_SKILL_TYPES = ["فرمول", "مفهوم", "حل‌مسئله", "واژگان", "دقت", "سرعت"];
+
 async function pqbGenerateKonkurAiPool(subject, grade, field) {
   const fieldBudgets = field && PQB_KONKUR_BUDGET[field];
   const budget = fieldBudgets && fieldBudgets[subject] && fieldBudgets[subject][grade];
@@ -18457,6 +18479,7 @@ async function pqbGenerateKonkurAiPool(subject, grade, field) {
         '{"chapter": "نام فصل/موضوع — دقیقاً از لیست بالا", ' +
         '"text": "متن کامل سؤال، و بلافاصله بعد از آن چهار گزینه دقیقاً با همین قالب داخل همان رشته متنی: الف) ... ب) ... ج) ... د) ...", ' +
         '"difficulty": "یکی از: آسان/متوسط/سخت", ' +
+        '"skillType": "یکی از: فرمول/مفهوم/حل‌مسئله/واژگان/دقت/سرعت — همان مهارتِ اصلی‌ای که این سؤال برای پاسخ‌دادن به آن نیاز دارد", ' +
         '"explanation": "دقیقاً با این قالب شروع شود: «گزینه‌ی X درست است» (X یکی از الف/ب/ج/د — همان حرفی که در متن سؤال گزینه‌ی درست است)، سپس استدلال یا مراحل حل کامل (آموزشِ عمیق و مفهومی)", ' +
         '"quickTechnique": "یک تکنیکِ کوتاهِ تست‌زنیِ سریع مخصوصِ کنکور برایِ همین سؤال (حذفِ گزینه، تخمینِ سریع، الگوی عددی، یا مشابه) — فقط اگر واقعاً چنین میان‌بری وجود دارد، وگرنه رشته‌ی خالی. این مکملِ explanation است، هرگز جایگزینِ آن نیست — دانش‌آموز باید اول عمیق بفهمد، بعد تکنیکِ سرعت را یاد بگیرد."}. ' +
         "فقط همان شیء JSON را برگردان، بدون هیچ توضیح اضافه یا Markdown.",
@@ -18474,6 +18497,7 @@ async function pqbGenerateKonkurAiPool(subject, grade, field) {
     text: item.text || "",
     type: "تستی (چهارگزینه‌ای)",
     difficulty: item.difficulty || "متوسط",
+    skillType: PQB_SKILL_TYPES.includes(item.skillType) ? item.skillType : "",
     explanation: item.explanation || "",
     quickTechnique: item.quickTechnique || "",
     examTypes: ["آزمایشی کنکور"],
@@ -18506,6 +18530,7 @@ async function pqbGenerateStarterBank(subject, grade) {
         '"text": "متن کامل سؤال — اگر تستی است، چهار گزینه را هم با علامت الف/ب/ج/د داخل همین متن بیاور", ' +
         '"cognitiveLevel": "یکی از: به‌خاطرسپاری/درک مفهومی/کاربرد/تحلیل/ارزیابی و قضاوت/خلق و ترکیب", ' +
         '"difficulty": "یکی از: آسان/متوسط/سخت", ' +
+        '"skillType": "یکی از: فرمول/مفهوم/حل‌مسئله/واژگان/دقت/سرعت — همان مهارتِ اصلی‌ای که این سؤال برای پاسخ‌دادن به آن نیاز دارد", ' +
         '"explanation": "پاسخ درست، همراه با استدلال یا مراحل حل کامل (آموزشِ عمیق و مفهومی)", ' +
         '"quickTechnique": "یک تکنیکِ کوتاهِ تست‌زنیِ سریع مخصوصِ همین نوع سؤال، فقط اگر واقعاً چنین میان‌بری وجود دارد، وگرنه رشته‌ی خالی — مکملِ explanation، نه جایگزینِ آن"}. ' +
         "فقط همان شیء JSON را برگردان، بدون هیچ توضیح اضافه یا Markdown.",
@@ -18525,6 +18550,7 @@ async function pqbGenerateStarterBank(subject, grade) {
     type: item.type || "تستی (چهارگزینه‌ای)",
     cognitiveLevel: item.cognitiveLevel || "",
     difficulty: item.difficulty || "متوسط",
+    skillType: PQB_SKILL_TYPES.includes(item.skillType) ? item.skillType : "",
     explanation: item.explanation || "",
     quickTechnique: item.quickTechnique || "",
     examTypes: ["نوبت اول", "نوبت دوم"],
@@ -18771,7 +18797,7 @@ function StudentQuestionBankView({ onBack, prefillSchoolCode, prefillGrade, pref
                 aiPracticeQuestions.slice(0, 15).map((q) => (q.text || "").slice(0, 60)).join(" | ") +
                 ". "
               : "") +
-            'یک آرایه‌ی JSON به نام "items" برگردان. هر عضو دقیقاً این ساختار را داشته باشد: {"chapter": "نام فصل/موضوع", "text": "متن کامل سؤال — اگر تستی چهارگزینه‌ای است، چهار گزینه را هم با علامت الف/ب/ج/د داخل همین متن بیاور", "difficulty": "یکی از: آسان/متوسط/سخت", "explanation": "پاسخ درست، همراه با استدلال یا مراحل حل کامل و قابل‌فهم برای یک دانش‌آموز (آموزشِ عمیق و مفهومی)", "quickTechnique": "یک تکنیکِ کوتاهِ تست‌زنیِ سریع مخصوصِ همین نوع سؤال، فقط اگر واقعاً چنین میان‌بری وجود دارد، وگرنه رشته‌ی خالی — مکملِ explanation، هرگز جایگزینِ آن؛ دانش‌آموز باید اول عمیق بفهمد"}. فقط همان شیء JSON را برگردان، بدون هیچ توضیح اضافه یا Markdown.',
+            'یک آرایه‌ی JSON به نام "items" برگردان. هر عضو دقیقاً این ساختار را داشته باشد: {"chapter": "نام فصل/موضوع", "text": "متن کامل سؤال — اگر تستی چهارگزینه‌ای است، چهار گزینه را هم با علامت الف/ب/ج/د داخل همین متن بیاور", "difficulty": "یکی از: آسان/متوسط/سخت", "skillType": "یکی از: فرمول/مفهوم/حل‌مسئله/واژگان/دقت/سرعت — همان مهارتِ اصلی‌ای که این سؤال برای پاسخ‌دادن به آن نیاز دارد", "explanation": "پاسخ درست، همراه با استدلال یا مراحل حل کامل و قابل‌فهم برای یک دانش‌آموز (آموزشِ عمیق و مفهومی)", "quickTechnique": "یک تکنیکِ کوتاهِ تست‌زنیِ سریع مخصوصِ همین نوع سؤال، فقط اگر واقعاً چنین میان‌بری وجود دارد، وگرنه رشته‌ی خالی — مکملِ explanation، هرگز جایگزینِ آن؛ دانش‌آموز باید اول عمیق بفهمد"}. فقط همان شیء JSON را برگردان، بدون هیچ توضیح اضافه یا Markdown.',
           messages: [{ role: "user", content: "لطفاً سؤالات تمرینی را آماده کن." }],
         }),
       });
@@ -18779,7 +18805,11 @@ function StudentQuestionBankView({ onBack, prefillSchoolCode, prefillGrade, pref
       const rawText = data && data.content && data.content[0] && data.content[0].text ? data.content[0].text : "";
       const cleaned = rawText.replace(/```json|```/g, "").trim();
       const parsed = JSON.parse(cleaned);
-      const items = (parsed.items || []).map((item, i) => ({ ...item, id: "ai-" + Date.now() + "-" + i }));
+      const items = (parsed.items || []).map((item, i) => ({
+        ...item,
+        id: "ai-" + Date.now() + "-" + i,
+        skillType: PQB_SKILL_TYPES.includes(item.skillType) ? item.skillType : "",
+      }));
       setAiPracticeQuestions((prev) => [...items, ...prev]);
     } catch (e) {
       setAiPracticeError("خطا در ساخت سؤال تمرینی. دوباره امتحان کنید.");
@@ -18951,6 +18981,10 @@ function StudentQuestionBankView({ onBack, prefillSchoolCode, prefillGrade, pref
     // رویِ همه‌ی سؤالات (بانکِ معلم، بانکِ شروعِ خودکار، استخرِ کنکور) وجود دارد؛ این فقط یک
     // تجمیعِ تازه از رویِ همان داده‌ی موجود است، نه نیاز به تغییرِ ساختِ سؤال.
     const byDifficulty = {};
+    // رادارِ مهارتیِ چندبُعدی: همین تجمیع، این‌بار بر اساسِ فیلدِ «skillType» (فرمول/مفهوم/حل‌مسئله/
+    // واژگان/دقت/سرعت). سؤالاتِ قدیمی‌تر که این فیلد را ندارند، در این آنالیز نادیده گرفته می‌شوند
+    // (نه این‌که زیرِ «نامشخص» جمع شوند) تا رادار فقط چیزی را نشان دهد که واقعاً برچسب‌گذاری شده.
+    const bySkillType = {};
     const missedForFlashcards = [];
     examSet.forEach((q) => {
       const known = isMandatoryExam ? !!(mcqResultById[q.id] && mcqResultById[q.id].isCorrect) : !!(examKnownIds.find((a) => a.id === q.id) || {}).known;
@@ -18962,6 +18996,12 @@ function StudentQuestionBankView({ onBack, prefillSchoolCode, prefillGrade, pref
       if (!byDifficulty[diffLabel]) byDifficulty[diffLabel] = { known: 0, total: 0 };
       byDifficulty[diffLabel].total += 1;
       if (known) byDifficulty[diffLabel].known += 1;
+
+      if (q.skillType && PQB_SKILL_TYPES.includes(q.skillType)) {
+        if (!bySkillType[q.skillType]) bySkillType[q.skillType] = { known: 0, total: 0 };
+        bySkillType[q.skillType].total += 1;
+        if (known) bySkillType[q.skillType].known += 1;
+      }
 
       if (!known) {
         missedForFlashcards.push({
@@ -19049,6 +19089,7 @@ function StudentQuestionBankView({ onBack, prefillSchoolCode, prefillGrade, pref
     setExamAnalysis({
       byChapter,
       byDifficulty,
+      bySkillType,
       flashcardsAdded: missedForFlashcards.length,
       totalKnown,
       totalCount,
@@ -19626,6 +19667,22 @@ function StudentQuestionBankView({ onBack, prefillSchoolCode, prefillGrade, pref
                           </div>
                         );
                       })}
+                  </>
+                )}
+
+                {examAnalysis.bySkillType && Object.keys(examAnalysis.bySkillType).length > 1 && (
+                  <>
+                    <p style={{ fontWeight: 800, marginTop: 12, marginBottom: 6 }}>🧭 رادارِ مهارتی (نوعِ مهارتِ موردنیاز):</p>
+                    {PQB_SKILL_TYPES.filter((s) => examAnalysis.bySkillType[s]).map((s) => {
+                      const v = examAnalysis.bySkillType[s];
+                      const pct = Math.round((v.known / v.total) * 100);
+                      return (
+                        <div key={s} style={{ fontSize: 12.5, marginBottom: 4 }}>
+                          {s}: {v.known} از {v.total} ({pct}٪)
+                          {pct < 60 && <span style={{ color: "#c0392b" }}> — نقطه‌ی ضعفِ مهارتی</span>}
+                        </div>
+                      );
+                    })}
                   </>
                 )}
 

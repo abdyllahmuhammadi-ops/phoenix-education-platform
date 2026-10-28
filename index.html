@@ -19421,11 +19421,17 @@ function StudentQuestionBankView({ onBack, prefillSchoolCode, prefillGrade, pref
         .pqb-mcq-option:disabled { cursor: default; }
         .pqb-exam-score { background: #eef6f0; border: 1px solid #bfe0c8; border-radius: 12px; padding: 16px; text-align: center; font-weight: 800; color: #2c6e3f; font-size: 14px; margin-top: 10px; }
         .pqb-export-btn { flex: 1; height: 42px; border-radius: 10px; border: 1px solid #e0a83e; background: transparent; color: #a8741f; font-weight: 700; font-size: 12.5px; cursor: pointer; }
+        .pqb-print-watermark { display: none; }
         @media print {
           body * { visibility: hidden; }
           #pqb-printable-questions, #pqb-printable-questions * { visibility: visible; }
           #pqb-printable-questions { position: absolute; top: 0; left: 0; width: 100%; }
           .pqb-no-print { display: none !important; }
+          .pqb-print-watermark {
+            display: flex; position: fixed; inset: 0; z-index: -1; align-items: center; justify-content: center;
+            pointer-events: none; print-color-adjust: exact; -webkit-print-color-adjust: exact;
+          }
+          .pqb-print-watermark img { width: 55%; max-width: 230px; height: auto; opacity: 0.1; }
         }
         .pqb-explanation-box { background: #eef6f0; border: 1px solid #bfe0c8; border-radius: 10px; padding: 10px 12px; margin-top: 8px; color: #2c6e3f; font-size: 12.5px; line-height: 1.9; }
         .pqb-technique-box { background: #fff7e6; border: 1px solid #f0d9a0; border-radius: 10px; padding: 10px 12px; margin-top: 8px; color: #8a5a10; font-size: 12.5px; line-height: 1.9; }
@@ -19653,6 +19659,9 @@ function StudentQuestionBankView({ onBack, prefillSchoolCode, prefillGrade, pref
                 )}
 
                 <div id="pqb-printable-questions" className="pqb-question-list">
+                  <div className="pqb-print-watermark pqb-no-select" aria-hidden="true">
+                    <img src={PHOENIX_LOGO} alt="" />
+                  </div>
                   {filtered.map((q, idx) => (
                     <div key={q.id} className="pqb-question-item">
                       <div className="pqb-question-meta">

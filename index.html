@@ -17044,7 +17044,7 @@ function TeacherQuestionBankStep({ onBack, prefillSchoolCode, teacherSchools, te
             " بساز. نوع سؤال: «" + aiGenQuestionType + "». سطح دشواری: " +
             (aiGenDifficulty === "ترکیبی (آسان تا سخت)" ? "سؤالات را با ترکیبی از سطح‌های آسان، متوسط و سخت بساز." : "همه‌ی سؤالات باید در سطح «" + aiGenDifficulty + "» باشند.") +
             " این فقط یک پیشنهاد است — معلم واقعی هر سؤال را قبل از افزودن به بانک سؤال، کامل مرور و تأیید می‌کند و می‌تواند هرکدام را ویرایش یا رد کند؛ پس در طراحی سؤال دقت و صحت علمی را در اولویت قرار بده. " +
-            'یک آرایه‌ی JSON به نام "items" برگردان. هر عضو دقیقاً این ساختار را داشته باشد: {"chapter": "نام فصل/موضوع", "text": "متن کامل سؤال — اگر تستی چهارگزینه‌ای است، چهار گزینه را هم با علامت الف/ب/ج/د داخل همین متن بیاور", "cognitiveLevel": "یکی از: به‌خاطرسپاری/درک مفهومی/کاربرد/تحلیل/ارزیابی و قضاوت/خلق و ترکیب", "difficulty": "یکی از: آسان/متوسط/سخت", "explanation": "پاسخ درست، همراه با استدلال یا مراحل حل کامل"}. فقط همان شیء JSON را برگردان، بدون هیچ توضیح اضافه یا Markdown.',
+            'یک آرایه‌ی JSON به نام "items" برگردان. هر عضو دقیقاً این ساختار را داشته باشد: {"chapter": "نام فصل/موضوع", "text": "متن کامل سؤال — اگر تستی چهارگزینه‌ای است، چهار گزینه را هم با علامت الف/ب/ج/د داخل همین متن بیاور", "cognitiveLevel": "یکی از: به‌خاطرسپاری/درک مفهومی/کاربرد/تحلیل/ارزیابی و قضاوت/خلق و ترکیب", "difficulty": "یکی از: آسان/متوسط/سخت", "explanation": "پاسخ درست، همراه با استدلال یا مراحل حل کامل (آموزشِ عمیق و مفهومی)", "quickTechnique": "یک تکنیکِ کوتاهِ تست‌زنیِ سریع مخصوصِ همین نوع سؤال (مثلاً حذفِ گزینه، تخمین، الگوی عددی) — فقط وقتی این نوع سؤال واقعاً چنین میان‌بری دارد؛ در غیرِ این صورت رشته‌ی خالی بگذار. این هرگز نباید جایگزینِ explanation شود، فقط مکملِ آن بعد از فهمِ عمیق است."}. فقط همان شیء JSON را برگردان، بدون هیچ توضیح اضافه یا Markdown.',
           messages: [{ role: "user", content: "لطفاً سؤالات را آماده کن." }],
         }),
       });
@@ -17068,6 +17068,7 @@ function TeacherQuestionBankStep({ onBack, prefillSchoolCode, teacherSchools, te
       type: aiGenQuestionType,
       cognitiveLevel: item.cognitiveLevel || "",
       explanation: item.explanation || "",
+      quickTechnique: item.quickTechnique || "",
       difficulty: item.difficulty || "متوسط",
       examTypes: [aiGenExamType],
       createdAt: new Date().toLocaleDateString("fa-IR"),
@@ -17371,6 +17372,7 @@ function TeacherQuestionBankStep({ onBack, prefillSchoolCode, teacherSchools, te
         .pqb-tag-cognitive { background: #e6effc; color: #1f4e8c; }
         .pqb-tag-ai { background: #fdf0d5; color: #8a5a12; }
         .pqb-explanation-box { background: #eef6f0; border: 1px solid #bfe0c8; border-radius: 10px; padding: 10px 12px; margin-top: 8px; color: #2c6e3f; font-size: 12.5px; line-height: 1.9; }
+        .pqb-technique-box { background: #fff7e6; border: 1px solid #f0d9a0; border-radius: 10px; padding: 10px 12px; margin-top: 8px; color: #8a5a10; font-size: 12.5px; line-height: 1.9; }
         .pqb-reveal-btn { background: none; border: 1px solid #e0a83e; color: #a8741f; font-size: 11.5px; font-weight: 700; cursor: pointer; margin-top: 10px; padding: 6px 12px; border-radius: 999px; }
         .pqb-empty { color: #8a8060; font-size: 13px; text-align: center; padding: 20px 0; }
         .pqb-generated-box { background: #eef6f0; border: 1px solid #bfe0c8; border-radius: 14px; padding: 16px; margin-top: 14px; }
@@ -17598,6 +17600,11 @@ function TeacherQuestionBankStep({ onBack, prefillSchoolCode, teacherSchools, te
                             <b>پاسخ و توضیح:</b> {item.explanation}
                           </div>
                         )}
+                        {item.quickTechnique && (
+                          <div className="pqb-technique-box">
+                            <b>⚡ تکنیکِ تست‌زنیِ سریع:</b> {item.quickTechnique}
+                          </div>
+                        )}
                         {aiGenAddedIdx.includes(i) ? (
                           <p className="pqb-save-msg">✅ به بانک سؤال اضافه شد</p>
                         ) : (
@@ -17782,6 +17789,11 @@ function TeacherQuestionBankStep({ onBack, prefillSchoolCode, teacherSchools, te
                       {q.explanation && (
                         <div className="pqb-explanation-box">
                           <b>پاسخ و توضیح:</b> {q.explanation}
+                        </div>
+                      )}
+                      {q.quickTechnique && (
+                        <div className="pqb-technique-box">
+                          <b>⚡ تکنیکِ تست‌زنیِ سریع:</b> {q.quickTechnique}
                         </div>
                       )}
                       <button type="button" className="pqb-delete-btn" onClick={() => handleDeleteQuestion(q.id)}>
@@ -18381,7 +18393,8 @@ async function pqbGenerateKonkurAiPool(subject, grade, field) {
         '{"chapter": "نام فصل/موضوع — دقیقاً از لیست بالا", ' +
         '"text": "متن کامل سؤال، و بلافاصله بعد از آن چهار گزینه دقیقاً با همین قالب داخل همان رشته متنی: الف) ... ب) ... ج) ... د) ...", ' +
         '"difficulty": "یکی از: آسان/متوسط/سخت", ' +
-        '"explanation": "دقیقاً با این قالب شروع شود: «گزینه‌ی X درست است» (X یکی از الف/ب/ج/د — همان حرفی که در متن سؤال گزینه‌ی درست است)، سپس استدلال یا مراحل حل کامل"}. ' +
+        '"explanation": "دقیقاً با این قالب شروع شود: «گزینه‌ی X درست است» (X یکی از الف/ب/ج/د — همان حرفی که در متن سؤال گزینه‌ی درست است)، سپس استدلال یا مراحل حل کامل (آموزشِ عمیق و مفهومی)", ' +
+        '"quickTechnique": "یک تکنیکِ کوتاهِ تست‌زنیِ سریع مخصوصِ کنکور برایِ همین سؤال (حذفِ گزینه، تخمینِ سریع، الگوی عددی، یا مشابه) — فقط اگر واقعاً چنین میان‌بری وجود دارد، وگرنه رشته‌ی خالی. این مکملِ explanation است، هرگز جایگزینِ آن نیست — دانش‌آموز باید اول عمیق بفهمد، بعد تکنیکِ سرعت را یاد بگیرد."}. ' +
         "فقط همان شیء JSON را برگردان، بدون هیچ توضیح اضافه یا Markdown.",
       messages: [{ role: "user", content: "لطفاً سؤالات آزمون الزامی کنکور را آماده کن — دقیقاً " + totalCount + " سؤال، با همان بودجه‌بندیِ فصلی که در دستور آمد." }],
     }),
@@ -18398,6 +18411,7 @@ async function pqbGenerateKonkurAiPool(subject, grade, field) {
     type: "تستی (چهارگزینه‌ای)",
     difficulty: item.difficulty || "متوسط",
     explanation: item.explanation || "",
+    quickTechnique: item.quickTechnique || "",
     examTypes: ["آزمایشی کنکور"],
     source: "رهیار — آزمون ملی",
   }));
@@ -18428,7 +18442,8 @@ async function pqbGenerateStarterBank(subject, grade) {
         '"text": "متن کامل سؤال — اگر تستی است، چهار گزینه را هم با علامت الف/ب/ج/د داخل همین متن بیاور", ' +
         '"cognitiveLevel": "یکی از: به‌خاطرسپاری/درک مفهومی/کاربرد/تحلیل/ارزیابی و قضاوت/خلق و ترکیب", ' +
         '"difficulty": "یکی از: آسان/متوسط/سخت", ' +
-        '"explanation": "پاسخ درست، همراه با استدلال یا مراحل حل کامل"}. ' +
+        '"explanation": "پاسخ درست، همراه با استدلال یا مراحل حل کامل (آموزشِ عمیق و مفهومی)", ' +
+        '"quickTechnique": "یک تکنیکِ کوتاهِ تست‌زنیِ سریع مخصوصِ همین نوع سؤال، فقط اگر واقعاً چنین میان‌بری وجود دارد، وگرنه رشته‌ی خالی — مکملِ explanation، نه جایگزینِ آن"}. ' +
         "فقط همان شیء JSON را برگردان، بدون هیچ توضیح اضافه یا Markdown.",
       messages: [{ role: "user", content: "لطفاً بانک اولیه‌ی سؤالات را آماده کن." }],
     }),
@@ -18447,6 +18462,7 @@ async function pqbGenerateStarterBank(subject, grade) {
     cognitiveLevel: item.cognitiveLevel || "",
     difficulty: item.difficulty || "متوسط",
     explanation: item.explanation || "",
+    quickTechnique: item.quickTechnique || "",
     examTypes: ["نوبت اول", "نوبت دوم"],
     createdAt: new Date().toLocaleDateString("fa-IR"),
     source: "تولید خودکار رهیار",
@@ -18561,6 +18577,11 @@ function StudentAiPracticeBlock({ grade, subject, aiPracticeLoading, aiPracticeE
                   {aiPracticeRevealedIds.includes(q.id) && (
                     <div className="pqb-explanation-box">
                       <b>پاسخ و توضیح:</b> {q.explanation}
+                    </div>
+                  )}
+                  {aiPracticeRevealedIds.includes(q.id) && q.quickTechnique && (
+                    <div className="pqb-technique-box">
+                      <b>⚡ تکنیکِ تست‌زنیِ سریع:</b> {q.quickTechnique}
                     </div>
                   )}
                 </>
@@ -18680,7 +18701,7 @@ function StudentQuestionBankView({ onBack, prefillSchoolCode, prefillGrade, pref
             "»" +
             (filterChapter.trim() ? "، دقیقاً درباره‌ی فصل/موضوع «" + filterChapter.trim() + "»" : "، از مباحث رایج و پرتکرار این پایه طبق کتاب درسی ایران") +
             " بساز — سطح دشواری متنوع (آسان تا سخت) و مناسب تمرین شخصی دانش‌آموز، نه آزمون رسمی. " +
-            'یک آرایه‌ی JSON به نام "items" برگردان. هر عضو دقیقاً این ساختار را داشته باشد: {"chapter": "نام فصل/موضوع", "text": "متن کامل سؤال — اگر تستی چهارگزینه‌ای است، چهار گزینه را هم با علامت الف/ب/ج/د داخل همین متن بیاور", "difficulty": "یکی از: آسان/متوسط/سخت", "explanation": "پاسخ درست، همراه با استدلال یا مراحل حل کامل و قابل‌فهم برای یک دانش‌آموز"}. فقط همان شیء JSON را برگردان، بدون هیچ توضیح اضافه یا Markdown.',
+            'یک آرایه‌ی JSON به نام "items" برگردان. هر عضو دقیقاً این ساختار را داشته باشد: {"chapter": "نام فصل/موضوع", "text": "متن کامل سؤال — اگر تستی چهارگزینه‌ای است، چهار گزینه را هم با علامت الف/ب/ج/د داخل همین متن بیاور", "difficulty": "یکی از: آسان/متوسط/سخت", "explanation": "پاسخ درست، همراه با استدلال یا مراحل حل کامل و قابل‌فهم برای یک دانش‌آموز (آموزشِ عمیق و مفهومی)", "quickTechnique": "یک تکنیکِ کوتاهِ تست‌زنیِ سریع مخصوصِ همین نوع سؤال، فقط اگر واقعاً چنین میان‌بری وجود دارد، وگرنه رشته‌ی خالی — مکملِ explanation، هرگز جایگزینِ آن؛ دانش‌آموز باید اول عمیق بفهمد"}. فقط همان شیء JSON را برگردان، بدون هیچ توضیح اضافه یا Markdown.',
           messages: [{ role: "user", content: "لطفاً سؤالات تمرینی را آماده کن." }],
         }),
       });
@@ -19075,6 +19096,7 @@ function StudentQuestionBankView({ onBack, prefillSchoolCode, prefillGrade, pref
           .pqb-no-print { display: none !important; }
         }
         .pqb-explanation-box { background: #eef6f0; border: 1px solid #bfe0c8; border-radius: 10px; padding: 10px 12px; margin-top: 8px; color: #2c6e3f; font-size: 12.5px; line-height: 1.9; }
+        .pqb-technique-box { background: #fff7e6; border: 1px solid #f0d9a0; border-radius: 10px; padding: 10px 12px; margin-top: 8px; color: #8a5a10; font-size: 12.5px; line-height: 1.9; }
         .pqb-reveal-btn { background: none; border: 1px solid #e0a83e; color: #a8741f; font-size: 11.5px; font-weight: 700; cursor: pointer; margin-top: 10px; padding: 6px 12px; border-radius: 999px; }
         .pqb-flashcard-overlay { position: fixed; inset: 0; background: rgba(10,15,35,0.55); display: flex; align-items: center; justify-content: center; padding: 16px; z-index: 50; }
         .pqb-flashcard-box { width: 100%; max-width: 460px; max-height: 80vh; overflow-y: auto; background: #fbf7ec; border-radius: 16px; padding: 18px; box-shadow: 0 20px 50px rgba(0,0,0,0.32); }
@@ -19286,6 +19308,11 @@ function StudentQuestionBankView({ onBack, prefillSchoolCode, prefillGrade, pref
                               <b>پاسخ و توضیح:</b> {q.explanation}
                             </div>
                           )}
+                          {revealedIds.includes(q.id) && q.quickTechnique && (
+                            <div className="pqb-technique-box">
+                              <b>⚡ تکنیکِ تست‌زنیِ سریع:</b> {q.quickTechnique}
+                            </div>
+                          )}
                         </>
                       )}
                       {onAskRahyar && (
@@ -19372,6 +19399,11 @@ function StudentQuestionBankView({ onBack, prefillSchoolCode, prefillGrade, pref
                           <b>پاسخ و توضیح:</b> {q.explanation}
                         </div>
                       )}
+                      {examScoreShown && q.quickTechnique && (
+                        <div className="pqb-technique-box">
+                          <b>⚡ تکنیکِ تست‌زنیِ سریع:</b> {q.quickTechnique}
+                        </div>
+                      )}
                     </div>
                   );
                 })
@@ -19395,6 +19427,11 @@ function StudentQuestionBankView({ onBack, prefillSchoolCode, prefillGrade, pref
                           {q.explanation && (
                             <div className="pqb-explanation-box">
                               <b>پاسخ و توضیح:</b> {q.explanation}
+                            </div>
+                          )}
+                          {q.quickTechnique && (
+                            <div className="pqb-technique-box">
+                              <b>⚡ تکنیکِ تست‌زنیِ سریع:</b> {q.quickTechnique}
                             </div>
                           )}
                           <div className="pqb-exam-answer-row">

@@ -16126,6 +16126,7 @@ function StudentDashboard({
   onOpenRecitationPractice,
   onOpenVirtualLab,
   onOpenTeachingLibrary,
+  onOpenHomeworkHelper,
   onOpenSystemSuggestionBox,
   onLogout,
 }) {
@@ -16686,6 +16687,11 @@ function StudentDashboard({
                   🗂️ یک سؤال تمرینی بگیر
                 </button>
               )}
+              {onOpenHomeworkHelper && (
+                <button type="button" className="sdb-welcome-btn secondary" onClick={() => { setShowWelcomeNudge(false); onOpenHomeworkHelper(); }}>
+                  📝 کمک به حل تکلیف
+                </button>
+              )}
             </div>
           </div>
         )}
@@ -16932,6 +16938,12 @@ function StudentDashboard({
               <button type="button" className="sdb-quick-btn" onClick={onOpenTeachingLibrary}>
                 <span className="sdb-quick-icon">🤖</span>
                 <span className="sdb-quick-label">تدریس زنده‌ی رهیار</span>
+              </button>
+            )}
+            {onOpenHomeworkHelper && (
+              <button type="button" className="sdb-quick-btn" onClick={onOpenHomeworkHelper}>
+                <span className="sdb-quick-icon">📝</span>
+                <span className="sdb-quick-label">کمک به حل تکلیف (بدون نیاز به کمک والدین)</span>
               </button>
             )}
             {onOpenSystemSuggestionBox && (
@@ -25032,6 +25044,7 @@ function rahyarTeachingKey(subject, grade, chapter) {
 // از رهیار یک «جلسه‌ی تدریس» ساختاریافته می‌خواهد: چند بخش روایت‌شده، هرکدام با یک نوع نمایش بصری
 // (نمودار میله‌ای/خطی/برچسب‌دار/جدول‌زمانی/بدون‌نمودار) که با پخش صدا هم‌زمان می‌شود.
 async function rahyarGenerateTeachingScript(subject, grade, chapter) {
+  const isElementary = pqbLevelFromGrade(grade) === "ابتدایی";
   const response = await fetch("https://api.anthropic.com/v1/messages", {
     method: "POST",
     headers: { "Content-Type": "application/json" },
@@ -25041,7 +25054,10 @@ async function rahyarGenerateTeachingScript(subject, grade, chapter) {
       system:
         "شما رهیار، دستیار آموزشی هوشمند هستید که یک «جلسه‌ی تدریس زنده» برای دانش‌آموز می‌سازید. این تدریس باید کاملاً " +
         "بر اساس کتاب درسی رسمی ایران برای پایه‌ی «" + grade + "»، درس «" + subject + "»، مبحث «" + chapter + "» باشد و مستقل از هر معلم یا مدرسه‌ی خاصی باشد. " +
-        "خروجی باید یک شیء JSON با کلید \"segments\" باشد: آرایه‌ای از ۴ تا ۷ بخش آموزشی پشت‌سرهم، هرکدام دقیقاً با این ساختار: " +
+        (isElementary
+          ? "این دانش‌آموز در مقطعِ ابتدایی است؛ هدفِ اصلی این است که خودِ دانش‌آموز، بدون نیاز به کمکِ والدینِ خسته یا کم‌سواد، مطلب را بفهمد. پس: جمله‌های بسیار کوتاه بساز (حداکثر ۸ تا ۱۰ کلمه در هر جمله)، فقط کلماتِ روزمره و ساده به‌کار ببر (نه کلماتِ کتابی و رسمی)، لحنِ گرم، صمیمی و تشویقی داشته باش (مثلِ «آفرین»، «ببین چه جالب»)، نکته‌ی اصلی هر بخش را حداقل یک‌بار با کلماتِ دیگر تکرار کن، و مطلب را به بخش‌های بیشتر و ریزتر تقسیم کن (۶ تا ۸ بخش) تا هیچ‌جا یک‌باره اطلاعاتِ زیاد به بچه داده نشود. "
+          : "") +
+        "خروجی باید یک شیء JSON با کلید \"segments\" باشد: آرایه‌ای از " + (isElementary ? "۶ تا ۸" : "۴ تا ۷") + " بخش آموزشی پشت‌سرهم، هرکدام دقیقاً با این ساختار: " +
         '{"narration": "متنی که رهیار با صدای بلند برای دانش‌آموز توضیح می‌دهد — ساده، گویا و محاوره‌ای‌وار، حدود ۲ تا ۴ جمله", ' +
         '"visualType": "یکی از: diagram / bars / line / labels / timeline / none — تا جای ممکن از diagram استفاده کن: برای هر موضوعی که اصلش تصویری/ساختاری/فرایندی است (مثلاً اندام‌ها و دستگاه‌های بدن مثل دستگاه گردش خون، ساختار سلول، نقشه، چرخه‌ی طبیعی، شکل هندسی، نمودار مداری) حتماً diagram را انتخاب کن تا دانش‌آموز علاوه بر صدا، تصویر و حرکت هم ببیند؛ bars/line فقط برای داده‌های عددی واقعی، labels برای فهرست مفهومی، timeline برای توالی مراحل، none وقتی هیچ‌کدام لازم نیست", ' +
         '"visualTitle": "عنوان کوتاه نمودار یا تصویر (اگر visualType برابر none است، رشته‌ی خالی بگذار)", ' +
@@ -25106,6 +25122,7 @@ function rahyarLabKey(subject, grade, chapter) {
 // و یک بخش تعاملی (یک متغیر قابل‌تنظیم با سه سطح نتیجه‌ی متفاوت) تا دانش‌آموز خودش «آزمایش کند».
 // این روش، به‌جای کدنویسی دستی هر آزمایش، همه‌ی آزمایش‌های کتاب درسی هر درس/پایه‌ای را پوشش می‌دهد.
 async function rahyarGenerateLabExperiment(subject, grade, chapter) {
+  const isElementary = pqbLevelFromGrade(grade) === "ابتدایی";
   const response = await fetch("https://api.anthropic.com/v1/messages", {
     method: "POST",
     headers: { "Content-Type": "application/json" },
@@ -25115,6 +25132,9 @@ async function rahyarGenerateLabExperiment(subject, grade, chapter) {
       system:
         "شما رهیار، دستیار آموزشی هوشمند هستید که یک «آزمایشگاه مجازی تعاملی» برای یک آزمایش واقعیِ کتاب درسی رسمی ایران " +
         "می‌سازید — پایه‌ی «" + grade + "»، درس «" + subject + "»، مبحث/فصل «" + chapter + "». این باید دقیقاً همان آزمایشی باشد که در کتاب درسی این مبحث آمده (اگر کتاب چند آزمایش دارد، مهم‌ترین و آموزنده‌ترین را انتخاب کن). " +
+        (isElementary
+          ? "این دانش‌آموز در مقطعِ ابتدایی است؛ پس در narration هر مرحله جمله‌های بسیار کوتاه و ساده (حداکثر ۸ تا ۱۰ کلمه) با لحنِ گرم و تشویقی به‌کار ببر تا خودِ بچه، بدون کمکِ والدین، متوجه شود. "
+          : "") +
         "خروجی باید فقط یک شیء JSON با این ساختار دقیق باشد: " +
         '{"title": "نام کوتاه آزمایش", "icon": "یک ایموجی مناسب", "tools": ["وسیله ۱", "وسیله ۲", "..."], ' +
         '"segments": [ {"narration": "توضیح گام‌به‌گام این مرحله از آزمایش — ساده و محاوره‌ای، ۲ تا ۴ جمله", "visualType": "یکی از: diagram / bars / line / labels / timeline / none — برای نشان‌دادن خودِ وسایل، چیدمان آزمایش یا پدیده‌ی در حال وقوع از diagram استفاده کن تا دانش‌آموز تصویر و حرکت هم ببیند، نه فقط صدا", "visualTitle": "عنوان کوتاه", "visualData": {...متناسب با نوع...}, "quickTechnique": "اگر این مرحله به‌طور طبیعی با یک سؤالِ کنکور/امتحانی مرتبط است و یک میان‌بر یا تکنیکِ تست‌زنیِ سریع دارد، در یک جمله‌ی کوتاه بنویس؛ فقط مکملِ narration است، بعد از فهمِ عمیق معنا پیدا می‌کند و هرگز جایگزینِ آن نمی‌شود؛ اگر واقعاً چنین میان‌بری نیست، رشته‌ی خالی بگذار"} ] (۴ تا ۶ مرحله: معرفی آزمایش، نحوه‌ی چیدن وسایل، نحوه‌ی انجام، مشاهده و نتیجه)، ' +
@@ -25155,6 +25175,99 @@ async function rahyarGenerateLabExperiment(subject, grade, chapter) {
     outcomeHigh: parsed.outcomeHigh || "",
     conclusion: parsed.conclusion || "",
   };
+}
+
+// خلاصه‌ی پایانِ جلسه برای والدین — کوتاه، غیرتخصصی، و بدونِ نیاز به دانشِ محتوایی:
+// والد فقط باید از دانش‌آموز بخواهد مطلب را با زبانِ خودش توضیح دهد؛ اگر توانست یعنی یاد گرفته.
+// این باعث می‌شود والدینِ کم‌سواد یا خسته هم بتوانند نظارت کنند، بدون اینکه خودشان درس را بدانند.
+function rahyarBuildParentDebrief({ subject, grade, chapter, segments }) {
+  const hasTechnique = Array.isArray(segments) && segments.some((s) => s && s.quickTechnique);
+  const topicLabel = chapter || subject || "این مطلب";
+  return {
+    title: "📋 خلاصه برای والد (نیازی به تخصص ندارد)",
+    line1: "دانش‌آموز مبحثِ «" + topicLabel + "»" + (subject ? " از درسِ «" + subject + "»" : "") + (grade ? " (پایه‌ی " + grade + ")" : "") + " را با رهیار یاد گرفت.",
+    checkQuestion: "فقط کافی است از او بخواهید در یک یا دو جمله‌ی خودش توضیح دهد «" + topicLabel + "» چیست؛ اگر توانست، یعنی واقعاً یاد گرفته و نیازی به توضیحِ دوباره‌ی شما نیست.",
+    techniqueNote: hasTechnique ? "رهیار یک میان‌بر/تکنیکِ تست‌زنیِ سریع هم به او یاد داد — کافی است بپرسید آن را به‌خاطر دارد یا نه." : "",
+  };
+}
+
+function rahyarHomeworkKey(studentCode) {
+  return "rahyar-homework-history:" + skey(studentCode || "anon");
+}
+
+// تاریخچه‌ی کمک‌به‌تکلیف مخصوص هر دانش‌آموز است (نه سراسری)، تا هم خودش بتواند دوباره مرور کند
+// و هم والد بتواند بدون تخصص، ببیند فرزندش روی چه چیزهایی کار کرده است.
+async function rahyarSaveHomeworkRecord(studentCode, record) {
+  const key = rahyarHomeworkKey(studentCode);
+  let list = [];
+  try {
+    const raw = await authStorageGet(key, false);
+    if (raw) list = JSON.parse(raw);
+    if (!Array.isArray(list)) list = [];
+  } catch (e) {
+    list = [];
+  }
+  list.unshift(record);
+  if (list.length > 20) list = list.slice(0, 20);
+  try {
+    await authStorageSet(key, JSON.stringify(list), false);
+  } catch (e) {
+    // ذخیره‌ی تاریخچه تلاش‌محور است؛ شکستش نباید جلسه‌ی فعلی را مختل کند
+  }
+  return list;
+}
+
+async function rahyarLoadHomeworkHistory(studentCode) {
+  const key = rahyarHomeworkKey(studentCode);
+  try {
+    const raw = await authStorageGet(key, false);
+    if (!raw) return [];
+    const list = JSON.parse(raw);
+    return Array.isArray(list) ? list : [];
+  } catch (e) {
+    return [];
+  }
+}
+
+// از رهیار می‌خواهد به‌جای والدین، سؤال/تکلیفِ خودِ دانش‌آموز را گام‌به‌گام و با روشِ درست توضیح دهد —
+// نه فقط جوابِ نهایی، بلکه خودِ روشِ حل، تا دانش‌آموز مستقل از کمکِ والدین بتواند یاد بگیرد.
+async function rahyarGenerateHomeworkHelp(subject, grade, questionText) {
+  const isElementary = pqbLevelFromGrade(grade) === "ابتدایی";
+  const response = await fetch("https://api.anthropic.com/v1/messages", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({
+      model: "claude-sonnet-4-6",
+      max_tokens: 3500,
+      system:
+        "شما رهیار، دستیار آموزشی هوشمند هستید که به‌جای والدینِ خسته یا کم‌سواد، تکلیف/سؤالِ خودِ دانش‌آموز را گام‌به‌گام و با روشِ درستِ حل (نه فقط جوابِ نهایی) " +
+        "توضیح می‌دهید تا خودِ دانش‌آموز روشِ حل را یاد بگیرد. این دانش‌آموز پایه‌ی «" + (grade || "نامشخص") + "» است" +
+        (isElementary ? " (ابتدایی — پس جمله‌های بسیار کوتاه، ساده و تشویقی به‌کار ببر و نکته‌ی اصلی را تکرار کن)" : "") + ". " +
+        "درسِ مربوط (اگر مشخص شده): «" + (subject || "نامشخص") + "». " +
+        'خروجی باید فقط یک شیء JSON با کلید "segments" باشد: آرایه‌ای از ۳ تا ۶ بخش پشت‌سرهم، هرکدام دقیقاً با این ساختار: ' +
+        '{"narration": "متنی که رهیار با صدای بلند می‌گوید — ساده و محاوره‌ای، ۲ تا ۴ جمله", ' +
+        '"visualType": "یکی از: diagram / bars / line / labels / timeline / none — همان قاعده‌ی قبلی: برای مفاهیمِ تصویری/ساختاری diagram، برای داده‌ی عددی bars/line، برای فهرستِ مفهومی labels، برای توالیِ مراحل timeline، در غیرِ این صورت none", ' +
+        '"visualTitle": "عنوان کوتاه (اگر none است، خالی)", ' +
+        '"visualData": "متناسب با نوع، طبقِ همان قاعده‌ی: diagram={\\"svg\\": \\"...\\"}, bars/line={\\"labels\\":[...], \\"values\\":[...]}, labels={\\"items\\":[{\\"label\\":\\"...\\",\\"desc\\":\\"...\\"}]}, timeline={\\"steps\\":[...]}, none={}", ' +
+        '"quickTechnique": "اگر این مرحله یک میان‌بر/تکنیکِ تست‌زنیِ سریع دارد در یک جمله بنویس، وگرنه رشته‌ی خالی — فقط مکملِ narration است"}. ' +
+        "بخشِ اول باید دقیقاً همان سؤال/تکلیفِ دانش‌آموز را با زبانِ خودت بازگو کند (تا مطمئن شوی درست فهمیده‌ای)، بخش‌های میانی روشِ حل را گام‌به‌گام (نه فقط جواب) نشان دهند، و بخشِ آخر جوابِ نهایی به‌همراه یک جمله‌ی تشویقی باشد. " +
+        "اگر سؤال نامشخص یا ناقص است، در همان بخشِ اول با مهربانی بگو چه اطلاعاتِ بیشتری لازم است. فقط همان شیء JSON را برگردان، بدون Markdown یا توضیح اضافه.",
+      messages: [{ role: "user", content: "این تکلیف/سؤالِ من است:\n\n" + questionText }],
+    }),
+  });
+  const data = await response.json();
+  const rawText = data && data.content && data.content[0] && data.content[0].text ? data.content[0].text : "";
+  const cleaned = rawText.replace(/```json|```/g, "").trim();
+  const parsed = JSON.parse(cleaned);
+  const segments = Array.isArray(parsed.segments) ? parsed.segments : [];
+  return segments.map((s, i) => ({
+    id: "seg-" + i,
+    narration: s.narration || "",
+    visualType: ["diagram", "bars", "line", "labels", "timeline", "none"].includes(s.visualType) ? s.visualType : "none",
+    visualTitle: s.visualTitle || "",
+    visualData: s.visualData && typeof s.visualData === "object" ? s.visualData : {},
+    quickTechnique: s.quickTechnique || "",
+  }));
 }
 
 // چهره‌ی متحرک رهیار — دهان هنگام صحبت‌کردن (speaking=true) تکان می‌خورد؛ کاملاً با CSS، بدون هیچ فایل ویدئویی
@@ -25455,7 +25568,7 @@ function RahyarTeachingLibraryView({ onBack, grade, studentCode, schoolCode }) {
       window.speechSynthesis.cancel();
       const utter = new window.SpeechSynthesisUtterance(seg.narration);
       utter.lang = "fa-IR";
-      utter.rate = 0.95;
+      utter.rate = levelSel === "ابتدایی" ? 0.85 : 0.95;
       utter.onstart = () => setSpeaking(true);
       utter.onend = () => {
         setSpeaking(false);
@@ -25575,6 +25688,8 @@ function RahyarTeachingLibraryView({ onBack, grade, studentCode, schoolCode }) {
         .rtl-player-box { background: #fff; border: 1px solid rgba(28,37,64,0.08); border-radius: 16px; padding: 20px; }
         .rtl-narration-box { background: #fdf3e3; border: 1px solid #f0d9a8; border-radius: 12px; padding: 14px 16px; font-size: 14px; color: #5b4636; line-height: 2; margin: 10px 0 14px; min-height: 60px; }
         .rtl-technique-box { background: #fff7e6; border: 1px solid #f0d9a0; border-radius: 10px; padding: 10px 12px; margin: -2px 0 14px; color: #8a5a10; font-size: 13px; line-height: 1.9; }
+        .rtl-parent-box { background: #eef6f0; border: 1px solid #bfe0c8; border-radius: 12px; padding: 14px 16px; margin: 6px 0 4px; color: #2c6e3f; font-size: 13px; line-height: 1.95; }
+        .rtl-parent-box b.rtl-parent-title { display: block; font-size: 13.5px; margin-bottom: 6px; color: #1f5a30; }
         .rtl-player-controls { display: flex; gap: 10px; justify-content: center; align-items: center; margin-bottom: 14px; flex-wrap: wrap; }
         .rtl-ctrl-btn { height: 42px; padding: 0 18px; border-radius: 10px; border: 1.3px solid #d9c9a0; background: #fff; color: #5b4636; font-weight: 700; font-size: 13px; cursor: pointer; }
         .rtl-ctrl-btn.primary { background: linear-gradient(135deg, #f2c572, #c8862b); color: #241503; border-color: transparent; }
@@ -25736,6 +25851,18 @@ function RahyarTeachingLibraryView({ onBack, grade, studentCode, schoolCode }) {
             <p className="pqb-upload-hint" style={{ textAlign: "center" }}>
               بخش {currentIndex + 1} از {segments.length}
             </p>
+
+            {currentIndex === segments.length - 1 && (() => {
+              const debrief = rahyarBuildParentDebrief({ subject, grade: gradeSel, chapter, segments });
+              return (
+                <div className="rtl-parent-box">
+                  <b className="rtl-parent-title">{debrief.title}</b>
+                  <div>{debrief.line1}</div>
+                  <div style={{ marginTop: 6 }}>{debrief.checkQuestion}</div>
+                  {debrief.techniqueNote && <div style={{ marginTop: 6 }}>{debrief.techniqueNote}</div>}
+                </div>
+              );
+            })()}
           </div>
         )}
       </div>
@@ -25863,7 +25990,7 @@ function RahyarDynamicLabView({ onBack, grade, studentCode, schoolCode }) {
       window.speechSynthesis.cancel();
       const utter = new window.SpeechSynthesisUtterance(seg.narration);
       utter.lang = "fa-IR";
-      utter.rate = 0.95;
+      utter.rate = levelSel === "ابتدایی" ? 0.85 : 0.95;
       utter.onstart = () => setSpeaking(true);
       utter.onend = () => {
         setSpeaking(false);
@@ -25997,6 +26124,8 @@ function RahyarDynamicLabView({ onBack, grade, studentCode, schoolCode }) {
         .rtl-player-box { background: #fff; border: 1px solid rgba(28,37,64,0.08); border-radius: 16px; padding: 20px; }
         .rtl-narration-box { background: #fdf3e3; border: 1px solid #f0d9a8; border-radius: 12px; padding: 14px 16px; font-size: 14px; color: #5b4636; line-height: 2; margin: 10px 0 14px; min-height: 60px; }
         .rtl-technique-box { background: #fff7e6; border: 1px solid #f0d9a0; border-radius: 10px; padding: 10px 12px; margin: -2px 0 14px; color: #8a5a10; font-size: 13px; line-height: 1.9; }
+        .rtl-parent-box { background: #eef6f0; border: 1px solid #bfe0c8; border-radius: 12px; padding: 14px 16px; margin: 6px 0 4px; color: #2c6e3f; font-size: 13px; line-height: 1.95; }
+        .rtl-parent-box b.rtl-parent-title { display: block; font-size: 13.5px; margin-bottom: 6px; color: #1f5a30; }
         .rtl-player-controls { display: flex; gap: 10px; justify-content: center; align-items: center; margin-bottom: 14px; flex-wrap: wrap; }
         .rtl-ctrl-btn { height: 42px; padding: 0 18px; border-radius: 10px; border: 1.3px solid #d9c9a0; background: #fff; color: #5b4636; font-weight: 700; font-size: 13px; cursor: pointer; }
         .rtl-ctrl-btn.primary { background: linear-gradient(135deg, #f2c572, #c8862b); color: #241503; border-color: transparent; }
@@ -26203,6 +26332,397 @@ function RahyarDynamicLabView({ onBack, grade, studentCode, schoolCode }) {
                 {experiment.conclusion}
               </div>
             )}
+
+            {(() => {
+              const debrief = rahyarBuildParentDebrief({ subject, grade: gradeSel, chapter: experiment.title || chapter, segments });
+              return (
+                <div className="rtl-parent-box">
+                  <b className="rtl-parent-title">{debrief.title}</b>
+                  <div>{debrief.line1}</div>
+                  <div style={{ marginTop: 6 }}>{debrief.checkQuestion}</div>
+                  {debrief.techniqueNote && <div style={{ marginTop: 6 }}>{debrief.techniqueNote}</div>}
+                </div>
+              );
+            })()}
+          </div>
+        )}
+      </div>
+    </div>
+  );
+}
+
+/* ============================================================
+   دستیارِ تکلیفِ زنده‌ی رهیار — به‌جای والدینِ خسته یا کم‌سواد، خودِ رهیار
+   سؤال/تکلیفِ دانش‌آموز را گام‌به‌گام و با روشِ درستِ حل توضیح می‌دهد؛
+   والد فقط در پایان یک خلاصه‌ی غیرتخصصی برای نظارت می‌بیند.
+   ============================================================ */
+function RahyarHomeworkHelperView({ onBack, grade, studentCode, schoolCode }) {
+  const [subject, setSubject] = useState("");
+  const [gradeSel, setGradeSel] = useState(grade || "");
+  const [fieldSel, setFieldSel] = useState("");
+  const [questionText, setQuestionText] = useState("");
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState("");
+  const [segments, setSegments] = useState(null);
+  const [currentIndex, setCurrentIndex] = useState(0);
+  const [playing, setPlaying] = useState(false);
+  const [speaking, setSpeaking] = useState(false);
+  const [autoAdvance, setAutoAdvance] = useState(true);
+  const [speechSupported, setSpeechSupported] = useState(true);
+  const [history, setHistory] = useState([]);
+  const [historyOpen, setHistoryOpen] = useState(false);
+
+  const levelSel = pqbLevelFromGrade(gradeSel);
+  const isSecondaryHigh = ["دهم", "یازدهم", "دوازدهم"].includes(gradeSel);
+  const subjectOptions = isSecondaryHigh && fieldSel
+    ? getSecondarySubjectsByFieldGrade("نظری", fieldSel, gradeSel)
+    : (PQB_SUBJECTS_BY_LEVEL[levelSel] || []);
+
+  useEffect(() => {
+    setFieldSel("");
+    setSubject("");
+  }, [gradeSel]);
+
+  useEffect(() => {
+    setSubject("");
+  }, [fieldSel]);
+
+  useEffect(() => {
+    setSpeechSupported(typeof window !== "undefined" && !!window.speechSynthesis && !!window.SpeechSynthesisUtterance);
+  }, []);
+
+  useEffect(() => {
+    (async () => {
+      const list = await rahyarLoadHomeworkHistory(studentCode);
+      setHistory(list);
+    })();
+    return () => {
+      try {
+        if (typeof window !== "undefined" && window.speechSynthesis) window.speechSynthesis.cancel();
+      } catch (e) {}
+    };
+  }, [studentCode]);
+
+  const stopSpeaking = () => {
+    try {
+      if (typeof window !== "undefined" && window.speechSynthesis) window.speechSynthesis.cancel();
+    } catch (e) {}
+    setSpeaking(false);
+    setPlaying(false);
+  };
+
+  const speakSegment = (idx, segs) => {
+    const list = segs || segments;
+    const seg = list && list[idx];
+    if (!seg) return;
+    if (!speechSupported) {
+      setPlaying(true);
+      setSpeaking(true);
+      window.setTimeout(() => setSpeaking(false), 1800);
+      return;
+    }
+    try {
+      window.speechSynthesis.cancel();
+      const utter = new window.SpeechSynthesisUtterance(seg.narration);
+      utter.lang = "fa-IR";
+      utter.rate = levelSel === "ابتدایی" ? 0.85 : 0.95;
+      utter.onstart = () => setSpeaking(true);
+      utter.onend = () => {
+        setSpeaking(false);
+        if (autoAdvance) {
+          setCurrentIndex((i) => {
+            if (i + 1 < list.length) {
+              window.setTimeout(() => speakSegment(i + 1, list), 400);
+              return i + 1;
+            }
+            setPlaying(false);
+            return i;
+          });
+        } else {
+          setPlaying(false);
+        }
+      };
+      utter.onerror = () => {
+        setSpeaking(false);
+        setPlaying(false);
+      };
+      window.speechSynthesis.speak(utter);
+      setPlaying(true);
+    } catch (e) {
+      setSpeaking(false);
+      setPlaying(false);
+    }
+  };
+
+  const handleGenerate = async () => {
+    if (!questionText.trim()) {
+      setError("لطفاً متنِ سؤال یا تکلیف را بنویسید.");
+      return;
+    }
+    setError("");
+    setLoading(true);
+    setSegments(null);
+    stopSpeaking();
+    try {
+      const segs = await rahyarGenerateHomeworkHelp(subject.trim(), gradeSel, questionText.trim());
+      if (!segs.length) throw new Error("empty");
+      setSegments(segs);
+      setCurrentIndex(0);
+      const record = {
+        id: "hw-" + Date.now(),
+        subject: subject.trim(),
+        grade: gradeSel,
+        questionText: questionText.trim(),
+        segments: segs,
+        createdAt: Date.now(),
+      };
+      const updatedHistory = await rahyarSaveHomeworkRecord(studentCode, record);
+      setHistory(updatedHistory);
+    } catch (e) {
+      setError("راهنمایی‌گرفتن با مشکل مواجه شد. دوباره تلاش کنید.");
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handlePlayPause = () => {
+    if (playing) {
+      stopSpeaking();
+    } else {
+      speakSegment(currentIndex);
+    }
+  };
+
+  const goToSegment = (idx) => {
+    stopSpeaking();
+    setCurrentIndex(idx);
+  };
+
+  const openHistoryRecord = (record) => {
+    stopSpeaking();
+    setSubject(record.subject || "");
+    setGradeSel(record.grade || gradeSel);
+    setQuestionText(record.questionText || "");
+    setSegments(record.segments || []);
+    setCurrentIndex(0);
+    setHistoryOpen(false);
+  };
+
+  const activeSegment = segments ? segments[currentIndex] : null;
+
+  return (
+    <div dir="rtl" className="pqb-root">
+      <style>{`
+        @import url('https://fonts.googleapis.com/css2?family=Vazirmatn:wght@400;500;600;700;800&display=swap');
+        .pqb-root, .pqb-root * { box-sizing: border-box; font-family: 'Vazirmatn', Tahoma, Arial, sans-serif; -webkit-tap-highlight-color: transparent; }
+        .pqb-root {
+          min-height: 100vh; min-height: 100dvh; width: 100%;
+          background: radial-gradient(1100px 550px at 18% -10%, rgba(226,98,47,0.16), transparent 60%),
+            radial-gradient(900px 500px at 100% 10%, rgba(242,197,114,0.10), transparent 55%),
+            linear-gradient(180deg, #060b1f 0%, #0b1330 45%, #0d1735 100%);
+          padding: max(20px, env(safe-area-inset-top)) max(14px, env(safe-area-inset-right)) max(28px, env(safe-area-inset-bottom)) max(14px, env(safe-area-inset-left));
+          display: flex; justify-content: center;
+        }
+        .pqb-card { width: 100%; max-width: 1080px; background: linear-gradient(180deg, #fbf7ec 0%, #f6efdc 100%); border-radius: 22px; padding: 24px 22px 28px; box-shadow: 0 20px 50px rgba(0,0,0,0.32); border: 1px solid rgba(224,168,62,0.25); min-width: 0; }
+        @media (max-width: 480px) { .pqb-card { padding: 18px 14px 22px; border-radius: 18px; } }
+        .pqb-back { background: none; border: none; color: #a8741f; font-weight: 700; font-size: 13px; cursor: pointer; padding: 0; margin-bottom: 10px; }
+        .pqb-title { color: #1c2540; font-size: clamp(18px, 4vw, 22px); font-weight: 800; margin: 0 0 4px; }
+        .pqb-kicker { color: #a8741f; font-size: 12.5px; font-weight: 700; margin: 0 0 18px; }
+        .pqb-field { display: flex; flex-direction: column; gap: 6px; }
+        .pqb-label { font-size: 12px; font-weight: 700; color: #6b7399; }
+        .pqb-input, .pqb-select, .pqb-textarea { height: 42px; border-radius: 10px; border: 1.3px solid #d9c9a0; background: #fff; padding: 0 12px; font-size: 13.5px; }
+        .pqb-textarea { height: auto; min-height: 96px; padding: 10px 12px; line-height: 1.8; resize: vertical; width: 100%; }
+        .pqb-w-grade { width: 130px; }
+        .pqb-w-subject { width: 190px; }
+        .pqb-submit-btn { height: 44px; padding: 0 22px; border: none; border-radius: 10px; background: linear-gradient(135deg, #f2c572, #c8862b); color: #241503; font-weight: 800; font-size: 13.5px; cursor: pointer; }
+        .pqb-submit-btn:disabled { opacity: 0.55; cursor: not-allowed; }
+        .pqb-upload-error { color: #c0392b; font-size: 12.5px; font-weight: 700; margin: 8px 0 0; }
+        .rtl-avatar-wrap { display: flex; flex-direction: column; align-items: center; gap: 8px; margin-bottom: 10px; }
+        .rtl-avatar-svg { width: 120px; height: 120px; }
+        .rtl-avatar-badge { background: #eef6f0; color: #2c6e3f; font-weight: 800; font-size: 12px; padding: 4px 14px; border-radius: 999px; border: 1px solid #bfe0c8; }
+        .rtl-avatar-badge.speaking { background: linear-gradient(135deg, #f2c572, #c8862b); color: #241503; border-color: transparent; animation: rtl-pulse 1s ease-in-out infinite; }
+        @keyframes rtl-pulse { 0%,100% { transform: scale(1); } 50% { transform: scale(1.04); } }
+        @keyframes rtl-mouth { 0%,100% { ry: 5; } 50% { ry: 13; } }
+        .rtl-avatar-mouth-speaking { animation: rtl-mouth 0.35s ease-in-out infinite; transform-origin: 80px 112px; }
+        .rtl-setup-row { display: flex; gap: 12px; flex-wrap: wrap; margin-bottom: 14px; }
+        .rtl-player-box { background: #fff; border: 1px solid rgba(28,37,64,0.08); border-radius: 16px; padding: 20px; }
+        .rtl-narration-box { background: #fdf3e3; border: 1px solid #f0d9a8; border-radius: 12px; padding: 14px 16px; font-size: 14px; color: #5b4636; line-height: 2; margin: 10px 0 14px; min-height: 60px; }
+        .rtl-technique-box { background: #fff7e6; border: 1px solid #f0d9a0; border-radius: 10px; padding: 10px 12px; margin: -2px 0 14px; color: #8a5a10; font-size: 13px; line-height: 1.9; }
+        .rtl-parent-box { background: #eef6f0; border: 1px solid #bfe0c8; border-radius: 12px; padding: 14px 16px; margin: 6px 0 4px; color: #2c6e3f; font-size: 13px; line-height: 1.95; }
+        .rtl-parent-box b.rtl-parent-title { display: block; font-size: 13.5px; margin-bottom: 6px; color: #1f5a30; }
+        .rtl-player-controls { display: flex; gap: 10px; justify-content: center; align-items: center; margin-bottom: 14px; flex-wrap: wrap; }
+        .rtl-ctrl-btn { height: 42px; padding: 0 18px; border-radius: 10px; border: 1.3px solid #d9c9a0; background: #fff; color: #5b4636; font-weight: 700; font-size: 13px; cursor: pointer; }
+        .rtl-ctrl-btn.primary { background: linear-gradient(135deg, #f2c572, #c8862b); color: #241503; border-color: transparent; }
+        .rtl-ctrl-btn:disabled { opacity: 0.45; cursor: not-allowed; }
+        .rtl-progress-dots { display: flex; gap: 6px; justify-content: center; margin-bottom: 10px; flex-wrap: wrap; }
+        .rtl-progress-dot { width: 26px; height: 26px; border-radius: 50%; border: 1.3px solid #d9c9a0; background: #fff; color: #8a8060; font-size: 11px; font-weight: 800; display: flex; align-items: center; justify-content: center; cursor: pointer; }
+        .rtl-progress-dot.active { background: linear-gradient(135deg, #f2c572, #c8862b); color: #241503; border-color: transparent; }
+        .rtl-visual-box { background: #f8f4ff; border: 1px solid #e6dcf7; border-radius: 12px; padding: 14px; margin-top: 4px; }
+        .rtl-visual-title { font-weight: 800; font-size: 12.5px; color: #6b3fa0; margin-bottom: 10px; }
+        .rtl-bars-row { display: flex; gap: 14px; align-items: flex-end; height: 140px; justify-content: center; }
+        .rtl-bar-col { display: flex; flex-direction: column; align-items: center; gap: 6px; width: 48px; }
+        .rtl-bar-track { width: 100%; height: 110px; display: flex; align-items: flex-end; background: #ede5f9; border-radius: 6px; overflow: hidden; }
+        .rtl-bar-fill { width: 100%; background: linear-gradient(180deg, #c8862b, #e2622f); border-radius: 6px 6px 0 0; display: flex; align-items: flex-start; justify-content: center; transition: height 0.8s cubic-bezier(.2,.9,.3,1); }
+        .rtl-bar-value { color: #fff; font-size: 10px; font-weight: 800; margin-top: 2px; }
+        .rtl-bar-label { font-size: 10.5px; color: #6b7399; font-weight: 700; text-align: center; }
+        .rtl-line-svg { width: 100%; max-width: 320px; display: block; margin: 0 auto; }
+        .rtl-diagram-svg { width: 100%; max-width: 360px; height: auto; display: block; margin: 0 auto; background: #fff; border-radius: 10px; }
+        .rtl-line-draw { stroke-dasharray: 600; stroke-dashoffset: 600; animation: rtl-line-anim 1.2s ease forwards; }
+        @keyframes rtl-line-anim { to { stroke-dashoffset: 0; } }
+        .rtl-line-labels { display: flex; justify-content: space-between; font-size: 10.5px; color: #6b7399; max-width: 280px; margin: 4px auto 0; }
+        .rtl-labels-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(140px, 1fr)); gap: 10px; }
+        .rtl-label-chip { background: #fff; border: 1px solid #e6dcf7; border-radius: 10px; padding: 10px; font-size: 12px; color: #4a4a6a; display: flex; flex-direction: column; gap: 4px; animation: rtl-fade-in 0.5s ease backwards; }
+        @keyframes rtl-fade-in { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; transform: translateY(0); } }
+        .rtl-timeline-row { display: flex; gap: 16px; flex-wrap: wrap; align-items: center; }
+        .rtl-timeline-step { display: flex; align-items: center; gap: 8px; animation: rtl-fade-in 0.5s ease backwards; }
+        .rtl-timeline-dot { width: 24px; height: 24px; border-radius: 50%; background: linear-gradient(135deg, #f2c572, #c8862b); color: #241503; font-weight: 800; font-size: 11px; display: flex; align-items: center; justify-content: center; flex-shrink: 0; }
+        .rtl-timeline-text { font-size: 12px; color: #4a4a6a; }
+        .rtl-no-speech-note { font-size: 11.5px; color: #c0392b; background: #fdecea; border: 1px solid #f3c6c2; border-radius: 10px; padding: 8px 12px; margin-bottom: 10px; }
+        .rhh-history-toggle { background: none; border: none; color: #a8741f; font-weight: 700; font-size: 12.5px; cursor: pointer; padding: 0; margin-bottom: 10px; }
+        .rhh-history-list { display: flex; flex-direction: column; gap: 8px; margin-bottom: 16px; }
+        .rhh-history-item { background: #fff; border: 1px solid #e8dcc0; border-radius: 10px; padding: 10px 12px; cursor: pointer; font-size: 12.5px; color: #5b4636; text-align: right; }
+        .rhh-history-item:hover { border-color: #c8862b; }
+        .rhh-history-meta { font-size: 11px; color: #a8741f; font-weight: 700; margin-bottom: 4px; }
+      `}</style>
+
+      <div className="pqb-card">
+        <button type="button" className="pqb-back" onClick={onBack}>
+          → بازگشت
+        </button>
+        <h1 className="pqb-title">📝 کمکِ رهیار به حل تکلیف</h1>
+        <p className="pqb-kicker">
+          سؤال یا تکلیفِ خودت را بنویس تا رهیار گام‌به‌گام روشِ حل را یادت بدهد — بدون اینکه لازم باشد والدینت کنارت بنشینند.
+        </p>
+
+        {!speechSupported && (
+          <p className="rtl-no-speech-note">⚠️ مرورگر شما از خواندن متن با صدا پشتیبانی نمی‌کند — متن همچنان نمایش داده می‌شود، فقط بدون صدا.</p>
+        )}
+
+        {history.length > 0 && (
+          <div>
+            <button type="button" className="rhh-history-toggle" onClick={() => setHistoryOpen((o) => !o)}>
+              {historyOpen ? "▲ بستن تاریخچه‌ی تکلیف‌های قبلی" : "▼ مشاهده‌ی تکلیف‌های قبلی (" + history.length + " مورد)"}
+            </button>
+            {historyOpen && (
+              <div className="rhh-history-list">
+                {history.map((r) => (
+                  <div key={r.id} className="rhh-history-item" onClick={() => openHistoryRecord(r)}>
+                    <div className="rhh-history-meta">
+                      {(r.subject || "درسِ نامشخص") + (r.grade ? " · پایه‌ی " + r.grade : "")}
+                    </div>
+                    {(r.questionText || "").slice(0, 90)}{(r.questionText || "").length > 90 ? "…" : ""}
+                  </div>
+                ))}
+              </div>
+            )}
+          </div>
+        )}
+
+        <div className="rtl-setup-row">
+          <div className="pqb-field">
+            <label className="pqb-label">پایه</label>
+            <select className="pqb-select pqb-w-grade" value={gradeSel} onChange={(e) => setGradeSel(e.target.value)}>
+              <option value="">انتخاب کنید</option>
+              {RAHYAR_TEACHING_GRADES.map((g) => <option key={g} value={g}>{g}</option>)}
+            </select>
+          </div>
+
+          {isSecondaryHigh && (
+            <div className="pqb-field">
+              <label className="pqb-label">رشته</label>
+              <select className="pqb-select pqb-w-subject" value={fieldSel} onChange={(e) => setFieldSel(e.target.value)}>
+                <option value="">انتخاب کنید</option>
+                {RAHYAR_FIELDS_TOP.map((f) => <option key={f} value={f}>{f}</option>)}
+              </select>
+            </div>
+          )}
+
+          <div className="pqb-field">
+            <label className="pqb-label">درس (اختیاری)</label>
+            <select
+              className="pqb-select pqb-w-subject"
+              value={subject}
+              onChange={(e) => setSubject(e.target.value)}
+              disabled={!gradeSel || (isSecondaryHigh && !fieldSel)}
+            >
+              <option value="">نامشخص / فرقی نمی‌کند</option>
+              {subjectOptions.map((s) => <option key={s} value={s}>{s}</option>)}
+            </select>
+          </div>
+        </div>
+
+        <div className="pqb-field" style={{ marginBottom: 14 }}>
+          <label className="pqb-label">متنِ سؤال یا تکلیف</label>
+          <textarea
+            className="pqb-textarea"
+            value={questionText}
+            onChange={(e) => setQuestionText(e.target.value)}
+            placeholder="مثلاً: ۲۳۴ را بر ۶ تقسیم کن و باقیمانده را بگو. یا: چرا آب در دمای صفر درجه یخ می‌زند؟"
+          />
+        </div>
+
+        <div className="pqb-field" style={{ alignSelf: "flex-start", marginBottom: 6 }}>
+          <button type="button" className="pqb-submit-btn" onClick={handleGenerate} disabled={loading}>
+            {loading ? "در حال آماده‌سازی..." : "🙋 راهنمایی بگیر"}
+          </button>
+        </div>
+        {error && <p className="pqb-upload-error">{error}</p>}
+
+        {segments && segments.length > 0 && (
+          <div className="rtl-player-box">
+            <RahyarAvatarFace speaking={speaking} />
+
+            <div className="rtl-progress-dots">
+              {segments.map((s, i) => (
+                <span key={s.id} className={"rtl-progress-dot" + (i === currentIndex ? " active" : "")} onClick={() => goToSegment(i)}>
+                  {i + 1}
+                </span>
+              ))}
+            </div>
+
+            <div className="rtl-narration-box">{activeSegment ? activeSegment.narration : ""}</div>
+
+            {activeSegment && activeSegment.quickTechnique && (
+              <div className="rtl-technique-box">
+                <b>⚡ تکنیکِ تست‌زنیِ سریع:</b> {activeSegment.quickTechnique}
+              </div>
+            )}
+
+            {activeSegment && (
+              <RahyarSegmentVisual
+                visualType={activeSegment.visualType}
+                visualTitle={activeSegment.visualTitle}
+                visualData={activeSegment.visualData}
+                animKey={activeSegment.id}
+              />
+            )}
+
+            <div className="rtl-player-controls">
+              <button type="button" className="rtl-ctrl-btn" onClick={() => goToSegment(Math.max(0, currentIndex - 1))} disabled={currentIndex === 0}>
+                ← قبلی
+              </button>
+              <button type="button" className="rtl-ctrl-btn primary" onClick={handlePlayPause}>
+                {playing ? "⏸ توقف" : "▶️ پخش این بخش"}
+              </button>
+              <button type="button" className="rtl-ctrl-btn" onClick={() => goToSegment(Math.min(segments.length - 1, currentIndex + 1))} disabled={currentIndex === segments.length - 1}>
+                بعدی →
+              </button>
+            </div>
+            <p className="pqb-upload-hint" style={{ textAlign: "center" }}>
+              بخش {currentIndex + 1} از {segments.length}
+            </p>
+
+            {currentIndex === segments.length - 1 && (() => {
+              const debrief = rahyarBuildParentDebrief({ subject, grade: gradeSel, chapter: "همین تکلیف", segments });
+              return (
+                <div className="rtl-parent-box">
+                  <b className="rtl-parent-title">{debrief.title}</b>
+                  <div>{debrief.line1}</div>
+                  <div style={{ marginTop: 6 }}>{debrief.checkQuestion}</div>
+                  {debrief.techniqueNote && <div style={{ marginTop: 6 }}>{debrief.techniqueNote}</div>}
+                </div>
+              );
+            })()}
           </div>
         )}
       </div>
@@ -28543,6 +29063,18 @@ function PhoenixApp() {
     );
   }
 
+  if (screen === "rahyarHomeworkHelper") {
+    const info = studentAcademicInfo || {};
+    return (
+      <RahyarHomeworkHelperView
+        onBack={() => setScreen("studentDashboard")}
+        grade={info.grade || ""}
+        studentCode={info.studentCode || ""}
+        schoolCode={info.schoolCode || ""}
+      />
+    );
+  }
+
   if (screen === "adminQuestionBank") {
     return (
       <StudentQuestionBankView
@@ -28616,6 +29148,7 @@ function PhoenixApp() {
         onOpenRecitationPractice={() => setScreen("studentRecitation")}
         onOpenVirtualLab={() => setScreen("studentVirtualLab")}
         onOpenTeachingLibrary={() => setScreen("rahyarTeachingLibrary")}
+        onOpenHomeworkHelper={() => setScreen("rahyarHomeworkHelper")}
         onOpenSystemSuggestionBox={() => { setSystemSuggestionRole("student"); setSystemSuggestionReturnScreen("studentDashboard"); setScreen("systemSuggestionBox"); }}
         onLogout={() => setScreen("welcome")}
       />

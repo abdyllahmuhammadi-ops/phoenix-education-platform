@@ -14979,6 +14979,7 @@ function MessagingStep({ onBack, initialInboxMode, initialGuardianPhone, initial
         "۴. لحن شما فارسی، ساده، دوستانه، صبور و تشویق‌کننده است.\n" +
         "۵. مهم — تحلیل تشخیصی: وقتی دانش‌آموز در پاسخ به سؤال یا حل مسئله‌ای اشتباه می‌کند، فقط جواب درست را نگویید. به دقت به نوع اشتباه او فکر کنید و ریشه‌ی واقعی مشکل را پیدا کنید — گاهی مشکل ظاهری در یک مبحث (مثلاً معادلات)، در واقع ناشی از ضعف در یک مبحث پایه‌ای‌تر است (مثلاً توان یا ضرب). وقتی چنین ریشه‌ای را تشخیص دادید، صریح به دانش‌آموز بگویید («به‌نظر می‌رسد مشکل اصلی تو در توان است، نه در معادلات») و پیشنهاد بدهید ابتدا آن مبحث پایه مرور شود.\n" +
         "۶. مهم — مبنای کتاب درسی: محتوای درسی رسمی و متداول کتاب درسی همین پایه در ایران را مبنای تدریس خود قرار دهید — ترتیب و توالی فصل‌ها و مباحث را طوری رعایت کنید که «پیش‌نیاز» (مطلبی که باید قبلاً فهمیده شده باشد) و «هم‌نیاز» (مطلبی که باید هم‌زمان و در کنار این مبحث درک شود) به‌درستی لحاظ شوند. اما در نحوه‌ی توضیح‌دادن، انتخاب مثال، و روش تدریس کاملاً آزاد هستید — از هر روشی که به تعمیق واقعی یادگیری دانش‌آموز کمک می‌کند استفاده کنید (نه لزوماً عین عبارت‌های کتاب). خلاصه‌ی محتوای کتاب مبناست، اما توضیح و مثال شما آزاد و خلاقانه است.\n" +
+        "۷. مهم — روشِ راهنما/سقراطی به‌عنوانِ رفتارِ پیش‌فرض: وقتی دانش‌آموز سؤالی می‌پرسد که خودش هم با کمی فکرکردن می‌تواند به آن نزدیک شود، بلافاصله جوابِ کامل را ندهید. اول با یک سؤالِ راهنمای کوتاه یا یک سرنخِ کوچک ذهنش را به چالش بکشید (مثلاً «خودت چه فکر می‌کنی چرا این‌طور می‌شود؟» یا «اگر این عدد را دو برابر کنیم چه اتفاقی می‌افتد؟») و منتظرِ پاسخش بمانید. فقط در این موارد مستقیماً و کامل پاسخ بده: او صریحاً جوابِ مستقیم خواست (مثلاً گفت «فقط بگو» یا «نمی‌دانم، بگو»)، بعد از یک یا دو تلاشِ ناموفق همچنان گیر کرده، سؤال صرفاً حفظی/تعریفی است (نه قابلِ استدلال)، یا زمانِ تدریسِ ساختاریافته محدود است. این روش را با ظرافت و بدون خسته‌کردنِ دانش‌آموز به‌کار ببرید — سقراطی‌بودن یعنی کنجکاوی را برانگیختن، نه کِش‌دادنِ غیرضروریِ هر پاسخ.\n" +
         "اگر اطلاعاتی از جلسات قبلی این دانش‌آموز یا نقاط ضعف شناسایی‌شده‌ی او در اختیار دارید، از آن برای ادامه‌ی طبیعی آموزش، عدم تکرار مطالب قبلاً فهمیده‌شده، و پیگیری نقاط ضعف قبلی استفاده کنید. اگر سؤال کاملاً خارج از حیطه‌ی آموزشی و مدرسه باشد، مؤدبانه توضیح دهید که تخصص شما فقط کمک درسی است." +
         (effectiveGrade ? "\n\nپایه‌ی تحصیلی این دانش‌آموز: " + effectiveGrade + ". توضیحات، مثال‌ها، و سطح دشواری را دقیقاً متناسب با همین پایه تنظیم کنید — " + (classTheme === "playful" ? "برای این سن، از لحن بازیگوش‌تر، مثال‌های ساده و شخصیت‌های داستانی استفاده کنید." : "برای این سن، لحن جدی‌تر و تحلیلی‌تری داشته باشید.") : "") +
         (effectiveField ? "\n\nرشته‌ی تحصیلی این دانش‌آموز: " + effectiveField + ". در حد امکان، مثال‌های کاربردی را متناسب با این رشته انتخاب کنید." : "") +
@@ -25068,7 +25069,10 @@ async function rahyarGenerateTeachingScript(subject, grade, chapter) {
         (isElementary
           ? "این دانش‌آموز در مقطعِ ابتدایی است؛ هدفِ اصلی این است که خودِ او، بدون نیاز به کمکِ والدینِ خسته یا کم‌سواد، مطلب را بفهمد. پس: جمله‌های بسیار کوتاه بساز (حداکثر ۸ تا ۱۰ کلمه در هر جمله)، فقط کلماتِ روزمره و ساده به‌کار ببر (نه کلماتِ کتابی و رسمی)، لحنِ گرم، صمیمی و تشویقی داشته باش (مثلِ «آفرین»، «ببین چه جالب»)، نکته‌ی اصلی هر بخش را حداقل یک‌بار با کلماتِ دیگر تکرار کن، و مطلب را به بخش‌های بیشتر و ریزتر تقسیم کن (۷ تا ۹ بخش) تا هیچ‌جا یک‌باره اطلاعاتِ زیاد به بچه داده نشود. "
           : "") +
-        "خروجی باید یک شیء JSON با کلید \"segments\" باشد: آرایه‌ای از " + (isElementary ? "۱۰ تا ۱۴" : "۱۱ تا ۱۵") + " بخش آموزشی پشت‌سرهم (شاملِ چند مثالِ هدایت‌شده + تمرینِ مستقل + بررسیِ پاسخ‌ها طبقِ توضیحِ بالا)، هرکدام دقیقاً با این ساختار: " +
+        "خروجی باید یک شیء JSON با سه کلید باشد: \"chapterSummary\"، \"learningObjectives\" و \"segments\". " +
+        '"chapterSummary": یک یا دو جمله‌ی کوتاه و جذاب که می‌گوید این مبحث درباره‌ی چیست و چرا مهم است — دانش‌آموز این را پیش از شروعِ تدریس می‌بیند تا بداند قرار است چه چیزی یاد بگیرد. ' +
+        '"learningObjectives": آرایه‌ای از ۳ تا ۵ رشته‌ی کوتاه، هرکدام با فعل «می‌تواند» شروع شود (مثلاً «می‌تواند یک معادله‌ی یک مجهولی را حل کند»)، دقیقاً اهدافِ یادگیریِ این جلسه را فهرست می‌کند. ' +
+        "\"segments\": آرایه‌ای از " + (isElementary ? "۱۰ تا ۱۴" : "۱۱ تا ۱۵") + " بخش آموزشی پشت‌سرهم (شاملِ چند مثالِ هدایت‌شده + تمرینِ مستقل + بررسیِ پاسخ‌ها طبقِ توضیحِ بالا)، هرکدام دقیقاً با این ساختار: " +
         '{"stepLabel": "نامِ گامِ طرحِ درس که این بخش به آن تعلق دارد — یکی از: ایجاد انگیزه / مرورِ دانشِ قبلی / ارائه‌ی مفهوم / تمرینِ هدایت‌شده / تمرینِ مستقل / بررسیِ پاسخ‌ها / تعمیم به زندگی / جمع‌بندی / ارزشیابیِ پایانی", ' +
         '"narration": "متنی که رهیار با صدای بلند برای دانش‌آموز توضیح می‌دهد — زیبا، گویا، محاوره‌ای و قصه‌گونه، حدود ۲ تا ۵ جمله، طوری که از تدریسِ یک معلمِ معمولی بهتر و گرم‌تر باشد", ' +
         '"visualType": "یکی از: board / diagram / bars / line / labels / timeline / none. board برای ریاضی و هر مبحثی که با نوشتنِ گام‌به‌گام (حل مسئله، فرمول، معادله) فهمیده می‌شود — مثلِ یک معلمِ واقعی که روی تخته می‌نویسد؛ این باید انتخابِ پیش‌فرض برایِ ریاضی باشد، نه diagram. diagram (یک تصویرِ SVGِ متحرک) را محدود و فقط برایِ موضوعاتِ ذاتاً تصویری/ساختاری/فرایندی نگه‌دار (اندام‌های بدن، ساختارِ سلول، نقشه، چرخه‌ی طبیعی، واکنشِ شیمیایی) — نه برایِ هر چیزی، چون در آینده ابزارهای پیشرفته‌تر (ویدئوی واقعی) جایگزینِ بخشِ بزرگی از diagram خواهد شد و بهتر است از همین حالا کاربردش را به موردِ واقعاً لازم محدود کنیم. bars/line فقط برای داده‌های عددیِ واقعی، labels برای فهرستِ مفهومی، timeline برای توالیِ مراحل، none فقط وقتی هیچ‌کدام واقعاً لازم نیست", ' +
@@ -25088,15 +25092,19 @@ async function rahyarGenerateTeachingScript(subject, grade, chapter) {
   const cleaned = rawText.replace(/```json|```/g, "").trim();
   const parsed = JSON.parse(cleaned);
   const segments = Array.isArray(parsed.segments) ? parsed.segments : [];
-  return segments.map((s, i) => ({
-    id: "seg-" + i,
-    stepLabel: s.stepLabel || "",
-    narration: s.narration || "",
-    visualType: ["diagram", "board", "bars", "line", "labels", "timeline", "video", "none"].includes(s.visualType) ? s.visualType : "none",
-    visualTitle: s.visualTitle || "",
-    visualData: s.visualData && typeof s.visualData === "object" ? s.visualData : {},
-    quickTechnique: s.quickTechnique || "",
-  }));
+  return {
+    summary: typeof parsed.chapterSummary === "string" ? parsed.chapterSummary : "",
+    objectives: Array.isArray(parsed.learningObjectives) ? parsed.learningObjectives.filter((o) => typeof o === "string" && o.trim()) : [],
+    segments: segments.map((s, i) => ({
+      id: "seg-" + i,
+      stepLabel: s.stepLabel || "",
+      narration: s.narration || "",
+      visualType: ["diagram", "board", "bars", "line", "labels", "timeline", "video", "none"].includes(s.visualType) ? s.visualType : "none",
+      visualTitle: s.visualTitle || "",
+      visualData: s.visualData && typeof s.visualData === "object" ? s.visualData : {},
+      quickTechnique: s.quickTechnique || "",
+    })),
+  };
 }
 
 function rahyarChapterKey(subject, grade) {
@@ -25576,6 +25584,8 @@ function RahyarTeachingLibraryView({ onBack, grade, studentCode, schoolCode }) {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
   const [segments, setSegments] = useState(null);
+  const [chapterSummary, setChapterSummary] = useState("");
+  const [chapterObjectives, setChapterObjectives] = useState([]);
   const [fromCache, setFromCache] = useState(false);
   const [currentIndex, setCurrentIndex] = useState(0);
   const [playing, setPlaying] = useState(false);
@@ -25775,14 +25785,20 @@ function RahyarTeachingLibraryView({ onBack, grade, studentCode, schoolCode }) {
     setError("");
     setLoading(true);
     setSegments(null);
+    setChapterSummary("");
+    setChapterObjectives([]);
     stopSpeaking();
     const key = rahyarTeachingKey(subject, gradeSel, chapter);
     try {
       const cached = await authStorageGet(key, true);
       if (cached) {
-        const parsedSegs = JSON.parse(cached);
-        if (Array.isArray(parsedSegs) && parsedSegs.length > 0) {
-          setSegments(parsedSegs);
+        const parsedCache = JSON.parse(cached);
+        // کشِ قدیمی فقط آرایه‌ی segments بود (بدونِ خلاصه/اهداف)؛ هر دو شکل را پوشش بده.
+        const normalized = Array.isArray(parsedCache) ? { summary: "", objectives: [], segments: parsedCache } : parsedCache;
+        if (Array.isArray(normalized.segments) && normalized.segments.length > 0) {
+          setSegments(normalized.segments);
+          setChapterSummary(normalized.summary || "");
+          setChapterObjectives(Array.isArray(normalized.objectives) ? normalized.objectives : []);
           setFromCache(true);
           setCurrentIndex(0);
           setLoading(false);
@@ -25793,12 +25809,14 @@ function RahyarTeachingLibraryView({ onBack, grade, studentCode, schoolCode }) {
       // کش موجود نبود یا خراب بود — ادامه به ساخت تازه
     }
     try {
-      const segs = await rahyarGenerateTeachingScript(subject.trim(), gradeSel, chapter.trim());
-      if (!segs.length) throw new Error("empty");
-      setSegments(segs);
+      const result = await rahyarGenerateTeachingScript(subject.trim(), gradeSel, chapter.trim());
+      if (!result.segments.length) throw new Error("empty");
+      setSegments(result.segments);
+      setChapterSummary(result.summary || "");
+      setChapterObjectives(result.objectives || []);
       setFromCache(false);
       setCurrentIndex(0);
-      await authStorageSet(key, JSON.stringify(segs), true);
+      await authStorageSet(key, JSON.stringify(result), true);
     } catch (e) {
       setError("ساخت تدریس با مشکل مواجه شد. دوباره تلاش کنید.");
     } finally {
@@ -25910,6 +25928,11 @@ function RahyarTeachingLibraryView({ onBack, grade, studentCode, schoolCode }) {
         .rtl-timeline-text { font-size: 12px; color: #4a4a6a; }
         .rtl-cache-badge { font-size: 11px; color: #a8741f; font-weight: 700; margin-bottom: 8px; }
         .rtl-no-speech-note { font-size: 11.5px; color: #c0392b; background: #fdecea; border: 1px solid #f3c6c2; border-radius: 10px; padding: 8px 12px; margin-bottom: 10px; }
+        .rtl-chapter-brief { background: linear-gradient(135deg, #fbf3e3, #f6efdc); border: 1.3px solid #e0a83e; border-radius: 14px; padding: 14px 16px; margin-bottom: 12px; }
+        .rtl-chapter-brief-summary { font-size: 13.5px; font-weight: 700; color: #6b4a16; line-height: 1.9; margin-bottom: 8px; }
+        .rtl-chapter-brief-label { font-size: 12px; font-weight: 700; color: #a8741f; margin-bottom: 4px; }
+        .rtl-chapter-brief-list { margin: 0; padding-right: 18px; display: flex; flex-direction: column; gap: 4px; }
+        .rtl-chapter-brief-list li { font-size: 12.5px; color: #4a4a6a; line-height: 1.8; }
       `}</style>
 
       <div className="pqb-card">
@@ -26000,6 +26023,22 @@ function RahyarTeachingLibraryView({ onBack, grade, studentCode, schoolCode }) {
         {segments && segments.length > 0 && (
           <div className="rtl-player-box">
             {fromCache && <div className="rtl-cache-badge">💾 این تدریس قبلاً ساخته شده و از کتابخانه بارگذاری شد — نیازی به ساخت دوباره نبود.</div>}
+
+            {(chapterSummary || chapterObjectives.length > 0) && (
+              <div className="rtl-chapter-brief">
+                {chapterSummary && <div className="rtl-chapter-brief-summary">🧭 {chapterSummary}</div>}
+                {chapterObjectives.length > 0 && (
+                  <>
+                    <div className="rtl-chapter-brief-label">در پایانِ این جلسه، دانش‌آموز:</div>
+                    <ul className="rtl-chapter-brief-list">
+                      {chapterObjectives.map((o, i) => (
+                        <li key={i}>{o}</li>
+                      ))}
+                    </ul>
+                  </>
+                )}
+              </div>
+            )}
 
             <div className="rtl-progress-dots">
               {segments.map((s, i) => (

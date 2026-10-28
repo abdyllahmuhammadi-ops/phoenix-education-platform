@@ -25069,9 +25069,10 @@ async function rahyarGenerateTeachingScript(subject, grade, chapter) {
         "خروجی باید یک شیء JSON با کلید \"segments\" باشد: آرایه‌ای از " + (isElementary ? "۷ تا ۹" : "۶ تا ۹") + " بخش آموزشی پشت‌سرهم، هرکدام دقیقاً با این ساختار: " +
         '{"stepLabel": "نامِ گامِ طرحِ درس که این بخش به آن تعلق دارد — یکی از: ایجاد انگیزه / مرورِ دانشِ قبلی / ارائه‌ی مفهوم / تمرینِ هدایت‌شده / تعمیم به زندگی / جمع‌بندی / ارزشیابیِ پایانی", ' +
         '"narration": "متنی که رهیار با صدای بلند برای دانش‌آموز توضیح می‌دهد — زیبا، گویا، محاوره‌ای و قصه‌گونه، حدود ۲ تا ۵ جمله، طوری که از تدریسِ یک معلمِ معمولی بهتر و گرم‌تر باشد", ' +
-        '"visualType": "یکی از: diagram / bars / line / labels / timeline / none — تا جای ممکن از diagram استفاده کن، چون نزدیک‌ترین چیزی‌ست که در اختیار داری به یک ویدئوی آموزشیِ کوتاه یا شبیه‌سازیِ سه‌بعدی و تخته‌وایت‌بردِ متحرک: برای هر موضوعی که اصلش تصویری/ساختاری/فرایندی/حرکتی است (اندام‌ها و دستگاه‌های بدن، ساختارِ سلول، نقشه، چرخه‌ی طبیعی، شکلِ هندسی، نمودارِ مداری، واکنشِ شیمیایی، حرکتِ اجسام) حتماً diagram را انتخاب کن تا دانش‌آموز علاوه بر صدا، تصویر و حرکت هم ببیند؛ bars/line فقط برای داده‌های عددیِ واقعی، labels برای فهرستِ مفهومی، timeline برای توالیِ مراحل، none فقط وقتی هیچ‌کدام واقعاً لازم نیست", ' +
-        '"visualTitle": "عنوان کوتاه نمودار یا تصویر (اگر visualType برابر none است، رشته‌ی خالی بگذار)", ' +
-        '"visualData": "داده‌ی متناسب با نوع نمودار — ' +
+        '"visualType": "یکی از: board / diagram / bars / line / labels / timeline / none. board برای ریاضی و هر مبحثی که با نوشتنِ گام‌به‌گام (حل مسئله، فرمول، معادله) فهمیده می‌شود — مثلِ یک معلمِ واقعی که روی تخته می‌نویسد؛ این باید انتخابِ پیش‌فرض برایِ ریاضی باشد، نه diagram. diagram (یک تصویرِ SVGِ متحرک) را محدود و فقط برایِ موضوعاتِ ذاتاً تصویری/ساختاری/فرایندی نگه‌دار (اندام‌های بدن، ساختارِ سلول، نقشه، چرخه‌ی طبیعی، واکنشِ شیمیایی) — نه برایِ هر چیزی، چون در آینده ابزارهای پیشرفته‌تر (ویدئوی واقعی) جایگزینِ بخشِ بزرگی از diagram خواهد شد و بهتر است از همین حالا کاربردش را به موردِ واقعاً لازم محدود کنیم. bars/line فقط برای داده‌های عددیِ واقعی، labels برای فهرستِ مفهومی، timeline برای توالیِ مراحل، none فقط وقتی هیچ‌کدام واقعاً لازم نیست", ' +
+        '"visualTitle": "عنوان کوتاه (اگر visualType برابر none است، رشته‌ی خالی بگذار)", ' +
+        '"visualData": "داده‌ی متناسب با نوع — ' +
+        'برای board: {\\"lines\\": [\\"سطرِ اول (مثلاً صورتِ مسئله یا معادله)\\", \\"سطرِ دوم (گامِ بعدیِ حل)\\", \\"...\\"]} — هر سطر دقیقاً یک گامِ نوشتاریِ طبیعی روی تخته باشد (نه یک پاراگراف)، معمولاً ۲ تا ۵ سطر کافی است؛ ' +
         'برای diagram: {\\"svg\\": \\"یک قطعه SVG غنی، معتبر و کامل، فقط عناصر داخلیِ تگ svg (بدون خودِ تگ svg، بدون <script>)، با viewBox فرضیِ 0 0 300 220 رسم‌شده؛ از circle/ellipse/rect/path/line/polygon/g/text برای شکل‌ها و برچسب‌های فارسیِ خوانا استفاده کن؛ تا جای ممکن چندین عنصرِ متحرک با <animate> یا <animateTransform> اضافه کن (مثلاً جریان خون در رگ، چرخشِ زمین، حرکتِ یک فلش، ظاهرشدنِ تدریجیِ برچسب‌ها) تا به‌جای یک عکسِ ثابت، شبیهِ یک انیمیشن/ویدیوی کوتاهِ آموزشیِ واقعی باشد، با جزئیاتِ کافی که ارزشِ دیدن داشته باشد\\"}؛ ' +
         'برای bars و line: {\\"labels\\": [...], \\"values\\": [اعداد]}؛ برای labels: {\\"items\\": [{\\"label\\": \\"...\\", \\"desc\\": \\"...\\"}]}؛ برای timeline: {\\"steps\\": [\\"...\\", \\"...\\"]}؛ برای none: {}"}, ' +
         '"quickTechnique": "اگر این بخش به‌طور طبیعی یک میان‌بر یا تکنیکِ تست‌زنیِ سریع مرتبط با کنکور یا امتحان دارد (مثلاً یک قاعده‌ی سرانگشتی، یک الگوی عددی، یک روشِ حذفِ گزینه) آن را اینجا در یک یا دو جمله‌ی کوتاه بنویس؛ این فقط مکملِ narration است و باید بعد از فهمِ عمیقِ مطلب معنا پیدا کند، هرگز نباید جایگزینِ توضیحِ مفهومی شود؛ اگر چنین میان‌بری واقعاً وجود ندارد (مثلاً در مقدمه یا جمع‌بندی)، رشته‌ی خالی بگذار" ' +
@@ -25089,7 +25090,7 @@ async function rahyarGenerateTeachingScript(subject, grade, chapter) {
     id: "seg-" + i,
     stepLabel: s.stepLabel || "",
     narration: s.narration || "",
-    visualType: ["diagram", "bars", "line", "labels", "timeline", "none"].includes(s.visualType) ? s.visualType : "none",
+    visualType: ["diagram", "board", "bars", "line", "labels", "timeline", "video", "none"].includes(s.visualType) ? s.visualType : "none",
     visualTitle: s.visualTitle || "",
     visualData: s.visualData && typeof s.visualData === "object" ? s.visualData : {},
     quickTechnique: s.quickTechnique || "",
@@ -25148,7 +25149,7 @@ async function rahyarGenerateLabExperiment(subject, grade, chapter) {
           : "") +
         "خروجی باید فقط یک شیء JSON با این ساختار دقیق باشد: " +
         '{"title": "نام کوتاه آزمایش", "icon": "یک ایموجی مناسب", "tools": ["وسیله ۱", "وسیله ۲", "..."], ' +
-        '"segments": [ {"narration": "توضیح گام‌به‌گام این مرحله از آزمایش — ساده و محاوره‌ای، ۲ تا ۴ جمله", "visualType": "یکی از: diagram / bars / line / labels / timeline / none — برای نشان‌دادن خودِ وسایل، چیدمان آزمایش یا پدیده‌ی در حال وقوع از diagram استفاده کن تا دانش‌آموز تصویر و حرکت هم ببیند، نه فقط صدا", "visualTitle": "عنوان کوتاه", "visualData": {...متناسب با نوع...}, "quickTechnique": "اگر این مرحله به‌طور طبیعی با یک سؤالِ کنکور/امتحانی مرتبط است و یک میان‌بر یا تکنیکِ تست‌زنیِ سریع دارد، در یک جمله‌ی کوتاه بنویس؛ فقط مکملِ narration است، بعد از فهمِ عمیق معنا پیدا می‌کند و هرگز جایگزینِ آن نمی‌شود؛ اگر واقعاً چنین میان‌بری نیست، رشته‌ی خالی بگذار"} ] (۴ تا ۶ مرحله: معرفی آزمایش، نحوه‌ی چیدن وسایل، نحوه‌ی انجام، مشاهده و نتیجه)، ' +
+        '"segments": [ {"narration": "توضیح گام‌به‌گام این مرحله از آزمایش — ساده و محاوره‌ای، ۲ تا ۴ جمله", "visualType": "یکی از: board / diagram / bars / line / labels / timeline / none — برای نشان‌دادن خودِ وسایل، چیدمان آزمایش یا پدیده‌ی در حال وقوع از diagram استفاده کن؛ اگر این مرحله شاملِ یک فرمول یا محاسبه است، board (نوشتنِ گام‌به‌گام روی تخته) را ترجیح بده", "visualTitle": "عنوان کوتاه", "visualData": {...متناسب با نوع، برای board: {\\"lines\\": [\\"...\\", \\"...\\"]}...}, "quickTechnique": "اگر این مرحله به‌طور طبیعی با یک سؤالِ کنکور/امتحانی مرتبط است و یک میان‌بر یا تکنیکِ تست‌زنیِ سریع دارد، در یک جمله‌ی کوتاه بنویس؛ فقط مکملِ narration است، بعد از فهمِ عمیق معنا پیدا می‌کند و هرگز جایگزینِ آن نمی‌شود؛ اگر واقعاً چنین میان‌بری نیست، رشته‌ی خالی بگذار"} ] (۴ تا ۶ مرحله: معرفی آزمایش، نحوه‌ی چیدن وسایل، نحوه‌ی انجام، مشاهده و نتیجه)، ' +
         '"variableLabel": "نام متغیری که دانش‌آموز در بخش تعاملی تغییر می‌دهد (مثلاً دما، غلظت، زاویه)", "variableUnit": "واحد (اگر ندارد رشته‌ی خالی)", "variableMin": عدد, "variableMax": عدد, "variableDefault": عدد, ' +
         '"outcomeLow": "چه اتفاقی می‌افتد وقتی متغیر در کمترین مقدار است", "outcomeMid": "در مقدار میانی", "outcomeHigh": "در بیشترین مقدار", ' +
         '"conclusion": "جمع‌بندی علمی کوتاه — این آزمایش چه قانون یا مفهومی را نشان می‌دهد"}. ' +
@@ -25165,7 +25166,7 @@ async function rahyarGenerateLabExperiment(subject, grade, chapter) {
     ? parsed.segments.map((s, i) => ({
         id: "seg-" + i,
         narration: s.narration || "",
-        visualType: ["diagram", "bars", "line", "labels", "timeline", "none"].includes(s.visualType) ? s.visualType : "none",
+        visualType: ["diagram", "board", "bars", "line", "labels", "timeline", "video", "none"].includes(s.visualType) ? s.visualType : "none",
         visualTitle: s.visualTitle || "",
         visualData: s.visualData && typeof s.visualData === "object" ? s.visualData : {},
         quickTechnique: s.quickTechnique || "",
@@ -25257,9 +25258,9 @@ async function rahyarGenerateHomeworkHelp(subject, grade, questionText) {
         "درسِ مربوط (اگر مشخص شده): «" + (subject || "نامشخص") + "». " +
         'خروجی باید فقط یک شیء JSON با کلید "segments" باشد: آرایه‌ای از ۳ تا ۶ بخش پشت‌سرهم، هرکدام دقیقاً با این ساختار: ' +
         '{"narration": "متنی که رهیار با صدای بلند می‌گوید — ساده و محاوره‌ای، ۲ تا ۴ جمله", ' +
-        '"visualType": "یکی از: diagram / bars / line / labels / timeline / none — همان قاعده‌ی قبلی: برای مفاهیمِ تصویری/ساختاری diagram، برای داده‌ی عددی bars/line، برای فهرستِ مفهومی labels، برای توالیِ مراحل timeline، در غیرِ این صورت none", ' +
+        '"visualType": "یکی از: board / diagram / bars / line / labels / timeline / none — اگر سؤال ریاضی یا محاسباتی است، board (نوشتنِ گام‌به‌گامِ حل روی تخته، مثلِ یک معلمِ واقعی) را ترجیح بده؛ diagram فقط برای مفاهیمِ ذاتاً تصویری/ساختاری، bars/line برای داده‌ی عددی، labels برای فهرستِ مفهومی، timeline برای توالیِ مراحل، در غیرِ این صورت none", ' +
         '"visualTitle": "عنوان کوتاه (اگر none است، خالی)", ' +
-        '"visualData": "متناسب با نوع، طبقِ همان قاعده‌ی: diagram={\\"svg\\": \\"...\\"}, bars/line={\\"labels\\":[...], \\"values\\":[...]}, labels={\\"items\\":[{\\"label\\":\\"...\\",\\"desc\\":\\"...\\"}]}, timeline={\\"steps\\":[...]}, none={}", ' +
+        '"visualData": "متناسب با نوع: board={\\"lines\\":[\\"سطرِ اول\\",\\"سطرِ دوم\\",...]}, diagram={\\"svg\\": \\"...\\"}, bars/line={\\"labels\\":[...], \\"values\\":[...]}, labels={\\"items\\":[{\\"label\\":\\"...\\",\\"desc\\":\\"...\\"}]}, timeline={\\"steps\\":[...]}, none={}", ' +
         '"quickTechnique": "اگر این مرحله یک میان‌بر/تکنیکِ تست‌زنیِ سریع دارد در یک جمله بنویس، وگرنه رشته‌ی خالی — فقط مکملِ narration است"}. ' +
         "بخشِ اول باید دقیقاً همان سؤال/تکلیفِ دانش‌آموز را با زبانِ خودت بازگو کند (تا مطمئن شوی درست فهمیده‌ای)، بخش‌های میانی روشِ حل را گام‌به‌گام (نه فقط جواب) نشان دهند، و بخشِ آخر جوابِ نهایی به‌همراه یک جمله‌ی تشویقی باشد. " +
         "اگر سؤال نامشخص یا ناقص است، در همان بخشِ اول با مهربانی بگو چه اطلاعاتِ بیشتری لازم است. فقط همان شیء JSON را برگردان، بدون Markdown یا توضیح اضافه.",
@@ -25274,7 +25275,7 @@ async function rahyarGenerateHomeworkHelp(subject, grade, questionText) {
   return segments.map((s, i) => ({
     id: "seg-" + i,
     narration: s.narration || "",
-    visualType: ["diagram", "bars", "line", "labels", "timeline", "none"].includes(s.visualType) ? s.visualType : "none",
+    visualType: ["diagram", "board", "bars", "line", "labels", "timeline", "video", "none"].includes(s.visualType) ? s.visualType : "none",
     visualTitle: s.visualTitle || "",
     visualData: s.visualData && typeof s.visualData === "object" ? s.visualData : {},
     quickTechnique: s.quickTechnique || "",
@@ -25465,6 +25466,39 @@ function RahyarSegmentVisual({ visualType, visualTitle, visualData, animKey }) {
             </div>
           ))}
         </div>
+      </div>
+    );
+  }
+
+  // تختهٔ سیاه/وایت‌برد — برای ریاضی و هر مبحثی که با «نوشتنِ گام‌به‌گام» (نه یک تصویرِ ساختاری)
+  // بهتر فهمیده می‌شود: هر سطر مثلِ نوشته‌شدنِ تدریجیِ یک معلمِ واقعی روی تخته ظاهر می‌شود.
+  if (visualType === "board") {
+    const lines = Array.isArray(data.lines) ? data.lines : [];
+    return (
+      <div className="rtl-board-box" key={animKey}>
+        {visualTitle && <div className="rtl-board-title">{visualTitle}</div>}
+        <div className="rtl-board-lines">
+          {lines.map((ln, i) => (
+            <div key={i} className="rtl-board-line" style={{ animationDelay: (i * 0.4) + "s" }}>{ln}</div>
+          ))}
+        </div>
+      </div>
+    );
+  }
+
+  // پخشِ ویدئوی واقعی — فعلاً هیچ موتورِ تولیدمحتوا این نوع را انتخاب نمی‌کند (چون منبعِ ویدئوی
+  // واقعی/تأییدشده‌ای وصل نیست)؛ این فقط «سوکتِ» آماده برای روزی‌ست که به سامانهٔ هوشمندِ ویدئوساز
+  // وصل شویم — همان لحظه فقط کافی‌ست یک videoUrl واقعی در داده قرار بگیرد، بدون تغییرِ این کامپوننت.
+  // صدای ویدئو همیشه خاموش است تا با صدای رهیار (که مستقل و همیشه در حالِ پخش است) تداخل نکند؛
+  // اگر ویدئو صدای خودش را نداشت یا بی‌صدا بود، همین رفتار دقیقاً همان است که باید باشد.
+  if (visualType === "video") {
+    const url = typeof data.videoUrl === "string" ? data.videoUrl.trim() : "";
+    const isSafeVideoUrl = /^https:\/\/[a-z0-9.-]+\/[^\s"'<>]*\.(mp4|webm)(\?[^\s"'<>]*)?$/i.test(url);
+    if (!isSafeVideoUrl) return null;
+    return (
+      <div className="rtl-visual-box" key={animKey}>
+        {visualTitle && <div className="rtl-visual-title">{visualTitle}</div>}
+        <video className="rtl-inline-video" src={url} autoPlay muted loop playsInline />
       </div>
     );
   }
@@ -25728,6 +25762,12 @@ function RahyarTeachingLibraryView({ onBack, grade, studentCode, schoolCode }) {
         .rtl-avatar-pip .rtl-avatar-badge { display: none; }
         .rtl-visual-box { background: #ffffff; border: 2px solid #dde2ec; border-radius: 14px; padding: 16px; margin-top: 4px; background-image: linear-gradient(0deg, rgba(60,74,158,0.05) 1px, transparent 1px), linear-gradient(90deg, rgba(60,74,158,0.05) 1px, transparent 1px); background-size: 22px 22px; box-shadow: inset 0 0 0 5px #fff, 0 6px 16px rgba(20,30,70,0.1); }
         .rtl-visual-title { font-weight: 800; font-size: 12.5px; color: #3c4a9e; margin-bottom: 10px; padding-bottom: 6px; border-bottom: 2px solid #c8d0f0; display: inline-block; }
+        .rtl-board-box { background: #1b3a2e; border: 10px solid #5b4636; border-radius: 6px; padding: 20px 18px; margin-top: 4px; box-shadow: inset 0 0 30px rgba(0,0,0,0.35), 0 6px 16px rgba(0,0,0,0.25); }
+        .rtl-board-title { color: #f2f2e8; font-weight: 800; font-size: 13px; margin-bottom: 14px; border-bottom: 2px dashed rgba(255,255,255,0.3); padding-bottom: 8px; }
+        .rtl-board-lines { display: flex; flex-direction: column; gap: 12px; }
+        .rtl-board-line { color: #fdfdf5; font-size: 15px; line-height: 1.8; opacity: 0; animation: rtl-chalk-write 0.6s ease forwards; }
+        @keyframes rtl-chalk-write { from { opacity: 0; transform: translateY(6px); } to { opacity: 1; transform: translateY(0); } }
+        .rtl-inline-video { width: 100%; border-radius: 10px; display: block; background: #000; }
         .rtl-bars-row { display: flex; gap: 14px; align-items: flex-end; height: 140px; justify-content: center; }
         .rtl-bar-col { display: flex; flex-direction: column; align-items: center; gap: 6px; width: 48px; }
         .rtl-bar-track { width: 100%; height: 110px; display: flex; align-items: flex-end; background: #ede5f9; border-radius: 6px; overflow: hidden; }
@@ -26182,6 +26222,12 @@ function RahyarDynamicLabView({ onBack, grade, studentCode, schoolCode }) {
         .rtl-avatar-pip .rtl-avatar-badge { display: none; }
         .rtl-visual-box { background: #ffffff; border: 2px solid #dde2ec; border-radius: 14px; padding: 16px; margin-top: 4px; background-image: linear-gradient(0deg, rgba(60,74,158,0.05) 1px, transparent 1px), linear-gradient(90deg, rgba(60,74,158,0.05) 1px, transparent 1px); background-size: 22px 22px; box-shadow: inset 0 0 0 5px #fff, 0 6px 16px rgba(20,30,70,0.1); }
         .rtl-visual-title { font-weight: 800; font-size: 12.5px; color: #3c4a9e; margin-bottom: 10px; padding-bottom: 6px; border-bottom: 2px solid #c8d0f0; display: inline-block; }
+        .rtl-board-box { background: #1b3a2e; border: 10px solid #5b4636; border-radius: 6px; padding: 20px 18px; margin-top: 4px; box-shadow: inset 0 0 30px rgba(0,0,0,0.35), 0 6px 16px rgba(0,0,0,0.25); }
+        .rtl-board-title { color: #f2f2e8; font-weight: 800; font-size: 13px; margin-bottom: 14px; border-bottom: 2px dashed rgba(255,255,255,0.3); padding-bottom: 8px; }
+        .rtl-board-lines { display: flex; flex-direction: column; gap: 12px; }
+        .rtl-board-line { color: #fdfdf5; font-size: 15px; line-height: 1.8; opacity: 0; animation: rtl-chalk-write 0.6s ease forwards; }
+        @keyframes rtl-chalk-write { from { opacity: 0; transform: translateY(6px); } to { opacity: 1; transform: translateY(0); } }
+        .rtl-inline-video { width: 100%; border-radius: 10px; display: block; background: #000; }
         .rtl-bars-row { display: flex; gap: 14px; align-items: flex-end; height: 140px; justify-content: center; }
         .rtl-bar-col { display: flex; flex-direction: column; align-items: center; gap: 6px; width: 48px; }
         .rtl-bar-track { width: 100%; height: 110px; display: flex; align-items: flex-end; background: #ede5f9; border-radius: 6px; overflow: hidden; }
@@ -26624,6 +26670,12 @@ function RahyarHomeworkHelperView({ onBack, grade, studentCode, schoolCode }) {
         .rtl-avatar-pip .rtl-avatar-badge { display: none; }
         .rtl-visual-box { background: #ffffff; border: 2px solid #dde2ec; border-radius: 14px; padding: 16px; margin-top: 4px; background-image: linear-gradient(0deg, rgba(60,74,158,0.05) 1px, transparent 1px), linear-gradient(90deg, rgba(60,74,158,0.05) 1px, transparent 1px); background-size: 22px 22px; box-shadow: inset 0 0 0 5px #fff, 0 6px 16px rgba(20,30,70,0.1); }
         .rtl-visual-title { font-weight: 800; font-size: 12.5px; color: #3c4a9e; margin-bottom: 10px; padding-bottom: 6px; border-bottom: 2px solid #c8d0f0; display: inline-block; }
+        .rtl-board-box { background: #1b3a2e; border: 10px solid #5b4636; border-radius: 6px; padding: 20px 18px; margin-top: 4px; box-shadow: inset 0 0 30px rgba(0,0,0,0.35), 0 6px 16px rgba(0,0,0,0.25); }
+        .rtl-board-title { color: #f2f2e8; font-weight: 800; font-size: 13px; margin-bottom: 14px; border-bottom: 2px dashed rgba(255,255,255,0.3); padding-bottom: 8px; }
+        .rtl-board-lines { display: flex; flex-direction: column; gap: 12px; }
+        .rtl-board-line { color: #fdfdf5; font-size: 15px; line-height: 1.8; opacity: 0; animation: rtl-chalk-write 0.6s ease forwards; }
+        @keyframes rtl-chalk-write { from { opacity: 0; transform: translateY(6px); } to { opacity: 1; transform: translateY(0); } }
+        .rtl-inline-video { width: 100%; border-radius: 10px; display: block; background: #000; }
         .rtl-bars-row { display: flex; gap: 14px; align-items: flex-end; height: 140px; justify-content: center; }
         .rtl-bar-col { display: flex; flex-direction: column; align-items: center; gap: 6px; width: 48px; }
         .rtl-bar-track { width: 100%; height: 110px; display: flex; align-items: flex-end; background: #ede5f9; border-radius: 6px; overflow: hidden; }

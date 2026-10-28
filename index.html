@@ -17948,25 +17948,24 @@ function TeacherQuestionBankStep({ onBack, prefillSchoolCode, teacherSchools, te
                             <td colSpan={2}>ادارهٔ آموزش و پرورشِ شهرستان/ناحیهٔ {examCountyOffice.trim() || "................"}</td>
                           </tr>
                           <tr>
-                            <td>نامِ مدرسه: {(schoolOptions.find((s) => s.code === schoolCode) || {}).name || "مدرسه"}</td>
+                            <td colSpan={2}>نامِ مدرسه: {(schoolOptions.find((s) => s.code === schoolCode) || {}).name || "مدرسه"}</td>
                             <td>کدِ مدرسه: {schoolCode}</td>
                             <td>کلاس: {examClassName.trim() || "—"}</td>
+                          </tr>
+                          <tr>
+                            <td>نامِ درس: {subject}</td>
                             <td>پایه: {grade}</td>
-                          </tr>
-                          <tr>
-                            <td colSpan={2}>نامِ درس: {subject}</td>
-                            <td colSpan={2}>تاریخِ امتحان: {new Date().toLocaleDateString("fa-IR")}</td>
-                          </tr>
-                          <tr>
+                            <td>تاریخِ امتحان: {new Date().toLocaleDateString("fa-IR")}</td>
                             <td>مدت: {examDuration.trim() || "................"} دقیقه</td>
+                          </tr>
+                          <tr>
                             <td>تعدادِ صفحات: {examPagesCount.trim() || "۱"}</td>
-                            <td colSpan={2}>نامِ دبیر: {examTeacherName.trim() || "—"}</td>
+                            <td colSpan={3}>نامِ دبیر: {examTeacherName.trim() || "—"}</td>
                           </tr>
                           <tr>
                             <td>نام: ........................</td>
                             <td>نام‌خانوادگی: ........................</td>
-                            <td>نامِ پدر: ........................</td>
-                            <td>شماره‌ی داوطلبی: ........................</td>
+                            <td colSpan={2}>نامِ پدر: ........................</td>
                           </tr>
                         </tbody>
                       </table>

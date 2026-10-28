@@ -16132,6 +16132,13 @@ function StudentDashboard({
   onLogout,
 }) {
   const [todaySchedule, setTodaySchedule] = useState([]);
+  // برایِ حسِ «زنگِ زنده‌ی رهیار» (مثلِ کلاسِ زنده‌ی رقبا، اما با AI نه معلمِ انسانی): هر ۶۰ ثانیه
+  // دوباره محاسبه می‌کنیم که الان طبق برنامه‌ی همین کلاس، کدام زنگ/درس است.
+  const [nowTick, setNowTick] = useState(Date.now());
+  useEffect(() => {
+    const t = window.setInterval(() => setNowTick(Date.now()), 60000);
+    return () => window.clearInterval(t);
+  }, []);
   const [tomorrowSubjects, setTomorrowSubjects] = useState([]);
   const [missedTodaySubjects, setMissedTodaySubjects] = useState([]);
   const [homeworkItems, setHomeworkItems] = useState([]);
@@ -16177,6 +16184,32 @@ function StudentDashboard({
   // پنج‌شنبه و جمعه مدارس تعطیل‌اند؛ به‌جای برنامه‌ی خالی، برنامه‌ی روز شنبه (شروع هفته‌ی بعد) نمایش داده می‌شود
   const isWeekendToday = todayName === "پنجشنبه" || todayName === "جمعه";
   const scheduleLookupDayName = isWeekendToday ? "شنبه" : todayName;
+
+  // زنگِ تدریسِ زنده‌ی رهیار: طبق همان برنامه‌ی هفتگیِ کلاس، الان کدام زنگ/درس است؟ (تقسیمِ
+  // یکنواختِ بازه‌ی شیفت بر تعدادِ زنگ‌هایِ ثبت‌شده‌ی امروز — تخمینی، نه دقیقِ ثانیه‌ای، ولی کافی
+  // برایِ حسِ هم‌زمانی) — eslint-disable-next-line نیازی ندارد چون nowTick را صریح می‌خوانیم.
+  const nowLiveSubjectInfo = (() => {
+    if (isWeekendToday || todaySchedule.length === 0) return null;
+    void nowTick;
+    const now = new Date();
+    const hour = now.getHours() + now.getMinutes() / 60;
+    const isShift1 = hour < 12.75;
+    const shiftStart = isShift1 ? 7.5 : 13;
+    const shiftEnd = isShift1 ? 12.5 : 18;
+    if (hour < shiftStart || hour >= shiftEnd) return null;
+    const periodNums = Array.from(new Set(todaySchedule.map((s) => Number(s.period)))).filter((n) => !isNaN(n)).sort((a, b) => a - b);
+    if (periodNums.length === 0) return null;
+    const perPeriod = (shiftEnd - shiftStart) / periodNums.length;
+    for (let i = 0; i < periodNums.length; i++) {
+      const start = shiftStart + i * perPeriod;
+      const end = start + perPeriod;
+      if (hour >= start && hour < end) {
+        const match = todaySchedule.find((s) => Number(s.period) === periodNums[i]);
+        return match ? { period: periodNums[i], subject: match.subject } : null;
+      }
+    }
+    return null;
+  })();
 
   useEffect(() => {
     let cancelled = false;
@@ -16557,6 +16590,9 @@ function StudentDashboard({
         .sdb-compensation-card { margin-top: 10px; background: linear-gradient(120deg, #4a2e1a 0%, #45301a 100%); }
         .sdb-compensation-smart { background: linear-gradient(120deg, #4a1a1a 0%, #451a2e 100%); border: 1px solid rgba(242,120,120,0.3); }
         .sdb-compensation-card .sdb-rahyar-avatar { background: linear-gradient(135deg, #f0c290, #c98f5f); }
+        .sdb-live-now-card { margin-top: 10px; background: linear-gradient(120deg, #2e1414 0%, #45201e 100%); border: 1px solid rgba(224,70,63,0.4); }
+        .sdb-live-now-pulse { background: linear-gradient(135deg, #f26f6f, #c8382b); animation: sdb-live-pulse 1.6s ease-in-out infinite; }
+        @keyframes sdb-live-pulse { 0%, 100% { box-shadow: 0 0 0 0 rgba(224,70,63,0.5); } 50% { box-shadow: 0 0 0 8px rgba(224,70,63,0); } }
 
         /* نشان‌ها */
         .sdb-badges-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; }
@@ -16723,6 +16759,21 @@ function StudentDashboard({
             </div>
             <span className="sdb-rahyar-arrow">‹</span>
           </button>
+
+          {nowLiveSubjectInfo && onOpenCompensation && (
+            <button
+              type="button"
+              className="sdb-rahyar-card sdb-live-now-card"
+              onClick={() => onOpenCompensation([nowLiveSubjectInfo.subject])}
+            >
+              <div className="sdb-rahyar-avatar sdb-live-now-pulse">🔴</div>
+              <div className="sdb-rahyar-text">
+                <div className="sdb-rahyar-title">الان طبق برنامه‌ات، زنگِ {nowLiveSubjectInfo.subject} است</div>
+                <div className="sdb-rahyar-sub">اگر معلم نیست یا دوست داری همراه کلاس پیش بروی، رهیار همین الان زنده تدریس می‌کند</div>
+              </div>
+              <span className="sdb-rahyar-arrow">‹</span>
+            </button>
+          )}
 
           {tomorrowSubjects.length > 0 && onOpenTomorrowPreview && (
             <button type="button" className="sdb-rahyar-card sdb-preview-card" onClick={() => onOpenTomorrowPreview(tomorrowSubjects)}>

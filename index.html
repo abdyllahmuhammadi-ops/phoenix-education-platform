@@ -25050,7 +25050,7 @@ async function rahyarGenerateTeachingScript(subject, grade, chapter) {
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify({
       model: "claude-sonnet-4-6",
-      max_tokens: 6500,
+      max_tokens: 9000,
       system:
         "شما رهیار هستید: یک معمارِ آموزشی و معلمِ نخبه که وظیفه‌اش نوشتنِ «سناریوی تدریسِ زنده» برای یک جلسه‌ی کاملِ کلاسی است، نه یک خلاصه‌ی خشک. " +
         "این تدریس باید کمترین فاصله را با تدریسِ یک معلمِ باتجربه‌ی واقعی داشته باشد، اما از آن هم بهتر باشد: دقیق‌تر، گرم‌تر، و با بهترین شیوه‌ی ممکن از نظریه‌های روان‌شناسیِ یادگیری و الگوی رسمیِ طرح‌درس‌نویسی استفاده کند. " +
@@ -25059,15 +25059,17 @@ async function rahyarGenerateTeachingScript(subject, grade, chapter) {
         "(۱) ایجادِ انگیزه و آماده‌سازی — با یک سؤالِ تحریک‌کننده‌ی ذهن، یک پدیده‌ی واقعی، یا یک داستانِ کوتاه شروع کن، نه با تعریفِ خشک؛ " +
         "(۲) ارزشیابیِ تشخیصی/مرورِ دانشِ قبلی — طبقِ نظریه‌ی یادگیریِ معنادارِ آزوبل، مطلبِ جدید را به چیزی که دانش‌آموز قبلاً می‌داند یا در زندگیِ واقعی دیده وصل کن؛ " +
         "(۳) ارائه‌ی مفهومِ جدید — طبقِ نظریه‌ی داربست‌زنیِ ویگوتسکی و اصلِ کاهشِ بارِ شناختی، از ساده به پیچیده برو، هر گام را روی گامِ قبلی بنا کن، و هرگز در یک بخش چند مفهومِ جدید را هم‌زمان نریز؛ " +
-        "(۴) تمرین/مثالِ هدایت‌شده — طبقِ ساختن‌گرایی (Constructivism) و یادگیریِ فعال، به‌جای اینکه فقط بگویی، نشان بده و از دانش‌آموز بخواه در ذهنش پیش‌بینی یا حل کند؛ " +
+        "(۴) تمرین/مثالِ هدایت‌شده — طبقِ ساختن‌گرایی (Constructivism) و یادگیریِ فعال، به‌جای اینکه فقط بگویی، نشان بده و از دانش‌آموز بخواه در ذهنش پیش‌بینی یا حل کند؛ در این گام حداقل دو یا سه مثالِ کاملاً حل‌شده و متنوع (نه فقط یک مثال) بیاور تا یادگیری عمیق و پایدار شود، هر مثال را در یک یا چند بخشِ جداگانه بنویس؛ " +
+        "(۴.۵) تمرینِ مستقل — بعد از مثال‌های هدایت‌شده، در یک یا دو بخشِ جداگانه با stepLabel «تمرینِ مستقل»، ۲ تا ۳ تمرینِ تازه (شبیه مثال‌های قبلی اما با اعداد/شرایطِ متفاوت) به دانش‌آموز بده و صریحاً از او بخواه خودش روی کاغذ حل کند و قبل از دیدنِ ادامه، واقعاً تلاش کند — در این بخش‌ها هرگز پاسخ را فاش نکن، فقط خودِ سؤال‌ها را در visualData (معمولاً board) بنویس؛ " +
+        "(۴.۷) بررسیِ پاسخ‌ها — در یک یا چند بخشِ بعدی با stepLabel «بررسیِ پاسخ‌ها»، دقیقاً همان تمرین‌های مرحلهٔ قبل را یکی‌یکی و گام‌به‌گام حل کن، مثلِ اینکه با دانش‌آموز «باهم جواب‌ها را چک می‌کنید»، و اگر جایی ممکن است اشتباهِ رایج رخ دهد به آن اشاره کن؛ " +
         "(۵) تعمیم به زندگیِ واقعی — بگو این مطلب کجای زندگیِ روزمره، طبیعت، یا فناوری دیده می‌شود؛ " +
         "(۶) جمع‌بندی و ارزشیابیِ پایانی — خلاصه‌ی کوتاه + یک سؤالِ خودسنجی که دانش‌آموز با پاسخ‌دادن به آن بفهمد یاد گرفته یا نه. " +
         "در بیانِ هر بخش، از زیباترین و گویاترین زبانِ ممکن استفاده کن: تمثیل، مثالِ ملموس، لحنِ قصه‌گویانه و پرسش‌های بلاغی که ذهنِ دانش‌آموز را درگیر نگه دارد؛ هرگز لحنِ کتابی و خشک نداشته باش. " +
         (isElementary
           ? "این دانش‌آموز در مقطعِ ابتدایی است؛ هدفِ اصلی این است که خودِ او، بدون نیاز به کمکِ والدینِ خسته یا کم‌سواد، مطلب را بفهمد. پس: جمله‌های بسیار کوتاه بساز (حداکثر ۸ تا ۱۰ کلمه در هر جمله)، فقط کلماتِ روزمره و ساده به‌کار ببر (نه کلماتِ کتابی و رسمی)، لحنِ گرم، صمیمی و تشویقی داشته باش (مثلِ «آفرین»، «ببین چه جالب»)، نکته‌ی اصلی هر بخش را حداقل یک‌بار با کلماتِ دیگر تکرار کن، و مطلب را به بخش‌های بیشتر و ریزتر تقسیم کن (۷ تا ۹ بخش) تا هیچ‌جا یک‌باره اطلاعاتِ زیاد به بچه داده نشود. "
           : "") +
-        "خروجی باید یک شیء JSON با کلید \"segments\" باشد: آرایه‌ای از " + (isElementary ? "۷ تا ۹" : "۶ تا ۹") + " بخش آموزشی پشت‌سرهم، هرکدام دقیقاً با این ساختار: " +
-        '{"stepLabel": "نامِ گامِ طرحِ درس که این بخش به آن تعلق دارد — یکی از: ایجاد انگیزه / مرورِ دانشِ قبلی / ارائه‌ی مفهوم / تمرینِ هدایت‌شده / تعمیم به زندگی / جمع‌بندی / ارزشیابیِ پایانی", ' +
+        "خروجی باید یک شیء JSON با کلید \"segments\" باشد: آرایه‌ای از " + (isElementary ? "۱۰ تا ۱۴" : "۱۱ تا ۱۵") + " بخش آموزشی پشت‌سرهم (شاملِ چند مثالِ هدایت‌شده + تمرینِ مستقل + بررسیِ پاسخ‌ها طبقِ توضیحِ بالا)، هرکدام دقیقاً با این ساختار: " +
+        '{"stepLabel": "نامِ گامِ طرحِ درس که این بخش به آن تعلق دارد — یکی از: ایجاد انگیزه / مرورِ دانشِ قبلی / ارائه‌ی مفهوم / تمرینِ هدایت‌شده / تمرینِ مستقل / بررسیِ پاسخ‌ها / تعمیم به زندگی / جمع‌بندی / ارزشیابیِ پایانی", ' +
         '"narration": "متنی که رهیار با صدای بلند برای دانش‌آموز توضیح می‌دهد — زیبا، گویا، محاوره‌ای و قصه‌گونه، حدود ۲ تا ۵ جمله، طوری که از تدریسِ یک معلمِ معمولی بهتر و گرم‌تر باشد", ' +
         '"visualType": "یکی از: board / diagram / bars / line / labels / timeline / none. board برای ریاضی و هر مبحثی که با نوشتنِ گام‌به‌گام (حل مسئله، فرمول، معادله) فهمیده می‌شود — مثلِ یک معلمِ واقعی که روی تخته می‌نویسد؛ این باید انتخابِ پیش‌فرض برایِ ریاضی باشد، نه diagram. diagram (یک تصویرِ SVGِ متحرک) را محدود و فقط برایِ موضوعاتِ ذاتاً تصویری/ساختاری/فرایندی نگه‌دار (اندام‌های بدن، ساختارِ سلول، نقشه، چرخه‌ی طبیعی، واکنشِ شیمیایی) — نه برایِ هر چیزی، چون در آینده ابزارهای پیشرفته‌تر (ویدئوی واقعی) جایگزینِ بخشِ بزرگی از diagram خواهد شد و بهتر است از همین حالا کاربردش را به موردِ واقعاً لازم محدود کنیم. bars/line فقط برای داده‌های عددیِ واقعی، labels برای فهرستِ مفهومی، timeline برای توالیِ مراحل، none فقط وقتی هیچ‌کدام واقعاً لازم نیست", ' +
         '"visualTitle": "عنوان کوتاه (اگر visualType برابر none است، رشته‌ی خالی بگذار)", ' +
@@ -25367,6 +25369,30 @@ function rahyarSanitizeDiagramSvg(raw) {
   }
 }
 
+// رنگ‌آمیزیِ هوشمندِ یک سطرِ تختهٔ ریاضی برای تمرکزِ بیشترِ دانش‌آموز:
+// علامتِ "=" همیشه سبز می‌شود و حرفِ تکیِ لاتین (مجهول/متغیر) همیشه قرمز —
+// چون متنِ اطرافِ آن فارسی است، هر حرفِ منفردِ لاتین تقریباً قطعاً یک نمادِ جبری است، نه بخشی از یک کلمه.
+function rahyarRenderBoardLine(line, idx) {
+  const text = String(line == null ? "" : line);
+  const re = /=|(?<![A-Za-z])[A-Za-z](?![A-Za-z])/g;
+  const parts = [];
+  let last = 0;
+  let m;
+  let key = 0;
+  while ((m = re.exec(text)) !== null) {
+    if (m.index > last) parts.push(text.slice(last, m.index));
+    const tok = m[0];
+    if (tok === "=") {
+      parts.push(<span key={idx + "-eq-" + key++} className="rtl-board-eq">=</span>);
+    } else {
+      parts.push(<span key={idx + "-var-" + key++} className="rtl-board-var">{tok}</span>);
+    }
+    last = re.lastIndex;
+  }
+  if (last < text.length) parts.push(text.slice(last));
+  return parts;
+}
+
 // نمایش نموداری یک بخش — دیاگرام تصویری/متحرک، میله‌ای، خطی، برچسب‌دار یا جدول‌زمانی؛ هر بار ورود یک بخش تازه، با انیمیشن ساده ظاهر می‌شود
 function RahyarSegmentVisual({ visualType, visualTitle, visualData, animKey }) {
   if (!visualType || visualType === "none") return null;
@@ -25472,6 +25498,7 @@ function RahyarSegmentVisual({ visualType, visualTitle, visualData, animKey }) {
 
   // تختهٔ سیاه/وایت‌برد — برای ریاضی و هر مبحثی که با «نوشتنِ گام‌به‌گام» (نه یک تصویرِ ساختاری)
   // بهتر فهمیده می‌شود: هر سطر مثلِ نوشته‌شدنِ تدریجیِ یک معلمِ واقعی روی تخته ظاهر می‌شود.
+  // برای تمرکزِ بیشترِ دانش‌آموز: علامتِ "=" همیشه سبز و مجهول/عددِ هدف همیشه قرمز نمایش داده می‌شود.
   if (visualType === "board") {
     const lines = Array.isArray(data.lines) ? data.lines : [];
     return (
@@ -25479,7 +25506,7 @@ function RahyarSegmentVisual({ visualType, visualTitle, visualData, animKey }) {
         {visualTitle && <div className="rtl-board-title">{visualTitle}</div>}
         <div className="rtl-board-lines">
           {lines.map((ln, i) => (
-            <div key={i} className="rtl-board-line" style={{ animationDelay: (i * 0.4) + "s" }}>{ln}</div>
+            <div key={i} className="rtl-board-line" style={{ animationDelay: (i * 0.4) + "s" }}>{rahyarRenderBoardLine(ln, i)}</div>
           ))}
         </div>
       </div>
@@ -25766,6 +25793,8 @@ function RahyarTeachingLibraryView({ onBack, grade, studentCode, schoolCode }) {
         .rtl-board-title { color: #f2f2e8; font-weight: 800; font-size: 13px; margin-bottom: 14px; border-bottom: 2px dashed rgba(255,255,255,0.3); padding-bottom: 8px; }
         .rtl-board-lines { display: flex; flex-direction: column; gap: 12px; }
         .rtl-board-line { color: #fdfdf5; font-size: 15px; line-height: 1.8; opacity: 0; animation: rtl-chalk-write 0.6s ease forwards; }
+        .rtl-board-eq { color: #6fe08a; font-weight: 800; padding: 0 2px; }
+        .rtl-board-var { color: #ff8a73; font-weight: 800; padding: 0 2px; }
         @keyframes rtl-chalk-write { from { opacity: 0; transform: translateY(6px); } to { opacity: 1; transform: translateY(0); } }
         .rtl-inline-video { width: 100%; border-radius: 10px; display: block; background: #000; }
         .rtl-bars-row { display: flex; gap: 14px; align-items: flex-end; height: 140px; justify-content: center; }
@@ -26226,6 +26255,8 @@ function RahyarDynamicLabView({ onBack, grade, studentCode, schoolCode }) {
         .rtl-board-title { color: #f2f2e8; font-weight: 800; font-size: 13px; margin-bottom: 14px; border-bottom: 2px dashed rgba(255,255,255,0.3); padding-bottom: 8px; }
         .rtl-board-lines { display: flex; flex-direction: column; gap: 12px; }
         .rtl-board-line { color: #fdfdf5; font-size: 15px; line-height: 1.8; opacity: 0; animation: rtl-chalk-write 0.6s ease forwards; }
+        .rtl-board-eq { color: #6fe08a; font-weight: 800; padding: 0 2px; }
+        .rtl-board-var { color: #ff8a73; font-weight: 800; padding: 0 2px; }
         @keyframes rtl-chalk-write { from { opacity: 0; transform: translateY(6px); } to { opacity: 1; transform: translateY(0); } }
         .rtl-inline-video { width: 100%; border-radius: 10px; display: block; background: #000; }
         .rtl-bars-row { display: flex; gap: 14px; align-items: flex-end; height: 140px; justify-content: center; }
@@ -26674,6 +26705,8 @@ function RahyarHomeworkHelperView({ onBack, grade, studentCode, schoolCode }) {
         .rtl-board-title { color: #f2f2e8; font-weight: 800; font-size: 13px; margin-bottom: 14px; border-bottom: 2px dashed rgba(255,255,255,0.3); padding-bottom: 8px; }
         .rtl-board-lines { display: flex; flex-direction: column; gap: 12px; }
         .rtl-board-line { color: #fdfdf5; font-size: 15px; line-height: 1.8; opacity: 0; animation: rtl-chalk-write 0.6s ease forwards; }
+        .rtl-board-eq { color: #6fe08a; font-weight: 800; padding: 0 2px; }
+        .rtl-board-var { color: #ff8a73; font-weight: 800; padding: 0 2px; }
         @keyframes rtl-chalk-write { from { opacity: 0; transform: translateY(6px); } to { opacity: 1; transform: translateY(0); } }
         .rtl-inline-video { width: 100%; border-radius: 10px; display: block; background: #000; }
         .rtl-bars-row { display: flex; gap: 14px; align-items: flex-end; height: 140px; justify-content: center; }

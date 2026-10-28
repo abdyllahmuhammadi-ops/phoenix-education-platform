@@ -17260,7 +17260,6 @@ function TeacherQuestionBankStep({ onBack, prefillSchoolCode, teacherSchools, te
   const [examProvinceOffice, setExamProvinceOffice] = useState("");
   const [examCountyOffice, setExamCountyOffice] = useState("");
   const [examPagesCount, setExamPagesCount] = useState("۱");
-  const [examDesignerName, setExamDesignerName] = useState("");
 
   const bankKey = () => "question-bank:" + schoolCode + ":" + skey(subject) + ":" + grade;
 
@@ -17539,14 +17538,11 @@ function TeacherQuestionBankStep({ onBack, prefillSchoolCode, teacherSchools, te
         .pqb-exam-content { position: relative; z-index: 1; }
         .pqb-exam-watermark {
           position: absolute; inset: 0; z-index: 0; display: flex; align-items: center; justify-content: center;
-          font-size: 76px; font-weight: 800; color: #c8382b; opacity: 0.09; transform: rotate(-28deg);
-          pointer-events: none; white-space: nowrap; letter-spacing: 4px;
+          pointer-events: none;
           print-color-adjust: exact; -webkit-print-color-adjust: exact;
         }
+        .pqb-exam-watermark img { width: 55%; max-width: 230px; height: auto; opacity: 0.14; }
         .pqb-no-select { user-select: none; }
-        .pqb-exam-brand-row { display: flex; align-items: center; gap: 8px; justify-content: center; margin-bottom: 10px; }
-        .pqb-exam-logo { width: 28px; height: auto; flex-shrink: 0; }
-        .pqb-exam-brand { color: #2c6e3f; font-size: 11px; font-weight: 700; }
         .pqb-exam-info-table { width: 100%; border-collapse: collapse; margin-bottom: 4px; font-size: 11.5px; }
         .pqb-exam-info-table td {
           border: 1px solid rgba(28,37,64,0.3); padding: 7px 10px; color: #1c2540; font-weight: 700;
@@ -17919,10 +17915,6 @@ function TeacherQuestionBankStep({ onBack, prefillSchoolCode, teacherSchools, te
                   <label className="pqb-label">تعدادِ صفحات</label>
                   <input className="pqb-input" style={{ width: 90 }} placeholder="۱" value={examPagesCount} onChange={(e) => setExamPagesCount(e.target.value)} />
                 </div>
-                <div className="pqb-field">
-                  <label className="pqb-label">نامِ طراحِ سؤال (اختیاری)</label>
-                  <input className="pqb-input pqb-w-class" placeholder="مثلاً خانم محمدی" value={examDesignerName} onChange={(e) => setExamDesignerName(e.target.value)} />
-                </div>
               </div>
               <button type="button" className="pqb-submit-btn" onClick={handleGenerate}>
                 🎲 ساخت آزمون تصادفی
@@ -17942,12 +17934,10 @@ function TeacherQuestionBankStep({ onBack, prefillSchoolCode, teacherSchools, te
                     <p className="pqb-empty">سؤالی با این فیلتر در بانک سؤال یافت نشد.</p>
                   ) : (
                     <>
-                      <div className="pqb-exam-watermark pqb-no-select" aria-hidden="true">ققنوس</div>
-                      <div className="pqb-exam-content">
-                      <div className="pqb-exam-brand-row">
-                        <img src={PHOENIX_LOGO} alt="لوگوی ققنوس" className="pqb-exam-logo" />
-                        <span className="pqb-exam-brand">آموزش برای فردا — ققنوس</span>
+                      <div className="pqb-exam-watermark pqb-no-select" aria-hidden="true">
+                        <img src={PHOENIX_LOGO} alt="" />
                       </div>
+                      <div className="pqb-exam-content">
                       <table className="pqb-exam-info-table">
                         <tbody>
                           <tr>
@@ -17964,16 +17954,13 @@ function TeacherQuestionBankStep({ onBack, prefillSchoolCode, teacherSchools, te
                             <td>پایه: {grade}</td>
                           </tr>
                           <tr>
-                            <td>نامِ درس: {subject}</td>
-                            <td>نوعِ آزمون: {genExamType}</td>
-                            <td>فصل: {genChapter || "—"}</td>
-                            <td>تاریخِ امتحان: {new Date().toLocaleDateString("fa-IR")}</td>
+                            <td colSpan={2}>نامِ درس: {subject}</td>
+                            <td colSpan={2}>تاریخِ امتحان: {new Date().toLocaleDateString("fa-IR")}</td>
                           </tr>
                           <tr>
                             <td>مدت: {examDuration.trim() || "................"} دقیقه</td>
                             <td>تعدادِ صفحات: {examPagesCount.trim() || "۱"}</td>
-                            <td>نامِ دبیر: {examTeacherName.trim() || "—"}</td>
-                            <td>نامِ طراحِ سؤال: {examDesignerName.trim() || "—"}</td>
+                            <td colSpan={2}>نامِ دبیر: {examTeacherName.trim() || "—"}</td>
                           </tr>
                           <tr>
                             <td>نام: ........................</td>

@@ -25205,26 +25205,15 @@ function rahyarBuildParentDebrief({ subject, grade, chapter, segments }) {
   };
 }
 
-// به‌جای اینکه خودِ هوش‌مصنوعیِ محتواساز یک لینکِ ویدئوی خاص را حدس بزند (که می‌تواند ساختگی/خراب باشد)،
-// فقط یک عبارتِ جست‌وجوی دقیق می‌سازد و ما آن را به چندین لینکِ جست‌وجوی واقعی تبدیل می‌کنیم — تا به
-// یک یا دو پلتفرمِ خاص (مثلاً فقط آپارات یا فقط یوتیوب) محدود نشویم: اول یک جست‌وجوی ویدئوییِ سراسری
-// (که خودش همه‌ی پلتفرم‌ها از جمله آپارات، یوتیوب، نماشا و... را هم‌زمان نشان می‌دهد)، بعد یک جست‌وجوی
-// مشخصاً در «رشد» (سامانه‌ی رسمیِ محتوای آموزشیِ وزارتِ آموزش‌وپرورش ایران، معتبرترین منبعِ ممکن)، و در
-// آخر دو میانبرِ مستقیم به آپارات و یوتیوب برای کسی که همان دو را ترجیح می‌دهد. همیشه نتیجه‌ی واقعی و
-// قابل‌کلیک، هرگز یک لینکِ شکسته یا ساختگی.
-function rahyarVideoSearchLinks(query) {
+// ویدئوی تکمیلی باید همین‌جا، داخلِ همان صفحه‌ی تدریس، پخش شود — دانش‌آموز هرگز نباید برای دیدنِ آن
+// به تبِ یا سایتِ دیگری برود، چون همین رفت‌وآمد خودش یک بهانه‌ی حواس‌پرتی و بر‌هم‌خوردنِ یکنواختیِ
+// تدریس است. به‌جای چند لینکِ بیرونی، فقط یک پخش‌کننده‌ی توکار (iframe) از جست‌وجوی یوتیوب ساخته
+// می‌شود که خودش نتایج را نشان می‌دهد؛ بدونِ autoplay، تا با صدای رهیار تداخل نکند.
+function rahyarVideoEmbedUrl(query) {
   const q = (query || "").trim();
-  if (!q) return null;
+  if (!q) return "";
   const encoded = encodeURIComponent(q);
-  return {
-    query: q,
-    links: [
-      { label: "🔎 جست‌وجوی ویدئو در همه‌ی پلتفرم‌ها (گوگل)", url: "https://www.google.com/search?tbm=vid&q=" + encoded },
-      { label: "🏫 جست‌وجو در «رشد» (رسمیِ آموزش‌وپرورش)", url: "https://www.google.com/search?q=" + encodeURIComponent("site:roshd.ir " + q) },
-      { label: "آپارات", url: "https://www.aparat.com/search/" + encoded },
-      { label: "یوتیوب", url: "https://www.youtube.com/results?search_query=" + encoded },
-    ],
-  };
+  return "https://www.youtube.com/embed?listType=search&list=" + encoded + "&rel=0&modestbranding=1&playsinline=1";
 }
 
 function rahyarHomeworkKey(studentCode) {
@@ -25307,30 +25296,39 @@ async function rahyarGenerateHomeworkHelp(subject, grade, questionText) {
 }
 
 // چهره‌ی متحرک رهیار — دهان هنگام صحبت‌کردن (speaking=true) تکان می‌خورد؛ کاملاً با CSS، بدون هیچ فایل ویدئویی
+// چهره‌ی رهیار دیگر کاملاً ایستا نیست — یک تنفسِ ملایمِ دائمی (کمی بزرگ‌وکوچک‌شدن + چرخشِ خیلی خفیف)
+// و پلک‌زدنِ دوره‌ای به آن اضافه شده تا در طولِ یک جلسه‌ی تدریسِ طولانی خسته‌کننده و بی‌جان به‌نظر نرسد،
+// بدون اینکه اصلاً به توجهِ دانش‌آموز (مثلِ یک حرکتِ ناگهانی یا رنگِ پرتضاد) تعرض کند.
 function RahyarAvatarFace({ speaking }) {
   return (
     <div className="rtl-avatar-wrap">
       <svg viewBox="0 0 160 160" className="rtl-avatar-svg">
-        <circle cx="80" cy="80" r="72" fill="url(#rtlFaceGrad)" stroke="#c8862b" strokeWidth="3" />
         <defs>
           <radialGradient id="rtlFaceGrad" cx="40%" cy="35%" r="75%">
             <stop offset="0%" stopColor="#fdf3e3" />
             <stop offset="100%" stopColor="#f2c572" />
           </radialGradient>
         </defs>
-        <circle cx="55" cy="68" r="9" fill="#1c2540" />
-        <circle cx="105" cy="68" r="9" fill="#1c2540" />
-        <circle cx="58" cy="65" r="2.5" fill="#fff" />
-        <circle cx="108" cy="65" r="2.5" fill="#fff" />
-        <path d="M45,45 Q55,35 65,43" fill="none" stroke="#5b4636" strokeWidth="3" strokeLinecap="round" />
-        <path d="M95,43 Q105,35 115,45" fill="none" stroke="#5b4636" strokeWidth="3" strokeLinecap="round" />
-        {speaking ? (
-          <ellipse className="rtl-avatar-mouth-speaking" cx="80" cy="112" rx="18" ry="10" fill="#8a3b2b" />
-        ) : (
-          <path d="M60,112 Q80,122 100,112" fill="none" stroke="#8a3b2b" strokeWidth="4" strokeLinecap="round" />
-        )}
-        <circle cx="42" cy="95" r="8" fill="#f2a98f" opacity="0.55" />
-        <circle cx="118" cy="95" r="8" fill="#f2a98f" opacity="0.55" />
+        <g className="rtl-avatar-breathe">
+          <circle cx="80" cy="80" r="72" fill="url(#rtlFaceGrad)" stroke="#c8862b" strokeWidth="3" />
+          <circle cx="42" cy="95" r="8" fill="#f2a98f" opacity="0.55" />
+          <circle cx="118" cy="95" r="8" fill="#f2a98f" opacity="0.55" />
+          <path d="M45,45 Q55,35 65,43" fill="none" stroke="#5b4636" strokeWidth="3" strokeLinecap="round" />
+          <path d="M95,43 Q105,35 115,45" fill="none" stroke="#5b4636" strokeWidth="3" strokeLinecap="round" />
+          <g className="rtl-avatar-eye">
+            <circle cx="55" cy="68" r="9" fill="#1c2540" />
+            <circle cx="58" cy="65" r="2.5" fill="#fff" />
+          </g>
+          <g className="rtl-avatar-eye">
+            <circle cx="105" cy="68" r="9" fill="#1c2540" />
+            <circle cx="108" cy="65" r="2.5" fill="#fff" />
+          </g>
+          {speaking ? (
+            <ellipse className="rtl-avatar-mouth-speaking" cx="80" cy="112" rx="18" ry="10" fill="#8a3b2b" />
+          ) : (
+            <path d="M60,112 Q80,122 100,112" fill="none" stroke="#8a3b2b" strokeWidth="4" strokeLinecap="round" />
+          )}
+        </g>
       </svg>
       <div className={"rtl-avatar-badge" + (speaking ? " speaking" : "")}>
         {speaking ? "🔊 در حال توضیح..." : "🤖 رهیار"}
@@ -25720,6 +25718,10 @@ function RahyarTeachingLibraryView({ onBack, grade, studentCode, schoolCode }) {
         @keyframes rtl-pulse { 0%,100% { transform: scale(1); } 50% { transform: scale(1.04); } }
         @keyframes rtl-mouth { 0%,100% { ry: 5; } 50% { ry: 13; } }
         .rtl-avatar-mouth-speaking { animation: rtl-mouth 0.35s ease-in-out infinite; transform-origin: 80px 112px; }
+        .rtl-avatar-breathe { transform-box: fill-box; transform-origin: center; animation: rtl-breathe 4.5s ease-in-out infinite; }
+        @keyframes rtl-breathe { 0%, 100% { transform: scale(1) rotate(0deg); } 50% { transform: scale(1.015) rotate(0.6deg); } }
+        .rtl-avatar-eye { transform-box: fill-box; transform-origin: center; animation: rtl-blink 5.5s ease-in-out infinite; }
+        @keyframes rtl-blink { 0%, 92%, 100% { transform: scaleY(1); } 94% { transform: scaleY(0.08); } 96% { transform: scaleY(1); } }
         .rtl-setup-row { display: flex; gap: 12px; flex-wrap: wrap; margin-bottom: 14px; }
         .rtl-player-box { background: #fff; border: 1px solid rgba(28,37,64,0.08); border-radius: 16px; padding: 20px; }
         .rtl-step-badge { display: inline-block; background: #eef1fb; color: #3c4a9e; font-weight: 700; font-size: 11.5px; padding: 4px 12px; border-radius: 999px; margin-bottom: 8px; }
@@ -25728,11 +25730,9 @@ function RahyarTeachingLibraryView({ onBack, grade, studentCode, schoolCode }) {
         .rtl-parent-box { background: #eef6f0; border: 1px solid #bfe0c8; border-radius: 12px; padding: 14px 16px; margin: 6px 0 4px; color: #2c6e3f; font-size: 13px; line-height: 1.95; }
         .rtl-parent-box b.rtl-parent-title { display: block; font-size: 13.5px; margin-bottom: 6px; color: #1f5a30; }
         .rtl-video-box { background: #fdeef0; border: 1px solid #f3c6cf; border-radius: 12px; padding: 12px 14px; margin: 4px 0 14px; }
-        .rtl-video-title { font-weight: 800; font-size: 12.5px; color: #a8345a; margin-bottom: 6px; }
-        .rtl-video-desc { font-size: 12.5px; color: #6b4650; margin-bottom: 8px; }
-        .rtl-video-links { display: flex; gap: 8px; flex-wrap: wrap; margin-bottom: 6px; }
-        .rtl-video-link { background: #fff; border: 1.3px solid #e3a3b2; border-radius: 8px; padding: 6px 14px; font-size: 12px; font-weight: 700; color: #a8345a; text-decoration: none; }
-        .rtl-video-link:hover { background: #fff0f3; }
+        .rtl-video-title { font-weight: 800; font-size: 12.5px; color: #a8345a; margin-bottom: 8px; }
+        .rtl-video-frame-wrap { position: relative; width: 100%; padding-top: 56.25%; border-radius: 10px; overflow: hidden; background: #000; margin-bottom: 6px; }
+        .rtl-video-frame { position: absolute; inset: 0; width: 100%; height: 100%; border: 0; }
         .rtl-video-note { font-size: 10.5px; color: #9a6b73; }
         .rtl-player-controls { display: flex; gap: 10px; justify-content: center; align-items: center; margin-bottom: 14px; flex-wrap: wrap; }
         .rtl-ctrl-btn { height: 42px; padding: 0 18px; border-radius: 10px; border: 1.3px solid #d9c9a0; background: #fff; color: #5b4636; font-weight: 700; font-size: 13px; cursor: pointer; }
@@ -25886,17 +25886,21 @@ function RahyarTeachingLibraryView({ onBack, grade, studentCode, schoolCode }) {
             )}
 
             {activeSegment && activeSegment.videoSearchQuery && (() => {
-              const vlinks = rahyarVideoSearchLinks(activeSegment.videoSearchQuery);
-              return vlinks && (
+              const embedUrl = rahyarVideoEmbedUrl(activeSegment.videoSearchQuery);
+              return embedUrl && (
                 <div className="rtl-video-box">
-                  <div className="rtl-video-title">🎬 ویدئوی مستند/تکمیلی (اختیاری — لینکِ جست‌وجوی بیرونی)</div>
-                  <div className="rtl-video-desc">اگر دوست داری فیلمِ واقعیِ «{vlinks.query}» را هم ببینی:</div>
-                  <div className="rtl-video-links">
-                    {vlinks.links.map((lnk, li) => (
-                      <a key={li} className="rtl-video-link" href={lnk.url} target="_blank" rel="noopener noreferrer">{lnk.label}</a>
-                    ))}
+                  <div className="rtl-video-title">🎬 ویدئوی تکمیلیِ همین بخش</div>
+                  <div className="rtl-video-frame-wrap">
+                    <iframe
+                      className="rtl-video-frame"
+                      src={embedUrl}
+                      title={activeSegment.visualTitle || "ویدئوی تکمیلی"}
+                      allow="encrypted-media; picture-in-picture"
+                      allowFullScreen
+                      loading="lazy"
+                    />
                   </div>
-                  <div className="rtl-video-note">⚠️ این لینک‌ها به یک جست‌وجوی بیرونی می‌روند؛ بهتر است همراه با یک بزرگ‌تر (والد یا معلم) دیده شود.</div>
+                  <div className="rtl-video-note">همین‌جا پخش می‌شود — لازم نیست از این صفحه خارج شوی.</div>
                 </div>
               );
             })()}
@@ -26184,6 +26188,10 @@ function RahyarDynamicLabView({ onBack, grade, studentCode, schoolCode }) {
         @keyframes rtl-pulse { 0%,100% { transform: scale(1); } 50% { transform: scale(1.04); } }
         @keyframes rtl-mouth { 0%,100% { ry: 5; } 50% { ry: 13; } }
         .rtl-avatar-mouth-speaking { animation: rtl-mouth 0.35s ease-in-out infinite; transform-origin: 80px 112px; }
+        .rtl-avatar-breathe { transform-box: fill-box; transform-origin: center; animation: rtl-breathe 4.5s ease-in-out infinite; }
+        @keyframes rtl-breathe { 0%, 100% { transform: scale(1) rotate(0deg); } 50% { transform: scale(1.015) rotate(0.6deg); } }
+        .rtl-avatar-eye { transform-box: fill-box; transform-origin: center; animation: rtl-blink 5.5s ease-in-out infinite; }
+        @keyframes rtl-blink { 0%, 92%, 100% { transform: scaleY(1); } 94% { transform: scaleY(0.08); } 96% { transform: scaleY(1); } }
         .rtl-setup-row { display: flex; gap: 12px; flex-wrap: wrap; margin-bottom: 14px; }
         .rtl-player-box { background: #fff; border: 1px solid rgba(28,37,64,0.08); border-radius: 16px; padding: 20px; }
         .rtl-step-badge { display: inline-block; background: #eef1fb; color: #3c4a9e; font-weight: 700; font-size: 11.5px; padding: 4px 12px; border-radius: 999px; margin-bottom: 8px; }
@@ -26192,11 +26200,9 @@ function RahyarDynamicLabView({ onBack, grade, studentCode, schoolCode }) {
         .rtl-parent-box { background: #eef6f0; border: 1px solid #bfe0c8; border-radius: 12px; padding: 14px 16px; margin: 6px 0 4px; color: #2c6e3f; font-size: 13px; line-height: 1.95; }
         .rtl-parent-box b.rtl-parent-title { display: block; font-size: 13.5px; margin-bottom: 6px; color: #1f5a30; }
         .rtl-video-box { background: #fdeef0; border: 1px solid #f3c6cf; border-radius: 12px; padding: 12px 14px; margin: 4px 0 14px; }
-        .rtl-video-title { font-weight: 800; font-size: 12.5px; color: #a8345a; margin-bottom: 6px; }
-        .rtl-video-desc { font-size: 12.5px; color: #6b4650; margin-bottom: 8px; }
-        .rtl-video-links { display: flex; gap: 8px; flex-wrap: wrap; margin-bottom: 6px; }
-        .rtl-video-link { background: #fff; border: 1.3px solid #e3a3b2; border-radius: 8px; padding: 6px 14px; font-size: 12px; font-weight: 700; color: #a8345a; text-decoration: none; }
-        .rtl-video-link:hover { background: #fff0f3; }
+        .rtl-video-title { font-weight: 800; font-size: 12.5px; color: #a8345a; margin-bottom: 8px; }
+        .rtl-video-frame-wrap { position: relative; width: 100%; padding-top: 56.25%; border-radius: 10px; overflow: hidden; background: #000; margin-bottom: 6px; }
+        .rtl-video-frame { position: absolute; inset: 0; width: 100%; height: 100%; border: 0; }
         .rtl-video-note { font-size: 10.5px; color: #9a6b73; }
         .rtl-player-controls { display: flex; gap: 10px; justify-content: center; align-items: center; margin-bottom: 14px; flex-wrap: wrap; }
         .rtl-ctrl-btn { height: 42px; padding: 0 18px; border-radius: 10px; border: 1.3px solid #d9c9a0; background: #fff; color: #5b4636; font-weight: 700; font-size: 13px; cursor: pointer; }
@@ -26369,17 +26375,21 @@ function RahyarDynamicLabView({ onBack, grade, studentCode, schoolCode }) {
             )}
 
             {activeSegment && activeSegment.videoSearchQuery && (() => {
-              const vlinks = rahyarVideoSearchLinks(activeSegment.videoSearchQuery);
-              return vlinks && (
+              const embedUrl = rahyarVideoEmbedUrl(activeSegment.videoSearchQuery);
+              return embedUrl && (
                 <div className="rtl-video-box">
-                  <div className="rtl-video-title">🎬 ویدئوی مستند/تکمیلی (اختیاری — لینکِ جست‌وجوی بیرونی)</div>
-                  <div className="rtl-video-desc">اگر دوست داری فیلمِ واقعیِ «{vlinks.query}» را هم ببینی:</div>
-                  <div className="rtl-video-links">
-                    {vlinks.links.map((lnk, li) => (
-                      <a key={li} className="rtl-video-link" href={lnk.url} target="_blank" rel="noopener noreferrer">{lnk.label}</a>
-                    ))}
+                  <div className="rtl-video-title">🎬 ویدئوی تکمیلیِ همین بخش</div>
+                  <div className="rtl-video-frame-wrap">
+                    <iframe
+                      className="rtl-video-frame"
+                      src={embedUrl}
+                      title={activeSegment.visualTitle || "ویدئوی تکمیلی"}
+                      allow="encrypted-media; picture-in-picture"
+                      allowFullScreen
+                      loading="lazy"
+                    />
                   </div>
-                  <div className="rtl-video-note">⚠️ این لینک‌ها به یک جست‌وجوی بیرونی می‌روند؛ بهتر است همراه با یک بزرگ‌تر (والد یا معلم) دیده شود.</div>
+                  <div className="rtl-video-note">همین‌جا پخش می‌شود — لازم نیست از این صفحه خارج شوی.</div>
                 </div>
               );
             })()}
@@ -26636,6 +26646,10 @@ function RahyarHomeworkHelperView({ onBack, grade, studentCode, schoolCode }) {
         @keyframes rtl-pulse { 0%,100% { transform: scale(1); } 50% { transform: scale(1.04); } }
         @keyframes rtl-mouth { 0%,100% { ry: 5; } 50% { ry: 13; } }
         .rtl-avatar-mouth-speaking { animation: rtl-mouth 0.35s ease-in-out infinite; transform-origin: 80px 112px; }
+        .rtl-avatar-breathe { transform-box: fill-box; transform-origin: center; animation: rtl-breathe 4.5s ease-in-out infinite; }
+        @keyframes rtl-breathe { 0%, 100% { transform: scale(1) rotate(0deg); } 50% { transform: scale(1.015) rotate(0.6deg); } }
+        .rtl-avatar-eye { transform-box: fill-box; transform-origin: center; animation: rtl-blink 5.5s ease-in-out infinite; }
+        @keyframes rtl-blink { 0%, 92%, 100% { transform: scaleY(1); } 94% { transform: scaleY(0.08); } 96% { transform: scaleY(1); } }
         .rtl-setup-row { display: flex; gap: 12px; flex-wrap: wrap; margin-bottom: 14px; }
         .rtl-player-box { background: #fff; border: 1px solid rgba(28,37,64,0.08); border-radius: 16px; padding: 20px; }
         .rtl-step-badge { display: inline-block; background: #eef1fb; color: #3c4a9e; font-weight: 700; font-size: 11.5px; padding: 4px 12px; border-radius: 999px; margin-bottom: 8px; }
@@ -26644,11 +26658,9 @@ function RahyarHomeworkHelperView({ onBack, grade, studentCode, schoolCode }) {
         .rtl-parent-box { background: #eef6f0; border: 1px solid #bfe0c8; border-radius: 12px; padding: 14px 16px; margin: 6px 0 4px; color: #2c6e3f; font-size: 13px; line-height: 1.95; }
         .rtl-parent-box b.rtl-parent-title { display: block; font-size: 13.5px; margin-bottom: 6px; color: #1f5a30; }
         .rtl-video-box { background: #fdeef0; border: 1px solid #f3c6cf; border-radius: 12px; padding: 12px 14px; margin: 4px 0 14px; }
-        .rtl-video-title { font-weight: 800; font-size: 12.5px; color: #a8345a; margin-bottom: 6px; }
-        .rtl-video-desc { font-size: 12.5px; color: #6b4650; margin-bottom: 8px; }
-        .rtl-video-links { display: flex; gap: 8px; flex-wrap: wrap; margin-bottom: 6px; }
-        .rtl-video-link { background: #fff; border: 1.3px solid #e3a3b2; border-radius: 8px; padding: 6px 14px; font-size: 12px; font-weight: 700; color: #a8345a; text-decoration: none; }
-        .rtl-video-link:hover { background: #fff0f3; }
+        .rtl-video-title { font-weight: 800; font-size: 12.5px; color: #a8345a; margin-bottom: 8px; }
+        .rtl-video-frame-wrap { position: relative; width: 100%; padding-top: 56.25%; border-radius: 10px; overflow: hidden; background: #000; margin-bottom: 6px; }
+        .rtl-video-frame { position: absolute; inset: 0; width: 100%; height: 100%; border: 0; }
         .rtl-video-note { font-size: 10.5px; color: #9a6b73; }
         .rtl-player-controls { display: flex; gap: 10px; justify-content: center; align-items: center; margin-bottom: 14px; flex-wrap: wrap; }
         .rtl-ctrl-btn { height: 42px; padding: 0 18px; border-radius: 10px; border: 1.3px solid #d9c9a0; background: #fff; color: #5b4636; font-weight: 700; font-size: 13px; cursor: pointer; }
@@ -26802,17 +26814,21 @@ function RahyarHomeworkHelperView({ onBack, grade, studentCode, schoolCode }) {
             )}
 
             {activeSegment && activeSegment.videoSearchQuery && (() => {
-              const vlinks = rahyarVideoSearchLinks(activeSegment.videoSearchQuery);
-              return vlinks && (
+              const embedUrl = rahyarVideoEmbedUrl(activeSegment.videoSearchQuery);
+              return embedUrl && (
                 <div className="rtl-video-box">
-                  <div className="rtl-video-title">🎬 ویدئوی مستند/تکمیلی (اختیاری — لینکِ جست‌وجوی بیرونی)</div>
-                  <div className="rtl-video-desc">اگر دوست داری فیلمِ واقعیِ «{vlinks.query}» را هم ببینی:</div>
-                  <div className="rtl-video-links">
-                    {vlinks.links.map((lnk, li) => (
-                      <a key={li} className="rtl-video-link" href={lnk.url} target="_blank" rel="noopener noreferrer">{lnk.label}</a>
-                    ))}
+                  <div className="rtl-video-title">🎬 ویدئوی تکمیلیِ همین بخش</div>
+                  <div className="rtl-video-frame-wrap">
+                    <iframe
+                      className="rtl-video-frame"
+                      src={embedUrl}
+                      title={activeSegment.visualTitle || "ویدئوی تکمیلی"}
+                      allow="encrypted-media; picture-in-picture"
+                      allowFullScreen
+                      loading="lazy"
+                    />
                   </div>
-                  <div className="rtl-video-note">⚠️ این لینک‌ها به یک جست‌وجوی بیرونی می‌روند؛ بهتر است همراه با یک بزرگ‌تر (والد یا معلم) دیده شود.</div>
+                  <div className="rtl-video-note">همین‌جا پخش می‌شود — لازم نیست از این صفحه خارج شوی.</div>
                 </div>
               );
             })()}

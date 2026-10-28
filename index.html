@@ -116,6 +116,17 @@ function pqbComputeKonkurPercent(correctCount, wrongCount, totalCount) {
   return Math.round(raw * 100) / 100;
 }
 
+// کلیدِ هفته‌ی جاری برای شمارشِ فعالیتِ هفتگیِ دانش‌آموز (آزمون/سؤال تمرین‌شده) — هفته از شنبه
+// شروع می‌شود (مطابقِ هفته‌ی ایرانی)، بدون نیاز به تقویمِ جلالی: فقط تاریخِ میلادیِ همان شنبه
+// را به‌عنوانِ کلید استفاده می‌کنیم، که برایِ شمارش کافی و پایدار است.
+function pqbWeekKey(d) {
+  const date = d || new Date();
+  const day = date.getDay(); // یکشنبه=۰ ... شنبه=۶
+  const offsetFromSaturday = (day - 6 + 7) % 7;
+  const saturday = new Date(date.getFullYear(), date.getMonth(), date.getDate() - offsetFromSaturday);
+  return saturday.getFullYear() + "-" + (saturday.getMonth() + 1) + "-" + saturday.getDate();
+}
+
 // گاهی window.storage درست همان لحظه‌ی بارگذاری صفحه هنوز کاملاً آماده نشده — قبل از اعلام «در دسترس نیست»،
 // چند بار با فاصله‌ی کوتاه دوباره چک می‌کنیم تا اگر مشکل فقط زمان‌بندی بود، خودش برطرف شود.
 async function waitForStorage(maxWaitMs) {
@@ -16154,6 +16165,27 @@ function StudentDashboard({
   const [deadlineHomework, setDeadlineHomework] = useState([]);
   const [unreadMessageCount, setUnreadMessageCount] = useState(0);
   const [showWelcomeNudge, setShowWelcomeNudge] = useState(false);
+  const [weeklyActivity, setWeeklyActivity] = useState(null);
+
+  // کارتِ «این هفته» — شمارشِ تعدادِ آزمون/سؤالِ تمرین‌شده‌ی همین هفته (در هر درسی)، تا دانش‌آموز
+  // بدونِ باز کردنِ هیچ آزمونی، حسِ فعالیتِ خودش در هفته‌ی جاری را ببیند.
+  useEffect(() => {
+    if (!studentCode || typeof window === "undefined" || !window.storage) return;
+    let cancelled = false;
+    (async () => {
+      try {
+        const weekKey = "weekly-activity:" + studentCode + ":" + pqbWeekKey();
+        const wr = await window.storage.get(weekKey, false).catch(() => null);
+        const data = wr && wr.value ? JSON.parse(wr.value) : null;
+        if (!cancelled) setWeeklyActivity(data);
+      } catch (e) {
+        // بی‌اهمیت — فقط نمایشِ کارتِ هفته را رد می‌کند
+      }
+    })();
+    return () => {
+      cancelled = true;
+    };
+  }, [studentCode]);
 
   // لحظه‌ی خوشامد — فقط همان اولین باری که دانش‌آموز بعد از ثبت‌نام وارد داشبورد می‌شود نشان داده می‌شود
   useEffect(() => {
@@ -16593,6 +16625,11 @@ function StudentDashboard({
         .sdb-live-now-card { margin-top: 10px; background: linear-gradient(120deg, #2e1414 0%, #45201e 100%); border: 1px solid rgba(224,70,63,0.4); }
         .sdb-live-now-pulse { background: linear-gradient(135deg, #f26f6f, #c8382b); animation: sdb-live-pulse 1.6s ease-in-out infinite; }
         @keyframes sdb-live-pulse { 0%, 100% { box-shadow: 0 0 0 0 rgba(224,70,63,0.5); } 50% { box-shadow: 0 0 0 8px rgba(224,70,63,0); } }
+        .sdb-weekly-card { margin-top: 10px; background: rgba(255,255,255,0.05); border: 1px solid rgba(242,197,114,0.2); border-radius: 14px; padding: 14px 16px; }
+        .sdb-weekly-title { color: #f2c572; font-weight: 800; font-size: 13px; margin-bottom: 8px; }
+        .sdb-weekly-stats { display: flex; gap: 14px; color: #d9c9a0; font-size: 12.5px; margin-bottom: 8px; }
+        .sdb-weekly-bar { height: 7px; border-radius: 6px; background: rgba(255,255,255,0.08); overflow: hidden; }
+        .sdb-weekly-bar-fill { height: 100%; border-radius: 6px; background: linear-gradient(90deg, #f2c572, #c98f5f); transition: width 0.4s ease; }
 
         /* نشان‌ها */
         .sdb-badges-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; }
@@ -16773,6 +16810,22 @@ function StudentDashboard({
               </div>
               <span className="sdb-rahyar-arrow">‹</span>
             </button>
+          )}
+
+          {weeklyActivity && weeklyActivity.examsCount > 0 && (
+            <div className="sdb-weekly-card">
+              <div className="sdb-weekly-title">📊 این هفته</div>
+              <div className="sdb-weekly-stats">
+                <span>{weeklyActivity.examsCount} آزمون/تمرین</span>
+                <span>{weeklyActivity.questionsCount} سؤال</span>
+              </div>
+              <div className="sdb-weekly-bar">
+                <div
+                  className="sdb-weekly-bar-fill"
+                  style={{ width: Math.min(100, (weeklyActivity.examsCount / 10) * 100) + "%" }}
+                />
+              </div>
+            </div>
           )}
 
           {tomorrowSubjects.length > 0 && onOpenTomorrowPreview && (
@@ -19038,6 +19091,7 @@ function StudentQuestionBankView({ onBack, prefillSchoolCode, prefillGrade, pref
 
     let historyList = [];
     let progressNotes = [];
+    let motivationMsg = "";
     try {
       if (studentCode && typeof window !== "undefined" && window.storage) {
         const historyKey = "exam-history:" + studentCode + ":" + skey(subject);
@@ -19055,6 +19109,31 @@ function StudentQuestionBankView({ onBack, prefillSchoolCode, prefillGrade, pref
               else if (nowPct < prevPct) progressNotes.push({ chapter, direction: "down", from: prevPct, to: nowPct });
             }
           });
+        }
+
+        // پیامِ تشویقیِ کلی — مقایسه‌ی درصدِ کلیِ این آزمون با آخرین آزمونِ قبلیِ همین درس (نه فصل‌به‌فصل)،
+        // تا دانش‌آموز بدون نیاز به خودش حساب‌کردن، یک جمله‌ی انگیزشیِ مستقیم ببیند.
+        if (lastEntry && lastEntry.totalCount > 0 && totalCount > 0) {
+          const prevOverallPct = Math.round((lastEntry.totalKnown / lastEntry.totalCount) * 100);
+          const nowOverallPct = Math.round((totalKnown / totalCount) * 100);
+          const diff = nowOverallPct - prevOverallPct;
+          if (diff > 0) motivationMsg = "🎉 نسبت به آزمونِ قبلیِ همین درس، " + diff + "٪ پیشرفت کردی!";
+          else if (diff < 0) motivationMsg = "💪 نسبت به آزمونِ قبلی کمی افت کردی (" + Math.abs(diff) + "٪) — یک بار دیگر تمرین کن، جایِ نگرانی نیست.";
+          else motivationMsg = "👍 نتیجه‌ات دقیقاً مثلِ آزمونِ قبلی است — برایِ پیشرفتِ بیشتر، رویِ فصل‌هایِ ضعیف‌تر تمرکز کن.";
+        } else if (!lastEntry) {
+          motivationMsg = "🙂 این اولین آزمونِ ثبت‌شده‌ات در این درس است — از دفعه‌ی بعد، پیشرفتت را هم نشانت می‌دهیم.";
+        }
+
+        // شمارشِ فعالیتِ هفتگی (بدونِ توجه به درس) — برایِ کارتِ «این هفته» در داشبوردِ دانش‌آموز
+        try {
+          const weekKey = "weekly-activity:" + studentCode + ":" + pqbWeekKey();
+          const wr = await window.storage.get(weekKey, false).catch(() => null);
+          const weekData = wr && wr.value ? JSON.parse(wr.value) : { examsCount: 0, questionsCount: 0 };
+          weekData.examsCount = (weekData.examsCount || 0) + 1;
+          weekData.questionsCount = (weekData.questionsCount || 0) + totalCount;
+          await window.storage.set(weekKey, JSON.stringify(weekData), false);
+        } catch (e) {
+          // تلاش‌محور
         }
 
         const newEntry = {
@@ -19090,6 +19169,7 @@ function StudentQuestionBankView({ onBack, prefillSchoolCode, prefillGrade, pref
       byChapter,
       byDifficulty,
       bySkillType,
+      motivationMsg,
       flashcardsAdded: missedForFlashcards.length,
       totalKnown,
       totalCount,
@@ -19208,6 +19288,8 @@ function StudentQuestionBankView({ onBack, prefillSchoolCode, prefillGrade, pref
         .pqb-budget-trust-list { list-style: none; margin: 8px 0 0; padding: 0; display: flex; flex-direction: column; gap: 4px; background: #fff; border: 1px solid #e3e3ec; border-radius: 10px; padding: 10px 12px; }
         .pqb-budget-trust-list li { display: flex; justify-content: space-between; font-size: 12px; color: #4a4a6a; }
         .pqb-budget-trust-list li b { color: #1f5a30; font-weight: 800; }
+        .pqb-budget-trust-pending { font-size: 12px; color: #8a6a1f; background: #fdf7e8; border: 1px solid #ecdba8; border-radius: 10px; padding: 8px 12px; margin: 0; }
+        .pqb-motivation-msg { text-align: center; font-size: 13.5px; font-weight: 700; background: #fff3dc; border: 1px solid #f0d9a8; border-radius: 12px; padding: 10px 14px; margin: 10px 0 0; color: #8a5a12; }
         .pqb-exam-session { margin-top: 10px; }
         .pqb-exam-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 14px; }
         .pqb-exam-answer-row { display: flex; gap: 10px; margin-top: 10px; }
@@ -19291,7 +19373,17 @@ function StudentQuestionBankView({ onBack, prefillSchoolCode, prefillGrade, pref
             {(() => {
               const fieldBudgetsForTrust = studentField && PQB_KONKUR_BUDGET[studentField];
               const budgetForTrust = fieldBudgetsForTrust && fieldBudgetsForTrust[subject] && fieldBudgetsForTrust[subject][grade];
-              if (!budgetForTrust || budgetForTrust.length === 0) return null;
+              if (!budgetForTrust || budgetForTrust.length === 0) {
+                // صادقانه بگوییم این درس هنوز بودجه‌بندیِ فصلیِ دقیق ندارد — به‌جایِ سکوت یا ادعایِ
+                // ساخته‌نشده‌ای مثل «درصدِ هم‌پوشانی با کنکورِ واقعی» که دادهٔ آن را فعلاً نداریم.
+                return (
+                  <div className="pqb-budget-trust-box">
+                    <p className="pqb-budget-trust-pending">
+                      🔎 سؤالاتِ این درس طبق سرفصل‌های رایجِ کنکور طراحی می‌شود؛ بودجه‌بندیِ دقیقِ فصل‌به‌فصلِ آن هنوز در سامانه ثبت نشده است.
+                    </p>
+                  </div>
+                );
+              }
               const totalForTrust = budgetForTrust.reduce((sum, b) => sum + b.count, 0);
               return (
                 <div className="pqb-budget-trust-box">
@@ -19644,6 +19736,10 @@ function StudentQuestionBankView({ onBack, prefillSchoolCode, prefillGrade, pref
                   <p style={{ textAlign: "center", fontSize: 15 }}>
                     نتیجه: از {examAnalysis.totalCount} سؤال، {examAnalysis.totalKnown} تا رو بلد بودی 🎉
                   </p>
+                )}
+
+                {examAnalysis.motivationMsg && (
+                  <p className="pqb-motivation-msg">{examAnalysis.motivationMsg}</p>
                 )}
 
                 <p style={{ fontWeight: 800, marginTop: 12, marginBottom: 6 }}>📊 آنالیز کامل بر اساس فصل:</p>

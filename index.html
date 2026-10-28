@@ -18647,6 +18647,7 @@ function StudentQuestionBankView({ onBack, prefillSchoolCode, prefillGrade, pref
   };
   const [examSaving, setExamSaving] = useState(false);
   const [examKnownIds, setExamKnownIds] = useState([]);
+  const [showBudgetDetail, setShowBudgetDetail] = useState(false);
   const [isMandatoryExam, setIsMandatoryExam] = useState(false);
   // آزمون الزامی کنکور کاملاً مستقل از معلم/مدیر/مدرسه‌ی واقعی است — سؤالاتش از بانک رسمی معلم
   // نمی‌آید، بلکه توسط رهیار (هوش مصنوعی) ساخته و برای همان روز، به‌صورت ملی و یکسان برای
@@ -18714,6 +18715,11 @@ function StudentQuestionBankView({ onBack, prefillSchoolCode, prefillGrade, pref
             "»" +
             (filterChapter.trim() ? "، دقیقاً درباره‌ی فصل/موضوع «" + filterChapter.trim() + "»" : "، از مباحث رایج و پرتکرار این پایه طبق کتاب درسی ایران") +
             " بساز — سطح دشواری متنوع (آسان تا سخت) و مناسب تمرین شخصی دانش‌آموز، نه آزمون رسمی. " +
+            (aiPracticeQuestions.length > 0
+              ? "این دانش‌آموز قبلاً این سؤالات را دیده — کاملاً متفاوت از همه‌ی این‌ها بساز (نه فقط تغییرِ عدد، بلکه زاویه‌ی دیگر یا زیرمبحثِ دیگر): " +
+                aiPracticeQuestions.slice(0, 15).map((q) => (q.text || "").slice(0, 60)).join(" | ") +
+                ". "
+              : "") +
             'یک آرایه‌ی JSON به نام "items" برگردان. هر عضو دقیقاً این ساختار را داشته باشد: {"chapter": "نام فصل/موضوع", "text": "متن کامل سؤال — اگر تستی چهارگزینه‌ای است، چهار گزینه را هم با علامت الف/ب/ج/د داخل همین متن بیاور", "difficulty": "یکی از: آسان/متوسط/سخت", "explanation": "پاسخ درست، همراه با استدلال یا مراحل حل کامل و قابل‌فهم برای یک دانش‌آموز (آموزشِ عمیق و مفهومی)", "quickTechnique": "یک تکنیکِ کوتاهِ تست‌زنیِ سریع مخصوصِ همین نوع سؤال، فقط اگر واقعاً چنین میان‌بری وجود دارد، وگرنه رشته‌ی خالی — مکملِ explanation، هرگز جایگزینِ آن؛ دانش‌آموز باید اول عمیق بفهمد"}. فقط همان شیء JSON را برگردان، بدون هیچ توضیح اضافه یا Markdown.',
           messages: [{ role: "user", content: "لطفاً سؤالات تمرینی را آماده کن." }],
         }),
@@ -18759,11 +18765,25 @@ function StudentQuestionBankView({ onBack, prefillSchoolCode, prefillGrade, pref
     setRevealedIds((prev) => (prev.includes(id) ? prev.filter((x) => x !== id) : [...prev, id]));
   };
 
-  const handleStartExam = () => {
+  // برایِ اینکه آزمونِ خودسنجیِ همان فصل هر بار دقیقاً همان سؤال‌های دفعه‌ی قبل را تکرار نکند
+  // (مثلِ «چندنسخه‌ایِ سؤالات هر فصل» در رقبا)، شناسه‌ی سؤال‌هایِ استفاده‌شده‌ی آخرینِ تلاشِ همین
+  // دانش‌آموز روی همین فصل/نوع‌آزمون را خصوصی (shared=false) نگه می‌داریم و در تلاشِ بعدی، تا
+  // جایی که تعدادِ سؤالاتِ بانک اجازه بدهد، از همان‌ها پرهیز می‌کنیم.
+  const handleStartExam = async () => {
     let pool = questions;
     if (examType) pool = pool.filter((q) => (q.examTypes || []).includes(examType));
     if (examChapter) pool = pool.filter((q) => q.chapter === examChapter);
-    const shuffled = [...pool].sort(() => Math.random() - 0.5);
+    const recentKey = "recent-exam-questions:" + (studentCode || "ناشناس") + ":" + skey(subject) + ":" + skey(examChapter || examType || "همه");
+    let recentIds = [];
+    try {
+      const raw = await authStorageGet(recentKey, false);
+      recentIds = raw ? JSON.parse(raw) : [];
+    } catch (e) {
+      recentIds = [];
+    }
+    const freshPool = pool.filter((q) => !recentIds.includes(q.id));
+    const basePool = freshPool.length >= Math.min(examCount, pool.length) ? freshPool : pool;
+    const shuffled = [...basePool].sort(() => Math.random() - 0.5);
     const picked = shuffled.slice(0, Math.min(examCount, shuffled.length));
     setExamSet(pqbDistributeScores(picked, examTotalScore));
     setExamRevealedIds([]);
@@ -18773,6 +18793,11 @@ function StudentQuestionBankView({ onBack, prefillSchoolCode, prefillGrade, pref
     setExamAnalysis(null);
     setIsMandatoryExam(false);
     setExamMode(true);
+    try {
+      await authStorageSet(recentKey, JSON.stringify(picked.map((q) => q.id)), false);
+    } catch (e) {
+      // تلاش‌محور — نبودِ کش مشکلی در روندِ اصلیِ آزمون ایجاد نمی‌کند
+    }
   };
 
   const handleStartMandatoryExam = async () => {
@@ -19086,6 +19111,11 @@ function StudentQuestionBankView({ onBack, prefillSchoolCode, prefillGrade, pref
         .pqb-export-row { display: flex; gap: 10px; margin-bottom: 14px; }
         .pqb-examgen-box { background: #f0e5ff; border: 1px solid #d8c2f0; border-radius: 14px; padding: 16px; margin-bottom: 16px; }
         .pqb-mandatory-box { background: #fdf3e3; border: 1px solid #f0d9a8; border-radius: 14px; padding: 16px; margin-bottom: 16px; }
+        .pqb-budget-trust-box { margin-bottom: 10px; }
+        .pqb-budget-trust-toggle { background: #eef6f0; border: 1px solid #bfe0c8; color: #1f5a30; font-weight: 800; font-size: 12.5px; border-radius: 10px; padding: 8px 14px; cursor: pointer; width: 100%; text-align: right; }
+        .pqb-budget-trust-list { list-style: none; margin: 8px 0 0; padding: 0; display: flex; flex-direction: column; gap: 4px; background: #fff; border: 1px solid #e3e3ec; border-radius: 10px; padding: 10px 12px; }
+        .pqb-budget-trust-list li { display: flex; justify-content: space-between; font-size: 12px; color: #4a4a6a; }
+        .pqb-budget-trust-list li b { color: #1f5a30; font-weight: 800; }
         .pqb-exam-session { margin-top: 10px; }
         .pqb-exam-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 14px; }
         .pqb-exam-answer-row { display: flex; gap: 10px; margin-top: 10px; }
@@ -19166,6 +19196,29 @@ function StudentQuestionBankView({ onBack, prefillSchoolCode, prefillGrade, pref
               این آزمون سراسری و ملی است و به بانک سؤال معلم یا مدرسه‌ی شما هیچ ربطی ندارد — سؤالاتش را رهیار
               مستقیماً بر اساس کتاب درسی طراحی می‌کند، یکسان برای همه‌ی دانش‌آموزان این درس و پایه در سراسر کشور.
             </p>
+            {(() => {
+              const fieldBudgetsForTrust = studentField && PQB_KONKUR_BUDGET[studentField];
+              const budgetForTrust = fieldBudgetsForTrust && fieldBudgetsForTrust[subject] && fieldBudgetsForTrust[subject][grade];
+              if (!budgetForTrust || budgetForTrust.length === 0) return null;
+              const totalForTrust = budgetForTrust.reduce((sum, b) => sum + b.count, 0);
+              return (
+                <div className="pqb-budget-trust-box">
+                  <button type="button" className="pqb-budget-trust-toggle" onClick={() => setShowBudgetDetail((v) => !v)}>
+                    ✅ دقیقاً مطابقِ بودجه‌بندیِ واقعیِ کنکور طراحی می‌شود ({totalForTrust} سؤال) {showBudgetDetail ? "▲" : "▼"}
+                  </button>
+                  {showBudgetDetail && (
+                    <ul className="pqb-budget-trust-list">
+                      {budgetForTrust.map((b, i) => (
+                        <li key={i}>
+                          <span>{b.chapter}</span>
+                          <b>{b.count} سؤال</b>
+                        </li>
+                      ))}
+                    </ul>
+                  )}
+                </div>
+              );
+            })()}
             {!fridayStatus.isMandatoryDay ? (
               <p className="pqb-upload-hint">امروز جمعه‌ی زوج نیست — آزمون الزامی بعدی، جمعه‌ی زوج، ساعت ۸ تا ۱۱ صبح برگزار می‌شود.</p>
             ) : !fridayStatus.session ? (

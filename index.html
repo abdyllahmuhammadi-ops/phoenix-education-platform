@@ -25205,6 +25205,35 @@ function rahyarBuildParentDebrief({ subject, grade, chapter, segments }) {
   };
 }
 
+// بازگرداندنِ توجهِ دانش‌آموز بدونِ دوربین/وب‌کم: به‌جایِ تشخیصِ تصویری (که نگرانیِ حریمِ خصوصیِ
+// کودکان دارد و خطاپذیر است)، هر چند بخش یک‌بار به‌جای پیشرفتِ کاملاً خودکار و بی‌صدا، یک پرسشِ
+// تعاملیِ خیلی کوچک و گرم نشان داده می‌شود؛ اگر دانش‌آموز مدتی پاسخ ندهد، رهیار خودش با صدای گرم
+// و تشویقی توجهش را برمی‌گرداند و بعد ادامه می‌دهد — کاملاً سمتِ‌مرورگر، بدونِ هیچ دوربین یا داده‌ی تازه.
+const RAHYAR_ATTENTION_CHECK_EVERY = 3;
+const RAHYAR_ATTENTION_TIMEOUT_MS = 20000;
+const RAHYAR_ATTENTION_PHRASES = ["هنوز با منی؟ 🙂", "تا اینجا رو خوب همراهم بودی؟", "آماده‌ای بریم جلوتر؟", "با من موافقی ادامه بدیم؟"];
+const RAHYAR_REENGAGE_PHRASES = [
+  "انگار یک‌کم حواست رفت؛ اشکالی ندارد، بیا دوباره با هم تمرکز کنیم.",
+  "مهم نیست! بیا یک نفس بکشیم و با هم ادامه بدهیم.",
+  "فکر کنم ذهنت یک‌جای دیگر رفت؛ بیا دوباره با هم شروع کنیم.",
+];
+function rahyarPickPhrase(list) {
+  return list[Math.floor(Math.random() * list.length)];
+}
+// آیا بعد از پایانِ بخشِ finishedIndex باید توجه را بررسی کرد؟ فقط اگر بخشِ بعدی وجود داشته باشد.
+function rahyarShouldAttentionCheck(finishedIndex, totalCount) {
+  return (finishedIndex + 1) % RAHYAR_ATTENTION_CHECK_EVERY === 0 && finishedIndex + 1 < totalCount;
+}
+// کارتِ کوچکِ تعاملیِ بازگرداندنِ توجه — فقط یک تأییدِ لمسیِ ساده، بدونِ دوربین یا هیچ داده‌ی تازه‌ای.
+function RahyarAttentionPrompt({ phrase, onContinue }) {
+  return (
+    <div className="rtl-attention-box">
+      <div className="rtl-attention-text">{phrase}</div>
+      <button type="button" className="rtl-attention-btn" onClick={onContinue}>بله، ادامه بده</button>
+    </div>
+  );
+}
+
 function rahyarHomeworkKey(studentCode) {
   return "rahyar-homework-history:" + skey(studentCode || "anon");
 }
@@ -25553,6 +25582,8 @@ function RahyarTeachingLibraryView({ onBack, grade, studentCode, schoolCode }) {
   const [speaking, setSpeaking] = useState(false);
   const [autoAdvance, setAutoAdvance] = useState(true);
   const [speechSupported, setSpeechSupported] = useState(true);
+  const [attentionPrompt, setAttentionPrompt] = useState(null);
+  const attentionTimeoutRef = React.useRef(null);
 
   const levelSel = pqbLevelFromGrade(gradeSel);
   const isSecondaryHigh = ["دهم", "یازدهم", "دوازدهم"].includes(gradeSel);
@@ -25625,6 +25656,7 @@ function RahyarTeachingLibraryView({ onBack, grade, studentCode, schoolCode }) {
       try {
         if (typeof window !== "undefined" && window.speechSynthesis) window.speechSynthesis.cancel();
       } catch (e) {}
+      if (attentionTimeoutRef.current) window.clearTimeout(attentionTimeoutRef.current);
     };
   }, []);
 
@@ -25632,6 +25664,11 @@ function RahyarTeachingLibraryView({ onBack, grade, studentCode, schoolCode }) {
     try {
       if (typeof window !== "undefined" && window.speechSynthesis) window.speechSynthesis.cancel();
     } catch (e) {}
+    if (attentionTimeoutRef.current) {
+      window.clearTimeout(attentionTimeoutRef.current);
+      attentionTimeoutRef.current = null;
+    }
+    setAttentionPrompt(null);
     setSpeaking(false);
     setPlaying(false);
   };
@@ -25656,6 +25693,14 @@ function RahyarTeachingLibraryView({ onBack, grade, studentCode, schoolCode }) {
         if (autoAdvance) {
           setCurrentIndex((i) => {
             if (i + 1 < segments.length) {
+              if (rahyarShouldAttentionCheck(i, segments.length)) {
+                setPlaying(false);
+                const nextIdx = i + 1;
+                setAttentionPrompt({ phrase: rahyarPickPhrase(RAHYAR_ATTENTION_PHRASES), nextIndex: nextIdx });
+                if (attentionTimeoutRef.current) window.clearTimeout(attentionTimeoutRef.current);
+                attentionTimeoutRef.current = window.setTimeout(() => rahyarReengageAndContinue(nextIdx), RAHYAR_ATTENTION_TIMEOUT_MS);
+                return i;
+              }
               window.setTimeout(() => speakSegment(i + 1), 400);
               return i + 1;
             }
@@ -25675,6 +25720,50 @@ function RahyarTeachingLibraryView({ onBack, grade, studentCode, schoolCode }) {
     } catch (e) {
       setSpeaking(false);
       setPlaying(false);
+    }
+  };
+
+  // اگر دانش‌آموز خودش روی «بله، ادامه بده» بزند، فوراً ادامه می‌دهیم.
+  const continueFromAttentionPrompt = () => {
+    if (attentionTimeoutRef.current) {
+      window.clearTimeout(attentionTimeoutRef.current);
+      attentionTimeoutRef.current = null;
+    }
+    const nextIdx = attentionPrompt ? attentionPrompt.nextIndex : currentIndex + 1;
+    setAttentionPrompt(null);
+    setCurrentIndex(nextIdx);
+    speakSegment(nextIdx);
+  };
+
+  // اگر دانش‌آموز مدتی پاسخ ندهد، رهیار با صدای خودش و لحنِ گرم توجهش را برمی‌گرداند و بعد ادامه می‌دهد.
+  const rahyarReengageAndContinue = (nextIdx) => {
+    setAttentionPrompt(null);
+    if (!speechSupported) {
+      setCurrentIndex(nextIdx);
+      speakSegment(nextIdx);
+      return;
+    }
+    try {
+      window.speechSynthesis.cancel();
+      const reengageUtter = new window.SpeechSynthesisUtterance(rahyarPickPhrase(RAHYAR_REENGAGE_PHRASES));
+      reengageUtter.lang = "fa-IR";
+      reengageUtter.rate = levelSel === "ابتدایی" ? 0.85 : 0.95;
+      reengageUtter.onstart = () => setSpeaking(true);
+      reengageUtter.onend = () => {
+        setSpeaking(false);
+        setCurrentIndex(nextIdx);
+        speakSegment(nextIdx);
+      };
+      reengageUtter.onerror = () => {
+        setSpeaking(false);
+        setCurrentIndex(nextIdx);
+        speakSegment(nextIdx);
+      };
+      window.speechSynthesis.speak(reengageUtter);
+      setPlaying(true);
+    } catch (e) {
+      setCurrentIndex(nextIdx);
+      speakSegment(nextIdx);
     }
   };
 
@@ -25776,6 +25865,10 @@ function RahyarTeachingLibraryView({ onBack, grade, studentCode, schoolCode }) {
         .rtl-technique-box { background: #fff7e6; border: 1px solid #f0d9a0; border-radius: 10px; padding: 10px 12px; margin: -2px 0 14px; color: #8a5a10; font-size: 13px; line-height: 1.9; }
         .rtl-parent-box { background: #eef6f0; border: 1px solid #bfe0c8; border-radius: 12px; padding: 14px 16px; margin: 6px 0 4px; color: #2c6e3f; font-size: 13px; line-height: 1.95; }
         .rtl-parent-box b.rtl-parent-title { display: block; font-size: 13.5px; margin-bottom: 6px; color: #1f5a30; }
+        .rtl-attention-box { display: flex; flex-direction: column; align-items: center; gap: 10px; background: linear-gradient(135deg, #eef6f0, #f7f2e4); border: 1.5px dashed #c8862b; border-radius: 14px; padding: 16px; margin: 4px 0 14px; animation: rtl-attention-pop 0.3s ease; }
+        .rtl-attention-text { font-weight: 800; font-size: 14px; color: #6b4a16; text-align: center; }
+        .rtl-attention-btn { height: 40px; padding: 0 20px; border: none; border-radius: 10px; background: linear-gradient(135deg, #f2c572, #c8862b); color: #241503; font-weight: 800; font-size: 13px; cursor: pointer; animation: rtl-pulse 1.4s ease-in-out infinite; }
+        @keyframes rtl-attention-pop { from { opacity: 0; transform: translateY(6px); } to { opacity: 1; transform: translateY(0); } }
         .rtl-player-controls { display: flex; gap: 10px; justify-content: center; align-items: center; margin-bottom: 14px; flex-wrap: wrap; }
         .rtl-ctrl-btn { height: 42px; padding: 0 18px; border-radius: 10px; border: 1.3px solid #d9c9a0; background: #fff; color: #5b4636; font-weight: 700; font-size: 13px; cursor: pointer; }
         .rtl-ctrl-btn.primary { background: linear-gradient(135deg, #f2c572, #c8862b); color: #241503; border-color: transparent; }
@@ -25944,6 +26037,10 @@ function RahyarTeachingLibraryView({ onBack, grade, studentCode, schoolCode }) {
               </div>
             )}
 
+            {attentionPrompt && (
+              <RahyarAttentionPrompt phrase={attentionPrompt.phrase} onContinue={continueFromAttentionPrompt} />
+            )}
+
             <div className="rtl-player-controls">
               <button type="button" className="rtl-ctrl-btn" onClick={() => goToSegment(Math.max(0, currentIndex - 1))} disabled={currentIndex === 0}>
                 ← قبلی
@@ -26000,6 +26097,8 @@ function RahyarDynamicLabView({ onBack, grade, studentCode, schoolCode }) {
   const [speaking, setSpeaking] = useState(false);
   const [autoAdvance, setAutoAdvance] = useState(true);
   const [speechSupported, setSpeechSupported] = useState(true);
+  const [attentionPrompt, setAttentionPrompt] = useState(null);
+  const attentionTimeoutRef = React.useRef(null);
   const [tryValue, setTryValue] = useState(0);
 
   const segments = experiment ? experiment.segments : null;
@@ -26073,6 +26172,7 @@ function RahyarDynamicLabView({ onBack, grade, studentCode, schoolCode }) {
       try {
         if (typeof window !== "undefined" && window.speechSynthesis) window.speechSynthesis.cancel();
       } catch (e) {}
+      if (attentionTimeoutRef.current) window.clearTimeout(attentionTimeoutRef.current);
     };
   }, []);
 
@@ -26080,6 +26180,11 @@ function RahyarDynamicLabView({ onBack, grade, studentCode, schoolCode }) {
     try {
       if (typeof window !== "undefined" && window.speechSynthesis) window.speechSynthesis.cancel();
     } catch (e) {}
+    if (attentionTimeoutRef.current) {
+      window.clearTimeout(attentionTimeoutRef.current);
+      attentionTimeoutRef.current = null;
+    }
+    setAttentionPrompt(null);
     setSpeaking(false);
     setPlaying(false);
   };
@@ -26104,6 +26209,14 @@ function RahyarDynamicLabView({ onBack, grade, studentCode, schoolCode }) {
         if (autoAdvance) {
           setCurrentIndex((i) => {
             if (i + 1 < segments.length) {
+              if (rahyarShouldAttentionCheck(i, segments.length)) {
+                setPlaying(false);
+                const nextIdx = i + 1;
+                setAttentionPrompt({ phrase: rahyarPickPhrase(RAHYAR_ATTENTION_PHRASES), nextIndex: nextIdx });
+                if (attentionTimeoutRef.current) window.clearTimeout(attentionTimeoutRef.current);
+                attentionTimeoutRef.current = window.setTimeout(() => rahyarReengageAndContinue(nextIdx), RAHYAR_ATTENTION_TIMEOUT_MS);
+                return i;
+              }
               window.setTimeout(() => speakSegment(i + 1), 400);
               return i + 1;
             }
@@ -26123,6 +26236,50 @@ function RahyarDynamicLabView({ onBack, grade, studentCode, schoolCode }) {
     } catch (e) {
       setSpeaking(false);
       setPlaying(false);
+    }
+  };
+
+  // اگر دانش‌آموز خودش روی «بله، ادامه بده» بزند، فوراً ادامه می‌دهیم.
+  const continueFromAttentionPrompt = () => {
+    if (attentionTimeoutRef.current) {
+      window.clearTimeout(attentionTimeoutRef.current);
+      attentionTimeoutRef.current = null;
+    }
+    const nextIdx = attentionPrompt ? attentionPrompt.nextIndex : currentIndex + 1;
+    setAttentionPrompt(null);
+    setCurrentIndex(nextIdx);
+    speakSegment(nextIdx);
+  };
+
+  // اگر دانش‌آموز مدتی پاسخ ندهد، رهیار با صدای خودش و لحنِ گرم توجهش را برمی‌گرداند و بعد ادامه می‌دهد.
+  const rahyarReengageAndContinue = (nextIdx) => {
+    setAttentionPrompt(null);
+    if (!speechSupported) {
+      setCurrentIndex(nextIdx);
+      speakSegment(nextIdx);
+      return;
+    }
+    try {
+      window.speechSynthesis.cancel();
+      const reengageUtter = new window.SpeechSynthesisUtterance(rahyarPickPhrase(RAHYAR_REENGAGE_PHRASES));
+      reengageUtter.lang = "fa-IR";
+      reengageUtter.rate = levelSel === "ابتدایی" ? 0.85 : 0.95;
+      reengageUtter.onstart = () => setSpeaking(true);
+      reengageUtter.onend = () => {
+        setSpeaking(false);
+        setCurrentIndex(nextIdx);
+        speakSegment(nextIdx);
+      };
+      reengageUtter.onerror = () => {
+        setSpeaking(false);
+        setCurrentIndex(nextIdx);
+        speakSegment(nextIdx);
+      };
+      window.speechSynthesis.speak(reengageUtter);
+      setPlaying(true);
+    } catch (e) {
+      setCurrentIndex(nextIdx);
+      speakSegment(nextIdx);
     }
   };
 
@@ -26238,6 +26395,10 @@ function RahyarDynamicLabView({ onBack, grade, studentCode, schoolCode }) {
         .rtl-technique-box { background: #fff7e6; border: 1px solid #f0d9a0; border-radius: 10px; padding: 10px 12px; margin: -2px 0 14px; color: #8a5a10; font-size: 13px; line-height: 1.9; }
         .rtl-parent-box { background: #eef6f0; border: 1px solid #bfe0c8; border-radius: 12px; padding: 14px 16px; margin: 6px 0 4px; color: #2c6e3f; font-size: 13px; line-height: 1.95; }
         .rtl-parent-box b.rtl-parent-title { display: block; font-size: 13.5px; margin-bottom: 6px; color: #1f5a30; }
+        .rtl-attention-box { display: flex; flex-direction: column; align-items: center; gap: 10px; background: linear-gradient(135deg, #eef6f0, #f7f2e4); border: 1.5px dashed #c8862b; border-radius: 14px; padding: 16px; margin: 4px 0 14px; animation: rtl-attention-pop 0.3s ease; }
+        .rtl-attention-text { font-weight: 800; font-size: 14px; color: #6b4a16; text-align: center; }
+        .rtl-attention-btn { height: 40px; padding: 0 20px; border: none; border-radius: 10px; background: linear-gradient(135deg, #f2c572, #c8862b); color: #241503; font-weight: 800; font-size: 13px; cursor: pointer; animation: rtl-pulse 1.4s ease-in-out infinite; }
+        @keyframes rtl-attention-pop { from { opacity: 0; transform: translateY(6px); } to { opacity: 1; transform: translateY(0); } }
         .rtl-player-controls { display: flex; gap: 10px; justify-content: center; align-items: center; margin-bottom: 14px; flex-wrap: wrap; }
         .rtl-ctrl-btn { height: 42px; padding: 0 18px; border-radius: 10px; border: 1.3px solid #d9c9a0; background: #fff; color: #5b4636; font-weight: 700; font-size: 13px; cursor: pointer; }
         .rtl-ctrl-btn.primary { background: linear-gradient(135deg, #f2c572, #c8862b); color: #241503; border-color: transparent; }
@@ -26425,6 +26586,10 @@ function RahyarDynamicLabView({ onBack, grade, studentCode, schoolCode }) {
               </div>
             )}
 
+            {attentionPrompt && (
+              <RahyarAttentionPrompt phrase={attentionPrompt.phrase} onContinue={continueFromAttentionPrompt} />
+            )}
+
             <div className="rtl-player-controls">
               <button type="button" className="rtl-ctrl-btn" onClick={() => goToSegment(Math.max(0, currentIndex - 1))} disabled={currentIndex === 0}>
                 ← قبلی
@@ -26502,6 +26667,8 @@ function RahyarHomeworkHelperView({ onBack, grade, studentCode, schoolCode }) {
   const [speaking, setSpeaking] = useState(false);
   const [autoAdvance, setAutoAdvance] = useState(true);
   const [speechSupported, setSpeechSupported] = useState(true);
+  const [attentionPrompt, setAttentionPrompt] = useState(null);
+  const attentionTimeoutRef = React.useRef(null);
   const [history, setHistory] = useState([]);
   const [historyOpen, setHistoryOpen] = useState(false);
 
@@ -26533,6 +26700,7 @@ function RahyarHomeworkHelperView({ onBack, grade, studentCode, schoolCode }) {
       try {
         if (typeof window !== "undefined" && window.speechSynthesis) window.speechSynthesis.cancel();
       } catch (e) {}
+      if (attentionTimeoutRef.current) window.clearTimeout(attentionTimeoutRef.current);
     };
   }, [studentCode]);
 
@@ -26540,6 +26708,11 @@ function RahyarHomeworkHelperView({ onBack, grade, studentCode, schoolCode }) {
     try {
       if (typeof window !== "undefined" && window.speechSynthesis) window.speechSynthesis.cancel();
     } catch (e) {}
+    if (attentionTimeoutRef.current) {
+      window.clearTimeout(attentionTimeoutRef.current);
+      attentionTimeoutRef.current = null;
+    }
+    setAttentionPrompt(null);
     setSpeaking(false);
     setPlaying(false);
   };
@@ -26565,6 +26738,14 @@ function RahyarHomeworkHelperView({ onBack, grade, studentCode, schoolCode }) {
         if (autoAdvance) {
           setCurrentIndex((i) => {
             if (i + 1 < list.length) {
+              if (rahyarShouldAttentionCheck(i, list.length)) {
+                setPlaying(false);
+                const nextIdx = i + 1;
+                setAttentionPrompt({ phrase: rahyarPickPhrase(RAHYAR_ATTENTION_PHRASES), nextIndex: nextIdx });
+                if (attentionTimeoutRef.current) window.clearTimeout(attentionTimeoutRef.current);
+                attentionTimeoutRef.current = window.setTimeout(() => rahyarReengageAndContinue(nextIdx, list), RAHYAR_ATTENTION_TIMEOUT_MS);
+                return i;
+              }
               window.setTimeout(() => speakSegment(i + 1, list), 400);
               return i + 1;
             }
@@ -26584,6 +26765,50 @@ function RahyarHomeworkHelperView({ onBack, grade, studentCode, schoolCode }) {
     } catch (e) {
       setSpeaking(false);
       setPlaying(false);
+    }
+  };
+
+  // اگر دانش‌آموز خودش روی «بله، ادامه بده» بزند، فوراً ادامه می‌دهیم.
+  const continueFromAttentionPrompt = () => {
+    if (attentionTimeoutRef.current) {
+      window.clearTimeout(attentionTimeoutRef.current);
+      attentionTimeoutRef.current = null;
+    }
+    const nextIdx = attentionPrompt ? attentionPrompt.nextIndex : currentIndex + 1;
+    setAttentionPrompt(null);
+    setCurrentIndex(nextIdx);
+    speakSegment(nextIdx, segments);
+  };
+
+  // اگر دانش‌آموز مدتی پاسخ ندهد، رهیار با صدای خودش و لحنِ گرم توجهش را برمی‌گرداند و بعد ادامه می‌دهد.
+  const rahyarReengageAndContinue = (nextIdx, list) => {
+    setAttentionPrompt(null);
+    if (!speechSupported) {
+      setCurrentIndex(nextIdx);
+      speakSegment(nextIdx, list);
+      return;
+    }
+    try {
+      window.speechSynthesis.cancel();
+      const reengageUtter = new window.SpeechSynthesisUtterance(rahyarPickPhrase(RAHYAR_REENGAGE_PHRASES));
+      reengageUtter.lang = "fa-IR";
+      reengageUtter.rate = levelSel === "ابتدایی" ? 0.85 : 0.95;
+      reengageUtter.onstart = () => setSpeaking(true);
+      reengageUtter.onend = () => {
+        setSpeaking(false);
+        setCurrentIndex(nextIdx);
+        speakSegment(nextIdx, list);
+      };
+      reengageUtter.onerror = () => {
+        setSpeaking(false);
+        setCurrentIndex(nextIdx);
+        speakSegment(nextIdx, list);
+      };
+      window.speechSynthesis.speak(reengageUtter);
+      setPlaying(true);
+    } catch (e) {
+      setCurrentIndex(nextIdx);
+      speakSegment(nextIdx, list);
     }
   };
 
@@ -26688,6 +26913,10 @@ function RahyarHomeworkHelperView({ onBack, grade, studentCode, schoolCode }) {
         .rtl-technique-box { background: #fff7e6; border: 1px solid #f0d9a0; border-radius: 10px; padding: 10px 12px; margin: -2px 0 14px; color: #8a5a10; font-size: 13px; line-height: 1.9; }
         .rtl-parent-box { background: #eef6f0; border: 1px solid #bfe0c8; border-radius: 12px; padding: 14px 16px; margin: 6px 0 4px; color: #2c6e3f; font-size: 13px; line-height: 1.95; }
         .rtl-parent-box b.rtl-parent-title { display: block; font-size: 13.5px; margin-bottom: 6px; color: #1f5a30; }
+        .rtl-attention-box { display: flex; flex-direction: column; align-items: center; gap: 10px; background: linear-gradient(135deg, #eef6f0, #f7f2e4); border: 1.5px dashed #c8862b; border-radius: 14px; padding: 16px; margin: 4px 0 14px; animation: rtl-attention-pop 0.3s ease; }
+        .rtl-attention-text { font-weight: 800; font-size: 14px; color: #6b4a16; text-align: center; }
+        .rtl-attention-btn { height: 40px; padding: 0 20px; border: none; border-radius: 10px; background: linear-gradient(135deg, #f2c572, #c8862b); color: #241503; font-weight: 800; font-size: 13px; cursor: pointer; animation: rtl-pulse 1.4s ease-in-out infinite; }
+        @keyframes rtl-attention-pop { from { opacity: 0; transform: translateY(6px); } to { opacity: 1; transform: translateY(0); } }
         .rtl-player-controls { display: flex; gap: 10px; justify-content: center; align-items: center; margin-bottom: 14px; flex-wrap: wrap; }
         .rtl-ctrl-btn { height: 42px; padding: 0 18px; border-radius: 10px; border: 1.3px solid #d9c9a0; background: #fff; color: #5b4636; font-weight: 700; font-size: 13px; cursor: pointer; }
         .rtl-ctrl-btn.primary { background: linear-gradient(135deg, #f2c572, #c8862b); color: #241503; border-color: transparent; }
@@ -26854,6 +27083,10 @@ function RahyarHomeworkHelperView({ onBack, grade, studentCode, schoolCode }) {
               <div className="rtl-technique-box">
                 <b>⚡ تکنیکِ تست‌زنیِ سریع:</b> {activeSegment.quickTechnique}
               </div>
+            )}
+
+            {attentionPrompt && (
+              <RahyarAttentionPrompt phrase={attentionPrompt.phrase} onContinue={continueFromAttentionPrompt} />
             )}
 
             <div className="rtl-player-controls">

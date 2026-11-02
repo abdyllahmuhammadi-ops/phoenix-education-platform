@@ -25488,6 +25488,213 @@ async function rahyarGenerateTeachingScript(subject, grade, chapter) {
   };
 }
 
+/* ============================================================
+   خلاصه‌ی درس به‌صورت اسلاید (در پایینِ هر درس) + محافظتِ محتوا
+   قانونِ پروژه: به‌جز نمونه‌سؤال‌های امتحانی و کنکور، هیچ محتوایی نباید قابلِ دانلود/کپی باشد.
+   توجه: مرورگر نمی‌تواند جلوی اسکرین‌شات را بگیرد؛ بازدارنده‌ی ما واترمارکِ کدِ دانش‌آموز روی محتواست.
+   ============================================================ */
+function rahyarSummarySlidesKey(subject, grade, chapter) {
+  return "rahyar-summary-slides:" + skey(subject) + ":" + skey(grade) + ":" + skey(chapter);
+}
+
+async function rahyarGenerateSummarySlides(subject, grade, chapter, chapterSummary, segments) {
+  const isElementary = pqbLevelFromGrade(grade) === "ابتدایی";
+  const taught = segments
+    .map((s, i) => (i + 1) + ") " + (s.stepLabel || "") + ": " + String(s.narration || "").slice(0, 160))
+    .join("\n");
+  const response = await fetch("https://api.anthropic.com/v1/messages", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({
+      model: "claude-sonnet-4-6",
+      max_tokens: 6000,
+      system:
+        "شما رهیار هستید، معلمِ نخبه‌ی ققنوس. وظیفه‌ات ساختنِ «خلاصه‌ی درس به‌صورت اسلاید» (مثلِ یک پاورپوینتِ کوتاه و زیبا) برای دانش‌آموزِ پایه‌ی «" + grade + "»، درسِ «" + subject + "»، مبحثِ «" + chapter + "» است. " +
+        "محتوا را فقط از همین جلسه‌ی تدریس‌شده بگیر و چیزِ تازه‌ای که در جلسه نیامده اضافه نکن. " +
+        "تعدادِ اسلایدها " + (isElementary ? "۵ تا ۶" : "۵ تا ۷") + " باشد: اسلایدِ اول «این درس درباره‌ی چیست»، اسلایدهای میانی نکته‌های کلیدی، و اسلایدِ آخر «مهم‌ترین نکته‌ای که باید یادت بماند». " +
+        (isElementary ? "دانش‌آموز ابتدایی است: جمله‌ها بسیار کوتاه و ساده (حداکثر ۸ کلمه) باشد. " : "") +
+        "هر اسلاید دقیقاً این ساختار را دارد: " +
+        '{"title": "عنوانِ کوتاه (حداکثر ۶ کلمه)", "points": ["۲ تا ۳ جمله‌ی کوتاه (حداکثر ۱۲ کلمه)"], "visualType": "یکی از: diagram / labels / timeline / bars / board", "visualTitle": "عنوانِ کوتاهِ تصویر", "visualData": {...}}. ' +
+        "مهم‌ترین قانون: تصویرِ هر اسلاید باید دقیقاً همان مطلبی را نشان بدهد که points همان اسلاید می‌گویند (نه یک تصویرِ عمومیِ کلی)؛ یعنی اگر نکته درباره‌ی «چرخه‌ی آب» است، تصویر همان چرخه با همان اجزا باشد. " +
+        "تصویر باید از نظرِ علمی کاملاً درست باشد؛ اگر در دقتِ یک نقاشیِ SVG مطمئن نیستی، به‌جای diagram از labels یا timeline استفاده کن. " +
+        "قالبِ visualData: " +
+        'برای diagram: {\\"svg\\": \\"فقط عناصرِ داخلیِ تگ svg (بدون خودِ تگ svg و بدون script) با viewBox فرضیِ 0 0 300 220؛ از circle/ellipse/rect/path/line/polygon/g/text و برچسب‌های فارسیِ کوتاه و خوانا استفاده کن؛ چند عنصرِ متحرک با animate/animateTransform بگذار\\"}؛ ' +
+        'برای labels: {\\"items\\": [{\\"label\\": \\"...\\", \\"desc\\": \\"...\\"}]}؛ برای timeline: {\\"steps\\": [\\"...\\", \\"...\\"]}؛ برای bars: {\\"labels\\": [...], \\"values\\": [اعداد واقعی]}؛ برای board: {\\"lines\\": [\\"...\\"]}. ' +
+        'خروجی فقط یک شیء JSON به شکلِ {"slides": [...]} باشد، بدون Markdown یا توضیحِ اضافه.',
+      messages: [
+        {
+          role: "user",
+          content:
+            "خلاصه‌ی جلسه: " + (chapterSummary || "—") + "\nبخش‌های تدریس‌شده:\n" + taught + "\n\nحالا اسلایدهای خلاصه‌ی درس را بساز.",
+        },
+      ],
+    }),
+  });
+  const data = await response.json();
+  const rawText = data && data.content && data.content[0] && data.content[0].text ? data.content[0].text : "";
+  const parsed = JSON.parse(rawText.replace(/```json|```/g, "").trim());
+  const list = Array.isArray(parsed.slides) ? parsed.slides : [];
+  return list
+    .map((s) => ({
+      title: typeof s.title === "string" ? s.title : "",
+      points: Array.isArray(s.points) ? s.points.filter((p) => typeof p === "string" && p.trim()) : [],
+      visualType: ["diagram", "labels", "timeline", "bars", "board"].includes(s.visualType) ? s.visualType : "none",
+      visualTitle: s.visualTitle || "",
+      visualData: s.visualData && typeof s.visualData === "object" ? s.visualData : {},
+    }))
+    .filter((s) => s.title && s.points.length > 0);
+}
+
+// جعبه‌ی محافظت‌شده: انتخاب/کپی/برش/کلیک‌راست/کشیدن و چاپ غیرفعال، و کدِ دانش‌آموز به‌صورت واترمارکِ تکراری روی محتوا.
+function RahyarProtectedBox({ className, studentCode, children }) {
+  const block = (e) => e.preventDefault();
+  const wm = React.useMemo(() => {
+    const label = ("ققنوس" + (studentCode ? " • " + studentCode : "")).replace(/[<>&"']/g, "");
+    const svg =
+      '<svg xmlns="http://www.w3.org/2000/svg" width="260" height="150">' +
+      '<text x="130" y="80" text-anchor="middle" transform="rotate(-24 130 75)" font-family="Tahoma, Arial, sans-serif" font-size="17" font-weight="700" fill="#1c2540" fill-opacity="0.12">' +
+      label +
+      "</text></svg>";
+    return 'url("data:image/svg+xml;utf8,' + encodeURIComponent(svg) + '")';
+  }, [studentCode]);
+  return (
+    <div
+      className={"rtl-protected " + (className || "")}
+      style={{ position: "relative", userSelect: "none", WebkitUserSelect: "none", WebkitTouchCallout: "none" }}
+      onContextMenu={block}
+      onCopy={block}
+      onCut={block}
+      onDragStart={block}
+    >
+      <style>{"@media print { .rtl-protected { display: none !important; } }"}</style>
+      {children}
+      <div
+        aria-hidden="true"
+        style={{ position: "absolute", inset: 0, pointerEvents: "none", backgroundImage: wm, backgroundRepeat: "repeat", zIndex: 5, borderRadius: "inherit" }}
+      />
+    </div>
+  );
+}
+
+function RahyarLessonSummarySlides({ subject, grade, chapter, chapterSummary, segments }) {
+  const [slides, setSlides] = useState(null);
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState("");
+  const [idx, setIdx] = useState(0);
+  const key = rahyarSummarySlidesKey(subject, grade, chapter);
+
+  // با عوض‌شدنِ درس/مبحث، اسلایدهای قبلی پاک شود
+  useEffect(() => {
+    setSlides(null);
+    setIdx(0);
+    setError("");
+  }, [key]);
+
+  const load = async () => {
+    setLoading(true);
+    setError("");
+    try {
+      const cached = await authStorageGet(key, true);
+      if (cached) {
+        const parsed = JSON.parse(cached);
+        if (Array.isArray(parsed) && parsed.length > 0) {
+          setSlides(parsed);
+          setIdx(0);
+          setLoading(false);
+          return;
+        }
+      }
+    } catch (e) {
+      // کش نبود یا خراب بود — ساخت تازه
+    }
+    try {
+      const result = await rahyarGenerateSummarySlides(subject, grade, chapter, chapterSummary, segments);
+      if (!result.length) throw new Error("empty");
+      setSlides(result);
+      setIdx(0);
+      await authStorageSet(key, JSON.stringify(result), true);
+    } catch (e) {
+      setError("ساخت اسلایدها با مشکل مواجه شد. دوباره تلاش کنید.");
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const s = slides ? slides[idx] : null;
+
+  return (
+    <div className="rss-wrap">
+      <style>{`
+        .rss-wrap { margin-top: 18px; border-top: 1px dashed rgba(28,37,64,0.18); padding-top: 16px; }
+        .rss-open-btn { width: 100%; padding: 14px 16px; border: 0; border-radius: 14px; cursor: pointer; font-weight: 800; font-size: 15px; color: #fff;
+          background: linear-gradient(135deg, #1c2540, #34406b); box-shadow: 0 6px 16px rgba(28,37,64,0.18); }
+        .rss-open-btn:disabled { opacity: .7; cursor: wait; }
+        .rss-card { border-radius: 18px; overflow: hidden; background: #fff; border: 1px solid rgba(28,37,64,0.10); box-shadow: 0 8px 22px rgba(28,37,64,0.10); animation: rssIn .35s ease; }
+        @keyframes rssIn { from { opacity: 0; transform: translateY(6px); } to { opacity: 1; transform: none; } }
+        .rss-title { display: flex; align-items: center; gap: 10px; padding: 14px 18px; color: #fff; font-weight: 800; font-size: 17px;
+          background: linear-gradient(135deg, #1c2540, #34406b); }
+        .rss-num { display: inline-flex; align-items: center; justify-content: center; min-width: 30px; height: 30px; border-radius: 50%; background: #e2622f; font-size: 15px; }
+        .rss-body { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; padding: 18px; align-items: center; }
+        .rss-points { margin: 0; padding: 0 20px 0 0; display: grid; gap: 12px; font-size: 15.5px; line-height: 1.9; color: #1c2540; }
+        .rss-points li::marker { color: #e2622f; }
+        .rss-visual .rtl-visual-box { margin: 0; }
+        .rss-nav { display: flex; align-items: center; justify-content: space-between; gap: 10px; margin-top: 12px; }
+        .rss-nav button { padding: 9px 16px; border-radius: 12px; border: 1px solid rgba(28,37,64,0.15); background: #fff; font-weight: 700; cursor: pointer; color: #1c2540; }
+        .rss-nav button:disabled { opacity: .4; cursor: default; }
+        .rss-dots { display: flex; gap: 6px; flex-wrap: wrap; justify-content: center; }
+        .rss-dot { width: 9px; height: 9px; border-radius: 50%; background: rgba(28,37,64,0.2); cursor: pointer; }
+        .rss-dot.active { background: #e2622f; transform: scale(1.25); }
+        @media (max-width: 640px) { .rss-body { grid-template-columns: 1fr; } }
+      `}</style>
+
+      {!slides && (
+        <>
+          <button type="button" className="rss-open-btn" onClick={load} disabled={loading}>
+            {loading ? "در حال آماده‌سازی اسلایدها..." : "📑 خلاصه‌ی درس به‌صورت اسلاید"}
+          </button>
+          {error && <p className="pqb-upload-error">{error}</p>}
+        </>
+      )}
+
+      {s && (
+        <>
+          <div className="rss-card" key={idx}>
+            <div className="rss-title">
+              <span className="rss-num">{idx + 1}</span>
+              <span>{s.title}</span>
+            </div>
+            <div className="rss-body" style={s.visualType === "none" ? { gridTemplateColumns: "1fr" } : undefined}>
+              <ul className="rss-points">
+                {s.points.map((p, i) => (
+                  <li key={i}>{p}</li>
+                ))}
+              </ul>
+              {s.visualType !== "none" && (
+                <div className="rss-visual">
+                  <RahyarSegmentVisual visualType={s.visualType} visualTitle={s.visualTitle} visualData={s.visualData} animKey={"sum-" + idx} />
+                </div>
+              )}
+            </div>
+          </div>
+          <div className="rss-nav">
+            <button type="button" onClick={() => setIdx(Math.max(0, idx - 1))} disabled={idx === 0}>
+              ← قبلی
+            </button>
+            <div className="rss-dots">
+              {slides.map((_, i) => (
+                <span key={i} className={"rss-dot" + (i === idx ? " active" : "")} onClick={() => setIdx(i)} />
+              ))}
+            </div>
+            <button type="button" onClick={() => setIdx(Math.min(slides.length - 1, idx + 1))} disabled={idx === slides.length - 1}>
+              بعدی →
+            </button>
+          </div>
+        </>
+      )}
+    </div>
+  );
+}
+
 function rahyarChapterKey(subject, grade) {
   return "rahyar-chapters:" + skey(subject) + ":" + skey(grade);
 }
@@ -26402,7 +26609,7 @@ function RahyarTeachingLibraryView({ onBack, grade, studentCode, schoolCode }) {
         {error && <p className="pqb-upload-error">{error}</p>}
 
         {segments && segments.length > 0 && (
-          <div className="rtl-player-box">
+          <RahyarProtectedBox className="rtl-player-box" studentCode={studentCode}>
             {fromCache && <div className="rtl-cache-badge">💾 این تدریس قبلاً ساخته شده و از کتابخانه بارگذاری شد — نیازی به ساخت دوباره نبود.</div>}
 
             {(chapterSummary || chapterObjectives.length > 0) && (
@@ -26487,7 +26694,15 @@ function RahyarTeachingLibraryView({ onBack, grade, studentCode, schoolCode }) {
                 </div>
               );
             })()}
-          </div>
+
+            <RahyarLessonSummarySlides
+              subject={subject}
+              grade={gradeSel}
+              chapter={chapter}
+              chapterSummary={chapterSummary}
+              segments={segments}
+            />
+          </RahyarProtectedBox>
         )}
       </div>
     </div>

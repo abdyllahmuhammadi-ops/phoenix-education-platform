@@ -1376,6 +1376,17 @@ function AuthLanding({ language, onLanguageChange, onContinue, onViewPerformance
       setLoginError("لطفاً رمز عبور را وارد کنید.");
       return;
     }
+    // عضو تیم سامانه (طراح سؤال / مدیر فنی / پشتیبان ثبت‌نام) — رمزِ تیم جدا از رمزِ حسابِ معمولی است
+    try {
+      const teamMember = await teamTryLogin(teamDigits(loginPhone), loginPassword.trim());
+      if (teamMember && onLoginSuccess) {
+        setLoginError("");
+        onLoginSuccess("teamMember", { member: teamMember }, teamMember.mobile);
+        return;
+      }
+    } catch (e) {
+      // اگر بررسیِ تیم خطا داد، مسیر ورودِ معمول ادامه پیدا می‌کند
+    }
     const storedCode = await authStorageGet("login-code:" + loginPhone.trim(), true);
     if (storedCode) {
       if (storedCode === loginPassword.trim()) {
@@ -13583,10 +13594,719 @@ function SystemAdminRegistration({ onBack, onContinue }) {
 
 /* ============================================================
    ققنوس — آموزش برای فردا
+   تیم سامانه — دسترسیِ محدود و نقش‌محور (نسخه‌ی مرورگری)
+   نقش‌ها: طراح سؤال (برای هر درس یک نفر؛ در ابتدایی برای هر پایه یک نفر)،
+   مدیر فنی، پشتیبان ثبت‌نام. انتخاب و انتصاب فقط با مدیر سامانه است.
+   توجه: در نسخه‌ی مرورگری، «قفلِ واقعی» ممکن نیست؛ این بخش منطق و صفحه‌ها را آماده می‌کند
+   و اجرای قطعیِ محدودیت‌ها هنگامِ اتصال به سرور انجام می‌شود.
+   ============================================================ */
+
+const TEAM_ROLES = {
+  contentDesigner: { label: "طراح سؤال", icon: "✍️", desc: "طراحی سؤال کنکور و امتحان داخلی برای درس (یا پایه‌ی ابتدایی) خودش" },
+  techManager: { label: "مدیر فنی", icon: "🛠️", desc: "رفع اشکال فنی سامانه؛ بدون دسترسی به اطلاعات شخصی" },
+  regSupport: { label: "پشتیبان ثبت‌نام", icon: "🎧", desc: "رسیدگی به مشکل ثبت‌نام؛ فقط مشخصات ثبت‌نامی" },
+};
+const TEAM_PRIMARY_GRADES = ["اول", "دوم", "سوم", "چهارم", "پنجم", "ششم"];
+const TEAM_SECONDARY_GRADES = ["هفتم", "هشتم", "نهم", "دهم", "یازدهم", "دوازدهم"];
+const TEAM_QTYPES = ["مفهومی", "ترکیبی", "محاسباتی", "مستقیم"];
+const TEAM_SUPPORT_REASONS = ["فراموشی رمز یا ورود", "خطا در ثبت‌نام", "اصلاح مشخصات ثبت‌شده", "پیگیری درخواست والدین", "سایر"];
+
+// این‌ها عمداً تابع‌اند (نه ثابت) چون PQB_SUBJECTS_BY_LEVEL بعدتر در فایل تعریف می‌شود
+function teamPrimarySubjects() {
+  return PQB_SUBJECTS_BY_LEVEL["ابتدایی"].filter((s) => s !== "سایر");
+}
+function teamSecondarySubjects() {
+  return Array.from(new Set([...PQB_SUBJECTS_BY_LEVEL["متوسطه اول"], ...PQB_SUBJECTS_BY_LEVEL["متوسطه دوم"]])).filter((s) => s !== "سایر");
+}
+function teamScopeLabel(scope) {
+  if (!scope) return "";
+  if (scope.kind === "grade") return "پایه‌ی " + scope.grade + " (ابتدایی) — همه‌ی دروس";
+  if (scope.kind === "subject") return "درس " + scope.subject + " (متوسطه)";
+  return "";
+}
+function teamSameScope(a, b) {
+  if (!a || !b || a.kind !== b.kind) return false;
+  return a.kind === "grade" ? a.grade === b.grade : a.subject === b.subject;
+}
+function teamDigits(v) {
+  return String(v || "")
+    .replace(/[۰-۹]/g, (d) => "۰۱۲۳۴۵۶۷۸۹".indexOf(d))
+    .replace(/[٠-٩]/g, (d) => "٠١٢٣٤٥٦٧٨٩".indexOf(d))
+    .replace(/[^0-9]/g, "");
+}
+function teamGenCode() {
+  return String(Math.floor(100000 + Math.random() * 900000));
+}
+async function teamLoad(key, fallback) {
+  try {
+    const raw = await authStorageGet(key, true);
+    return raw ? JSON.parse(raw) : fallback;
+  } catch (e) {
+    return fallback;
+  }
+}
+async function teamSave(key, value) {
+  return authStorageSet(key, JSON.stringify(value), true);
+}
+// گزارشِ فعالیت — فقط مدیر سامانه می‌بیند؛ عمداً هیچ مشخصاتِ شخصیِ کامل در آن نوشته نمی‌شود
+async function teamAudit(actor, action, detail) {
+  const log = await teamLoad("team-audit-log", []);
+  log.unshift({ t: Date.now(), actor: actor || "؟", action, detail: detail || "" });
+  await teamSave("team-audit-log", log.slice(0, 300));
+}
+// ورودِ عضو تیم: رمزِ تیم جدا از رمزِ حسابِ معمولیِ همان شماره است تا هیچ‌چیز تداخل نکند
+async function teamTryLogin(phone, password) {
+  if (!phone || !password) return null;
+  const members = await teamLoad("team-members", []);
+  const m = members.find((x) => x.mobile === phone && x.active);
+  if (!m) return null;
+  const code = await authStorageGet("team-code:" + phone, true);
+  if (!code || code !== password) return null;
+  await teamAudit(m.name + " (" + TEAM_ROLES[m.role].label + ")", "ورود به سامانه", "");
+  return m;
+}
+
+function TeamStyles() {
+  return (
+    <style>{`
+      .tm-root, .tm-root * { box-sizing: border-box; font-family: 'Vazirmatn', Tahoma, Arial, sans-serif; -webkit-tap-highlight-color: transparent; }
+      .tm-root { min-height: 100vh; min-height: 100dvh; background: #f7f4ee; color: #1c2540; padding: 0 0 40px; }
+      .tm-wrap { max-width: 1080px; margin: 0 auto; padding: 0 16px; }
+      .tm-hero { background: linear-gradient(135deg, #1c2540, #36457f); color: #fff; padding: 22px 0 20px; margin-bottom: 18px; border-radius: 0 0 22px 22px; }
+      .tm-hero h1 { font-size: 19px; font-weight: 800; margin: 0 0 4px; }
+      .tm-hero p { font-size: 12.5px; opacity: .85; margin: 0; line-height: 1.9; }
+      .tm-back { background: rgba(255,255,255,.14); color: #fff; border: none; border-radius: 10px; padding: 7px 14px; font-size: 12.5px; font-weight: 700; cursor: pointer; margin-bottom: 12px; }
+      .tm-tabs { display: flex; flex-wrap: wrap; gap: 8px; margin-bottom: 16px; }
+      .tm-tab { border: 1px solid #d9d2c3; background: #fff; border-radius: 12px; padding: 8px 14px; font-size: 13px; font-weight: 700; cursor: pointer; color: #4a5272; }
+      .tm-tab.on { background: linear-gradient(135deg, #f2c572, #c8862b); color: #241503; border-color: transparent; }
+      .tm-card { background: #fff; border-radius: 16px; padding: 16px; box-shadow: 0 2px 10px rgba(28,37,64,.07); margin-bottom: 14px; }
+      .tm-card h2 { font-size: 15px; font-weight: 800; margin: 0 0 10px; }
+      .tm-row { display: flex; flex-wrap: wrap; gap: 10px; align-items: flex-end; margin-bottom: 10px; }
+      .tm-field { display: flex; flex-direction: column; gap: 4px; }
+      .tm-field label { font-size: 11.5px; font-weight: 700; color: #5a6385; }
+      .tm-in { height: 40px; border: 1px solid #cfd3e2; border-radius: 10px; padding: 0 10px; font-size: 13px; background: #fff; color: #1c2540; }
+      .tm-in.name { width: 210px; } .tm-in.mobile { width: 140px; direction: ltr; text-align: left; } .tm-in.sel { width: 190px; } .tm-in.narrow { width: 120px; } .tm-in.code { width: 150px; direction: ltr; text-align: left; }
+      .tm-ta { border: 1px solid #cfd3e2; border-radius: 10px; padding: 8px 10px; font-size: 13px; width: 100%; min-height: 76px; line-height: 1.8; background: #fff; color: #1c2540; resize: vertical; }
+      .tm-opt { display: flex; align-items: center; gap: 8px; margin-bottom: 8px; }
+      .tm-opt .tm-in { flex: 1; min-width: 0; }
+      .tm-btn { height: 40px; padding: 0 16px; border: none; border-radius: 10px; background: linear-gradient(135deg, #f2c572, #c8862b); color: #241503; font-weight: 800; font-size: 13px; cursor: pointer; }
+      .tm-btn.ghost { background: transparent; border: 1px solid #b9bfd6; color: #36457f; }
+      .tm-btn.danger { background: transparent; border: 1px solid #e3a09a; color: #b3261e; }
+      .tm-btn.ok { background: linear-gradient(135deg, #7fd3a0, #2f9a5f); color: #fff; }
+      .tm-btn.sm { height: 32px; padding: 0 11px; font-size: 12px; }
+      .tm-err { color: #b3261e; font-size: 12.5px; margin: 4px 0 8px; white-space: pre-line; }
+      .tm-note { font-size: 12px; color: #6b7394; line-height: 1.9; }
+      .tm-member { display: flex; flex-wrap: wrap; gap: 10px; align-items: center; justify-content: space-between; border: 1px solid #e6e1d5; border-radius: 12px; padding: 10px 12px; margin-bottom: 8px; }
+      .tm-badge { display: inline-block; font-size: 11.5px; font-weight: 700; border-radius: 8px; padding: 2px 9px; background: #eef0f8; color: #36457f; margin-left: 6px; }
+      .tm-badge.off { background: #f1e3e1; color: #b3261e; } .tm-badge.pending { background: #fff1d6; color: #9a5b00; } .tm-badge.approved { background: #e0f4e8; color: #1d6b3c; } .tm-badge.rejected { background: #f1e3e1; color: #b3261e; }
+      .tm-code-box { background: #fff8e6; border: 1px dashed #c8862b; border-radius: 12px; padding: 12px; margin-bottom: 12px; font-size: 13px; line-height: 2; }
+      .tm-code-box b { font-size: 20px; letter-spacing: 3px; direction: ltr; display: inline-block; }
+      .tm-q { border: 1px solid #e6e1d5; border-radius: 12px; padding: 12px; margin-bottom: 10px; }
+      .tm-q .stem { font-size: 13.5px; line-height: 1.9; white-space: pre-line; }
+      .tm-q .opt { font-size: 13px; padding: 2px 0; } .tm-q .opt.right { color: #1d6b3c; font-weight: 800; }
+      .tm-log { font-size: 12.5px; padding: 7px 0; border-bottom: 1px solid #efeadf; line-height: 1.9; }
+      @media (max-width: 560px) { .tm-in.name, .tm-in.sel, .tm-in.mobile, .tm-in.code { width: 100%; } .tm-field { width: 100%; } .tm-btn { width: 100%; } .tm-btn.sm { width: auto; } }
+    `}</style>
+  );
+}
+
+function TeamQuestionCard({ q }) {
+  const parsed = pqbParseMcqText(q.text);
+  const statusLabel = q.status === "approved" ? "تأییدشده" : q.status === "rejected" ? "ردشده" : "در انتظار بازبینی";
+  return (
+    <div className="tm-q">
+      <div style={{ marginBottom: 6 }}>
+        <span className={"tm-badge " + q.status}>{statusLabel}</span>
+        <span className="tm-badge">{q.subject}</span>
+        <span className="tm-badge">پایه‌ی {q.grade}</span>
+        <span className="tm-badge">{q.purpose}</span>
+        {q.qType && <span className="tm-badge">{q.qType}</span>}
+      </div>
+      {parsed ? (
+        <>
+          <div className="stem">{parsed.stem}</div>
+          {parsed.options.map((o, i) => (
+            <div key={i} className={"opt" + (PQB_MCQ_LETTERS[i] === q.correct ? " right" : "")}>
+              {PQB_MCQ_LETTERS[i]}) {o.content} {PQB_MCQ_LETTERS[i] === q.correct ? " ✓" : ""}
+            </div>
+          ))}
+        </>
+      ) : (
+        <div className="stem">{q.text}</div>
+      )}
+      <div className="tm-note" style={{ marginTop: 6 }}>{q.explanation}</div>
+      <div className="tm-note">طراح: {q.authorName}{q.reviewedBy ? " • بازبین: " + q.reviewedBy : ""}{q.rejectReason ? " • دلیل رد: " + q.rejectReason : ""}</div>
+    </div>
+  );
+}
+
+// بازبینی سؤال‌های در انتظار — هم برای مدیر سامانه، هم برای طراحانِ دیگر (هرگز نویسنده‌ی خودِ سؤال)
+function TeamReviewList({ reviewerKey, reviewerLabel, questions, onChanged }) {
+  const [rejectFor, setRejectFor] = useState("");
+  const [reason, setReason] = useState("");
+  const pending = questions.filter((q) => q.status === "pending" && q.authorKey !== reviewerKey);
+  const decide = async (q, approve) => {
+    if (!approve && reason.trim().length < 5) return;
+    const all = await teamLoad("team-questions", []);
+    const next = all.map((x) =>
+      x.id === q.id
+        ? { ...x, status: approve ? "approved" : "rejected", reviewedBy: reviewerLabel, reviewedAt: Date.now(), rejectReason: approve ? "" : reason.trim() }
+        : x
+    );
+    await teamSave("team-questions", next);
+    await teamAudit(reviewerLabel, approve ? "تأیید سؤال" : "ردِ سؤال", q.subject + " / " + q.grade);
+    setRejectFor("");
+    setReason("");
+    if (onChanged) onChanged(next);
+  };
+  if (pending.length === 0) return <p className="tm-note">سؤالی برای بازبینی در انتظار نیست.</p>;
+  return (
+    <>
+      {pending.map((q) => (
+        <div key={q.id}>
+          <TeamQuestionCard q={q} />
+          <div className="tm-row" style={{ marginTop: -4 }}>
+            <button type="button" className="tm-btn ok sm" onClick={() => decide(q, true)}>✓ تأیید (کلید و صورتِ سؤال را بررسی کردم)</button>
+            {rejectFor === q.id ? (
+              <>
+                <input className="tm-in" style={{ flex: 1, minWidth: 180 }} value={reason} onChange={(e) => setReason(e.target.value)} placeholder="دلیل رد (حداقل ۵ حرف)" />
+                <button type="button" className="tm-btn danger sm" onClick={() => decide(q, false)}>ثبتِ رد</button>
+              </>
+            ) : (
+              <button type="button" className="tm-btn danger sm" onClick={() => setRejectFor(q.id)}>رد</button>
+            )}
+          </div>
+        </div>
+      ))}
+    </>
+  );
+}
+
+function TeamManagementView({ onBack }) {
+  const [tab, setTab] = useState("members");
+  const [members, setMembers] = useState([]);
+  const [questions, setQuestions] = useState([]);
+  const [log, setLog] = useState([]);
+  const [name, setName] = useState("");
+  const [mobile, setMobile] = useState("");
+  const [roleKey, setRoleKey] = useState("contentDesigner");
+  const [level, setLevel] = useState("ابتدایی");
+  const [scopeGrade, setScopeGrade] = useState("اول");
+  const [scopeSubject, setScopeSubject] = useState("");
+  const [error, setError] = useState("");
+  const [codeInfo, setCodeInfo] = useState(null);
+  const [confirmDeleteId, setConfirmDeleteId] = useState("");
+
+  const reload = async () => {
+    setMembers(await teamLoad("team-members", []));
+    setQuestions(await teamLoad("team-questions", []));
+    setLog(await teamLoad("team-audit-log", []));
+  };
+  useEffect(() => {
+    (async () => {
+      await waitForStorage(4000);
+      await reload();
+    })();
+  }, []);
+
+  const handleAdd = async () => {
+    setError("");
+    setCodeInfo(null);
+    const cleanMobile = teamDigits(mobile);
+    if (name.trim().length < 3) return setError("نام و نام‌خانوادگی را کامل بنویسید.");
+    if (!/^09\d{9}$/.test(cleanMobile)) return setError("شماره‌ی موبایل باید ۱۱ رقم و با ۰۹ شروع شود.");
+    if (members.some((m) => m.mobile === cleanMobile)) return setError("این شماره قبلاً در تیم ثبت شده است.");
+    let scope = null;
+    if (roleKey === "contentDesigner") {
+      scope = level === "ابتدایی" ? { kind: "grade", grade: scopeGrade } : { kind: "subject", subject: scopeSubject };
+      if (scope.kind === "subject" && !scope.subject) return setError("درس را انتخاب کنید.");
+      const clash = members.find((m) => m.role === "contentDesigner" && m.active && teamSameScope(m.scope, scope));
+      if (clash) return setError("برای " + teamScopeLabel(scope) + " قبلاً یک نفر (" + clash.name + ") تعیین شده است.\nاگر می‌خواهید جابه‌جا شود، ابتدا او را غیرفعال یا حذف کنید.");
+    }
+    const code = teamGenCode();
+    const member = { id: "m" + Date.now().toString(36) + Math.floor(Math.random() * 1000), name: name.trim(), mobile: cleanMobile, role: roleKey, scope, active: true, createdAt: Date.now() };
+    const next = [...members, member];
+    await teamSave("team-members", next);
+    await authStorageSet("team-code:" + cleanMobile, code, true);
+    await teamAudit("مدیر سامانه", "افزودن عضو", member.name + " — " + TEAM_ROLES[roleKey].label + (scope ? " — " + teamScopeLabel(scope) : ""));
+    setMembers(next);
+    setCodeInfo({ name: member.name, mobile: cleanMobile, code });
+    setName("");
+    setMobile("");
+    setLog(await teamLoad("team-audit-log", []));
+  };
+
+  const reissue = async (m) => {
+    const code = teamGenCode();
+    await authStorageSet("team-code:" + m.mobile, code, true);
+    await teamAudit("مدیر سامانه", "صدورِ رمزِ تازه", m.name);
+    setCodeInfo({ name: m.name, mobile: m.mobile, code });
+    setLog(await teamLoad("team-audit-log", []));
+  };
+  const toggleActive = async (m) => {
+    const next = members.map((x) => (x.id === m.id ? { ...x, active: !x.active } : x));
+    await teamSave("team-members", next);
+    await teamAudit("مدیر سامانه", m.active ? "غیرفعال‌کردن عضو" : "فعال‌کردن عضو", m.name);
+    setMembers(next);
+    setLog(await teamLoad("team-audit-log", []));
+  };
+  const remove = async (m) => {
+    if (confirmDeleteId !== m.id) {
+      setConfirmDeleteId(m.id);
+      return;
+    }
+    const next = members.filter((x) => x.id !== m.id);
+    await teamSave("team-members", next);
+    await authStorageSet("team-code:" + m.mobile, "", true);
+    await teamAudit("مدیر سامانه", "حذف عضو (دسترسی قطع شد)", m.name);
+    setMembers(next);
+    setConfirmDeleteId("");
+    setLog(await teamLoad("team-audit-log", []));
+  };
+
+  const pendingCount = questions.filter((q) => q.status === "pending").length;
+
+  return (
+    <div dir="rtl" className="tm-root">
+      <TeamStyles />
+      <div className="tm-hero">
+        <div className="tm-wrap">
+          <button type="button" className="tm-back" onClick={onBack}>→ بازگشت</button>
+          <h1>👥 تیم سامانه و دسترسی‌ها</h1>
+          <p>هر عضو فقط به بخشی از سامانه دسترسی دارد که برای کارش لازم است. انتخاب و انتصاب فقط با شماست؛ هر کار اعضا در «گزارش فعالیت» ثبت می‌شود.</p>
+        </div>
+      </div>
+      <div className="tm-wrap">
+        <div className="tm-tabs">
+          <button type="button" className={"tm-tab" + (tab === "members" ? " on" : "")} onClick={() => setTab("members")}>اعضای تیم ({members.length})</button>
+          <button type="button" className={"tm-tab" + (tab === "questions" ? " on" : "")} onClick={() => setTab("questions")}>سؤال‌های در انتظار تأیید{pendingCount ? " (" + pendingCount + ")" : ""}</button>
+          <button type="button" className={"tm-tab" + (tab === "log" ? " on" : "")} onClick={() => setTab("log")}>گزارش فعالیت</button>
+        </div>
+
+        {tab === "members" && (
+          <>
+            <div className="tm-card">
+              <h2>➕ افزودن عضو</h2>
+              <div className="tm-row">
+                <div className="tm-field"><label>نام و نام‌خانوادگی</label><input className="tm-in name" value={name} onChange={(e) => setName(e.target.value)} placeholder="مثلاً: مریم احمدی" /></div>
+                <div className="tm-field"><label>موبایل</label><input className="tm-in mobile" value={mobile} maxLength={11} inputMode="numeric" onChange={(e) => setMobile(teamDigits(e.target.value))} placeholder="09123456789" /></div>
+                <div className="tm-field"><label>نقش</label>
+                  <select className="tm-in sel" value={roleKey} onChange={(e) => setRoleKey(e.target.value)}>
+                    {Object.keys(TEAM_ROLES).map((k) => <option key={k} value={k}>{TEAM_ROLES[k].icon} {TEAM_ROLES[k].label}</option>)}
+                  </select>
+                </div>
+                {roleKey === "contentDesigner" && (
+                  <>
+                    <div className="tm-field"><label>سطح</label>
+                      <select className="tm-in narrow" value={level} onChange={(e) => setLevel(e.target.value)}>
+                        <option value="ابتدایی">ابتدایی (به‌ازای پایه)</option>
+                        <option value="متوسطه">متوسطه (به‌ازای درس)</option>
+                      </select>
+                    </div>
+                    {level === "ابتدایی" ? (
+                      <div className="tm-field"><label>پایه</label>
+                        <select className="tm-in narrow" value={scopeGrade} onChange={(e) => setScopeGrade(e.target.value)}>
+                          {TEAM_PRIMARY_GRADES.map((g) => <option key={g} value={g}>{g}</option>)}
+                        </select>
+                      </div>
+                    ) : (
+                      <div className="tm-field"><label>درس</label>
+                        <select className="tm-in sel" value={scopeSubject} onChange={(e) => setScopeSubject(e.target.value)}>
+                          <option value="">انتخاب کنید…</option>
+                          {teamSecondarySubjects().map((s) => <option key={s} value={s}>{s}</option>)}
+                        </select>
+                      </div>
+                    )}
+                  </>
+                )}
+                <button type="button" className="tm-btn" onClick={handleAdd}>افزودن و صدورِ رمز</button>
+              </div>
+              <p className="tm-note">{TEAM_ROLES[roleKey].desc}. {roleKey === "contentDesigner" ? "برای هر درس (و در ابتدایی برای هر پایه) فقط یک نفر مجاز است." : ""}</p>
+              {error && <div className="tm-err">{error}</div>}
+            </div>
+
+            {codeInfo && (
+              <div className="tm-code-box">
+                رمزِ ورودِ <b style={{ fontSize: 14, letterSpacing: 0 }}>{codeInfo.name}</b> ({codeInfo.mobile}):<br />
+                <b>{codeInfo.code}</b><br />
+                <span className="tm-note">این رمز را همین حالا و فقط به خودِ او بدهید. عضو با همین شماره و رمز، از صفحه‌ی ورودِ معمول وارد می‌شود و فقط بخش مربوط به نقش خودش را می‌بیند.</span>
+              </div>
+            )}
+
+            <div className="tm-card">
+              <h2>اعضای فعلی</h2>
+              {members.length === 0 && <p className="tm-note">هنوز عضوی ثبت نشده است.</p>}
+              {members.map((m) => (
+                <div key={m.id} className="tm-member">
+                  <div>
+                    <b>{m.name}</b>
+                    <span className="tm-badge">{TEAM_ROLES[m.role].icon} {TEAM_ROLES[m.role].label}</span>
+                    {!m.active && <span className="tm-badge off">غیرفعال</span>}
+                    <div className="tm-note">{m.mobile}{m.scope ? " • " + teamScopeLabel(m.scope) : ""}</div>
+                  </div>
+                  <div className="tm-row" style={{ margin: 0 }}>
+                    <button type="button" className="tm-btn ghost sm" onClick={() => reissue(m)}>رمز تازه</button>
+                    <button type="button" className="tm-btn ghost sm" onClick={() => toggleActive(m)}>{m.active ? "غیرفعال‌کردن" : "فعال‌کردن"}</button>
+                    <button type="button" className="tm-btn danger sm" onClick={() => remove(m)}>{confirmDeleteId === m.id ? "برای حذفِ قطعی دوباره بزنید" : "حذف"}</button>
+                  </div>
+                </div>
+              ))}
+            </div>
+          </>
+        )}
+
+        {tab === "questions" && (
+          <div className="tm-card">
+            <h2>سؤال‌های منتظرِ تأییدِ مدیر سامانه</h2>
+            <p className="tm-note">سؤالِ تأییدشده وارد استخرِ آزمونِ کنکور می‌شود. بازبینِ سؤال هرگز نویسنده‌ی همان سؤال نیست.</p>
+            <TeamReviewList reviewerKey="admin" reviewerLabel="مدیر سامانه" questions={questions} onChanged={(n) => setQuestions(n)} />
+          </div>
+        )}
+
+        {tab === "log" && (
+          <div className="tm-card">
+            <h2>گزارش فعالیت (۶۰ مورد آخر)</h2>
+            {log.length === 0 && <p className="tm-note">هنوز موردی ثبت نشده است.</p>}
+            {log.slice(0, 60).map((l, i) => (
+              <div key={i} className="tm-log">
+                <b>{l.actor}</b> — {l.action}{l.detail ? ": " + l.detail : ""}
+                <div className="tm-note">{new Date(l.t).toLocaleString("fa-IR")}</div>
+              </div>
+            ))}
+          </div>
+        )}
+      </div>
+    </div>
+  );
+}
+
+// ---------- طراح سؤال ----------
+function TeamDesignerPanel({ member }) {
+  const scope = member.scope || {};
+  const grades = scope.kind === "grade" ? [scope.grade] : TEAM_SECONDARY_GRADES;
+  const subjects = scope.kind === "grade" ? teamPrimarySubjects() : [scope.subject];
+  const [subject, setSubject] = useState(subjects[0] || "");
+  const [grade, setGrade] = useState(grades[0] || "");
+  const [purpose, setPurpose] = useState("کنکور");
+  const [chapter, setChapter] = useState("");
+  const [qType, setQType] = useState("مفهومی");
+  const [difficulty, setDifficulty] = useState("متوسط");
+  const [stem, setStem] = useState("");
+  const [opts, setOpts] = useState(["", "", "", ""]);
+  const [correct, setCorrect] = useState("الف");
+  const [expl, setExpl] = useState("");
+  const [error, setError] = useState("");
+  const [saved, setSaved] = useState("");
+  const [questions, setQuestions] = useState([]);
+  const myKey = "m:" + member.mobile;
+
+  useEffect(() => {
+    (async () => {
+      await waitForStorage(4000);
+      setQuestions(await teamLoad("team-questions", []));
+    })();
+  }, []);
+
+  const submit = async () => {
+    setError("");
+    setSaved("");
+    const cleaned = opts.map((o) => o.trim());
+    if (stem.trim().length < 10) return setError("صورتِ سؤال را کامل بنویسید.");
+    if (cleaned.some((o) => !o)) return setError("هر چهار گزینه باید پر باشد.");
+    if (new Set(cleaned).size !== 4) return setError("گزینه‌ها نباید یکسان باشند.");
+    if (expl.trim().length < 15) return setError("توضیحِ پاسخ را بنویسید (چرا گزینه‌ی درست، درست است و چرا بقیه نادرست‌اند).");
+    if (!chapter.trim()) return setError("فصل/مبحث را بنویسید.");
+    const text = pqbBuildMcqText(stem.trim(), cleaned.map((c) => ({ content: c })));
+    if (!pqbParseMcqText(text)) return setError("در صورتِ سؤال یا گزینه‌ها از نشانه‌هایی مثل «الف)» «ب)» «ج)» «د)» استفاده نکنید؛ سامانه آن‌ها را برای شماره‌گذاریِ گزینه‌ها به کار می‌برد.");
+    const q = {
+      id: "q" + Date.now().toString(36) + Math.floor(Math.random() * 1000),
+      subject, grade, purpose, chapter: chapter.trim(), qType, difficulty, text,
+      correct,
+      explanation: "گزینه‌ی " + correct + " درست است. " + expl.trim(),
+      status: "pending", authorKey: myKey, authorName: member.name, createdAt: Date.now(),
+    };
+    const all = await teamLoad("team-questions", []);
+    const next = [q, ...all].slice(0, 2000);
+    await teamSave("team-questions", next);
+    await teamAudit(member.name + " (طراح سؤال)", "ثبتِ سؤالِ تازه", subject + " / " + grade);
+    setQuestions(next);
+    setStem("");
+    setOpts(["", "", "", ""]);
+    setExpl("");
+    setSaved("سؤال ثبت شد و منتظرِ بازبینی است. بعد از تأیید وارد استخر می‌شود.");
+  };
+
+  const mine = questions.filter((q) => q.authorKey === myKey);
+  return (
+    <>
+      <div className="tm-card">
+        <h2>✍️ سؤالِ تازه</h2>
+        <p className="tm-note">حوزه‌ی شما: {teamScopeLabel(scope)}. سبکِ کنکور: بیشتر سؤال مفهومی و ترکیبی («کدام عبارت‌ها درست‌اند؟»)، با گزینه‌های انحرافی از اشتباه‌های رایج دانش‌آموز، و فقط یک گزینه‌ی بی‌ابهامِ درست.</p>
+        <div className="tm-row">
+          {scope.kind === "grade" && (
+            <div className="tm-field"><label>درس</label>
+              <select className="tm-in sel" value={subject} onChange={(e) => setSubject(e.target.value)}>{subjects.map((s) => <option key={s} value={s}>{s}</option>)}</select>
+            </div>
+          )}
+          {scope.kind === "subject" && (
+            <div className="tm-field"><label>پایه</label>
+              <select className="tm-in narrow" value={grade} onChange={(e) => setGrade(e.target.value)}>{grades.map((g) => <option key={g} value={g}>{g}</option>)}</select>
+            </div>
+          )}
+          <div className="tm-field"><label>کاربرد</label>
+            <select className="tm-in narrow" value={purpose} onChange={(e) => setPurpose(e.target.value)}><option value="کنکور">کنکور</option><option value="امتحان داخلی">امتحان داخلی</option></select>
+          </div>
+          <div className="tm-field"><label>نوع سؤال</label>
+            <select className="tm-in narrow" value={qType} onChange={(e) => setQType(e.target.value)}>{TEAM_QTYPES.map((t) => <option key={t} value={t}>{t}</option>)}</select>
+          </div>
+          <div className="tm-field"><label>دشواری</label>
+            <select className="tm-in narrow" value={difficulty} onChange={(e) => setDifficulty(e.target.value)}><option>آسان</option><option>متوسط</option><option>سخت</option></select>
+          </div>
+          <div className="tm-field" style={{ flex: 1, minWidth: 180 }}><label>فصل / مبحث</label><input className="tm-in" value={chapter} onChange={(e) => setChapter(e.target.value)} placeholder="مثلاً: فصل ۳ — گوارش" /></div>
+        </div>
+        <div className="tm-field" style={{ marginBottom: 10 }}><label>صورتِ سؤال</label><textarea className="tm-ta" value={stem} onChange={(e) => setStem(e.target.value)} /></div>
+        {["الف", "ب", "ج", "د"].map((L, i) => (
+          <div key={L} className="tm-opt">
+            <b style={{ width: 22 }}>{L})</b>
+            <input className="tm-in" value={opts[i]} onChange={(e) => setOpts(opts.map((o, k) => (k === i ? e.target.value : o)))} />
+            <label style={{ fontSize: 12, whiteSpace: "nowrap" }}><input type="radio" name="tm-correct" checked={correct === L} onChange={() => setCorrect(L)} /> گزینه‌ی درست</label>
+          </div>
+        ))}
+        <div className="tm-field" style={{ margin: "10px 0" }}><label>توضیحِ پاسخ (چرا درست است، چرا بقیه نادرست‌اند)</label><textarea className="tm-ta" value={expl} onChange={(e) => setExpl(e.target.value)} /></div>
+        {error && <div className="tm-err">{error}</div>}
+        {saved && <div className="tm-note" style={{ color: "#1d6b3c", marginBottom: 8 }}>{saved}</div>}
+        <button type="button" className="tm-btn" onClick={submit}>ثبتِ سؤال برای بازبینی</button>
+      </div>
+
+      <div className="tm-card">
+        <h2>🔎 بازبینیِ سؤال‌های همکاران</h2>
+        <p className="tm-note">یک سؤال فقط وقتی وارد استخر می‌شود که غیر از نویسنده‌اش، شخص دیگری کلید و صورتِ آن را بررسی و تأیید کند. در بررسیِ خود دقت کنید؛ یک کلیدِ غلط به اعتمادِ دانش‌آموزان ضربه می‌زند.</p>
+        <TeamReviewList reviewerKey={myKey} reviewerLabel={member.name + " (طراح سؤال)"} questions={questions} onChanged={(n) => setQuestions(n)} />
+      </div>
+
+      <div className="tm-card">
+        <h2>سؤال‌های من ({mine.length})</h2>
+        {mine.length === 0 && <p className="tm-note">هنوز سؤالی ثبت نکرده‌اید.</p>}
+        {mine.slice(0, 40).map((q) => <TeamQuestionCard key={q.id} q={q} />)}
+      </div>
+    </>
+  );
+}
+
+// ---------- مدیر فنی ----------
+function TeamTechPanel({ member }) {
+  const [errors, setErrors] = useState([]);
+  const [storageOk, setStorageOk] = useState(null);
+  const reload = async () => setErrors(await teamLoad("app-error-log", []));
+  useEffect(() => {
+    (async () => {
+      setStorageOk(await waitForStorage(2500));
+      await reload();
+    })();
+  }, []);
+  const markResolved = async (id) => {
+    const all = await teamLoad("app-error-log", []);
+    const next = all.map((e) => (e.id === id ? { ...e, resolved: !e.resolved } : e));
+    await teamSave("app-error-log", next);
+    await teamAudit(member.name + " (مدیر فنی)", "تغییر وضعیتِ یک خطا", "");
+    setErrors(next);
+  };
+  const open = errors.filter((e) => !e.resolved).length;
+  return (
+    <>
+      <div className="tm-card">
+        <h2>🩺 وضعیتِ سامانه</h2>
+        <p className="tm-note">
+          ذخیره‌سازی: {storageOk === null ? "در حال بررسی…" : storageOk ? "✅ در دسترس" : "⚠️ در دسترس نیست"} • خطاهای باز: {open}
+        </p>
+        <p className="tm-note">این صفحه عمداً هیچ مشخصاتِ شخصیِ دانش‌آموز، ولی، معلم یا مدرسه‌ای نشان نمی‌دهد؛ فقط پیامِ خطای فنی.</p>
+      </div>
+      <div className="tm-card">
+        <h2>خطاهای ثبت‌شده</h2>
+        {errors.length === 0 && <p className="tm-note">خطایی ثبت نشده است.</p>}
+        {errors.slice(0, 80).map((e) => (
+          <div key={e.id} className="tm-log" style={{ opacity: e.resolved ? 0.5 : 1 }}>
+            <div style={{ direction: "ltr", textAlign: "left", fontFamily: "monospace", fontSize: 12 }}>{e.msg}</div>
+            <div className="tm-note">{e.where ? e.where + " • " : ""}{new Date(e.t).toLocaleString("fa-IR")} • {e.count || 1} بار</div>
+            <button type="button" className="tm-btn ghost sm" onClick={() => markResolved(e.id)}>{e.resolved ? "بازکردنِ دوباره" : "رفع شد"}</button>
+          </div>
+        ))}
+      </div>
+    </>
+  );
+}
+
+// ---------- پشتیبان ثبت‌نام ----------
+function TeamRegSupportPanel({ member }) {
+  const [reason, setReason] = useState("");
+  const [query, setQuery] = useState("");
+  const [results, setResults] = useState(null);
+  const [searching, setSearching] = useState(false);
+  const [error, setError] = useState("");
+  const [noteFor, setNoteFor] = useState("");
+  const [noteText, setNoteText] = useState("");
+  const [notes, setNotes] = useState([]);
+  const actor = member.name + " (پشتیبان ثبت‌نام)";
+
+  useEffect(() => {
+    (async () => {
+      await waitForStorage(4000);
+      setNotes(await teamLoad("team-support-notes", []));
+    })();
+  }, []);
+
+  const search = async () => {
+    setError("");
+    setResults(null);
+    const q = teamDigits(query);
+    if (!reason) return setError("ابتدا دلیلِ بررسی را انتخاب کنید؛ هر جست‌وجو ثبت می‌شود.");
+    if (q.length < 9 || q.length > 10) return setError("کد دانش‌آموزی (۹ رقم) یا کد ملی (۱۰ رقم) را کامل وارد کنید.");
+    setSearching(true);
+    const found = [];
+    try {
+      const reg = await teamLoad("all-registered-schools", []);
+      const reg2 = await teamLoad("all-schools-registry", []);
+      const codes = Array.from(new Set([...reg, ...reg2]));
+      for (const code of codes) {
+        const info = await teamLoad("school-info:" + code, {});
+        const classes = await teamLoad("school-classes:" + code, []);
+        for (const cls of classes) {
+          const roster = await teamLoad("gradebook-roster:" + code + ":" + skey(cls), []);
+          for (const s of roster) {
+            if (s.studentCode === q || (s.nationalCode && s.nationalCode === q)) {
+              const missing = [];
+              if (!s.firstName) missing.push("نام");
+              if (!s.lastName) missing.push("نام‌خانوادگی");
+              if (!s.grade) missing.push("پایه");
+              if (!s.gender) missing.push("جنسیت");
+              if (!s.studentCode) missing.push("کد دانش‌آموزی");
+              if (["دهم", "یازدهم", "دوازدهم"].includes(s.grade) && (!s.fieldOfStudy || s.fieldOfStudy === "—")) missing.push("رشته");
+              found.push({
+                studentCode: s.studentCode || "", name: ((s.firstName || "") + " " + (s.lastName || "")).trim(),
+                school: info.schoolName || "بدون‌نام", className: cls, grade: s.grade || "", missing,
+              });
+            }
+          }
+        }
+      }
+    } catch (e) {
+      setError("خطا در جست‌وجو. دوباره تلاش کنید.");
+    }
+    await teamAudit(actor, "جست‌وجوی ثبت‌نام", "دلیل: " + reason + " • کلید: ***" + q.slice(-3) + " • نتیجه: " + found.length);
+    setResults(found);
+    setSearching(false);
+  };
+
+  const saveNote = async (r) => {
+    if (noteText.trim().length < 5) return;
+    const all = await teamLoad("team-support-notes", []);
+    const next = [{ id: "n" + Date.now().toString(36), t: Date.now(), by: member.name, ref: r.studentCode, reason, text: noteText.trim() }, ...all].slice(0, 500);
+    await teamSave("team-support-notes", next);
+    await teamAudit(actor, "ثبتِ یادداشتِ پشتیبانی", "کد ***" + String(r.studentCode || "").slice(-3));
+    setNotes(next);
+    setNoteFor("");
+    setNoteText("");
+  };
+
+  return (
+    <>
+      <div className="tm-card">
+        <h2>🔍 بررسیِ مشکلِ ثبت‌نام</h2>
+        <p className="tm-note">فقط مشخصاتِ ثبت‌نامی نشان داده می‌شود (نام، مدرسه، کلاس، پایه). نمره، پیام‌ها و پروندهٔ بهداشتی برای شما قابل‌دیدن نیست. دلیلِ هر جست‌وجو در گزارشِ مدیر سامانه ثبت می‌شود.</p>
+        <div className="tm-row">
+          <div className="tm-field"><label>دلیلِ بررسی</label>
+            <select className="tm-in sel" value={reason} onChange={(e) => setReason(e.target.value)}>
+              <option value="">انتخاب کنید…</option>
+              {TEAM_SUPPORT_REASONS.map((r) => <option key={r} value={r}>{r}</option>)}
+            </select>
+          </div>
+          <div className="tm-field"><label>کد دانش‌آموزی یا کد ملی</label>
+            <input className="tm-in code" value={query} maxLength={10} inputMode="numeric" onChange={(e) => setQuery(teamDigits(e.target.value))} />
+          </div>
+          <button type="button" className="tm-btn" disabled={searching} onClick={search}>{searching ? "در حال جست‌وجو…" : "جست‌وجو"}</button>
+        </div>
+        {error && <div className="tm-err">{error}</div>}
+        {results && results.length === 0 && <p className="tm-note">موردی پیدا نشد. ممکن است ثبت‌نام اصلاً انجام نشده یا کد اشتباه وارد شده باشد.</p>}
+        {results && results.map((r, i) => (
+          <div key={i} className="tm-q">
+            <div className="stem"><b>{r.name || "بدون‌نام"}</b> — {r.school} — کلاس {r.className} {r.grade ? "(پایه‌ی " + r.grade + ")" : ""}</div>
+            <div className="tm-note">کد دانش‌آموزی: {r.studentCode || "—"}</div>
+            {r.missing.length > 0 ? (
+              <div className="tm-err">⚠️ فیلدهای ناقصِ ثبت‌نام: {r.missing.join("، ")}</div>
+            ) : (
+              <div className="tm-note" style={{ color: "#1d6b3c" }}>✓ همه‌ی فیلدهای اصلیِ ثبت‌نام پر است.</div>
+            )}
+            {noteFor === r.studentCode ? (
+              <div className="tm-row" style={{ marginTop: 8 }}>
+                <input className="tm-in" style={{ flex: 1, minWidth: 180 }} value={noteText} onChange={(e) => setNoteText(e.target.value)} placeholder="یادداشتِ پیگیری (حداقل ۵ حرف)" />
+                <button type="button" className="tm-btn sm" onClick={() => saveNote(r)}>ثبت</button>
+              </div>
+            ) : (
+              <button type="button" className="tm-btn ghost sm" style={{ marginTop: 8 }} onClick={() => setNoteFor(r.studentCode)}>ثبتِ یادداشتِ پیگیری</button>
+            )}
+          </div>
+        ))}
+        <p className="tm-note">بازنشانیِ رمز و اصلاحِ مستقیمِ مشخصات هنوز به شما واگذار نشده؛ چون این کارها فقط با تأییدِ هویتِ واقعی روی سرور امن است. فعلاً مشکل را بررسی و یادداشت کنید تا مدیر سامانه پیگیری کند.</p>
+      </div>
+      <div className="tm-card">
+        <h2>یادداشت‌های اخیرِ من</h2>
+        {notes.filter((n) => n.by === member.name).length === 0 && <p className="tm-note">هنوز یادداشتی ثبت نشده است.</p>}
+        {notes.filter((n) => n.by === member.name).slice(0, 30).map((n) => (
+          <div key={n.id} className="tm-log">کد {n.ref} — {n.reason}: {n.text}<div className="tm-note">{new Date(n.t).toLocaleString("fa-IR")}</div></div>
+        ))}
+      </div>
+    </>
+  );
+}
+
+function TeamMemberDashboard({ member, onLogout }) {
+  const role = TEAM_ROLES[member.role];
+  return (
+    <div dir="rtl" className="tm-root">
+      <TeamStyles />
+      <div className="tm-hero">
+        <div className="tm-wrap">
+          <button type="button" className="tm-back" onClick={onLogout}>خروج</button>
+          <h1>{role.icon} {role.label} — {member.name}</h1>
+          <p>{member.scope ? "حوزه‌ی شما: " + teamScopeLabel(member.scope) + ". " : ""}{role.desc}. شما فقط به همین بخش دسترسی دارید.</p>
+        </div>
+      </div>
+      <div className="tm-wrap">
+        {member.role === "contentDesigner" && <TeamDesignerPanel member={member} />}
+        {member.role === "techManager" && <TeamTechPanel member={member} />}
+        {member.role === "regSupport" && <TeamRegSupportPanel member={member} />}
+      </div>
+    </div>
+  );
+}
+
+// سؤال‌های تأییدشده‌ی طراحان را برای استخرِ آزمونِ الزامیِ کنکور آماده می‌کند
+async function teamApprovedKonkurQuestions(subject, grade) {
+  const all = await teamLoad("team-questions", []);
+  return all
+    .filter((q) => q.status === "approved" && q.purpose === "کنکور" && q.subject === subject && q.grade === grade)
+    .map((q) => ({
+      id: "team-" + q.id,
+      chapter: q.chapter,
+      text: q.text,
+      type: "تستی (چهارگزینه‌ای)",
+      qType: q.qType || "",
+      difficulty: q.difficulty || "متوسط",
+      skillType: "",
+      explanation: q.explanation,
+      quickTechnique: "",
+      examTypes: ["آزمایشی کنکور"],
+      source: "طراح سؤال — بازبینی‌شده",
+      verified: true,
+    }));
+}
+
+/* ============================================================
+   ققنوس — آموزش برای فردا
    داشبورد مدیر سامانه — تنها نقشی که به شهریه/پرداخت دسترسی دارد
    ============================================================ */
 
-function SystemAdminDashboardStep({ onBack, onOpenQuestionBank, onOpenSystemSuggestionBox, onOpenRegistrationStats }) {
+function SystemAdminDashboardStep({ onBack, onOpenQuestionBank, onOpenSystemSuggestionBox, onOpenRegistrationStats, onOpenTeam }) {
   const [schoolCodes, setSchoolCodes] = useState([]);
   const [paymentsBySchool, setPaymentsBySchool] = useState({});
   const [loading, setLoading] = useState(true);
@@ -14150,6 +14870,17 @@ function SystemAdminDashboardStep({ onBack, onOpenQuestionBank, onOpenSystemSugg
               onClick={onOpenSystemSuggestionBox}
             >
               📣 ثبت پیشنهاد من به‌عنوان مدیر سامانه
+            </button>
+          )}
+
+          {onOpenTeam && (
+            <button
+              type="button"
+              className="psad-query-btn"
+              style={{ width: "100%", marginBottom: 20, background: "transparent", color: "#36457f", border: "1px solid #aab4e0" }}
+              onClick={onOpenTeam}
+            >
+              👥 تیم سامانه و دسترسی‌ها (طراح سؤال، مدیر فنی، پشتیبان ثبت‌نام)
             </button>
           )}
 
@@ -19267,6 +19998,13 @@ function StudentQuestionBankView({ onBack, prefillSchoolCode, prefillGrade, pref
         if (pool && pool.length > 0 && typeof window !== "undefined" && window.storage) {
           await window.storage.set(poolKey, JSON.stringify(pool), true).catch(() => {});
         }
+      }
+      // سؤال‌های طراحانِ انسانی (تأییدشده توسطِ بازبین) کنارِ استخرِ هوش مصنوعی وارد می‌شوند
+      try {
+        const humanQs = await teamApprovedKonkurQuestions(subject, grade);
+        if (humanQs.length > 0) pool = (pool || []).concat(humanQs);
+      } catch (e) {
+        // اگر خواندنِ سؤال‌های طراحان خطا داد، آزمون با استخرِ موجود ادامه پیدا می‌کند
       }
       if (!pool || pool.length === 0) {
         setMandatoryExamError("در ساخت سؤالات آزمون الزامی مشکلی پیش آمد. دوباره امتحان کنید.");
@@ -30182,6 +30920,46 @@ function PhoenixApp() {
   const [teacherClasses, setTeacherClasses] = useState([]);
   const [teacherScheduleGrid, setTeacherScheduleGrid] = useState(null);
   const [prefillPhone, setPrefillPhone] = useState("");
+  const [teamMemberSession, setTeamMemberSession] = useState(null);
+
+  // ثبتِ خطاهای فنیِ برنامه برای «مدیر فنی» — فقط پیام و محل، بدونِ هیچ مشخصاتِ شخصی
+  useEffect(() => {
+    const seen = {};
+    const record = async (msg, where) => {
+      try {
+        const text = String(msg || "").slice(0, 200);
+        if (!text || seen[text]) return;
+        seen[text] = true;
+        const log = await teamLoad("app-error-log", []);
+        const hit = log.find((e) => e.msg === text);
+        if (hit) {
+          hit.count = (hit.count || 1) + 1;
+          hit.t = Date.now();
+        } else {
+          log.unshift({ id: "e" + Date.now().toString(36) + Math.floor(Math.random() * 1000), t: Date.now(), msg: text, where: String(where || "").slice(0, 80), count: 1, resolved: false });
+        }
+        await teamSave("app-error-log", log.slice(0, 100));
+      } catch (e) {
+        // ثبتِ خطا هرگز نباید خودش مزاحمِ برنامه شود
+      }
+    };
+    const onErr = (ev) => record(ev && ev.message, ev && ev.filename ? "خط " + ev.lineno : "");
+    const onRej = (ev) => record(ev && ev.reason && (ev.reason.message || ev.reason), "promise");
+    window.addEventListener("error", onErr);
+    window.addEventListener("unhandledrejection", onRej);
+    return () => {
+      window.removeEventListener("error", onErr);
+      window.removeEventListener("unhandledrejection", onRej);
+    };
+  }, []);
+
+  if (screen === "teamManagement") {
+    return <TeamManagementView onBack={() => setScreen("systemAdminDashboard")} />;
+  }
+
+  if (screen === "teamDashboard" && teamMemberSession) {
+    return <TeamMemberDashboard member={teamMemberSession} onLogout={() => { setTeamMemberSession(null); setScreen("welcome"); }} />;
+  }
 
   if (screen === "testMasterAccess") {
     return (
@@ -30403,6 +31181,7 @@ function PhoenixApp() {
         onOpenQuestionBank={() => setScreen("systemAdminQuestionBank")}
         onOpenSystemSuggestionBox={() => { setSystemSuggestionRole("systemAdmin"); setSystemSuggestionReturnScreen("systemAdminDashboard"); setScreen("systemSuggestionBox"); }}
         onOpenRegistrationStats={() => setScreen("systemAdminRegistrationStats")}
+        onOpenTeam={() => setScreen("teamManagement")}
       />
     );
   }
@@ -30777,6 +31556,11 @@ function PhoenixApp() {
       onOpenDemo={() => setScreen("demoPreview")}
       onOpenTrustInfo={() => setScreen("trustInfo")}
       onLoginSuccess={(role, profile, phone) => {
+        if (role === "teamMember") {
+          setTeamMemberSession(profile.member);
+          setScreen("teamDashboard");
+          return;
+        }
         if (role === "student") {
           setStudentAcademicInfo(profile || {});
           setScreen("studentDashboard");

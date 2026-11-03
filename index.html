@@ -13595,7 +13595,7 @@ function SystemAdminRegistration({ onBack, onContinue }) {
 /* ============================================================
    ققنوس — آموزش برای فردا
    تیم سامانه — دسترسیِ محدود و نقش‌محور (نسخه‌ی مرورگری)
-   نقش‌ها: طراح سؤال (برای هر درس یک نفر؛ در ابتدایی برای هر پایه یک نفر)،
+   نقش‌ها: طراح سؤال (برای هر درس دو نفر که بازبینِ هم‌درسِ یکدیگرند؛ در ابتدایی برای هر پایه دو نفر)،
    مدیر فنی، پشتیبان ثبت‌نام. انتخاب و انتصاب فقط با مدیر سامانه است.
    توجه: در نسخه‌ی مرورگری، «قفلِ واقعی» ممکن نیست؛ این بخش منطق و صفحه‌ها را آماده می‌کند
    و اجرای قطعیِ محدودیت‌ها هنگامِ اتصال به سرور انجام می‌شود.
@@ -13741,10 +13741,11 @@ function TeamQuestionCard({ q }) {
 }
 
 // بازبینی سؤال‌های در انتظار — هم برای مدیر سامانه، هم برای طراحانِ دیگر (هرگز نویسنده‌ی خودِ سؤال)
-function TeamReviewList({ reviewerKey, reviewerLabel, questions, onChanged }) {
+function TeamReviewList({ reviewerKey, reviewerLabel, reviewerScope, readOnly, questions, onChanged }) {
   const [rejectFor, setRejectFor] = useState("");
   const [reason, setReason] = useState("");
-  const pending = questions.filter((q) => q.status === "pending" && q.authorKey !== reviewerKey);
+  // بازبین باید «هم‌درس» (هم‌حوزه) با نویسنده‌ی سؤال باشد و هرگز خودِ نویسنده نیست
+  const pending = questions.filter((q) => q.status === "pending" && q.authorKey !== reviewerKey && (readOnly || teamSameScope(q.scope, reviewerScope)));
   const decide = async (q, approve) => {
     if (!approve && reason.trim().length < 5) return;
     const all = await teamLoad("team-questions", []);
@@ -13765,7 +13766,8 @@ function TeamReviewList({ reviewerKey, reviewerLabel, questions, onChanged }) {
       {pending.map((q) => (
         <div key={q.id}>
           <TeamQuestionCard q={q} />
-          <div className="tm-row" style={{ marginTop: -4 }}>
+          {readOnly && <p className="tm-note" style={{ marginTop: -4 }}>⏳ منتظرِ بازبینِ هم‌درس ({teamScopeLabel(q.scope) || q.subject})</p>}
+          {!readOnly && <div className="tm-row" style={{ marginTop: -4 }}>
             <button type="button" className="tm-btn ok sm" onClick={() => decide(q, true)}>✓ تأیید (کلید و صورتِ سؤال را بررسی کردم)</button>
             {rejectFor === q.id ? (
               <>
@@ -13775,7 +13777,7 @@ function TeamReviewList({ reviewerKey, reviewerLabel, questions, onChanged }) {
             ) : (
               <button type="button" className="tm-btn danger sm" onClick={() => setRejectFor(q.id)}>رد</button>
             )}
-          </div>
+          </div>}
         </div>
       ))}
     </>
@@ -13820,8 +13822,8 @@ function TeamManagementView({ onBack }) {
     if (roleKey === "contentDesigner") {
       scope = level === "ابتدایی" ? { kind: "grade", grade: scopeGrade } : { kind: "subject", subject: scopeSubject };
       if (scope.kind === "subject" && !scope.subject) return setError("درس را انتخاب کنید.");
-      const clash = members.find((m) => m.role === "contentDesigner" && m.active && teamSameScope(m.scope, scope));
-      if (clash) return setError("برای " + teamScopeLabel(scope) + " قبلاً یک نفر (" + clash.name + ") تعیین شده است.\nاگر می‌خواهید جابه‌جا شود، ابتدا او را غیرفعال یا حذف کنید.");
+      const same = members.filter((m) => m.role === "contentDesigner" && m.active && teamSameScope(m.scope, scope));
+      if (same.length >= 2) return setError("برای " + teamScopeLabel(scope) + " قبلاً دو نفر (" + same.map((m) => m.name).join(" و ") + ") تعیین شده‌اند: یک طراح و یک بازبینِ هم‌درس.\nاگر می‌خواهید جابه‌جا شود، ابتدا یکی را غیرفعال یا حذف کنید.");
     }
     const code = teamGenCode();
     const member = { id: "m" + Date.now().toString(36) + Math.floor(Math.random() * 1000), name: name.trim(), mobile: cleanMobile, role: roleKey, scope, active: true, createdAt: Date.now() };
@@ -13865,6 +13867,16 @@ function TeamManagementView({ onBack }) {
   };
 
   const pendingCount = questions.filter((q) => q.status === "pending").length;
+  // حوزه‌هایی که طراح دارند ولی کمتر از دو طراحِ فعال (یعنی بدونِ بازبینِ هم‌درس)
+  const uncovered = (() => {
+    const seen = [];
+    members.filter((m) => m.role === "contentDesigner" && m.active).forEach((m) => {
+      if (!seen.some((x) => teamSameScope(x, m.scope))) seen.push(m.scope);
+    });
+    return seen
+      .filter((sc) => members.filter((m) => m.role === "contentDesigner" && m.active && teamSameScope(m.scope, sc)).length < 2)
+      .map((sc) => teamScopeLabel(sc));
+  })();
 
   return (
     <div dir="rtl" className="tm-root">
@@ -13921,7 +13933,7 @@ function TeamManagementView({ onBack }) {
                 )}
                 <button type="button" className="tm-btn" onClick={handleAdd}>افزودن و صدورِ رمز</button>
               </div>
-              <p className="tm-note">{TEAM_ROLES[roleKey].desc}. {roleKey === "contentDesigner" ? "برای هر درس (و در ابتدایی برای هر پایه) فقط یک نفر مجاز است." : ""}</p>
+              <p className="tm-note">{TEAM_ROLES[roleKey].desc}. {roleKey === "contentDesigner" ? "برای هر درس (و در ابتدایی برای هر پایه) دو نفر لازم است؛ آن دو بازبینِ هم‌درسِ یکدیگرند و سؤالِ هر کدام را دیگری تأیید می‌کند." : ""}</p>
               {error && <div className="tm-err">{error}</div>}
             </div>
 
@@ -13957,9 +13969,10 @@ function TeamManagementView({ onBack }) {
 
         {tab === "questions" && (
           <div className="tm-card">
-            <h2>سؤال‌های منتظرِ تأییدِ مدیر سامانه</h2>
-            <p className="tm-note">سؤالِ تأییدشده وارد استخرِ آزمونِ کنکور می‌شود. بازبینِ سؤال هرگز نویسنده‌ی همان سؤال نیست.</p>
-            <TeamReviewList reviewerKey="admin" reviewerLabel="مدیر سامانه" questions={questions} onChanged={(n) => setQuestions(n)} />
+            <h2>سؤال‌های در انتظارِ بازبینی</h2>
+            <p className="tm-note">هر سؤال را فقط یک طراحِ هم‌درس (غیر از نویسنده) می‌تواند تأیید یا رد کند؛ مدیر سامانه فقط نظارت می‌کند. سؤالِ تأییدشده وارد استخرِ آزمونِ کنکور می‌شود.</p>
+            {uncovered.length > 0 && <div className="tm-err">⚠️ حوزه‌هایی که هنوز دو طراحِ فعال ندارند و سؤال‌شان بازبین نخواهد داشت: {uncovered.join("، ")}</div>}
+            <TeamReviewList readOnly reviewerKey="admin" reviewerLabel="مدیر سامانه" questions={questions} onChanged={(n) => setQuestions(n)} />
           </div>
         )}
 
@@ -14023,7 +14036,7 @@ function TeamDesignerPanel({ member }) {
       subject, grade, purpose, chapter: chapter.trim(), qType, difficulty, text,
       correct,
       explanation: "گزینه‌ی " + correct + " درست است. " + expl.trim(),
-      status: "pending", authorKey: myKey, authorName: member.name, createdAt: Date.now(),
+      status: "pending", authorKey: myKey, authorName: member.name, scope: member.scope, createdAt: Date.now(),
     };
     const all = await teamLoad("team-questions", []);
     const next = [q, ...all].slice(0, 2000);
@@ -14080,8 +14093,8 @@ function TeamDesignerPanel({ member }) {
 
       <div className="tm-card">
         <h2>🔎 بازبینیِ سؤال‌های همکاران</h2>
-        <p className="tm-note">یک سؤال فقط وقتی وارد استخر می‌شود که غیر از نویسنده‌اش، شخص دیگری کلید و صورتِ آن را بررسی و تأیید کند. در بررسیِ خود دقت کنید؛ یک کلیدِ غلط به اعتمادِ دانش‌آموزان ضربه می‌زند.</p>
-        <TeamReviewList reviewerKey={myKey} reviewerLabel={member.name + " (طراح سؤال)"} questions={questions} onChanged={(n) => setQuestions(n)} />
+        <p className="tm-note">یک سؤال فقط وقتی وارد استخر می‌شود که همکارِ هم‌درسِ شما (غیر از نویسنده) کلید و صورتِ آن را بررسی و تأیید کند، و شما هم همین کار را برای سؤال‌های او انجام می‌دهید. دقت کنید؛ یک کلیدِ غلط به اعتمادِ دانش‌آموزان ضربه می‌زند.</p>
+        <TeamReviewList reviewerKey={myKey} reviewerLabel={member.name + " (طراح سؤال)"} reviewerScope={member.scope} questions={questions} onChanged={(n) => setQuestions(n)} />
       </div>
 
       <div className="tm-card">

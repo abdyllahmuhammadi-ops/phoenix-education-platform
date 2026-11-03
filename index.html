@@ -15285,6 +15285,353 @@ async function moderateSchoolMessage(text) {
 
 /* ============================================================
    ققنوس — آموزش برای فردا
+   گفت‌وگوی صوتی با رهیار — دانش‌آموز حرف می‌زند، رهیار می‌شنود، فکر می‌کند و با صدا جواب می‌دهد.
+   - شنیدن: Web Speech API مرورگر (fa-IR) — هیچ صدایی در خودِ ققنوس ضبط یا ذخیره نمی‌شود.
+   - گفتن: speechSynthesis مرورگر؛ اگر صدای فارسی روی دستگاه نباشد، فقط متنِ پاسخ نشان داده می‌شود
+     (هرگز با صدای انگلیسیِ نامفهوم خوانده نمی‌شود).
+   - میکروفون فقط وقتی این صفحه باز و در حالتِ «گوش‌دادن» است روشن می‌شود.
+   ============================================================ */
+
+// متنِ پاسخ را برایِ خواندن با صدا تمیز می‌کند (بدونِ علامت‌هایِ مارک‌داون و شکلک) و به جمله‌هایِ کوتاه می‌شکند
+function rahyarVoiceCleanText(text) {
+  let t = String(text || "");
+  t = t.replace(/```[\s\S]*?```/g, " ");
+  t = t.replace(/[*_#>`~|]+/g, " ");
+  t = t.replace(/^\s*[-•]\s+/gm, "");
+  try {
+    t = t.replace(/[\p{Extended_Pictographic}️‍]/gu, " ");
+  } catch (e) {
+    // مرورگرِ قدیمی: شکلک‌ها حذف نمی‌شوند، ولی مشکلی هم ایجاد نمی‌کند
+  }
+  return t.replace(/[ \t]+/g, " ").replace(/\n{2,}/g, "\n").trim();
+}
+function rahyarVoiceChunks(text) {
+  const clean = rahyarVoiceCleanText(text);
+  const parts = clean.split(/([.!؟?؛\n]+)/);
+  const chunks = [];
+  let cur = "";
+  for (let i = 0; i < parts.length; i++) {
+    cur += parts[i];
+    const isDelim = i % 2 === 1;
+    if (isDelim && cur.trim().length >= 40) {
+      chunks.push(cur.trim());
+      cur = "";
+    } else if (cur.length > 220) {
+      chunks.push(cur.trim());
+      cur = "";
+    }
+  }
+  if (cur.trim()) chunks.push(cur.trim());
+  return chunks;
+}
+
+function RahyarVoiceConversation({ persona, conversation, thinking, onSend, onClose }) {
+  const SRCtor = typeof window !== "undefined" ? window.SpeechRecognition || window.webkitSpeechRecognition : null;
+  const ttsOk = typeof window !== "undefined" && !!window.speechSynthesis && !!window.SpeechSynthesisUtterance;
+
+  const [accepted, setAccepted] = useState(() => {
+    try {
+      return window.localStorage.getItem("rvc-consent") === "1";
+    } catch (e) {
+      return false;
+    }
+  });
+  const [phase, setPhase] = useState("idle"); // idle | listening | thinking | speaking
+  const [heard, setHeard] = useState("");
+  const [notice, setNotice] = useState("");
+  const [faMissing, setFaMissing] = useState(false);
+
+  const phaseRef = React.useRef("idle");
+  const recRef = React.useRef(null);
+  const aliveRef = React.useRef(true);
+  const gotFinalRef = React.useRef(false);
+  const noSpeechRef = React.useRef(0);
+  const baseLenRef = React.useRef(0);
+  const sawThinkingRef = React.useRef(false);
+  const waitTimerRef = React.useRef(null);
+  const faVoiceRef = React.useRef(null);
+  const convRef = React.useRef(conversation);
+  convRef.current = conversation;
+
+  const go = (p) => {
+    phaseRef.current = p;
+    setPhase(p);
+  };
+
+  useEffect(() => {
+    aliveRef.current = true;
+    return () => {
+      aliveRef.current = false;
+      try {
+        if (recRef.current) recRef.current.abort();
+      } catch (e) {}
+      try {
+        if (window.speechSynthesis) window.speechSynthesis.cancel();
+      } catch (e) {}
+      if (waitTimerRef.current) clearTimeout(waitTimerRef.current);
+    };
+  }, []);
+
+  useEffect(() => {
+    if (!ttsOk) return;
+    const pick = () => {
+      try {
+        const voices = window.speechSynthesis.getVoices() || [];
+        const fa = voices.find((v) => /^fa/i.test(v.lang));
+        faVoiceRef.current = fa || null;
+        setFaMissing(voices.length > 0 && !fa);
+      } catch (e) {}
+    };
+    pick();
+    window.speechSynthesis.onvoiceschanged = pick;
+    return () => {
+      try {
+        window.speechSynthesis.onvoiceschanged = null;
+      } catch (e) {}
+    };
+  }, []);
+
+  const startListening = () => {
+    if (!SRCtor || !aliveRef.current) return;
+    try {
+      if (ttsOk) window.speechSynthesis.cancel();
+    } catch (e) {}
+    setNotice("");
+    setHeard("");
+    gotFinalRef.current = false;
+    const rec = new SRCtor();
+    rec.lang = "fa-IR";
+    rec.interimResults = true;
+    rec.continuous = false;
+    rec.maxAlternatives = 1;
+    rec.onresult = (ev) => {
+      let text = "";
+      let fin = false;
+      for (let i = 0; i < ev.results.length; i++) {
+        text += ev.results[i][0].transcript + " ";
+        if (ev.results[i].isFinal) fin = true;
+      }
+      text = text.trim();
+      if (aliveRef.current) setHeard(text);
+      if (fin && text && !gotFinalRef.current) {
+        gotFinalRef.current = true;
+        noSpeechRef.current = 0;
+        sendHeard(text);
+      }
+    };
+    rec.onerror = (ev) => {
+      const err = ev && ev.error;
+      if (!aliveRef.current || err === "aborted" || err === "no-speech") return;
+      if (err === "not-allowed" || err === "service-not-allowed") {
+        setNotice("دسترسی به میکروفون داده نشد. در تنظیمات مرورگر، اجازه‌ی میکروفون را برای این سایت روشن کن و دوباره بزن.");
+      } else if (err === "network") {
+        setNotice("تشخیص گفتار به اینترنت نیاز دارد و الان در دسترس نیست.");
+      } else {
+        setNotice("تشخیص گفتار ممکن نشد. دوباره امتحان کن.");
+      }
+      go("idle");
+    };
+    rec.onend = () => {
+      if (!aliveRef.current) return;
+      if (phaseRef.current !== "listening" || gotFinalRef.current) return;
+      noSpeechRef.current += 1;
+      if (noSpeechRef.current >= 2) {
+        noSpeechRef.current = 0;
+        setNotice("صدایی نشنیدم. هر وقت آماده بودی دکمه‌ی میکروفون را بزن.");
+        go("idle");
+      } else {
+        setTimeout(() => {
+          if (aliveRef.current && phaseRef.current === "listening") startListening();
+        }, 250);
+      }
+    };
+    recRef.current = rec;
+    try {
+      go("listening");
+      rec.start();
+    } catch (e) {
+      setNotice("روشن‌کردن میکروفون ممکن نشد.");
+      go("idle");
+    }
+  };
+
+  const stopListening = () => {
+    try {
+      if (recRef.current) recRef.current.abort();
+    } catch (e) {}
+    go("idle");
+  };
+
+  const sendHeard = (text) => {
+    try {
+      if (recRef.current) recRef.current.stop();
+    } catch (e) {}
+    baseLenRef.current = convRef.current.length;
+    sawThinkingRef.current = false;
+    go("thinking");
+    if (waitTimerRef.current) clearTimeout(waitTimerRef.current);
+    waitTimerRef.current = setTimeout(() => {
+      if (aliveRef.current && phaseRef.current === "thinking") {
+        setNotice("پاسخی نرسید. دوباره امتحان کن.");
+        go("idle");
+      }
+    }, 45000);
+    onSend(text);
+  };
+
+  const speakReply = (text) => {
+    if (!ttsOk || faMissing) {
+      setNotice(faMissing ? "صدای فارسی روی این دستگاه نصب نیست؛ پاسخ را از روی صفحه بخوان و بعد دوباره صحبت کن." : "");
+      go("idle");
+      return;
+    }
+    const chunks = rahyarVoiceChunks(text);
+    if (chunks.length === 0) {
+      go("idle");
+      return;
+    }
+    go("speaking");
+    try {
+      window.speechSynthesis.cancel();
+    } catch (e) {}
+    const playAt = (i) => {
+      if (!aliveRef.current || phaseRef.current !== "speaking") return;
+      if (i >= chunks.length) {
+        startListening(); // گفت‌وگوی دست‌آزاد: بعد از جواب، دوباره گوش می‌دهد
+        return;
+      }
+      try {
+        const u = new window.SpeechSynthesisUtterance(chunks[i]);
+        u.lang = "fa-IR";
+        if (faVoiceRef.current) u.voice = faVoiceRef.current;
+        u.rate = 0.95;
+        u.onend = () => playAt(i + 1);
+        u.onerror = () => {
+          if (aliveRef.current && phaseRef.current === "speaking") go("idle");
+        };
+        window.speechSynthesis.speak(u);
+      } catch (e) {
+        go("idle");
+      }
+    };
+    playAt(0);
+  };
+
+  // وقتی پاسخِ رهیار رسید، بلند بخوانش
+  useEffect(() => {
+    if (phaseRef.current !== "thinking") return;
+    if (thinking) {
+      sawThinkingRef.current = true;
+      return;
+    }
+    if (!sawThinkingRef.current) return;
+    if (waitTimerRef.current) clearTimeout(waitTimerRef.current);
+    const last = conversation[conversation.length - 1];
+    if (conversation.length > baseLenRef.current && last && last.role === "assistant") {
+      speakReply(last.text);
+    } else {
+      setNotice("پاسخی دریافت نشد. دوباره امتحان کن.");
+      go("idle");
+    }
+  }, [thinking, conversation]);
+
+  const interrupt = () => {
+    try {
+      window.speechSynthesis.cancel();
+    } catch (e) {}
+    startListening();
+  };
+
+  const accept = () => {
+    try {
+      window.localStorage.setItem("rvc-consent", "1");
+    } catch (e) {}
+    setAccepted(true);
+    startListening();
+  };
+
+  const closeAll = () => {
+    try {
+      if (recRef.current) recRef.current.abort();
+    } catch (e) {}
+    try {
+      if (ttsOk) window.speechSynthesis.cancel();
+    } catch (e) {}
+    onClose();
+  };
+
+  const lastAssistant = [...conversation].reverse().find((m) => m.role === "assistant");
+  const statusText =
+    phase === "listening" ? "دارم گوش می‌دهم…" : phase === "thinking" ? "دارم فکر می‌کنم…" : phase === "speaking" ? "دارم جواب می‌دهم…" : "برای صحبت، دکمه‌ی میکروفون را بزن";
+  const mainAction = phase === "listening" ? stopListening : phase === "speaking" ? interrupt : phase === "thinking" ? null : startListening;
+  const mainLabel = phase === "listening" ? "⏹ بس است" : phase === "speaking" ? "✋ وسط حرفش بپر" : phase === "thinking" ? "…" : "🎙️ صحبت کن";
+
+  return (
+    <div className="rvc-overlay" dir="rtl" role="dialog" aria-label="گفت‌وگوی صوتی">
+      <style>{`
+        .rvc-overlay, .rvc-overlay * { box-sizing: border-box; font-family: 'Vazirmatn', Tahoma, Arial, sans-serif; }
+        .rvc-overlay { position: fixed; inset: 0; z-index: 9999; background: linear-gradient(160deg, #1c2540 0%, #36457f 60%, #5b4a9a 100%); color: #fff; display: flex; flex-direction: column; align-items: center; padding: 18px 16px calc(18px + env(safe-area-inset-bottom)); overflow-y: auto; }
+        .rvc-top { width: 100%; max-width: 560px; display: flex; justify-content: space-between; align-items: center; }
+        .rvc-name { font-weight: 800; font-size: 15px; }
+        .rvc-close { background: rgba(255,255,255,.16); border: none; color: #fff; border-radius: 10px; padding: 8px 14px; font-size: 12.5px; font-weight: 700; cursor: pointer; }
+        .rvc-orb-wrap { margin: 26px 0 10px; display: flex; flex-direction: column; align-items: center; gap: 12px; }
+        .rvc-orb { width: 132px; height: 132px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 58px; background: radial-gradient(circle at 35% 30%, #fff6dd, #f2c572 55%, #c8862b); box-shadow: 0 0 0 0 rgba(242,197,114,.55); transition: transform .3s; }
+        .rvc-orb.listening { animation: rvc-pulse 1.4s ease-out infinite; background: radial-gradient(circle at 35% 30%, #e9fff2, #7fd3a0 55%, #2f9a5f); }
+        .rvc-orb.thinking { animation: rvc-think 1.6s ease-in-out infinite; background: radial-gradient(circle at 35% 30%, #f3ecff, #b9a2f0 55%, #6a4aa8); }
+        .rvc-orb.speaking { animation: rvc-speak .9s ease-in-out infinite; }
+        @keyframes rvc-pulse { 0% { box-shadow: 0 0 0 0 rgba(127,211,160,.6); } 100% { box-shadow: 0 0 0 34px rgba(127,211,160,0); } }
+        @keyframes rvc-think { 0%,100% { transform: scale(1); } 50% { transform: scale(.94); } }
+        @keyframes rvc-speak { 0%,100% { transform: scale(1); } 50% { transform: scale(1.07); } }
+        @media (prefers-reduced-motion: reduce) { .rvc-orb { animation: none !important; } }
+        .rvc-status { font-size: 14px; font-weight: 700; opacity: .95; }
+        .rvc-heard { width: 100%; max-width: 560px; min-height: 26px; text-align: center; font-size: 14px; opacity: .9; margin-bottom: 8px; }
+        .rvc-reply { width: 100%; max-width: 560px; background: rgba(255,255,255,.12); border-radius: 16px; padding: 14px 16px; font-size: 14px; line-height: 2; max-height: 34vh; overflow-y: auto; white-space: pre-line; margin-bottom: 14px; }
+        .rvc-notice { width: 100%; max-width: 560px; background: rgba(255,214,150,.18); border: 1px solid rgba(255,214,150,.5); border-radius: 12px; padding: 10px 14px; font-size: 12.5px; line-height: 1.9; margin-bottom: 12px; }
+        .rvc-main { height: 54px; min-width: 190px; padding: 0 26px; border: none; border-radius: 999px; background: linear-gradient(135deg, #f2c572, #c8862b); color: #241503; font-weight: 800; font-size: 15px; cursor: pointer; }
+        .rvc-main:disabled { opacity: .55; cursor: default; }
+        .rvc-consent { max-width: 520px; margin-top: 40px; background: rgba(255,255,255,.12); border-radius: 18px; padding: 20px; line-height: 2.1; font-size: 13.5px; }
+        .rvc-consent h2 { margin: 0 0 8px; font-size: 16px; }
+      `}</style>
+
+      <div className="rvc-top">
+        <div className="rvc-name">{persona.icon} گفت‌وگوی صوتی با {persona.name}</div>
+        <button type="button" className="rvc-close" onClick={closeAll}>پایان</button>
+      </div>
+
+      {!SRCtor ? (
+        <div className="rvc-consent">
+          <h2>🎙️ این مرورگر امکان تشخیص گفتار ندارد</h2>
+          برای گفت‌وگوی صوتی از Chrome (اندروید یا کامپیوتر) یا نسخه‌ی جدید Safari استفاده کن. فایرفاکس این قابلیت را ندارد. فعلاً می‌توانی سؤالت را تایپ کنی.
+        </div>
+      ) : !accepted ? (
+        <div className="rvc-consent">
+          <h2>🎙️ قبل از شروع، این را بدان</h2>
+          • میکروفون فقط وقتی این صفحه باز است و «دارم گوش می‌دهم…» را می‌بینی روشن است.<br />
+          • ققنوس صدای تو را ضبط یا ذخیره نمی‌کند.<br />
+          • تبدیل صدا به متن را مرورگرت انجام می‌دهد و ممکن است برای این کار صدا را به سرویس خودِ مرورگر (مثلاً گوگل در Chrome) بفرستد و به اینترنت نیاز دارد.<br />
+          • اگر زیر ۱۸ سال هستی، بهتر است با اطلاعِ ولی از این قابلیت استفاده کنی.<br />
+          <div style={{ marginTop: 14, textAlign: "center" }}>
+            <button type="button" className="rvc-main" onClick={accept}>متوجه شدم، شروع کنیم</button>
+          </div>
+        </div>
+      ) : (
+        <>
+          <div className="rvc-orb-wrap">
+            <div className={"rvc-orb " + phase} aria-hidden="true">{persona.icon}</div>
+            <div className="rvc-status" aria-live="polite">{statusText}</div>
+          </div>
+          <div className="rvc-heard">{heard ? "«" + heard + "»" : ""}</div>
+          {notice && <div className="rvc-notice">{notice}</div>}
+          {lastAssistant && <div className="rvc-reply">{rahyarVoiceCleanText(lastAssistant.text)}</div>}
+          <button type="button" className="rvc-main" disabled={!mainAction} onClick={() => mainAction && mainAction()}>{mainLabel}</button>
+        </>
+      )}
+    </div>
+  );
+}
+
+/* ============================================================
+   ققنوس — آموزش برای فردا
    قابلیت‌های میکروفون — برای ارتباط صوتی (رهیار/پیام‌ها) و
    ضبط صدا برای دروس قرائتی (مثل زبان و قرآن)
    ============================================================ */
@@ -15768,6 +16115,8 @@ function MessagingStep({ onBack, initialInboxMode, initialGuardianPhone, initial
   })();
 
   const sessionStartRef = React.useRef(null);
+
+  const [voiceOpen, setVoiceOpen] = useState(false);
 
   const handleAskAiTeacher = async (overrideText) => {
     const question = (overrideText !== undefined ? overrideText : aiQuestion).trim();
@@ -16759,6 +17108,26 @@ function MessagingStep({ onBack, initialInboxMode, initialGuardianPhone, initial
               <button type="button" className="pmg-send-btn" onClick={() => handleAskAiTeacher()} disabled={aiThinking}>
                 {aiThinking ? "در حال پاسخ‌گویی..." : "پرسیدن از " + aiPersona.name}
               </button>
+              {!(senderRole === "student" && !rahyarSubjectPicked) && !(senderRole === "guardian" && !guardianChildLookupDone) && (
+                <button
+                  type="button"
+                  className="pmg-send-btn"
+                  style={{ marginTop: 10, background: "linear-gradient(135deg, #7fd3a0, #2f9a5f)", color: "#fff" }}
+                  onClick={() => setVoiceOpen(true)}
+                  disabled={aiThinking}
+                >
+                  🎙️ گفت‌وگوی صوتی با {aiPersona.name}
+                </button>
+              )}
+              {voiceOpen && (
+                <RahyarVoiceConversation
+                  persona={aiPersona}
+                  conversation={aiConversation}
+                  thinking={aiThinking}
+                  onSend={(text) => handleAskAiTeacher(text)}
+                  onClose={() => setVoiceOpen(false)}
+                />
+              )}
 
               {senderRole === "student" && aiConversation.length > 0 && (
                 <>

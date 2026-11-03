@@ -27182,7 +27182,7 @@ function RahyarDynamicLabView({ onBack, grade, studentCode, schoolCode }) {
         )}
 
         {segments && segments.length > 0 && (
-          <div className="rtl-player-box">
+          <RahyarProtectedBox className="rtl-player-box" studentCode={studentCode}>
             {fromCache && <div className="rtl-cache-badge">💾 این آزمایش قبلاً ساخته شده و از کتابخانه بارگذاری شد — نیازی به ساخت دوباره نبود.</div>}
 
             <div className="rtl-progress-dots">
@@ -27277,7 +27277,7 @@ function RahyarDynamicLabView({ onBack, grade, studentCode, schoolCode }) {
                 </div>
               );
             })()}
-          </div>
+          </RahyarProtectedBox>
         )}
       </div>
     </div>
@@ -27683,7 +27683,7 @@ function RahyarHomeworkHelperView({ onBack, grade, studentCode, schoolCode }) {
         {error && <p className="pqb-upload-error">{error}</p>}
 
         {segments && segments.length > 0 && (
-          <div className="rtl-player-box">
+          <RahyarProtectedBox className="rtl-player-box" studentCode={studentCode}>
             <div className="rtl-progress-dots">
               {segments.map((s, i) => (
                 <span key={s.id} className={"rtl-progress-dot" + (i === currentIndex ? " active" : "")} onClick={() => goToSegment(i)}>
@@ -27750,7 +27750,7 @@ function RahyarHomeworkHelperView({ onBack, grade, studentCode, schoolCode }) {
                 </div>
               );
             })()}
-          </div>
+          </RahyarProtectedBox>
         )}
       </div>
     </div>

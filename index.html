@@ -1315,6 +1315,8 @@ function AuthLanding({ language, onLanguageChange, onContinue, onViewPerformance
   const logoTapCount = useState({ current: 0 })[0];
   const logoTapTimerRef = useState({ current: null })[0];
 
+  const [staffOpen, setStaffOpen] = useState(false);
+  const [teamHint, setTeamHint] = useState(false);
   const [devAccessOpen, setDevAccessOpen] = useState(false);
   const [devPassphrase, setDevPassphrase] = useState("");
   const [devAccessError, setDevAccessError] = useState(false);
@@ -2096,6 +2098,12 @@ function AuthLanding({ language, onLanguageChange, onContinue, onViewPerformance
             </div>
           )}
 
+          {mode === "login" && teamHint && (
+            <div style={{ fontSize: 13, lineHeight: 1.9, padding: "8px 12px", margin: "0 0 8px", borderRadius: 12, background: "rgba(124,58,237,0.08)" }}>
+              عضو تیم: شماره‌ی موبایلی که مدیر سامانه ثبت کرده و «کد تیمی» که به شما داده را در همین کادرها وارد کنید.
+            </div>
+          )}
+
           {mode === "login" && loginError && (
             <div className="pal-login-error">{loginError}</div>
           )}
@@ -2158,6 +2166,32 @@ function AuthLanding({ language, onLanguageChange, onContinue, onViewPerformance
             <div className="pal-perfview-row">
               <button type="button" className="pal-perfview-link" onClick={onOpenTrustInfo}>
                 🔒 چرا به ققنوس اعتماد کنیم؟
+              </button>
+            </div>
+          )}
+
+          <div className="pal-perfview-row">
+            <button type="button" className="pal-perfview-link" onClick={() => setStaffOpen((v) => !v)}>
+              🛡️ ورود مدیر سامانه و تیم (طراح سؤال، مدیر فنی، پشتیبان ثبت‌نام)
+            </button>
+          </div>
+          {staffOpen && (
+            <div style={{ display: "flex", flexDirection: "column", gap: 8, margin: "4px 0 10px", padding: 12, borderRadius: 14, background: "rgba(124,58,237,0.08)", border: "1px solid rgba(124,58,237,0.25)" }}>
+              <button
+                type="button"
+                className="pal-submit"
+                style={{ margin: 0, minHeight: 46, fontSize: 14 }}
+                onClick={() => { setStaffOpen(false); setAdminPinOpen(true); setAdminPinEntered([]); }}
+              >
+                🔑 ورود مدیر سامانه (با رمز ۶ رقمی)
+              </button>
+              <button
+                type="button"
+                className="pal-submit"
+                style={{ margin: 0, minHeight: 46, fontSize: 14 }}
+                onClick={() => { setStaffOpen(false); setMode("login"); setTeamHint(true); setLoginError(""); }}
+              >
+                👥 ورود عضو تیم (با موبایل و کد تیمی)
               </button>
             </div>
           )}

@@ -18609,67 +18609,196 @@ const PQB_KONKUR_BUDGET = {
 // درسِ زیست می‌لنگد، یا مفهوم را می‌فهمد ولی سریع تست نمی‌زند).
 const PQB_SKILL_TYPES = ["فرمول", "مفهوم", "حل‌مسئله", "واژگان", "دقت", "سرعت"];
 
-async function pqbGenerateKonkurAiPool(subject, grade, field) {
-  const fieldBudgets = field && PQB_KONKUR_BUDGET[field];
-  const budget = fieldBudgets && fieldBudgets[subject] && fieldBudgets[subject][grade];
-  const totalFromBudget = budget ? budget.reduce((sum, b) => sum + b.count, 0) : null;
-  const budgetInstruction = budget
-    ? "تعداد و درصد سؤالات باید دقیقاً مطابق بودجه‌بندیِ واقعیِ کنکور سراسری برای همین پایه و درس باشد — " +
-      "یعنی دقیقاً همین تعداد سؤال از هر فصل طراحی کن، نه بیشتر و نه کمتر: " +
-      budget.map((b) => "«" + b.chapter + "»: " + b.count + " سؤال").join("، ") +
-      ". در مجموع دقیقاً " +
-      totalFromBudget +
-      " سؤال طراحی کن (" +
-      budget.map((b) => b.count + " از «" + b.chapter + "»").join(" + ") +
-      " = " +
-      totalFromBudget +
-      ")."
-    : "۲۴ سؤال چهارگزینه‌ای (تستی) طراحی کن، با پوشش متنوع از فصل‌های مختلف.";
-  const totalCount = totalFromBudget || 24;
+// نوعِ سؤال به سبکِ کنکور — تا استخرِ ملی فقط سؤالِ مستقیم و کتاب‌محور نباشد
+const PQB_KONKUR_QTYPES = ["مفهومی", "ترکیبی", "محاسباتی", "مستقیم"];
+
+// حرفِ گزینه‌ی درست را از ابتدای توضیحِ پاسخ («گزینه‌ی ب درست است») بیرون می‌کشد
+function pqbParseKeyLetter(explanation) {
+  const m = /گزینه[‌\s]*[یي]?[‌\s]*(الف|ب|ج|د)(?![؀-ۿ])/.exec(String(explanation || ""));
+  return m ? m[1] : "";
+}
+
+// چهار گزینه‌ی الف/ب/ج/د باید به‌ترتیب داخل متن سؤال باشد
+function pqbHasFourOptions(text) {
+  const t = String(text || "");
+  const a = t.indexOf("الف)");
+  const b = t.indexOf("ب)", a + 1);
+  const c = t.indexOf("ج)", b + 1);
+  const d = t.indexOf("د)", c + 1);
+  return a >= 0 && b > a && c > b && d > c;
+}
+
+function pqbParseJsonLoose(rawText) {
+  const cleaned = String(rawText || "").replace(/```json|```/g, "").trim();
+  const start = cleaned.indexOf("{");
+  const end = cleaned.lastIndexOf("}");
+  return JSON.parse(start >= 0 && end > start ? cleaned.slice(start, end + 1) : cleaned);
+}
+
+async function pqbCallClaudeJson(system, userContent, maxTokens) {
   const response = await fetch("https://api.anthropic.com/v1/messages", {
     method: "POST",
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify({
       model: "claude-sonnet-4-6",
-      max_tokens: 4000,
-      system:
-        "شما رهیار، طراح سؤالات آزمون سراسری (کنکور) هستید. این آزمون، آزمونی ملی و یکسان برای همه‌ی " +
-        "دانش‌آموزان پایه‌ی «" +
-        grade +
-        "» در درس «" +
-        subject +
-        "» است و به هیچ معلم، مدیر یا مدرسه‌ی خاصی وابسته نیست — یعنی باید کاملاً بر اساس کتاب درسی رسمی " +
-        "ایران برای این پایه و درس باشد. " +
-        budgetInstruction +
-        " نام فیلد «chapter» برای هر سؤال باید دقیقاً یکی از همین نام‌های فصل باشد (کپی دقیق، بدون تغییر املایی). " +
-        "دشواری سؤالات هر فصل را متنوع کن (ترکیبی از آسان/متوسط/سخت)، نه همه یک سطح. " +
-        'یک آرایه‌ی JSON به نام "items" برگردان. هر عضو دقیقاً این ساختار را داشته باشد: ' +
-        '{"chapter": "نام فصل/موضوع — دقیقاً از لیست بالا", ' +
-        '"text": "متن کامل سؤال، و بلافاصله بعد از آن چهار گزینه دقیقاً با همین قالب داخل همان رشته متنی: الف) ... ب) ... ج) ... د) ...", ' +
-        '"difficulty": "یکی از: آسان/متوسط/سخت", ' +
-        '"skillType": "یکی از: فرمول/مفهوم/حل‌مسئله/واژگان/دقت/سرعت — همان مهارتِ اصلی‌ای که این سؤال برای پاسخ‌دادن به آن نیاز دارد", ' +
-        '"explanation": "دقیقاً با این قالب شروع شود: «گزینه‌ی X درست است» (X یکی از الف/ب/ج/د — همان حرفی که در متن سؤال گزینه‌ی درست است)، سپس استدلال یا مراحل حل کامل (آموزشِ عمیق و مفهومی)", ' +
-        '"quickTechnique": "یک تکنیکِ کوتاهِ تست‌زنیِ سریع مخصوصِ کنکور برایِ همین سؤال (حذفِ گزینه، تخمینِ سریع، الگوی عددی، یا مشابه) — فقط اگر واقعاً چنین میان‌بری وجود دارد، وگرنه رشته‌ی خالی. این مکملِ explanation است، هرگز جایگزینِ آن نیست — دانش‌آموز باید اول عمیق بفهمد، بعد تکنیکِ سرعت را یاد بگیرد."}. ' +
-        "فقط همان شیء JSON را برگردان، بدون هیچ توضیح اضافه یا Markdown.",
-      messages: [{ role: "user", content: "لطفاً سؤالات آزمون الزامی کنکور را آماده کن — دقیقاً " + totalCount + " سؤال، با همان بودجه‌بندیِ فصلی که در دستور آمد." }],
+      max_tokens: maxTokens,
+      system,
+      messages: [{ role: "user", content: userContent }],
     }),
   });
   const data = await response.json();
   const rawText = data && data.content && data.content[0] && data.content[0].text ? data.content[0].text : "";
-  const cleaned = rawText.replace(/```json|```/g, "").trim();
-  const parsed = JSON.parse(cleaned);
-  const items = parsed.items || [];
-  return items.map((item, i) => ({
+  return pqbParseJsonLoose(rawText);
+}
+
+// یک دسته (حداکثر ~۸ سؤال) با سبک و ترکیبِ نوعِ کنکور می‌سازد
+async function pqbGenerateKonkurBatch(subject, grade, entries) {
+  const total = entries.reduce((s, e) => s + e.count, 0);
+  const plan = entries.map((e) => "«" + e.chapter + "»: " + e.count + " سؤال").join("، ");
+  const system =
+    "شما رهیار، طراح سؤالات آزمون سراسری (کنکور) هستید؛ آزمونی ملی و یکسان برای همه‌ی دانش‌آموزان پایه‌ی «" +
+    grade + "» در درس «" + subject + "» که باید کاملاً بر اساس کتاب درسی رسمی ایران باشد. " +
+    "دقیقاً " + total + " سؤال چهارگزینه‌ای با این تقسیم‌بندیِ فصلی طراحی کن: " + plan + ". " +
+    "مقدار فیلد «chapter» باید کپیِ دقیقِ یکی از همین نام‌های فصل باشد. " +
+    "سبکِ سؤال‌ها باید سبکِ واقعیِ آزمون سراسری سازمان سنجش باشد، نه سؤالِ ساده‌ی پایانِ فصل: " +
+    "(۱) از هر ۱۰ سؤال حدود ۴ سؤال «مفهومی/تحلیلی» (فهمِ عمیق، علت و معلول، پیش‌بینیِ نتیجه، تشخیصِ نادرستیِ یک گزاره)، " +
+    "۳ سؤال «ترکیبی» (یا چند مفهومِ مرتبط را با هم می‌سنجد، یا به قالب «کدام عبارت‌ها درست‌اند؟» با گزاره‌های شماره‌دارِ ۱) ۲) ۳) ۴) و گزینه‌هایی مثل «۱ و ۲» / «۲ و ۳»…)، " +
+    "۲ سؤال «محاسباتی/حل‌مسئله» (اگر درس ماهیتِ محاسباتی ندارد، به‌جایش مفهومی یا ترکیبی بساز)، و حداکثر ۱ سؤالِ «مستقیم». " +
+    "سؤال‌های ترکیبی و مفهومی باید حتماً حضور داشته باشند؛ فقط سؤالِ حفظیِ مستقیم نساز. " +
+    "گزینه‌های انحرافی باید از اشتباه‌های رایج و تله‌های واقعیِ دانش‌آموزان ساخته شوند (نه گزینه‌های پرتِ بدیهی)، هم‌طول و هم‌سبک باشند، " +
+    "و دقیقاً یک گزینه به‌طور بی‌ابهام درست باشد. از «همه‌ی موارد/هیچ‌کدام» جز در موارد ضروری استفاده نکن. " +
+    "حرفِ گزینه‌ی درست را بین الف/ب/ج/د متعادل پخش کن. " +
+    "فقط درباره‌ی چیزهایی سؤال بساز که از نظر علمی و مطابقِ کتاب درسی کاملاً از آن‌ها مطمئنی؛ اگر درباره‌ی یک واقعیت مطمئن نیستی، سراغِ مطلبِ دیگری از همان فصل برو. " +
+    "سؤال‌ها را از کنکورهای واقعی کپی نکن و نگو که کنکورِ واقعی‌اند. سؤالِ تکراری یا دوبلیکیت نساز. دشواری را بیشتر «متوسط» و «سخت» بگیر مگر برای چند سؤالِ ساده. " +
+    'یک شیء JSON با کلید "items" (آرایه) برگردان. هر عضو دقیقاً این ساختار را داشته باشد: ' +
+    '{"chapter": "...", ' +
+    '"text": "متن کاملِ سؤال و بلافاصله چهار گزینه با همین قالب داخل همان رشته: الف) ... ب) ... ج) ... د) ...", ' +
+    '"qType": "یکی از: مفهومی/ترکیبی/محاسباتی/مستقیم", ' +
+    '"difficulty": "یکی از: آسان/متوسط/سخت", ' +
+    '"skillType": "یکی از: فرمول/مفهوم/حل‌مسئله/واژگان/دقت/سرعت", ' +
+    '"explanation": "دقیقاً با «گزینه‌ی X درست است» شروع شود (X یکی از الف/ب/ج/د)، سپس استدلالِ کامل و مفهومی، و در یک جمله بگو چرا هر گزینه‌ی دیگر نادرست است", ' +
+    '"quickTechnique": "تکنیکِ کوتاهِ تست‌زنی فقط اگر واقعاً وجود دارد، وگرنه رشته‌ی خالی"}. ' +
+    "فقط همان شیء JSON را برگردان، بدون توضیحِ اضافه یا Markdown.";
+  const parsed = await pqbCallClaudeJson(system, "لطفاً " + total + " سؤال کنکوری را با همین تقسیم‌بندی و سبک آماده کن.", 8000);
+  const items = Array.isArray(parsed.items) ? parsed.items : [];
+  return items.filter((it) => it && pqbHasFourOptions(it.text) && pqbParseKeyLetter(it.explanation));
+}
+
+// تأییدِ مستقل: یک مرحله‌ی جدا، سؤال‌ها را بدونِ کلید حل می‌کند؛ هر سؤالی که جوابش با کلید نخواند کنار می‌رود
+async function pqbVerifyKonkurItems(subject, grade, items) {
+  if (!items.length) return [];
+  const system =
+    "شما یک حل‌کننده‌ی دقیق و مستقل برای سؤالات کنکور درس «" + subject + "» پایه‌ی «" + grade + "» هستید. " +
+    "هر سؤال را مستقل و با دقت حل کن (بدون این‌که کلیدی در اختیار داشته باشی). اگر سؤال ابهام دارد یا بیش از یک گزینه درست است " +
+    'یا هیچ گزینه‌ای درست نیست، choice را "؟" بگذار. فقط JSON برگردان: {"answers":[{"i":0,"choice":"الف|ب|ج|د|؟"}, ...]} ' +
+    "بدون توضیح یا Markdown.";
+  const body = items.map((it, i) => "سؤال " + i + ":\n" + it.text).join("\n\n");
+  let answers;
+  try {
+    const parsed = await pqbCallClaudeJson(system, body, 3000);
+    answers = Array.isArray(parsed.answers) ? parsed.answers : null;
+  } catch (e) {
+    answers = null;
+  }
+  // اگر خودِ مرحله‌ی تأیید خطا بدهد، سؤال‌ها را نگه می‌داریم ولی «تأییدنشده» علامت می‌خورند
+  if (!answers) return items.map((it) => Object.assign({}, it, { _verified: false }));
+  const byIndex = {};
+  answers.forEach((a) => {
+    if (a && typeof a.i === "number") byIndex[a.i] = a.choice;
+  });
+  const out = [];
+  items.forEach((it, i) => {
+    if (byIndex[i] && byIndex[i] === pqbParseKeyLetter(it.explanation)) out.push(Object.assign({}, it, { _verified: true }));
+  });
+  return out;
+}
+
+async function pqbGenerateAndVerify(subject, grade, entries) {
+  const gen = await pqbGenerateKonkurBatch(subject, grade, entries);
+  return pqbVerifyKonkurItems(subject, grade, gen);
+}
+
+async function pqbGenerateKonkurAiPool(subject, grade, field) {
+  const fieldBudgets = field && PQB_KONKUR_BUDGET[field];
+  const budget = fieldBudgets && fieldBudgets[subject] && fieldBudgets[subject][grade];
+  // برنامه‌ی ساخت: فهرستِ {chapter, count}؛ بدونِ بودجه‌بندی ۲۴ سؤالِ متنوع
+  const plan = budget
+    ? budget.map((b) => ({ chapter: b.chapter, count: b.count }))
+    : [{ chapter: "متنوع، از فصل‌های مختلفِ کتاب (نام فصل را خودت دقیق بنویس)", count: 24 }];
+  // تقسیم به دسته‌های حداکثر ۸ سؤالی تا خروجی نیمه‌کاره قطع نشود
+  const batches = [];
+  let cur = [];
+  let curCount = 0;
+  plan.forEach((p) => {
+    let left = p.count;
+    while (left > 0) {
+      const take = Math.min(left, 8 - curCount);
+      cur.push({ chapter: p.chapter, count: take });
+      curCount += take;
+      left -= take;
+      if (curCount >= 8) {
+        batches.push(cur);
+        cur = [];
+        curCount = 0;
+      }
+    }
+  });
+  if (cur.length) batches.push(cur);
+
+  const settled = await Promise.allSettled(batches.map((b) => pqbGenerateAndVerify(subject, grade, b)));
+  let good = [];
+  settled.forEach((s) => {
+    if (s.status === "fulfilled") good = good.concat(s.value);
+  });
+
+  // یک دورِ جبران: اگر فصلی به‌خاطر ردِ سؤالِ مشکوک کم آمد، فقط همان کمبود دوباره ساخته و تأیید می‌شود
+  if (budget) {
+    const have = {};
+    good.forEach((it) => {
+      have[it.chapter] = (have[it.chapter] || 0) + 1;
+    });
+    const deficit = plan
+      .map((p) => ({ chapter: p.chapter, count: Math.max(0, p.count - (have[p.chapter] || 0)) }))
+      .filter((p) => p.count > 0);
+    if (deficit.length) {
+      const refill = [];
+      let rc = [];
+      let rn = 0;
+      deficit.forEach((d) => {
+        let left = d.count;
+        while (left > 0) {
+          const take = Math.min(left, 8 - rn);
+          rc.push({ chapter: d.chapter, count: take });
+          rn += take;
+          left -= take;
+          if (rn >= 8) {
+            refill.push(rc);
+            rc = [];
+            rn = 0;
+          }
+        }
+      });
+      if (rc.length) refill.push(rc);
+      const s2 = await Promise.allSettled(refill.map((b) => pqbGenerateAndVerify(subject, grade, b)));
+      s2.forEach((s) => {
+        if (s.status === "fulfilled") good = good.concat(s.value);
+      });
+    }
+  }
+
+  return good.map((item, i) => ({
     id: "konkur-ai-" + i,
     chapter: item.chapter || "",
     text: item.text || "",
     type: "تستی (چهارگزینه‌ای)",
+    qType: PQB_KONKUR_QTYPES.includes(item.qType) ? item.qType : "",
     difficulty: item.difficulty || "متوسط",
     skillType: PQB_SKILL_TYPES.includes(item.skillType) ? item.skillType : "",
     explanation: item.explanation || "",
     quickTechnique: item.quickTechnique || "",
     examTypes: ["آزمایشی کنکور"],
     source: "رهیار — آزمون ملی",
+    verified: item._verified === true,
   }));
 }
 

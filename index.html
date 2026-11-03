@@ -2172,7 +2172,7 @@ function AuthLanding({ language, onLanguageChange, onContinue, onViewPerformance
 
           <div className="pal-perfview-row">
             <button type="button" className="pal-perfview-link" onClick={() => setStaffOpen((v) => !v)}>
-              🛡️ ورود مدیر سامانه و تیم (طراح سؤال، مدیر فنی، پشتیبان ثبت‌نام)
+              🛡️ ورود مدیر یا تیم فنی
             </button>
           </div>
           {staffOpen && (
@@ -2191,7 +2191,7 @@ function AuthLanding({ language, onLanguageChange, onContinue, onViewPerformance
                 style={{ margin: 0, minHeight: 46, fontSize: 14 }}
                 onClick={() => { setStaffOpen(false); setMode("login"); setTeamHint(true); setLoginError(""); }}
               >
-                👥 ورود عضو تیم (با موبایل و کد تیمی)
+                👥 ورود تیم فنی و همکاران (با موبایل و کد تیمی)
               </button>
             </div>
           )}

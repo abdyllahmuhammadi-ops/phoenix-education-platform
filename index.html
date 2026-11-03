@@ -2226,15 +2226,19 @@ function AuthLanding({ language, onLanguageChange, onContinue, onViewPerformance
 
       {teamOpen && (
         <div className="pal-pin-overlay" onClick={() => setTeamOpen(false)}>
-          <div className="pal-pin-box" style={{ textAlign: "right", direction: "rtl" }} onClick={(e) => e.stopPropagation()}>
-            <div className="pal-pin-title" style={{ textAlign: "center" }}>🛠️ ورود تیم فنی و همکاران</div>
-            <p className="pal-pin-sub" style={{ textAlign: "center" }}>ثبت‌نام لازم نیست؛ مدیر سامانه شما را معرفی و یک کد مخصوص شما صادر کرده است.</p>
-            <label className="pal-label">شماره‌ی موبایل</label>
-            <input className="pal-input" inputMode="numeric" maxLength={11} placeholder="۰۹…" value={teamMobile} onChange={(e) => setTeamMobile(e.target.value)} />
-            <label className="pal-label" style={{ marginTop: 10 }}>کد تیمی (۶ رقم)</label>
-            <input className="pal-input" inputMode="numeric" maxLength={6} type="password" placeholder="••••••" value={teamCodeIn} onChange={(e) => setTeamCodeIn(e.target.value)} onKeyDown={(e) => { if (e.key === "Enter") handleTeamLogin(); }} />
-            {teamError && <div className="pal-login-error" style={{ marginTop: 10 }}>{teamError}</div>}
-            <button type="button" className="pal-submit" style={{ marginTop: 14 }} disabled={teamBusy} onClick={handleTeamLogin}>
+          <div className="pal-pin-box" onClick={(e) => e.stopPropagation()}>
+            <div className="pal-pin-title">🛠️ ورود تیم فنی و همکاران</div>
+            <p className="pal-pin-sub">ثبت‌نام لازم نیست؛ مدیر سامانه شما را معرفی و کد مخصوص شما را صادر کرده است.</p>
+            <div className="pal-field pal-field-center" style={{ marginBottom: 12 }}>
+              <label className="pal-label">شماره‌ی موبایل</label>
+              <input className="pal-input pal-w-phone" style={{ height: 44 }} inputMode="numeric" maxLength={11} placeholder="09xxxxxxxxx" value={teamMobile} onChange={(e) => setTeamMobile(e.target.value)} />
+            </div>
+            <div className="pal-field pal-field-center" style={{ marginBottom: 12 }}>
+              <label className="pal-label">کد تیمی (۶ رقم)</label>
+              <input className="pal-input pal-w-otp" style={{ height: 44, width: 130 }} inputMode="numeric" maxLength={6} type="password" placeholder="••••••" value={teamCodeIn} onChange={(e) => setTeamCodeIn(e.target.value)} onKeyDown={(e) => { if (e.key === "Enter") handleTeamLogin(); }} />
+            </div>
+            {teamError && <div className="pal-login-error" style={{ marginBottom: 10 }}>{teamError}</div>}
+            <button type="button" className="pal-submit" style={{ height: 46, fontSize: 15, borderRadius: 14, width: 180, margin: "4px auto 8px" }} disabled={teamBusy} onClick={handleTeamLogin}>
               {teamBusy ? "لحظه‌ای صبر کنید…" : "ورود"}
             </button>
             <button type="button" className="pal-pin-clear" onClick={() => setTeamOpen(false)}>بستن</button>

@@ -1317,6 +1317,32 @@ function AuthLanding({ language, onLanguageChange, onContinue, onViewPerformance
 
   const [staffOpen, setStaffOpen] = useState(false);
   const [teamHint, setTeamHint] = useState(false);
+  const [teamOpen, setTeamOpen] = useState(false);
+  const [teamMobile, setTeamMobile] = useState("");
+  const [teamCodeIn, setTeamCodeIn] = useState("");
+  const [teamError, setTeamError] = useState("");
+  const [teamBusy, setTeamBusy] = useState(false);
+  const handleTeamLogin = async () => {
+    setTeamError("");
+    const ph = teamDigits(teamMobile);
+    const cd = teamDigits(teamCodeIn);
+    if (!ph || !cd) return setTeamError("شماره‌ی موبایل و کد تیمی را وارد کنید.");
+    setTeamBusy(true);
+    try {
+      await teamEnsureTestMember();
+      const m = await teamTryLogin(ph, cd);
+      if (m && onLoginSuccess) {
+        setTeamOpen(false);
+        setTeamCodeIn("");
+        onLoginSuccess("teamMember", { member: m }, m.mobile);
+      } else {
+        setTeamError("شماره یا کد تیمی درست نیست. کد را مدیر سامانه برای شما صادر می‌کند.");
+      }
+    } catch (e) {
+      setTeamError("خطایی رخ داد؛ دوباره تلاش کنید.");
+    }
+    setTeamBusy(false);
+  };
   const [devAccessOpen, setDevAccessOpen] = useState(false);
   const [devPassphrase, setDevPassphrase] = useState("");
   const [devAccessError, setDevAccessError] = useState(false);
@@ -2189,14 +2215,32 @@ function AuthLanding({ language, onLanguageChange, onContinue, onViewPerformance
                 type="button"
                 className="pal-submit"
                 style={{ margin: 0, minHeight: 46, fontSize: 14 }}
-                onClick={() => { setStaffOpen(false); setMode("login"); setTeamHint(true); setLoginError(""); }}
+                onClick={() => { setStaffOpen(false); setTeamOpen(true); setTeamError(""); }}
               >
-                👥 ورود تیم فنی و همکاران (با موبایل و کد تیمی)
+                👥 ورود تیم فنی و همکاران
               </button>
             </div>
           )}
         </div>
       </div>
+
+      {teamOpen && (
+        <div className="pal-pin-overlay" onClick={() => setTeamOpen(false)}>
+          <div className="pal-pin-box" style={{ textAlign: "right", direction: "rtl" }} onClick={(e) => e.stopPropagation()}>
+            <div className="pal-pin-title" style={{ textAlign: "center" }}>🛠️ ورود تیم فنی و همکاران</div>
+            <p className="pal-pin-sub" style={{ textAlign: "center" }}>ثبت‌نام لازم نیست؛ مدیر سامانه شما را معرفی و یک کد مخصوص شما صادر کرده است.</p>
+            <label className="pal-label">شماره‌ی موبایل</label>
+            <input className="pal-input" inputMode="numeric" maxLength={11} placeholder="۰۹…" value={teamMobile} onChange={(e) => setTeamMobile(e.target.value)} />
+            <label className="pal-label" style={{ marginTop: 10 }}>کد تیمی (۶ رقم)</label>
+            <input className="pal-input" inputMode="numeric" maxLength={6} type="password" placeholder="••••••" value={teamCodeIn} onChange={(e) => setTeamCodeIn(e.target.value)} onKeyDown={(e) => { if (e.key === "Enter") handleTeamLogin(); }} />
+            {teamError && <div className="pal-login-error" style={{ marginTop: 10 }}>{teamError}</div>}
+            <button type="button" className="pal-submit" style={{ marginTop: 14 }} disabled={teamBusy} onClick={handleTeamLogin}>
+              {teamBusy ? "لحظه‌ای صبر کنید…" : "ورود"}
+            </button>
+            <button type="button" className="pal-pin-clear" onClick={() => setTeamOpen(false)}>بستن</button>
+          </div>
+        </div>
+      )}
 
       {adminPinOpen && (
         <div className="pal-pin-overlay" onClick={() => { setAdminPinOpen(false); setAdminPinEntered([]); }}>
@@ -13687,6 +13731,20 @@ async function teamAudit(actor, action, detail) {
   const log = await teamLoad("team-audit-log", []);
   log.unshift({ t: Date.now(), actor: actor || "؟", action, detail: detail || "" });
   await teamSave("team-audit-log", log.slice(0, 300));
+}
+// عضوِ آزمایشیِ موقت (فقط برای امتحانِ مدیر سامانه در نسخه‌ی پیش‌نمایش) — پیش از انتشار حذف شود
+const TEAM_TEST_MOBILE = "09000000000";
+const TEAM_TEST_CODE = "482915";
+async function teamEnsureTestMember() {
+  const done = await authStorageGet("team-test-seeded", true);
+  if (done) return;
+  const members = await teamLoad("team-members", []);
+  if (!members.some((m) => m.mobile === TEAM_TEST_MOBILE)) {
+    members.push({ id: "m-test", name: "مدیر فنی (آزمایشی)", mobile: TEAM_TEST_MOBILE, role: "techManager", scope: null, active: true, createdAt: Date.now() });
+    await teamSave("team-members", members);
+    await authStorageSet("team-code:" + TEAM_TEST_MOBILE, TEAM_TEST_CODE, true);
+  }
+  await authStorageSet("team-test-seeded", "1", true);
 }
 // ورودِ عضو تیم: رمزِ تیم جدا از رمزِ حسابِ معمولیِ همان شماره است تا هیچ‌چیز تداخل نکند
 async function teamTryLogin(phone, password) {

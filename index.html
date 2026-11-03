@@ -14090,7 +14090,7 @@ function TeamManagementView({ onBack }) {
 }
 
 // ---------- طراح سؤال ----------
-function TeamDesignerPanel({ member }) {
+function TeamDesignerPanel({ member, sec }) {
   const scope = member.scope || {};
   const grades = scope.kind === "grade" ? [scope.grade] : TEAM_SECONDARY_GRADES;
   const subjects = scope.kind === "grade" ? teamPrimarySubjects() : [scope.subject];
@@ -14148,6 +14148,7 @@ function TeamDesignerPanel({ member }) {
   const mine = questions.filter((q) => q.authorKey === myKey);
   return (
     <>
+      {sec === "new" && (
       <div className="tm-card">
         <h2>✍️ سؤالِ تازه</h2>
         <p className="tm-note">حوزه‌ی شما: {teamScopeLabel(scope)}. سبکِ کنکور: بیشتر سؤال مفهومی و ترکیبی («کدام عبارت‌ها درست‌اند؟»)، با گزینه‌های انحرافی از اشتباه‌های رایج دانش‌آموز، و فقط یک گزینه‌ی بی‌ابهامِ درست.</p>
@@ -14186,24 +14187,29 @@ function TeamDesignerPanel({ member }) {
         {saved && <div className="tm-note" style={{ color: "#1d6b3c", marginBottom: 8 }}>{saved}</div>}
         <button type="button" className="tm-btn" onClick={submit}>ثبتِ سؤال برای بازبینی</button>
       </div>
+      )}
 
+      {sec === "review" && (
       <div className="tm-card">
         <h2>🔎 بازبینیِ سؤال‌های همکاران</h2>
         <p className="tm-note">یک سؤال فقط وقتی وارد استخر می‌شود که همکارِ هم‌درسِ شما (غیر از نویسنده) کلید و صورتِ آن را بررسی و تأیید کند، و شما هم همین کار را برای سؤال‌های او انجام می‌دهید. دقت کنید؛ یک کلیدِ غلط به اعتمادِ دانش‌آموزان ضربه می‌زند.</p>
         <TeamReviewList reviewerKey={myKey} reviewerLabel={member.name + " (طراح سؤال)"} reviewerScope={member.scope} questions={questions} onChanged={(n) => setQuestions(n)} />
       </div>
+      )}
 
+      {sec === "mine" && (
       <div className="tm-card">
         <h2>سؤال‌های من ({mine.length})</h2>
         {mine.length === 0 && <p className="tm-note">هنوز سؤالی ثبت نکرده‌اید.</p>}
         {mine.slice(0, 40).map((q) => <TeamQuestionCard key={q.id} q={q} />)}
       </div>
+      )}
     </>
   );
 }
 
 // ---------- مدیر فنی ----------
-function TeamTechPanel({ member }) {
+function TeamTechPanel({ member, sec }) {
   const [errors, setErrors] = useState([]);
   const [storageOk, setStorageOk] = useState(null);
   const reload = async () => setErrors(await teamLoad("app-error-log", []));
@@ -14223,6 +14229,7 @@ function TeamTechPanel({ member }) {
   const open = errors.filter((e) => !e.resolved).length;
   return (
     <>
+      {sec === "status" && (
       <div className="tm-card">
         <h2>🩺 وضعیتِ سامانه</h2>
         <p className="tm-note">
@@ -14230,6 +14237,8 @@ function TeamTechPanel({ member }) {
         </p>
         <p className="tm-note">این صفحه عمداً هیچ مشخصاتِ شخصیِ دانش‌آموز، ولی، معلم یا مدرسه‌ای نشان نمی‌دهد؛ فقط پیامِ خطای فنی.</p>
       </div>
+      )}
+      {sec === "errors" && (
       <div className="tm-card">
         <h2>خطاهای ثبت‌شده</h2>
         {errors.length === 0 && <p className="tm-note">خطایی ثبت نشده است.</p>}
@@ -14241,12 +14250,13 @@ function TeamTechPanel({ member }) {
           </div>
         ))}
       </div>
+      )}
     </>
   );
 }
 
 // ---------- پشتیبان ثبت‌نام ----------
-function TeamRegSupportPanel({ member }) {
+function TeamRegSupportPanel({ member, sec }) {
   const [reason, setReason] = useState("");
   const [query, setQuery] = useState("");
   const [results, setResults] = useState(null);
@@ -14319,6 +14329,7 @@ function TeamRegSupportPanel({ member }) {
 
   return (
     <>
+      {sec === "search" && (
       <div className="tm-card">
         <h2>🔍 بررسیِ مشکلِ ثبت‌نام</h2>
         <p className="tm-note">فقط مشخصاتِ ثبت‌نامی نشان داده می‌شود (نام، مدرسه، کلاس، پایه). نمره، پیام‌ها و پروندهٔ بهداشتی برای شما قابل‌دیدن نیست. دلیلِ هر جست‌وجو در گزارشِ مدیر سامانه ثبت می‌شود.</p>
@@ -14357,6 +14368,8 @@ function TeamRegSupportPanel({ member }) {
         ))}
         <p className="tm-note">بازنشانیِ رمز و اصلاحِ مستقیمِ مشخصات هنوز به شما واگذار نشده؛ چون این کارها فقط با تأییدِ هویتِ واقعی روی سرور امن است. فعلاً مشکل را بررسی و یادداشت کنید تا مدیر سامانه پیگیری کند.</p>
       </div>
+      )}
+      {sec === "notes" && (
       <div className="tm-card">
         <h2>یادداشت‌های اخیرِ من</h2>
         {notes.filter((n) => n.by === member.name).length === 0 && <p className="tm-note">هنوز یادداشتی ثبت نشده است.</p>}
@@ -14364,12 +14377,48 @@ function TeamRegSupportPanel({ member }) {
           <div key={n.id} className="tm-log">کد {n.ref} — {n.reason}: {n.text}<div className="tm-note">{new Date(n.t).toLocaleString("fa-IR")}</div></div>
         ))}
       </div>
+      )}
     </>
   );
 }
 
+const TEAM_SECTIONS = {
+  contentDesigner: [
+    { id: "new", icon: "✍️", label: "سؤالِ تازه", hint: "طراحیِ سؤال" },
+    { id: "review", icon: "🔎", label: "بازبینیِ همکار", hint: "تأییدِ سؤالِ هم‌درس" },
+    { id: "mine", icon: "📚", label: "سؤال‌های من", hint: "وضعیتِ سؤال‌هایم" },
+    { id: "access", icon: "🔐", label: "حدودِ دسترسی من", hint: "چه چیزی می‌بینم" },
+  ],
+  techManager: [
+    { id: "status", icon: "🩺", label: "وضعیتِ سامانه", hint: "سلامتِ ذخیره‌سازی" },
+    { id: "errors", icon: "🐞", label: "خطاهای ثبت‌شده", hint: "رفعِ اشکال فنی" },
+    { id: "access", icon: "🔐", label: "حدودِ دسترسی من", hint: "چه چیزی می‌بینم" },
+  ],
+  regSupport: [
+    { id: "search", icon: "🔍", label: "بررسیِ ثبت‌نام", hint: "جست‌وجو و پیگیری" },
+    { id: "notes", icon: "📝", label: "یادداشت‌های من", hint: "پیگیری‌های ثبت‌شده" },
+    { id: "access", icon: "🔐", label: "حدودِ دسترسی من", hint: "چه چیزی می‌بینم" },
+  ],
+};
+const TEAM_ACCESS_INFO = {
+  contentDesigner: {
+    can: ["طراحیِ سؤالِ کنکور و امتحانِ داخلی برای درس (یا پایه‌ی) خودتان", "بازبینیِ سؤال‌های همکارِ هم‌درس", "دیدنِ وضعیتِ سؤال‌های خودتان"],
+    cannot: ["دیدنِ اطلاعاتِ دانش‌آموزان، والدین و معلمان", "بازبینیِ سؤال‌های خودتان", "ورود به درس‌ها یا پایه‌های دیگر", "دیدنِ بخشِ مدیر سامانه"],
+  },
+  techManager: {
+    can: ["دیدنِ خطاهای فنیِ ثبت‌شده و علامت‌زدنِ «رفع شد»", "بررسیِ وضعیتِ ذخیره‌سازی"],
+    cannot: ["دیدنِ هرگونه مشخصاتِ شخصیِ دانش‌آموز، ولی، معلم یا مدرسه", "تغییرِ نقش‌ها و رمزها", "دیدنِ بخشِ مدیر سامانه"],
+  },
+  regSupport: {
+    can: ["جست‌وجوی مشکلِ ثبت‌نام با کد دانش‌آموزی یا کد ملی (با ثبتِ دلیل)", "دیدنِ فقط مشخصاتِ ثبت‌نامی و فیلدهای ناقص", "ثبتِ یادداشتِ پیگیری برای مدیر سامانه"],
+    cannot: ["دیدنِ نمره، پیام‌ها و اطلاعاتِ بهداشتی", "بازنشانیِ رمز یا اصلاحِ مستقیمِ مشخصات (فعلاً)", "دیدنِ بخشِ مدیر سامانه"],
+  },
+};
 function TeamMemberDashboard({ member, onLogout }) {
   const role = TEAM_ROLES[member.role];
+  const sections = TEAM_SECTIONS[member.role] || [];
+  const [sec, setSec] = useState(sections[0] ? sections[0].id : "access");
+  const info = TEAM_ACCESS_INFO[member.role];
   return (
     <div dir="rtl" className="tm-root">
       <TeamStyles />
@@ -14377,13 +14426,43 @@ function TeamMemberDashboard({ member, onLogout }) {
         <div className="tm-wrap">
           <button type="button" className="tm-back" onClick={onLogout}>خروج</button>
           <h1>{role.icon} {role.label} — {member.name}</h1>
-          <p>{member.scope ? "حوزه‌ی شما: " + teamScopeLabel(member.scope) + ". " : ""}{role.desc}. شما فقط به همین بخش دسترسی دارید.</p>
+          <p>{member.scope ? "حوزه‌ی شما: " + teamScopeLabel(member.scope) + ". " : ""}{role.desc}. شما فقط به بخش‌های همین صفحه دسترسی دارید.</p>
         </div>
       </div>
       <div className="tm-wrap">
-        {member.role === "contentDesigner" && <TeamDesignerPanel member={member} />}
-        {member.role === "techManager" && <TeamTechPanel member={member} />}
-        {member.role === "regSupport" && <TeamRegSupportPanel member={member} />}
+        <div style={{ fontSize: 12.5, fontWeight: 800, color: "#5a6385", margin: "0 2px 8px" }}>بخش‌های شما</div>
+        <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(150px, 1fr))", gap: 10, marginBottom: 16 }}>
+          {sections.map((x) => (
+            <button
+              key={x.id}
+              type="button"
+              onClick={() => setSec(x.id)}
+              style={{
+                textAlign: "right", cursor: "pointer", borderRadius: 14, padding: "10px 12px",
+                border: sec === x.id ? "1.5px solid #c8862b" : "1px solid #d9d2c3",
+                background: sec === x.id ? "linear-gradient(135deg, #fff4dc, #f7dfae)" : "#fff",
+                color: "#1c2540", fontFamily: "inherit",
+              }}
+            >
+              <div style={{ fontSize: 20 }}>{x.icon}</div>
+              <div style={{ fontSize: 13.5, fontWeight: 800, marginTop: 2 }}>{x.label}</div>
+              <div style={{ fontSize: 11.5, color: "#6b7399", marginTop: 2 }}>{x.hint}</div>
+            </button>
+          ))}
+        </div>
+        {sec === "access" && info && (
+          <div className="tm-card">
+            <h2>🔐 حدودِ دسترسیِ نقشِ شما</h2>
+            <p className="tm-note" style={{ fontWeight: 800, color: "#1d6b3c" }}>می‌توانید:</p>
+            <ul style={{ margin: "0 0 10px", paddingInlineStart: 20, fontSize: 13, lineHeight: 2 }}>{info.can.map((t) => <li key={t}>{t}</li>)}</ul>
+            <p className="tm-note" style={{ fontWeight: 800, color: "#b3261e" }}>نمی‌توانید:</p>
+            <ul style={{ margin: 0, paddingInlineStart: 20, fontSize: 13, lineHeight: 2 }}>{info.cannot.map((t) => <li key={t}>{t}</li>)}</ul>
+            <p className="tm-note">انتخاب، تغییر و برکناریِ اعضای تیم فقط با مدیر سامانه است. فعالیت‌های شما در گزارشِ مدیر سامانه ثبت می‌شود.</p>
+          </div>
+        )}
+        {member.role === "contentDesigner" && <TeamDesignerPanel member={member} sec={sec} />}
+        {member.role === "techManager" && <TeamTechPanel member={member} sec={sec} />}
+        {member.role === "regSupport" && <TeamRegSupportPanel member={member} sec={sec} />}
       </div>
     </div>
   );

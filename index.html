@@ -13941,6 +13941,17 @@ function TeamManagementView({ onBack }) {
     setCodeInfo({ name: m.name, mobile: m.mobile, code });
     setLog(await teamLoad("team-audit-log", []));
   };
+  const toggleSection = async (m, secId, secs) => {
+    const cur = m.allowedSections || secs.map((x) => x.id);
+    const nextAllowed = cur.includes(secId) ? cur.filter((x) => x !== secId) : [...cur, secId];
+    if (nextAllowed.length === 0) return setError("حداقل یک بخش باید برای عضو روشن بماند؛ برای قطع کامل، او را غیرفعال کنید.");
+    setError("");
+    const next = members.map((x) => (x.id === m.id ? { ...x, allowedSections: nextAllowed } : x));
+    await teamSave("team-members", next);
+    await teamAudit("مدیر سامانه", "تغییر دسترسیِ عضو", m.name);
+    setMembers(next);
+    setLog(await teamLoad("team-audit-log", []));
+  };
   const toggleActive = async (m) => {
     const next = members.map((x) => (x.id === m.id ? { ...x, active: !x.active } : x));
     await teamSave("team-members", next);
@@ -13988,6 +13999,7 @@ function TeamManagementView({ onBack }) {
         <div className="tm-tabs">
           <button type="button" className={"tm-tab" + (tab === "members" ? " on" : "")} onClick={() => setTab("members")}>اعضای تیم ({members.length})</button>
           <button type="button" className={"tm-tab" + (tab === "questions" ? " on" : "")} onClick={() => setTab("questions")}>سؤال‌های در انتظار تأیید{pendingCount ? " (" + pendingCount + ")" : ""}</button>
+          <button type="button" className={"tm-tab" + (tab === "access" ? " on" : "")} onClick={() => setTab("access")}>🔐 جدول دسترسی‌ها</button>
           <button type="button" className={"tm-tab" + (tab === "log" ? " on" : "")} onClick={() => setTab("log")}>گزارش فعالیت</button>
         </div>
 
@@ -14059,6 +14071,48 @@ function TeamManagementView({ onBack }) {
                   </div>
                 </div>
               ))}
+            </div>
+          </>
+        )}
+
+        {tab === "access" && (
+          <>
+            <div className="tm-card">
+              <h2>🔐 دسترسیِ هر نقش</h2>
+              <p className="tm-note">هر نقش فقط بخش‌های زیر را می‌بیند. هیچ نقشی به بخش مدیر سامانه، رمزها و اطلاعات شخصی دانش‌آموزان (جز آنچه در جدول آمده) دسترسی ندارد.</p>
+              {Object.keys(TEAM_ROLES).map((rk) => (
+                <div key={rk} className="tm-q" style={{ marginBottom: 10 }}>
+                  <div className="stem"><b>{TEAM_ROLES[rk].icon} {TEAM_ROLES[rk].label}</b></div>
+                  <div className="tm-note">بخش‌ها: {TEAM_SECTIONS[rk].filter((x) => x.id !== "access").map((x) => x.icon + " " + x.label).join(" • ")}</div>
+                  <div className="tm-note" style={{ color: "#1d6b3c" }}>می‌تواند: {TEAM_ACCESS_INFO[rk].can.join("؛ ")}</div>
+                  <div className="tm-note" style={{ color: "#b3261e" }}>نمی‌تواند: {TEAM_ACCESS_INFO[rk].cannot.join("؛ ")}</div>
+                </div>
+              ))}
+            </div>
+            <div className="tm-card">
+              <h2>دسترسیِ هر عضو</h2>
+              <p className="tm-note">برای هر عضو می‌توانید بخش‌هایی را خاموش کنید. تغییر بعد از ورودِ بعدیِ او اعمال می‌شود. اگر همه روشن باشد، عضو همه‌ی بخش‌های نقشِ خودش را می‌بیند.</p>
+              {error && <div className="tm-err">{error}</div>}
+              {members.length === 0 && <p className="tm-note">هنوز عضوی ثبت نشده است.</p>}
+              {members.map((m) => {
+                const secs = TEAM_SECTIONS[m.role].filter((x) => x.id !== "access");
+                const allowed = m.allowedSections || secs.map((x) => x.id);
+                return (
+                  <div key={m.id} className="tm-member" style={{ flexDirection: "column", alignItems: "stretch" }}>
+                    <div><b>{m.name}</b> <span className="tm-badge">{TEAM_ROLES[m.role].icon} {TEAM_ROLES[m.role].label}</span>{!m.active && <span className="tm-badge off">غیرفعال</span>}</div>
+                    <div className="tm-row" style={{ margin: "8px 0 0" }}>
+                      {secs.map((x) => {
+                        const on = allowed.includes(x.id);
+                        return (
+                          <button key={x.id} type="button" className={"tm-tab" + (on ? " on" : "")} onClick={() => toggleSection(m, x.id, secs)}>
+                            {on ? "✓ " : "✕ "}{x.icon} {x.label}
+                          </button>
+                        );
+                      })}
+                    </div>
+                  </div>
+                );
+              })}
             </div>
           </>
         )}
@@ -14416,7 +14470,7 @@ const TEAM_ACCESS_INFO = {
 };
 function TeamMemberDashboard({ member, onLogout }) {
   const role = TEAM_ROLES[member.role];
-  const sections = TEAM_SECTIONS[member.role] || [];
+  const sections = (TEAM_SECTIONS[member.role] || []).filter((x) => x.id === "access" || !member.allowedSections || member.allowedSections.includes(x.id));
   const [sec, setSec] = useState(sections[0] ? sections[0].id : "access");
   const info = TEAM_ACCESS_INFO[member.role];
   return (

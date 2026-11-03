@@ -13928,7 +13928,7 @@ function TeamManagementView({ onBack }) {
     await authStorageSet("team-code:" + cleanMobile, code, true);
     await teamAudit("مدیر سامانه", "افزودن عضو", member.name + " — " + TEAM_ROLES[roleKey].label + (scope ? " — " + teamScopeLabel(scope) : ""));
     setMembers(next);
-    setCodeInfo({ name: member.name, mobile: cleanMobile, code });
+    setCodeInfo({ name: member.name, mobile: cleanMobile, code, scopeText: scope ? teamScopeLabel(scope) : "" });
     setName("");
     setMobile("");
     setLog(await teamLoad("team-audit-log", []));
@@ -13938,7 +13938,7 @@ function TeamManagementView({ onBack }) {
     const code = teamGenCode();
     await authStorageSet("team-code:" + m.mobile, code, true);
     await teamAudit("مدیر سامانه", "صدورِ رمزِ تازه", m.name);
-    setCodeInfo({ name: m.name, mobile: m.mobile, code });
+    setCodeInfo({ name: m.name, mobile: m.mobile, code, scopeText: m.scope ? teamScopeLabel(m.scope) : "" });
     setLog(await teamLoad("team-audit-log", []));
   };
   const toggleSection = async (m, secId, secs) => {
@@ -14047,7 +14047,7 @@ function TeamManagementView({ onBack }) {
 
             {codeInfo && (
               <div className="tm-code-box">
-                رمزِ ورودِ <b style={{ fontSize: 14, letterSpacing: 0 }}>{codeInfo.name}</b> ({codeInfo.mobile}):<br />
+                رمزِ ورودِ <b style={{ fontSize: 14, letterSpacing: 0 }}>{codeInfo.name}</b> ({codeInfo.mobile}){codeInfo.scopeText ? " — " + codeInfo.scopeText : ""}:<br />
                 <b>{codeInfo.code}</b><br />
                 <span className="tm-note">این رمز را همین حالا و فقط به خودِ او بدهید. عضو با همین شماره و رمز، از صفحه‌ی ورودِ معمول وارد می‌شود و فقط بخش مربوط به نقش خودش را می‌بیند.</span>
               </div>
@@ -14061,8 +14061,9 @@ function TeamManagementView({ onBack }) {
                   <div>
                     <b>{m.name}</b>
                     <span className="tm-badge">{TEAM_ROLES[m.role].icon} {TEAM_ROLES[m.role].label}</span>
+                    {m.scope && <span className="tm-badge" style={{ background: "#e8f3ec", color: "#1d6b3c" }}>📘 {teamScopeLabel(m.scope)}</span>}
                     {!m.active && <span className="tm-badge off">غیرفعال</span>}
-                    <div className="tm-note">{m.mobile}{m.scope ? " • " + teamScopeLabel(m.scope) : ""}</div>
+                    <div className="tm-note">{m.mobile}</div>
                   </div>
                   <div className="tm-row" style={{ margin: 0 }}>
                     <button type="button" className="tm-btn ghost sm" onClick={() => reissue(m)}>رمز تازه</button>
@@ -14099,7 +14100,7 @@ function TeamManagementView({ onBack }) {
                 const allowed = m.allowedSections || secs.map((x) => x.id);
                 return (
                   <div key={m.id} className="tm-member" style={{ flexDirection: "column", alignItems: "stretch" }}>
-                    <div><b>{m.name}</b> <span className="tm-badge">{TEAM_ROLES[m.role].icon} {TEAM_ROLES[m.role].label}</span>{!m.active && <span className="tm-badge off">غیرفعال</span>}</div>
+                    <div><b>{m.name}</b> <span className="tm-badge">{TEAM_ROLES[m.role].icon} {TEAM_ROLES[m.role].label}</span>{m.scope && <span className="tm-badge" style={{ background: "#e8f3ec", color: "#1d6b3c" }}>📘 {teamScopeLabel(m.scope)}</span>}{!m.active && <span className="tm-badge off">غیرفعال</span>}</div>
                     <div className="tm-row" style={{ margin: "8px 0 0" }}>
                       {secs.map((x) => {
                         const on = allowed.includes(x.id);
@@ -14484,6 +14485,11 @@ function TeamMemberDashboard({ member, onLogout }) {
         </div>
       </div>
       <div className="tm-wrap">
+        {member.scope && (
+          <div style={{ display: "inline-block", margin: "0 0 12px", padding: "8px 14px", borderRadius: 12, background: "#e8f3ec", color: "#1d6b3c", fontSize: 13, fontWeight: 800 }}>
+            📘 رشته / حوزه‌ی شما: {teamScopeLabel(member.scope)}
+          </div>
+        )}
         <div style={{ fontSize: 12.5, fontWeight: 800, color: "#5a6385", margin: "0 2px 8px" }}>بخش‌های شما</div>
         <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(150px, 1fr))", gap: 10, marginBottom: 16 }}>
           {sections.map((x) => (

@@ -18930,9 +18930,57 @@ async function pqbGradeExamPaper({ subject, imageBase64, imageMediaType, totalSc
   }
 }
 
+// کلمه‌های کلیدیِ تست‌زنی — فهرستِ ثابت و قابل‌کنترل (عمداً بدون هوش مصنوعی، تا هرگز کلمه‌ی اشتباهی رنگی نشود).
+// فقط در «تمرین در منزل» نمایش داده می‌شود؛ آزمون الزامی کنکور عمداً بدون هیچ برجسته‌سازی است، مثل برگه‌ی واقعی.
+const PQB_KEYWORD_GROUPS = [
+  { id: "neg", label: "نفی / خواسته‌ی سؤال", color: "#b3261e", bg: "#fde7e5", words: ["نادرست", "غلط", "نیست", "نمی‌باشد", "نمی‌شود", "نمی‌تواند", "نمی‌کند", "نباید", "به‌جز", "بجز", "مگر", "هیچ‌کدام", "هیچ‌گاه", "هیچ"] },
+  { id: "abs", label: "قید قطعی (معمولاً مشکوک)", color: "#9a5b00", bg: "#fff1d6", words: ["همواره", "همیشه", "هرگز", "حتماً", "حتما", "فقط", "تنها", "همگی", "کاملاً", "قطعاً", "در هر شرایطی", "تمام", "همه"] },
+  { id: "cmp", label: "مقایسه / رتبه", color: "#1b5aa8", bg: "#e1ecfb", words: ["بیشترین", "کمترین", "بیش‌ترین", "کم‌ترین", "بزرگ‌ترین", "کوچک‌ترین", "اولین", "آخرین", "بیشتر", "کمتر", "برابر"] },
+  { id: "hdg", label: "احتمال (معمولاً درست)", color: "#1d6b3c", bg: "#e0f4e8", words: ["ممکن است", "می‌تواند", "گاهی", "معمولاً", "اغلب", "برخی", "بعضی", "احتمالاً"] },
+];
+const PQB_KEYWORD_LOOKUP = (() => {
+  const map = {};
+  const all = [];
+  PQB_KEYWORD_GROUPS.forEach((g) =>
+    g.words.forEach((w) => {
+      all.push(w);
+      map[w.replace(/[‌\s]/g, "")] = g;
+    })
+  );
+  all.sort((a, b) => b.length - a.length);
+  const esc = (w) => w.replace(/[.*+?^${}()|[\]\\]/g, "\\$&").replace(/\u200c/g, "[\\u200c ]?").replace(/ /g, "\\s+");
+  const re = new RegExp("(^|[^\\u0600-\\u06FF\\u200c])(" + all.map(esc).join("|") + ")(?![\\u0600-\\u06FF])", "g");
+  return { map, re };
+})();
+
+function PqbKeywordText({ text, enabled }) {
+  const str = String(text || "");
+  if (!enabled) return <>{str}</>;
+  const parts = [];
+  const re = new RegExp(PQB_KEYWORD_LOOKUP.re.source, "g");
+  let last = 0;
+  let m;
+  while ((m = re.exec(str)) !== null) {
+    const word = m[2];
+    const g = PQB_KEYWORD_LOOKUP.map[word.replace(/[\u200c\s]/g, "")];
+    if (!g) continue;
+    const start = m.index + m[1].length;
+    if (start > last) parts.push(str.slice(last, start));
+    parts.push(
+      <mark key={"kw" + start} style={{ background: g.bg, color: g.color, fontWeight: 800, borderRadius: 4, padding: "0 3px" }}>
+        {word}
+      </mark>
+    );
+    last = start + word.length;
+  }
+  if (last < str.length) parts.push(str.slice(last));
+  return <>{parts}</>;
+}
+
 // تمرین نامحدود با رهیار — مستقل از این‌که بانک رسمی معلم خالی باشد یا نه، همیشه در دسترس دانش‌آموز است
 // (برخلاف بقیه‌ی این صفحه که فقط وقتی بانک معلم سؤال دارد نمایش داده می‌شود)
 function StudentAiPracticeBlock({ grade, subject, aiPracticeLoading, aiPracticeError, aiPracticeQuestions, aiPracticeRevealedIds, onGenerate, onToggleReveal, onAskRahyar }) {
+  const [kwOn, setKwOn] = useState(true);
   return (
     <div className="pqb-section" style={{ marginTop: 18 }}>
       <h2 className="pqb-section-title">🤖 تمرین نامحدود با رهیار</h2>
@@ -18947,6 +18995,23 @@ function StudentAiPracticeBlock({ grade, subject, aiPracticeLoading, aiPracticeE
       {aiPracticeError && <p className="pqb-upload-error">{aiPracticeError}</p>}
 
       {aiPracticeQuestions.length > 0 && (
+        <div className="pqb-kw-bar" style={{ marginTop: 14, display: "flex", flexWrap: "wrap", gap: 8, alignItems: "center" }}>
+          <button type="button" className="pqb-reveal-btn" onClick={() => setKwOn((v) => !v)}>
+            {kwOn ? "🙈 خاموش‌کردن رنگِ کلمه‌های کلیدی (تمرینِ بدون کمک)" : "🎨 نمایش کلمه‌های کلیدی"}
+          </button>
+          {kwOn &&
+            PQB_KEYWORD_GROUPS.map((g) => (
+              <span key={g.id} style={{ background: g.bg, color: g.color, fontWeight: 700, fontSize: 12, borderRadius: 6, padding: "2px 8px" }}>
+                {g.label}
+              </span>
+            ))}
+          <span style={{ fontSize: 12, opacity: 0.75, flexBasis: "100%" }}>
+            این رنگ‌ها فقط سرنخ‌اند، نه قانون؛ همیشه گزینه‌ها را با علم خودت بسنج. در آزمون الزامی کنکور هیچ رنگی نیست.
+          </span>
+        </div>
+      )}
+
+      {aiPracticeQuestions.length > 0 && (
         <div className="pqb-question-list" style={{ marginTop: 14 }}>
           {aiPracticeQuestions.map((q) => (
             <div key={q.id} className="pqb-question-item" style={{ background: "#f8f4ff" }}>
@@ -18955,7 +19020,7 @@ function StudentAiPracticeBlock({ grade, subject, aiPracticeLoading, aiPracticeE
                 {q.difficulty && <span className="pqb-tag">{q.difficulty}</span>}
                 <span className="pqb-tag" style={{ background: "#e6dcf7", color: "#6b3fa0" }}>تمرین رهیار — بدون بازبینی معلم</span>
               </div>
-              <div className="pqb-question-text">{q.text}</div>
+              <div className="pqb-question-text"><PqbKeywordText text={q.text} enabled={kwOn} /></div>
               {q.explanation && (
                 <>
                   <button type="button" className="pqb-reveal-btn" onClick={() => onToggleReveal(q.id)}>

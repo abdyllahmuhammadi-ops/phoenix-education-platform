@@ -27270,7 +27270,7 @@ function VlabDiffusionExperiment({ onReading }) {
         {/* بشرِ شیشه‌ای: طبقِ خواسته‌ی کاربر، خودِ آب سفید در نظر گرفته شد (نه آبیِ تیره) تا رنگِ
             آبیِ اضافه‌شده واضح و زیبا دیده شود — دقیقاً مثلِ زمینه‌ی سفیدِ فیلمِ واقعیِ قطره‌چکان */}
         <path d="M58,30 L58,150 Q58,158 66,158 L254,158 Q262,158 262,150 L262,30" fill="#f7faff" opacity="0.96" stroke="#8fb4e0" strokeWidth="2" />
-        <path d="M58,30 L58,150 Q58,158 66,158 L254,158 Q262,158 262,150 L262,30" fill="none" stroke="#8fb4e0" strokeWidth="2" />
+        <ellipse cx="160" cy="30" rx="102" ry="8" fill="#e9f1fb" stroke="#8fb4e0" strokeWidth="1.4" />
         {[50, 80, 110, 140].map((gy) => (
           <line key={gy} x1="58" y1={gy} x2="66" y2={gy} stroke="#7a93b8" strokeWidth="1" opacity="0.5" />
         ))}
@@ -27378,8 +27378,31 @@ function VlabDiffusionExperiment({ onReading }) {
         {/* کرونومترِ عقربه‌ایِ واقعی: چون حالا زمان به‌طورِ خودکار و پیوسته جلو می‌رود (نه با نوارِ
             لغزنده)، عقربه مثلِ یک کرونومترِ واقعی هر ۶۰ ثانیه یک دور کامل می‌زند و عددِ کلِ زمانِ
             سپری‌شده زیرش نوشته می‌شود */}
+        <VlabGlassFront x1={58} x2={262} top={30} bottom={152} ry={8} id="dif" />
         <VlabStopwatchIcon x={46} y={24} scale={1.15} seconds={elapsed % 60} maxSeconds={60} readout={`${elapsed.toFixed(0)}s`} />
       </svg>
+      {/* نمای مولکولی: هر نقطه یک مولکولِ رنگ است؛ در آغاز همه کنارِ هم‌اند و با گذشتِ زمان (با همان شعاعِ پخشِ بالا) به‌طور تصادفی در آب پراکنده می‌شوند */}
+      {(() => {
+        const W = 300, H = 110, N = 70;
+        const sig = Math.max(diffusionRadius * 1.5, 3);
+        const g = (i, k) => { const u1 = seeded(i * 3 + k, 7) * 0.998 + 0.001, u2 = seeded(i * 5 + k, 11); return Math.sqrt(-2 * Math.log(u1)) * Math.cos(6.2832 * u2); };
+        const fold = (v, L) => { let t = ((v % (2 * L)) + 2 * L) % (2 * L); return t > L ? 2 * L - t : t; };
+        return (
+          <svg viewBox="0 0 320 150" className="vlab-svg" style={{ background: "#03060f", maxWidth: 520, marginTop: 8 }}>
+            <text x="160" y="13" fontSize="9" fontWeight="700" fill="#cfd6ea" textAnchor="middle">نمای مولکولی: پخش رنگ در آب</text>
+            <rect x="10" y="22" width={W} height={H} rx="6" fill="#0a1530" stroke="#2f6fe2" strokeWidth="1.2" />
+            {Array.from({ length: N }).map((_, i) => {
+              const jx = Math.sin(elapsed * (2 + (temp / 30)) + i * 1.7) * (1 + temp / 40);
+              const jy = Math.cos(elapsed * (2.3 + (temp / 30)) + i * 2.3) * (1 + temp / 40);
+              const x = 10 + fold(W / 2 + g(i, 0) * sig + jx, W);
+              const y = 22 + fold(H / 2 + g(i, 1) * sig * 0.7 + jy, H);
+              return <circle key={"dm" + i} cx={x} cy={y} r="3" fill="url(#diffusionCoreGrad)" stroke="#bcd8ff" strokeWidth="0.4" style={{ transition: "cx 0.2s linear, cy 0.2s linear" }} />;
+            })}
+            <text x="160" y="142" fontSize="8" fill="#9aa3c0" textAnchor="middle">دمای بالاتر ← تکان‌خوردن تندتر ← پخش سریع‌تر</text>
+          </svg>
+        );
+      })()}
+      <VlabMeterRow height={160} meters={[{ label: "شعاع پخش رنگ", unit: "mm", value: diffusionRadius, ranges: [100], maj: 5, decimals: 0 }, { label: "دمای آب", unit: "°C", value: temp, ranges: [100], maj: 5, decimals: 0 }]} />
       <div className="vlab-controls">
         <div className="vlab-ctrl-col" style={{ flex: 1 }}>
           <label className="vlab-ctrl-label">دمای آب (°C): {temp}</label>

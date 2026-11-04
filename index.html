@@ -24410,6 +24410,35 @@ function VlabFreeFallExperiment({ onReading }) {
     // eslint-disable-next-line
   }, [height, planet]);
 
+  // ---- سقوطِ زنده با فیزیکِ واقعی: s = ½·g·t² ، ساعتِ بزرگ و دقیق (هر دور = ۱۰ ثانیه، خط‌های ۰٫۱ ثانیه) ----
+  const [t, setT] = useState(0);
+  const [running, setRunning] = useState(false);
+  const rafId = React.useRef(0);
+  useEffect(() => { setT(0); setRunning(false); }, [height, planet]);
+  useEffect(() => {
+    if (!running) return undefined;
+    const t0 = performance.now();
+    const tick = (now) => {
+      const el = (now - t0) / 1000;
+      if (el >= time) { setT(time); setRunning(false); return; }
+      setT(el);
+      rafId.current = requestAnimationFrame(tick);
+    };
+    rafId.current = requestAnimationFrame(tick);
+    return () => cancelAnimationFrame(rafId.current);
+  }, [running, time]);
+  const faN = (n) => String(n).replace(/\d/g, (d) => "۰۱۲۳۴۵۶۷۸۹"[d]).replace(/\./g, "٫");
+  const fallen = Math.min(height, 0.5 * g * t * t);
+  const vNow = g * t;
+  const TOP = 40, TRACK = 211, BALL_R = 11;
+  const ballY = TOP + (fallen / height) * TRACK;
+  const stepM = height <= 10 ? 1 : height <= 20 ? 2 : height <= 50 ? 5 : 10;
+  const rulerMarks = [];
+  for (let m = 0; m <= height + 1e-9; m += stepM) rulerMarks.push(m);
+  const dtG = time / 8;
+  const CX = 305, CY = 128, CR = 84;
+  const handAng = ((t % 10.0001) / 10) * 360;
+
   return (
     <div className="vlab-exp">
       {/* خط‌چین قبلی فقط مسیر سقوط را نشان می‌داد ولی «متر یا ارتفاع‌سنج» و «کرنومتر» که در فهرست وسایل بودند
@@ -24419,40 +24448,66 @@ function VlabFreeFallExperiment({ onReading }) {
           calcMode="spline" (شتاب‌گیری واقعی، شبیه y∝t²) حرکت می‌کند تا اختلاف سرعتِ شروع/پایانِ سقوط
           واقعاً حس شود؛ یک سایه‌ی بیضی‌شکل روی زمین هم هم‌زمان با افت گوی کوچک/بزرگ و کم‌رنگ/پررنگ
           می‌شود (هرچه گوی نزدیک‌تر به زمین، سایه تیره‌تر و بزرگ‌تر) تا عمق صحنه بهتر دیده شود. */}
-      <svg viewBox="0 0 320 200" className="vlab-svg">
+      <svg viewBox="0 0 420 300" className="vlab-svg" style={{ background: "#0b1330", maxWidth: 520 }}>
         <defs>
-          <radialGradient id="vlabMetalBallGrad" cx="35%" cy="28%" r="75%">
-            <stop offset="0%" stopColor="#f4f8fc" />
-            <stop offset="30%" stopColor="#c7d2dd" />
-            <stop offset="70%" stopColor="#7c8899" />
-            <stop offset="100%" stopColor="#3a4150" />
+          <radialGradient id="ffBall" cx="35%" cy="28%" r="75%">
+            <stop offset="0%" stopColor="#ffffff" /><stop offset="30%" stopColor="#c7d2dd" /><stop offset="70%" stopColor="#7c8899" /><stop offset="100%" stopColor="#2a3040" />
           </radialGradient>
-          <linearGradient id="vlabFreeFallGround" x1="0" y1="0" x2="0" y2="1">
-            <stop offset="0%" stopColor="#9c7d4a" />
-            <stop offset="100%" stopColor="#6e5633" />
-          </linearGradient>
+          <linearGradient id="ffGround" x1="0" y1="0" x2="0" y2="1"><stop offset="0%" stopColor="#8a6d3b" /><stop offset="100%" stopColor="#4a3a1e" /></linearGradient>
+          <radialGradient id="ffBezel" cx="50%" cy="40%" r="70%"><stop offset="0%" stopColor="#d9dfee" /><stop offset="60%" stopColor="#8a94b4" /><stop offset="100%" stopColor="#3a4468" /></radialGradient>
         </defs>
-        <rect x="58" y="16" width="10" height="164" rx="2" fill="#f2c572" stroke="#c8862b" strokeWidth="1" />
-        {Array.from({ length: 9 }).map((_, i) => (
-          <g key={i}>
-            <line x1="58" y1={16 + i * 20.5} x2={i % 2 === 0 ? 50 : 54} y2={16 + i * 20.5} stroke="#8a6d3b" strokeWidth="1" />
-            {i % 2 === 0 && <text x="46" y={16 + i * 20.5 + 3} fontSize="6.5" fill="#6b7399" textAnchor="end">{80 - i * 20}</text>}
-          </g>
-        ))}
-        <line x1="40" y1="20" x2="40" y2="180" stroke="#d9c9a0" strokeWidth="2" strokeDasharray="4 4" />
-        {/* تکیه‌گاه/گیره‌ی رهاسازی بالای مسیر */}
-        <rect x="32" y="16" width="16" height="5" rx="1.5" fill="#5b4636" />
-        <rect x="20" y="180" width="280" height="10" fill="url(#vlabFreeFallGround)" />
-        {/* سایه‌ی گوی روی زمین: هم‌زمان با سقوط، بزرگ‌تر/تیره‌تر می‌شود */}
-        <ellipse cx="40" cy="183" rx="4" ry="2" fill="#2c2410" opacity="0.15">
-          <animate attributeName="rx" values="4;14" keyTimes="0;1" calcMode="spline" keySplines="0.42 0 1 1" dur={`${animDuration}s`} repeatCount="indefinite" />
-          <animate attributeName="opacity" values="0.1;0.4" keyTimes="0;1" calcMode="spline" keySplines="0.42 0 1 1" dur={`${animDuration}s`} repeatCount="indefinite" />
-        </ellipse>
-        <circle cx="40" cy="30" r="13" fill="url(#vlabMetalBallGrad)" stroke="#1c2540" strokeWidth="0.6">
-          <animate attributeName="cy" values="30;170" keyTimes="0;1" calcMode="spline" keySplines="0.42 0 1 1" dur={`${animDuration}s`} repeatCount="indefinite" />
-        </circle>
-        <VlabStopwatchIcon x={270} y={50} readout={`${time.toFixed(2)}s`} />
+        {/* ستونِ مدرجِ ارتفاع */}
+        <rect x="62" y={TOP - BALL_R} width="12" height={TRACK + BALL_R * 2} rx="2" fill="#2a3460" stroke="#5a6a9c" strokeWidth="0.8" />
+        {rulerMarks.map((m) => {
+          const y = TOP + ((height - m) / height) * TRACK;
+          return (
+            <g key={"m" + m}>
+              <line x1="62" y1={y} x2="52" y2={y} stroke="#f2c572" strokeWidth="1.2" />
+              <text x="48" y={y + 3} fontSize="9" fill="#cfd6ea" textAnchor="end">{faN(m)}</text>
+            </g>
+          );
+        })}
+        <text x="62" y="18" fontSize="9" fill="#9fb0e0">ارتفاع (متر)</text>
+        <rect x="86" y="14" width="22" height="5" rx="2" fill="#8fa0c8" />
+        {/* خط مسیر و تصاویرِ پی‌درپی (هر ۱/۸ زمانِ سقوط) — فاصله‌ها رو‌به‌افزایش‌اند یعنی شتاب */}
+        <line x1="97" y1={TOP} x2="97" y2={TOP + TRACK} stroke="#5a6a9c" strokeDasharray="3 4" strokeWidth="0.8" />
+        {Array.from({ length: 7 }).map((_, k) => {
+          const tk = (k + 1) * dtG;
+          if (t < tk) return null;
+          const yk = TOP + (Math.min(height, 0.5 * g * tk * tk) / height) * TRACK;
+          return <circle key={"gh" + k} cx="97" cy={yk} r={BALL_R} fill="none" stroke="#8fa0c8" strokeWidth="1" opacity="0.55" />;
+        })}
+        <ellipse cx="97" cy={TOP + TRACK + BALL_R + 3} rx={6 + (fallen / height) * 10} ry="2.5" fill="#000" opacity={0.15 + (fallen / height) * 0.3} />
+        <rect x="30" y={TOP + TRACK + BALL_R + 2} width="200" height="12" rx="2" fill="url(#ffGround)" />
+        <circle cx="97" cy={ballY} r={BALL_R} fill="url(#ffBall)" stroke="#1c2540" strokeWidth="0.6" />
+        {/* ساعتِ بزرگ */}
+        <circle cx={CX} cy={CY} r={CR + 10} fill="url(#ffBezel)" stroke="#1c2540" strokeWidth="1" />
+        <circle cx={CX} cy={CY} r={CR + 2} fill="#fbf7ec" stroke="#3a4468" strokeWidth="1.2" />
+        {Array.from({ length: 100 }).map((_, i) => {
+          const ang = (i / 100) * 2 * Math.PI;
+          const major = i % 10 === 0, mid = i % 5 === 0;
+          const r1 = CR - 1, r2 = CR - (major ? 11 : mid ? 7 : 4);
+          return <line key={"ck" + i} x1={CX + r1 * Math.sin(ang)} y1={CY - r1 * Math.cos(ang)} x2={CX + r2 * Math.sin(ang)} y2={CY - r2 * Math.cos(ang)} stroke={major ? "#1c2540" : "#5a6585"} strokeWidth={major ? 1.8 : mid ? 1.1 : 0.6} />;
+        })}
+        {Array.from({ length: 10 }).map((_, i) => {
+          const ang = (i / 10) * 2 * Math.PI;
+          return <text key={"cn" + i} x={CX + (CR - 22) * Math.sin(ang)} y={CY - (CR - 22) * Math.cos(ang) + 5} fontSize="15" fontWeight="800" fill="#1c2540" textAnchor="middle">{faN(i)}</text>;
+        })}
+        <text x={CX} y={CY - 38} fontSize="8.5" fill="#6b7399" textAnchor="middle">ثانیه</text>
+        <g transform={`rotate(${handAng} ${CX} ${CY})`}>
+          <line x1={CX} y1={CY + 14} x2={CX} y2={CY - (CR - 6)} stroke="#d3392b" strokeWidth="2.4" strokeLinecap="round" />
+          <polygon points={`${CX - 3},${CY - (CR - 14)} ${CX + 3},${CY - (CR - 14)} ${CX},${CY - (CR - 2)}`} fill="#d3392b" />
+        </g>
+        <circle cx={CX} cy={CY} r="5" fill="#1c2540" /><circle cx={CX} cy={CY} r="2" fill="#d3392b" />
+        {/* نمایشگر دیجیتال */}
+        <rect x={CX - 75} y="232" width="150" height="34" rx="8" fill="#050a1c" stroke="#2a3a73" />
+        <text x={CX} y="256" fontSize="22" fontWeight="800" fill="#7be0a4" textAnchor="middle" style={{ direction: "ltr", unicodeBidi: "isolate" }}>{"t = " + faN(t.toFixed(2)) + " s"}</text>
+        <text x={CX} y="284" fontSize="10.5" fill="#cfd6ea" textAnchor="middle">{"مسافتِ پیموده: " + faN(fallen.toFixed(1)) + " m  |  سرعت: " + faN(vNow.toFixed(1)) + " m/s"}</text>
+        <text x="235" y="20" fontSize="9.5" fill="#f2c572" textAnchor="end">{planet + " — g = " + faN(g) + " m/s²"}</text>
       </svg>
+      <div style={{ display: "flex", gap: 8, justifyContent: "center", margin: "8px 0" }}>
+        <button type="button" className="pqb-submit-btn" disabled={running} onClick={() => { setT(0); setRunning(true); }}>{t > 0 && !running ? "↺ دوباره رها کن" : "▶️ رها کن"}</button>
+      </div>
       <div className="vlab-controls">
         <div className="vlab-ctrl-col" style={{ flex: 1 }}>
           <label className="vlab-ctrl-label">ارتفاع رهاسازی (متر): {height}</label>

@@ -22392,6 +22392,32 @@ const VLAB_SUBJECTS = ["فیزیک", "شیمی", "زیست‌شناسی", "بر�
 /* ============================================================
    ققنوس — آمپرمتر و ولت‌مترِ عقربه‌ایِ دقیق (با برد خودکار، مثل مولتی‌متر)
    ============================================================ */
+// بشر شیشه‌ایِ سه‌بعدی (مشترک): VlabGlassBack پیش از محتویات و VlabGlassFront پس از آن‌ها رسم می‌شود.
+function VlabGlassBack({ x1, x2, top, ry }) {
+  const cx = (x1 + x2) / 2, rx = (x2 - x1) / 2;
+  return <ellipse cx={cx} cy={top} rx={rx} ry={ry} fill="#cfd8e8" fillOpacity="0.04" stroke="#8fa3c4" strokeWidth="1.1" />;
+}
+function VlabGlassFront({ x1, x2, top, bottom, ry, id }) {
+  const cx = (x1 + x2) / 2, rx = (x2 - x1) / 2, gid = "vgf" + (id || "x");
+  return (
+    <g>
+      <defs>
+        <linearGradient id={gid} x1="0" x2="1">
+          <stop offset="0" stopColor="#fff" stopOpacity="0.26" />
+          <stop offset="0.16" stopColor="#fff" stopOpacity="0.05" />
+          <stop offset="0.85" stopColor="#fff" stopOpacity="0.04" />
+          <stop offset="1" stopColor="#fff" stopOpacity="0.2" />
+        </linearGradient>
+      </defs>
+      <path d={`M${x1},${top} L${x1},${bottom} A${rx},${ry} 0 0 0 ${x2},${bottom} L${x2},${top} A${rx},${ry} 0 0 1 ${x1},${top} Z`} fill={`url(#${gid})`} />
+      <path d={`M${x1},${top} L${x1},${bottom} A${rx},${ry} 0 0 0 ${x2},${bottom} L${x2},${top}`} fill="none" stroke="#cfd8e8" strokeWidth="2" />
+      <path d={`M${x1},${top} A${rx},${ry} 0 0 0 ${x2},${top}`} fill="none" stroke="#e8eefb" strokeWidth="2" />
+      <path d={`M${x1 + 9},${top + 10} L${x1 + 9},${bottom - 10}`} stroke="#fff" strokeWidth="4" strokeLinecap="round" opacity="0.16" />
+      <path d={`M${x2 - 8},${top + 14} L${x2 - 8},${bottom - 14}`} stroke="#fff" strokeWidth="1.8" strokeLinecap="round" opacity="0.1" />
+    </g>
+  );
+}
+
 function VlabMeter({ x, y, value, ranges, unit, label, size, decimals, maj }) {
   const v = Math.max(0, Number(value) || 0);
   const max = ranges.find((r) => v <= r) || ranges[ranges.length - 1];
@@ -23725,7 +23751,7 @@ function VlabStatesOfMatterExperiment({ onReading }) {
       const col = i % 5;
       const row = Math.floor(i / 5);
       const lx = 78 + col * 32;
-      const ly = 52 + row * 26;
+      const ly = 94 + row * 22;
       return { lx, ly, x: lx, y: ly, vx: 0, vy: 0, seed: i * 0.77 + Math.random() * 3 };
     });
   }
@@ -23805,14 +23831,9 @@ function VlabStatesOfMatterExperiment({ onReading }) {
 
   const fillHeight = vlabSomFillHeight(temp);
   const dots = molsRef.current.map((m, i) => (
-    <circle
-      key={i}
-      cx={m.x}
-      cy={m.y}
-      r={temp >= 100 ? 2.6 : 5}
-      fill="#3a7bd5"
-      opacity={temp >= 100 ? vlabClamp(1 - (VLAB_SOM_CONTAINER_BOTTOM - m.y) / 190, 0.08, 0.8) : 0.85}
-    />
+    <g key={i} opacity={temp >= 100 ? vlabClamp(1 - (VLAB_SOM_CONTAINER_BOTTOM - m.y) / 190, 0.08, 0.8) : 0.95}>
+      <circle cx={m.x} cy={m.y} r={temp >= 100 ? 3 : 5} fill="url(#somMol)" stroke="#0b2a66" strokeWidth="0.6" />
+    </g>
   ));
 
   const thermoTicks = [];
@@ -23821,8 +23842,8 @@ function VlabStatesOfMatterExperiment({ onReading }) {
     const isFreezeOrBoil = v === 0 || v === 100;
     thermoTicks.push(
       <g key={"tick" + v}>
-        <line x1="246" y1={ty} x2="252" y2={ty} stroke={isFreezeOrBoil ? (v === 0 ? "#6fa8ff" : "#ff7a5c") : "#8f9ac2"} strokeWidth={isFreezeOrBoil ? 2 : 1} />
-        <text x="243" y={ty + 3} textAnchor="end" fontSize={isFreezeOrBoil ? 9.5 : 8} fontWeight={isFreezeOrBoil ? 700 : 400} fill={isFreezeOrBoil ? (v === 0 ? "#6fa8ff" : "#ff7a5c") : "#aeb8d6"}>
+        <line x1="243" y1={ty} x2="249" y2={ty} stroke={isFreezeOrBoil ? (v === 0 ? "#6fa8ff" : "#ff7a5c") : "#8f9ac2"} strokeWidth={isFreezeOrBoil ? 2 : 1} />
+        <text x="239" y={ty + 3} textAnchor="end" fontSize={isFreezeOrBoil ? 9.5 : 8} fontWeight={isFreezeOrBoil ? 700 : 400} fill={isFreezeOrBoil ? (v === 0 ? "#6fa8ff" : "#ff7a5c") : "#aeb8d6"}>
           {v}
         </text>
       </g>
@@ -23835,47 +23856,113 @@ function VlabStatesOfMatterExperiment({ onReading }) {
   // و هم آب/مولکول‌ها در این آزمایش آبی‌اند، برای این‌که شعله گم نشود: بزرگ‌تر از حالت قبل، با هاله‌ی نورانی
   // دور خودش و یک هسته‌ی تقریباً سفید/روشن در وسط (مثل شعله‌ی واقعی الکل که هسته‌اش داغ‌تر و روشن‌تر است) کشیده می‌شود.
   const flameFlicker = Math.sin(Date.now() / 140) * 1.6;
-  const flameHeight = 20 + (temp / 100) * 12;
-  const flameTipY = 173 - flameHeight + flameFlicker;
-  const flameInnerTipY = 171 - flameHeight * 0.58 + flameFlicker;
+  const flameHeight = 18 + (temp / 100) * 10;
+  const flameTipY = 206 - flameHeight + flameFlicker;
+  const flameInnerTipY = 204 - flameHeight * 0.58 + flameFlicker;
 
   return (
     <div className="vlab-exp">
-      <svg viewBox="0 -40 320 250" className="vlab-svg">
-        {/* زمینه‌ی تیره تا وجود آب/یخ داخل ظرف بهتر معلوم باشد (همان زبان بصری ظرف‌های تیره‌ی سایر آزمایش‌ها) */}
-        <rect x="0" y="-40" width="320" height="250" fill="#0b1330" />
-        {temp <= 0 && (
-          <g>
-            <text x="140" y="-4" textAnchor="middle" fontSize="34">🧊</text>
-            <text x="140" y="14" textAnchor="middle" fontSize="11" fill="#aeb8d6">یخ</text>
-          </g>
-        )}
-        {/* چراغ الکلی زیر ظرف — بدنه/فتیله قبل از ظرف رسم می‌شوند؛ خود شعله را پایین‌تر، بعد از آب/مولکول‌ها رسم می‌کنیم
-            تا رنگ آبی‌کم‌رنگ آب روی شعله نیفتد و همیشه دیده شود. */}
-        <g>
-          <ellipse cx="140" cy="196" rx="20" ry="10" fill="#dce8f5" stroke="#8fa3c4" strokeWidth="1.5" opacity="0.92" />
-          <ellipse cx="140" cy="198" rx="14" ry="6" fill="#bcdfff" opacity="0.7" />
-          <rect x="134" y="180" width="12" height="8" fill="#6b7280" stroke="#3d4450" strokeWidth="1" />
-          <line x1="140" y1="180" x2="140" y2="172" stroke="#3a2e22" strokeWidth="2" strokeLinecap="round" />
-          <text x="168" y="200" textAnchor="start" fontSize="9" fill="#aeb8d6">چراغ الکلی</text>
-        </g>
-        {temp >= 100 ? (
-          // در حالت گاز، درِ بالای ظرف رسم نمی‌شود تا بخار واقعاً از دهانه‌ی باز بیرون بزند و در هوا پخش شود.
-          <path d="M50,20 L50,170 L230,170 L230,20" fill="none" stroke="#cfd8e8" strokeWidth="3" />
-        ) : (
-          <rect x="50" y="20" width="180" height="150" fill="none" stroke="#cfd8e8" strokeWidth="3" />
-        )}
-        {fillHeight > 0 && <rect x="53" y={170 - fillHeight} width="174" height={fillHeight} fill="#5b9bff" opacity="0.5" />}
-        {dots}
-        {temp > 0 && (
-          <g>
-            {/* هاله‌ی نورانی دور شعله تا روی زمینه‌ی تیره و میان مولکول‌های آبی گم نشود */}
-            <ellipse cx="140" cy={173 - flameHeight * 0.55} rx={13 + flameHeight * 0.25} ry={10 + flameHeight * 0.4} fill="#4fc3f7" opacity="0.22" />
-            <ellipse cx="140" cy={173 - flameHeight * 0.55} rx={8 + flameHeight * 0.15} ry={7 + flameHeight * 0.25} fill="#7fd8ff" opacity="0.28" />
-            <path d={`M140,174 C130,165 131,154 140,${flameTipY} C149,154 150,165 140,174 Z`} fill="#1e88e5" stroke="#8fe0ff" strokeWidth="0.8" opacity="0.97" />
-            <path d={`M140,172 C134,165 134,158 140,${flameInnerTipY} C146,158 146,165 140,172 Z`} fill="#dff6ff" opacity="0.98" />
-          </g>
-        )}
+      <svg viewBox="0 -40 320 292" className="vlab-svg">
+        <defs>
+          <radialGradient id="somMol" cx="35%" cy="30%" r="75%">
+            <stop offset="0" stopColor="#cfe8ff" />
+            <stop offset="0.55" stopColor="#4a8fe8" />
+            <stop offset="1" stopColor="#1d4fa8" />
+          </radialGradient>
+          <linearGradient id="somGlass" x1="0" x2="1">
+            <stop offset="0" stopColor="#fff" stopOpacity="0.28" />
+            <stop offset="0.16" stopColor="#fff" stopOpacity="0.05" />
+            <stop offset="0.85" stopColor="#fff" stopOpacity="0.04" />
+            <stop offset="1" stopColor="#fff" stopOpacity="0.2" />
+          </linearGradient>
+          <linearGradient id="somIce" x1="0" y1="0" x2="1" y2="1">
+            <stop offset="0" stopColor="#f2fbff" stopOpacity="0.95" />
+            <stop offset="1" stopColor="#8fcdf2" stopOpacity="0.8" />
+          </linearGradient>
+        </defs>
+        <rect x="0" y="-40" width="320" height="292" fill="#03060f" />
+        {(() => {
+          const t = Date.now() / 1000;
+          const LT = 170 - fillHeight; // سطح مایع
+          const iceScale = temp <= 0 ? 1 : vlabClamp(1 - temp / 8, 0, 1);
+          const waterTop = temp <= 0 ? 80 : LT;
+          const warm = vlabClamp(temp / 100, 0, 1);
+          const waterColor = vlabMixHexColor("#3d86d9", "#e0703a", warm * 0.45);
+          const badge = temp <= 0 ? "🧊 جامد (یخ)" : temp >= 100 ? "☁️ گاز (بخار آب)" : temp >= 98 ? "♨️ در حال جوشیدن" : temp <= 2 ? "💧 در حال ذوب" : "💧 مایع (آب)";
+          const cubes = [[92, 96, -6], [132, 90, 5], [172, 98, -4], [108, 128, 4], [150, 126, -5], [190, 130, 6], [96, 152, 3], [138, 150, -3], [180, 154, 4]];
+          const showSteam = temp >= 70;
+          const steamA = temp >= 100 ? 0.5 : vlabClamp((temp - 70) / 30, 0, 1) * 0.28;
+          return (
+            <g>
+              {/* گاز/بخار بالای ظرف */}
+              {showSteam && [0, 1, 2, 3, 4, 5].map((k) => {
+                const prog = ((t * (temp >= 100 ? 0.45 : 0.28) + k * 0.17) % 1);
+                return <ellipse key={"st" + k} cx={95 + k * 18 + Math.sin(t * 0.9 + k) * 9} cy={14 - prog * 52} rx={9 + prog * 12} ry={6 + prog * 8} fill="#f4f8ff" opacity={Math.min(0.85, steamA * 1.5) * (1 - prog)} />;
+              })}
+              {/* دیوارِ پشتیِ دهانه‌ی بشر */}
+              <ellipse cx="140" cy="20" rx="90" ry="10" fill="#cfd8e8" fillOpacity="0.04" stroke="#8fa3c4" strokeWidth="1.2" />
+              {/* آب/یخ */}
+              {(fillHeight > 0 || temp <= 0) && (
+                <g>
+                  <path d={`M52,${waterTop} L52,170 A88,9 0 0 0 228,170 L228,${waterTop} Z`} fill={temp <= 0 ? "#9fd3f5" : waterColor} opacity={temp <= 0 ? 0.35 : 0.82} />
+                  <ellipse cx="140" cy={waterTop} rx="88" ry="8" fill={temp <= 0 ? "#e4f6ff" : waterColor} />
+                  <ellipse cx="140" cy={waterTop} rx="88" ry="8" fill="#fff" opacity="0.2" />
+                </g>
+              )}
+              {/* حباب‌های جوش */}
+              {temp >= 78 && temp < 100 && Array.from({ length: 9 }).map((_, k) => {
+                const prog = (t * (0.3 + warm * 0.9) + k * 0.113) % 1;
+                const by = 160 - prog * (160 - LT);
+                return <circle key={"bb" + k} cx={78 + k * 15.5 + Math.sin(t * 2 + k) * 2} cy={by} r={1.4 + (k % 3) * 0.9} fill="#fff" fillOpacity="0.15" stroke="#e8f4ff" strokeWidth="0.7" opacity={0.85 * (1 - prog * 0.4)} />;
+              })}
+              {/* قطعه‌های یخ */}
+              {iceScale > 0 && cubes.map(([cx, cy, rot], k) => (
+                <g key={"ic" + k} transform={`translate(${cx},${cy + (1 - iceScale) * 6}) rotate(${rot}) scale(${iceScale})`}>
+                  <rect x="-15" y="-13" width="30" height="26" rx="5" fill="url(#somIce)" stroke="#dff4ff" strokeWidth="1" />
+                  <path d="M-10,-8 L-3,-8 M-10,-8 L-10,-1" stroke="#fff" strokeWidth="1.6" strokeLinecap="round" opacity="0.8" />
+                  <path d="M3,2 L9,9" stroke="#fff" strokeWidth="0.8" opacity="0.5" />
+                </g>
+              ))}
+              {/* مولکول‌ها */}
+              {dots}
+              {/* بدنه‌ی شیشه‌ای بشر */}
+              <path d="M50,20 L50,170 A90,10 0 0 0 230,170 L230,20 A90,10 0 0 1 50,20 Z" fill="url(#somGlass)" />
+              <path d="M50,20 L50,170 A90,10 0 0 0 230,170 L230,20" fill="none" stroke="#cfd8e8" strokeWidth="2.4" />
+              <path d="M50,20 A90,10 0 0 0 230,20" fill="none" stroke="#e8eefb" strokeWidth="2.4" />
+              <path d="M50,20 L38,15 L51,15" fill="none" stroke="#cfd8e8" strokeWidth="1.6" strokeLinejoin="round" />
+              <path d="M60,34 L60,158" stroke="#fff" strokeWidth="4.5" strokeLinecap="round" opacity="0.16" />
+              <path d="M220,40 L220,150" stroke="#fff" strokeWidth="2" strokeLinecap="round" opacity="0.1" />
+              {[0, 1, 2, 3, 4].map((g) => {
+                const gy = 150 - g * 22;
+                return (
+                  <g key={"gr" + g}>
+                    <line x1="204" y1={gy} x2={g % 2 === 0 ? 226 : 218} y2={gy} stroke="#e8eefb" strokeWidth="1.1" opacity="0.85" />
+                    {g % 2 === 0 && <text x="200" y={gy + 2.6} fontSize="7" fill="#e8eefb" textAnchor="end" style={{ direction: "ltr", unicodeBidi: "isolate" }}>{50 + g * 50}</text>}
+                  </g>
+                );
+              })}
+              {/* برچسب حالت ماده */}
+              <rect x="8" y="-34" width="118" height="24" rx="12" fill="#10204a" stroke="#2f6fe2" strokeWidth="1" />
+              <text x="67" y="-18" textAnchor="middle" fontSize="11" fontWeight="700" fill="#e8f0ff">{badge}</text>
+              {/* سه‌پایه، توری و چراغ الکلی */}
+              <path d="M70,178 L58,236 M210,178 L222,236" stroke="#6b7280" strokeWidth="3" strokeLinecap="round" />
+              <rect x="62" y="176" width="156" height="4" rx="2" fill="#8a93a6" />
+              <path d="M70,180 L210,180" stroke="#b9c1d4" strokeWidth="0.6" strokeDasharray="2 2" />
+              <ellipse cx="140" cy="226" rx="28" ry="12" fill="#cfe3f5" fillOpacity="0.85" stroke="#8fa3c4" strokeWidth="1.4" />
+              <ellipse cx="140" cy="224" rx="22" ry="7" fill="#fff" opacity="0.25" />
+              <rect x="133" y="206" width="14" height="14" rx="2" fill="#7b8190" stroke="#3d4450" strokeWidth="1" />
+              <line x1="140" y1="206" x2="140" y2="203" stroke="#3a2e22" strokeWidth="2" strokeLinecap="round" />
+              <text x="226" y="246" textAnchor="middle" fontSize="8.5" fill="#aeb8d6">چراغ الکلی</text>
+              {temp > 0 && (
+                <g>
+                  <ellipse cx="140" cy={203 - flameHeight * 0.5} rx={10 + flameHeight * 0.2} ry={9 + flameHeight * 0.35} fill="#4fc3f7" opacity="0.22" />
+                  <path d={`M140,204 C131,196 132,186 140,${flameTipY} C148,186 149,196 140,204 Z`} fill="#1e88e5" stroke="#8fe0ff" strokeWidth="0.8" opacity="0.97" />
+                  <path d={`M140,203 C135,196 135,190 140,${flameInnerTipY} C145,190 145,196 140,203 Z`} fill="#dff6ff" opacity="0.98" />
+                </g>
+              )}
+            </g>
+          );
+        })()}
         <rect x="250" y="20" width="18" height="150" fill="#1a2444" stroke="#cfd8e8" strokeWidth="2" />
         <circle cx="259" cy="182" r="15" fill="#1a2444" stroke="#cfd8e8" strokeWidth="2" />
         {thermoTicks}
@@ -26309,10 +26396,12 @@ function VlabDensityFloatingExperiment({ onReading }) {
           عکسِ واقعیِ خودشان (که کاربر فرستاد) نشان داده می‌شوند؛ پلاستیک چون عکسی نداشت، همان بطریِ
           برداریِ قبلی را حفظ کرد. */}
       <svg viewBox="0 0 320 170" className="vlab-svg" style={{ background: "#0b1330", borderRadius: "10px" }}>
-        <path d="M60,42 L60,152 Q60,160 68,160 L252,160 Q260,160 260,152 L260,42" fill="none" stroke="#8fb4e0" strokeWidth="2" />
-        <path d="M62,98 L62,152 Q62,158 68,158 L252,158 Q258,158 258,152 L258,98 Z" fill="#2f6fe2" opacity="0.28" />
-        <line x1="62" y1="98" x2="258" y2="98" stroke="#8fb4e0" strokeWidth="1.2" opacity="0.55" />
-        <line x1="70" y1="46" x2="70" y2="152" stroke="#eaf3ff" strokeWidth="3" opacity="0.15" />
+        <rect x="0" y="0" width="320" height="170" fill="#03060f" />
+        <ellipse cx="160" cy="160" rx="112" ry="7" fill="#000" opacity="0.4" />
+        <VlabGlassBack x1={60} x2={260} top={42} ry={8} />
+        <path d="M62,98 L62,152 A98,8 0 0 0 258,152 L258,98 Z" fill="#2f6fe2" opacity="0.5" />
+        <ellipse cx="160" cy="98" rx="98" ry="7" fill="#5ea0ff" opacity="0.55" />
+        <ellipse cx="160" cy="98" rx="98" ry="7" fill="none" stroke="#cfe6ff" strokeWidth="0.8" opacity="0.6" />
 
         {isPhoto && <VlabDensityPhoto x={160 - photo.w / 2} y={objY} width={photo.w} src={photo.src} ratio={photo.ratio} />}
         {/* برایِ اجسامِ شناور، یک موجِ کوچکِ حلقه‌ای درست رویِ خطِ آب، کنارِ جسم کشیده می‌شود — تا
@@ -26333,7 +26422,8 @@ function VlabDensityFloatingExperiment({ onReading }) {
 
         {/* برچسبِ نامِ ماده در یک جایِ ثابتِ بالایِ ظرف — مستقل از این‌که جسم کجایِ ظرف بنشیند، همیشه
             واضح و بدونِ همپوشانی با کفِ ظرف دیده می‌شود. */}
-        <text x="160" y="58" fontSize="10" fill="#eaf0fb" textAnchor="middle" fontWeight="700">{material}</text>
+        <VlabGlassFront x1={60} x2={260} top={42} bottom={152} ry={8} id="den" />
+        <text x="160" y="28" fontSize="11" fill="#eaf0fb" textAnchor="middle" fontWeight="700">{material}</text>
       </svg>
       <div className="vlab-controls">
         <div className="vlab-toggle-row">
@@ -26422,12 +26512,11 @@ function VlabDissolveTemperatureExperiment({ onReading }) {
       {/* قاشق هم‌زدن و دماسنج که در فهرست وسایل بودند، اضافه شدند؛ زمینه‌ی تیره و لیوانِ شیشه‌ایِ
           واقعی (با خطِ برجستگیِ نور) جایگزینِ مستطیلِ تختِ قبلی شد */}
       <svg viewBox="0 0 320 150" className="vlab-svg" style={{ background: "#0b1330", borderRadius: "10px" }}>
-        <path d="M112,42 L116,128 Q117,136 125,136 L195,136 Q203,136 204,128 L208,42" fill="none" stroke="#8fb4e0" strokeWidth="2" />
-        <path
-          d="M114,66 L117,128 Q118,134 125,134 L195,134 Q202,134 203,128 L206,66 Z"
-          fill={waterColor}
-          opacity={0.22 + temp / 400}
-        />
+        <rect x="0" y="0" width="320" height="150" fill="#03060f" />
+        <ellipse cx="160" cy="140" rx="64" ry="5" fill="#000" opacity="0.4" />
+        <VlabGlassBack x1={112} x2={208} top={42} ry={6} />
+        <path d="M114,66 L114,128 A46,6 0 0 0 206,128 L206,66 Z" fill={waterColor} opacity={0.3 + temp / 300} />
+        <ellipse cx="160" cy="66" rx="46" ry="5" fill={waterColor} opacity={0.55 + temp / 400} />
         {/* ذراتِ آبِ لرزان — سرعتِ لرزش با دما زیاد می‌شود */}
         {particles.map((p, i) => (
           <circle
@@ -26440,7 +26529,7 @@ function VlabDissolveTemperatureExperiment({ onReading }) {
             style={{ animation: `${wobbleVariant[i % 3]} ${particleDur}s ease-in-out infinite`, animationDelay: `${(i % 4) * 0.12}s` }}
           />
         ))}
-        <line x1="120" y1="46" x2="117" y2="128" stroke="#eaf3ff" strokeWidth="3" opacity="0.18" />
+        <VlabGlassFront x1={112} x2={208} top={42} bottom={128} ry={6} id="dis" />
         {/* توده‌ی دانه‌هایِ قند — دقیقاً روی کفِ لیوان (نزدیکِ y=124)، نه معلق در وسطِ آب */}
         <g transform="translate(160,124)">
           {grains.map((g, i) => (
@@ -26555,8 +26644,8 @@ function VlabReactionRateExperiment({ onReading }) {
         <VlabDropperMini x={222} y={55} rotate={20} color="#e2622f" />
         <text x="88" y="30" fontSize="7" fill="#9aa3c0" textAnchor="middle">واکنش‌گر ۱</text>
         <text x="212" y="30" fontSize="7" fill="#9aa3c0" textAnchor="middle">واکنش‌گر ۲</text>
-        <VlabThermometerMini x={262} y={88} temp={temp} minT={0} maxT={80} h={38} />
-        <VlabStopwatchIcon x={268} y={34} scale={1.4} readout={`${reactionTime.toFixed(0)}s`} />
+        <VlabThermometerMini x={236} y={92} temp={temp} minT={0} maxT={80} h={40} />
+        <VlabStopwatchIcon x={272} y={30} scale={1.0} readout={`${reactionTime.toFixed(0)}s`} />
       </svg>
       <div className="vlab-controls">
         <div className="vlab-ctrl-col" style={{ flex: 1 }}>

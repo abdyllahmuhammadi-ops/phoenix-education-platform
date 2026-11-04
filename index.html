@@ -22389,6 +22389,48 @@ function StudentRecitationPracticeView({ onBack }) {
 const VLAB_LEVELS = ["ابتدایی", "متوسطه اول", "متوسطه دوم"];
 const VLAB_SUBJECTS = ["فیزیک", "شیمی", "زیست‌شناسی", "برق و الکترونیک"];
 
+/* ============================================================
+   ققنوس — لغزنده + کادر عددی (دانش‌آموز می‌تواند عدد دقیق را تایپ کند؛ تصویر و فرمول همان عدد را نشان می‌دهند)
+   ============================================================ */
+function VlabRange({ min, max, step, value, onChange, style, ...rest }) {
+  const mn = +min, mx = +max;
+  const explicitStep = step !== undefined && step !== null && step !== "";
+  const st = explicitStep ? +step : 1;
+  const [txt, setTxt] = useState(null);
+  const fa = (n) => String(n).replace(/\d/g, (d) => "۰۱۲۳۴۵۶۷۸۹"[d]);
+  const parse = (t) => {
+    const n = String(t).replace(/[۰-۹]/g, (d) => "۰۱۲۳۴۵۶۷۸۹".indexOf(d)).replace(/[٠-٩]/g, (d) => "٠١٢٣٤٥٦٧٨٩".indexOf(d)).replace(/[٫,،]/g, ".").trim();
+    if (n === "" || n === "-" || n === ".") return NaN;
+    return Number(n);
+  };
+  const emit = (v) => { if (onChange) onChange({ target: { value: String(v) } }); };
+  const finalize = (v) => {
+    let x = Math.min(mx, Math.max(mn, v));
+    x = explicitStep ? Math.round((x - mn) / st) * st + mn : Math.round(x * 100) / 100;
+    return Math.round(x * 1e6) / 1e6;
+  };
+  const shown = txt !== null ? txt : String(value);
+  return (
+    <span className="vlab-range-wrap" style={{ display: "flex", alignItems: "center", gap: 8, width: "100%" }}>
+      <input type="range" min={min} max={max} step={step} value={value} onChange={onChange} style={{ flex: 1, minWidth: 0, ...(style || {}) }} {...rest} />
+      <input
+        type="text" inputMode="decimal" dir="ltr" className="vlab-num"
+        title={"عدد دلخواه را بنویسید (از " + fa(mn) + " تا " + fa(mx) + ")"}
+        value={txt !== null ? txt : fa(shown)}
+        onFocus={(e) => { setTxt(String(value)); try { e.target.select(); } catch (er) {} }}
+        onChange={(e) => {
+          setTxt(e.target.value);
+          const v = parse(e.target.value);
+          if (!isNaN(v) && v >= mn && v <= mx) emit(v);
+        }}
+        onBlur={() => { const v = parse(txt); if (!isNaN(v)) emit(finalize(v)); setTxt(null); }}
+        onKeyDown={(e) => { if (e.key === "Enter") e.target.blur(); }}
+        style={{ width: 62, flex: "none", textAlign: "center", fontFamily: "inherit", fontSize: 13, fontWeight: 700, color: "#1c2540", background: "#fbf7ec", border: "1px solid #e0a83e", borderRadius: 8, padding: "3px 4px" }}
+      />
+    </span>
+  );
+}
+
 const VLAB_EXPERIMENTS = [
   {
     id: "lever",
@@ -23083,15 +23125,15 @@ function VlabLeverExperiment({ onReading }) {
           <div className="vlab-controls">
             <div className="vlab-ctrl-col">
               <label className="vlab-ctrl-label" style={{ color: "#e2622f" }}>وزن چپ (کیلوگرم): {leftMass}</label>
-              <input type="range" min="1" max="10" value={leftMass} onChange={(e) => setLeftMass(+e.target.value)} />
+              <VlabRange min="1" max="10" value={leftMass} onChange={(e) => setLeftMass(+e.target.value)} />
               <label className="vlab-ctrl-label" style={{ color: "#e2622f" }}>فاصله از تکیه‌گاه (چپ): {leftDist}</label>
-              <input type="range" min="1" max="10" value={leftDist} onChange={(e) => setLeftDist(+e.target.value)} />
+              <VlabRange min="1" max="10" value={leftDist} onChange={(e) => setLeftDist(+e.target.value)} />
             </div>
             <div className="vlab-ctrl-col">
               <label className="vlab-ctrl-label" style={{ color: "#2f6fe2" }}>وزن راست (کیلوگرم): {rightMass}</label>
-              <input type="range" min="1" max="10" value={rightMass} onChange={(e) => setRightMass(+e.target.value)} />
+              <VlabRange min="1" max="10" value={rightMass} onChange={(e) => setRightMass(+e.target.value)} />
               <label className="vlab-ctrl-label" style={{ color: "#2f6fe2" }}>فاصله از تکیه‌گاه (راست): {rightDist}</label>
-              <input type="range" min="1" max="10" value={rightDist} onChange={(e) => setRightDist(+e.target.value)} />
+              <VlabRange min="1" max="10" value={rightDist} onChange={(e) => setRightDist(+e.target.value)} />
             </div>
           </div>
           <div className="vlab-readout">
@@ -23105,15 +23147,15 @@ function VlabLeverExperiment({ onReading }) {
           <div className="vlab-controls">
             <div className="vlab-ctrl-col">
               <label className="vlab-ctrl-label" style={{ color: "#2f6fe2" }}>جرم بار (کیلوگرم): {loadMass}</label>
-              <input type="range" min="1" max="10" value={loadMass} onChange={(e) => setLoadMass(+e.target.value)} />
+              <VlabRange min="1" max="10" value={loadMass} onChange={(e) => setLoadMass(+e.target.value)} />
               <label className="vlab-ctrl-label" style={{ color: "#2f6fe2" }}>فاصله‌ی بار از تکیه‌گاه: {loadDist}</label>
-              <input type="range" min="1" max="10" value={loadDist} onChange={(e) => setLoadDist(+e.target.value)} />
+              <VlabRange min="1" max="10" value={loadDist} onChange={(e) => setLoadDist(+e.target.value)} />
             </div>
             <div className="vlab-ctrl-col">
               <label className="vlab-ctrl-label" style={{ color: "#e2622f" }}>نیرویِ اعمالی (نیوتن): {appliedForce}</label>
-              <input type="range" min="1" max="100" value={appliedForce} onChange={(e) => setAppliedForce(+e.target.value)} />
+              <VlabRange min="1" max="100" value={appliedForce} onChange={(e) => setAppliedForce(+e.target.value)} />
               <label className="vlab-ctrl-label" style={{ color: "#e2622f" }}>فاصله‌ی نیرو از تکیه‌گاه: {effortDist}</label>
-              <input type="range" min="1" max="10" value={effortDist} onChange={(e) => setEffortDist(+e.target.value)} />
+              <VlabRange min="1" max="10" value={effortDist} onChange={(e) => setEffortDist(+e.target.value)} />
             </div>
           </div>
           <div className="vlab-readout">
@@ -23154,7 +23196,7 @@ function VlabPendulumExperiment({ onReading }) {
       <div className="vlab-controls">
         <div className="vlab-ctrl-col" style={{ flex: 1 }}>
           <label className="vlab-ctrl-label">طول آونگ (سانتی‌متر): {length}</label>
-          <input type="range" min="20" max="150" value={length} onChange={(e) => setLength(+e.target.value)} disabled={swinging} />
+          <VlabRange min="20" max="150" value={length} onChange={(e) => setLength(+e.target.value)} disabled={swinging} />
         </div>
         <button type="button" className="pqb-submit-btn" onClick={() => setSwinging((s) => !s)}>
           {swinging ? "⏸️ توقف نوسان" : "▶️ شروع نوسان"}
@@ -23411,9 +23453,9 @@ function VlabSeriesParallelExperiment({ onReading }) {
         </div>
         <div className="vlab-ctrl-col">
           <label className="vlab-ctrl-label">مقاومت ۱ (اهم): {r1}</label>
-          <input type="range" min="2" max="50" value={r1} onChange={(e) => setR1(+e.target.value)} />
+          <VlabRange min="2" max="50" value={r1} onChange={(e) => setR1(+e.target.value)} />
           <label className="vlab-ctrl-label">مقاومت ۲ (اهم): {r2}</label>
-          <input type="range" min="2" max="50" value={r2} onChange={(e) => setR2(+e.target.value)} />
+          <VlabRange min="2" max="50" value={r2} onChange={(e) => setR2(+e.target.value)} />
         </div>
       </div>
       <div className="vlab-readout">
@@ -23612,7 +23654,7 @@ function VlabStatesOfMatterExperiment({ onReading }) {
         <div className="vlab-ctrl-col" style={{ flex: 1 }}>
           <label className="vlab-ctrl-label">دما (درجه‌ی سانتی‌گراد): {temp}</label>
           {/* برای آب، دمای بیش از ۱۰۰°C در این آزمایش معنی ندارد — در ۱۰۰°C کل آب به‌تدریج تبدیل به بخار شده است. */}
-          <input type="range" min="-20" max="100" value={temp} onChange={(e) => setTemp(+e.target.value)} />
+          <VlabRange min="-20" max="100" value={temp} onChange={(e) => setTemp(+e.target.value)} />
         </div>
       </div>
       <div className="vlab-readout">
@@ -23969,9 +24011,9 @@ function VlabPlantGrowthExperiment({ onReading }) {
       <div className="vlab-controls">
         <div className="vlab-ctrl-col" style={{ flex: 1 }}>
           <label className="vlab-ctrl-label">☀️ نور (٪): {light} — {lightStatus}</label>
-          <input type="range" min="0" max="100" value={light} onChange={(e) => setLight(+e.target.value)} />
+          <VlabRange min="0" max="100" value={light} onChange={(e) => setLight(+e.target.value)} />
           <label className="vlab-ctrl-label">💧 آب (٪): {water} — {waterStatus}</label>
-          <input type="range" min="0" max="100" value={water} onChange={(e) => setWater(+e.target.value)} />
+          <VlabRange min="0" max="100" value={water} onChange={(e) => setWater(+e.target.value)} />
         </div>
         <div className="vlab-ctrl-col">
           <button type="button" className="pqb-submit-btn" onClick={passDay} disabled={maturity >= MATURITY_TARGET}>
@@ -24152,11 +24194,11 @@ function VlabMicroscopeExperiment({ onReading }) {
             ))}
           </select>
           <label className="vlab-ctrl-label">بزرگ‌نمایی: {zoom}×</label>
-          <input type="range" min="1" max="4" step="1" value={zoom} onChange={(e) => setZoom(+e.target.value)} />
+          <VlabRange min="1" max="4" step="1" value={zoom} onChange={(e) => setZoom(+e.target.value)} />
         </div>
         <div className="vlab-ctrl-col" style={{ flex: 1 }}>
           <label className="vlab-ctrl-label">تنظیم فوکوس</label>
-          <input type="range" min="0" max="100" value={focus} onChange={(e) => setFocus(+e.target.value)} />
+          <VlabRange min="0" max="100" value={focus} onChange={(e) => setFocus(+e.target.value)} />
         </div>
       </div>
       <div className="vlab-readout">
@@ -24231,7 +24273,7 @@ function VlabFreeFallExperiment({ onReading }) {
       <div className="vlab-controls">
         <div className="vlab-ctrl-col" style={{ flex: 1 }}>
           <label className="vlab-ctrl-label">ارتفاع رهاسازی (متر): {height}</label>
-          <input type="range" min="2" max="80" value={height} onChange={(e) => setHeight(+e.target.value)} />
+          <VlabRange min="2" max="80" value={height} onChange={(e) => setHeight(+e.target.value)} />
         </div>
         <div className="vlab-ctrl-col">
           <label className="vlab-ctrl-label">سیاره / جرم آسمانی</label>
@@ -24641,7 +24683,7 @@ function VlabPhotosynthesisExperiment({ onReading }) {
       <div className="vlab-controls">
         <div className="vlab-ctrl-col" style={{ flex: 1 }}>
           <label className="vlab-ctrl-label">شدت نور: {light}٪</label>
-          <input type="range" min="0" max="100" value={light} onChange={(e) => setLight(+e.target.value)} />
+          <VlabRange min="0" max="100" value={light} onChange={(e) => setLight(+e.target.value)} />
         </div>
       </div>
       <div className="vlab-readout">
@@ -24915,7 +24957,7 @@ function VlabPulleyExperiment({ onReading }) {
       <div className="vlab-controls">
         <div className="vlab-ctrl-col" style={{ flex: 1 }}>
           <label className="vlab-ctrl-label">وزن بار (کیلوگرم): {load}</label>
-          <input type="range" min="1" max="10" value={load} onChange={(e) => setLoad(+e.target.value)} />
+          <VlabRange min="1" max="10" value={load} onChange={(e) => setLoad(+e.target.value)} />
         </div>
         <div className="vlab-toggle-row">
           {["ثابت", "متحرک", "مرکب"].map((t) => (
@@ -25071,7 +25113,7 @@ function VlabFrictionExperiment({ onReading }) {
       <div className="vlab-controls">
         <div className="vlab-ctrl-col" style={{ flex: 1 }}>
           <label className="vlab-ctrl-label">جرم جسم (کیلوگرم): {mass}</label>
-          <input type="range" min="1" max="10" value={mass} onChange={(e) => setMass(+e.target.value)} />
+          <VlabRange min="1" max="10" value={mass} onChange={(e) => setMass(+e.target.value)} />
         </div>
         <div className="vlab-toggle-row">
           {Object.keys(coeffs).map((s) => (
@@ -25148,7 +25190,7 @@ function VlabNewtonFirstLawExperiment({ onReading }) {
       <div className="vlab-controls">
         <div className="vlab-ctrl-col" style={{ flex: 1 }}>
           <label className="vlab-ctrl-label">سرعتِ کشیدنِ پارچه: {pullSpeed}</label>
-          <input type="range" min="1" max="10" value={pullSpeed} onChange={(e) => setPullSpeed(+e.target.value)} />
+          <VlabRange min="1" max="10" value={pullSpeed} onChange={(e) => setPullSpeed(+e.target.value)} />
         </div>
         <button type="button" className="vlab-toggle-btn" onClick={() => setPulled((p) => !p)}>
           {pulled ? "⟲ بازگرداندنِ پارچه" : "➜ کشیدنِ پارچه"}
@@ -25302,9 +25344,9 @@ function VlabNewtonSecondLawExperiment({ onReading }) {
       <div className="vlab-controls">
         <div className="vlab-ctrl-col" style={{ flex: 1 }}>
           <label className="vlab-ctrl-label">نیروی وارد (نیوتن): {force}</label>
-          <input type="range" min="2" max="50" value={force} onChange={(e) => setForce(+e.target.value)} />
+          <VlabRange min="2" max="50" value={force} onChange={(e) => setForce(+e.target.value)} />
           <label className="vlab-ctrl-label">جرم گاری (کیلوگرم): {mass}</label>
-          <input type="range" min="1" max="15" value={mass} onChange={(e) => setMass(+e.target.value)} />
+          <VlabRange min="1" max="15" value={mass} onChange={(e) => setMass(+e.target.value)} />
         </div>
         <button type="button" className="vlab-toggle-btn" onClick={() => setPulled((p) => !p)}>
           {pulled ? "⟲ بازگرداندن گاری" : "➜ اعمال نیرو"}
@@ -25404,9 +25446,9 @@ function VlabNewtonThirdLawExperiment({ onReading }) {
       <div className="vlab-controls">
         <div className="vlab-ctrl-col" style={{ flex: 1 }}>
           <label className="vlab-ctrl-label">جرمِ گاریِ آبی (کیلوگرم): {mass1}</label>
-          <input type="range" min="1" max="10" value={mass1} onChange={(e) => setMass1(+e.target.value)} />
+          <VlabRange min="1" max="10" value={mass1} onChange={(e) => setMass1(+e.target.value)} />
           <label className="vlab-ctrl-label">جرمِ گاریِ نارنجی (کیلوگرم): {mass2}</label>
-          <input type="range" min="1" max="10" value={mass2} onChange={(e) => setMass2(+e.target.value)} />
+          <VlabRange min="1" max="10" value={mass2} onChange={(e) => setMass2(+e.target.value)} />
         </div>
         <button type="button" className="vlab-toggle-btn" onClick={() => setPushed((p) => !p)}>
           {pushed ? "⟲ بازگرداندنِ گاری‌ها" : "➜ هل دادن"}
@@ -25459,7 +25501,7 @@ function VlabLedVoltageExperiment({ onReading }) {
       <div className="vlab-controls">
         <div className="vlab-ctrl-col" style={{ flex: 1 }}>
           <label className="vlab-ctrl-label">ولتاژ باتری (ولت): {voltage}</label>
-          <input type="range" min="0" max="9" step="0.5" value={voltage} onChange={(e) => setVoltage(+e.target.value)} />
+          <VlabRange min="0" max="9" step="0.5" value={voltage} onChange={(e) => setVoltage(+e.target.value)} />
         </div>
       </div>
       <div className="vlab-readout">
@@ -25568,9 +25610,9 @@ function VlabElectromagnetExperiment({ onReading }) {
       <div className="vlab-controls">
         <div className="vlab-ctrl-col" style={{ flex: 1 }}>
           <label className="vlab-ctrl-label">تعداد دور سیم‌پیچ: {turns}</label>
-          <input type="range" min="10" max="200" step="10" value={turns} onChange={(e) => setTurns(+e.target.value)} />
+          <VlabRange min="10" max="200" step="10" value={turns} onChange={(e) => setTurns(+e.target.value)} />
           <label className="vlab-ctrl-label">شدت جریان (آمپر): {current}</label>
-          <input type="range" min="0.2" max="2" step="0.2" value={current} onChange={(e) => setCurrent(+e.target.value)} />
+          <VlabRange min="0.2" max="2" step="0.2" value={current} onChange={(e) => setCurrent(+e.target.value)} />
         </div>
       </div>
       <div className="vlab-readout">
@@ -25710,9 +25752,9 @@ function VlabCapacitorExperiment({ onReading }) {
       <div className="vlab-controls">
         <div className="vlab-ctrl-col" style={{ flex: 1 }}>
           <label className="vlab-ctrl-label">ظرفیت خازن (میکروفاراد): {capacitance}</label>
-          <input type="range" min="10" max="500" step="10" value={capacitance} onChange={(e) => setCapacitance(+e.target.value)} />
+          <VlabRange min="10" max="500" step="10" value={capacitance} onChange={(e) => setCapacitance(+e.target.value)} />
           <label className="vlab-ctrl-label">مقاومت (کیلواهم): {resistance}</label>
-          <input type="range" min="1" max="50" value={resistance} onChange={(e) => setResistance(+e.target.value)} />
+          <VlabRange min="1" max="50" value={resistance} onChange={(e) => setResistance(+e.target.value)} />
         </div>
         <button type="button" className="vlab-toggle-btn" onClick={() => startMode("charging")}>
           ⚡ شارژ کردن
@@ -25951,7 +25993,7 @@ function VlabDissolveTemperatureExperiment({ onReading }) {
       <div className="vlab-controls">
         <div className="vlab-ctrl-col" style={{ flex: 1 }}>
           <label className="vlab-ctrl-label">دمای آب (°C): {temp}</label>
-          <input type="range" min="0" max="100" value={temp} onChange={(e) => setTemp(+e.target.value)} />
+          <VlabRange min="0" max="100" value={temp} onChange={(e) => setTemp(+e.target.value)} />
         </div>
         <button type="button" className={"vlab-toggle-btn" + (stirring ? " active" : "")} onClick={() => setStirring((s) => !s)} disabled={dissolved}>
           🥄 هم‌زدن {stirring ? "فعال" : "غیرفعال"}
@@ -26046,9 +26088,9 @@ function VlabReactionRateExperiment({ onReading }) {
       <div className="vlab-controls">
         <div className="vlab-ctrl-col" style={{ flex: 1 }}>
           <label className="vlab-ctrl-label">غلظت (مولار): {concentration}</label>
-          <input type="range" min="0.2" max="2" step="0.2" value={concentration} onChange={(e) => setConcentration(+e.target.value)} />
+          <VlabRange min="0.2" max="2" step="0.2" value={concentration} onChange={(e) => setConcentration(+e.target.value)} />
           <label className="vlab-ctrl-label">دما (°C): {temp}</label>
-          <input type="range" min="0" max="80" value={temp} onChange={(e) => setTemp(+e.target.value)} />
+          <VlabRange min="0" max="80" value={temp} onChange={(e) => setTemp(+e.target.value)} />
         </div>
       </div>
       <div className="vlab-readout">
@@ -26186,7 +26228,7 @@ function VlabHeartRateExperiment({ onReading }) {
       <div className="vlab-controls">
         <div className="vlab-ctrl-col" style={{ flex: 1 }}>
           <label className="vlab-ctrl-label">سطح فعالیت بدنی: {activityLabel}</label>
-          <input type="range" min="0" max="10" value={activity} onChange={(e) => setActivity(+e.target.value)} />
+          <VlabRange min="0" max="10" value={activity} onChange={(e) => setActivity(+e.target.value)} />
         </div>
       </div>
       <div className="vlab-readout">
@@ -26610,7 +26652,7 @@ function VlabDiffusionExperiment({ onReading }) {
       <div className="vlab-controls">
         <div className="vlab-ctrl-col" style={{ flex: 1 }}>
           <label className="vlab-ctrl-label">دمای آب (°C): {temp}</label>
-          <input type="range" min="0" max="90" value={temp} onChange={(e) => setTemp(+e.target.value)} />
+          <VlabRange min="0" max="90" value={temp} onChange={(e) => setTemp(+e.target.value)} />
           {diffusionDone && (
             <button type="button" className="vlab-toggle-btn" onClick={replay} style={{ marginTop: "8px" }}>
               💧 چکاندنِ دوباره‌ی قطره
@@ -26717,7 +26759,7 @@ function VlabEnzymeActivityExperiment({ onReading }) {
       <div className="vlab-controls">
         <div className="vlab-ctrl-col" style={{ flex: 1 }}>
           <label className="vlab-ctrl-label">دمای محیط (°C): {temp}</label>
-          <input type="range" min="0" max="90" value={temp} onChange={(e) => setTemp(+e.target.value)} />
+          <VlabRange min="0" max="90" value={temp} onChange={(e) => setTemp(+e.target.value)} />
         </div>
       </div>
       <div className="vlab-readout">
@@ -26861,7 +26903,7 @@ function VlabHeatTransferExperiment({ onReading }) {
         {mode === "رسانش" && (
           <div className="vlab-ctrl-col" style={{ flex: 1 }}>
             <label className="vlab-ctrl-label">زمانِ گرم‌شدن (ثانیه): {conductTime}</label>
-            <input type="range" min="0" max="30" value={conductTime} onChange={(e) => setConductTime(+e.target.value)} />
+            <VlabRange min="0" max="30" value={conductTime} onChange={(e) => setConductTime(+e.target.value)} />
           </div>
         )}
         {mode === "همرفت" && (
@@ -26872,7 +26914,7 @@ function VlabHeatTransferExperiment({ onReading }) {
         {mode === "تابش" && (
           <div className="vlab-ctrl-col" style={{ flex: 1 }}>
             <label className="vlab-ctrl-label">فاصله از منبعِ گرما (سانتی‌متر): {distance}</label>
-            <input type="range" min="10" max="150" value={distance} onChange={(e) => setDistance(+e.target.value)} />
+            <VlabRange min="10" max="150" value={distance} onChange={(e) => setDistance(+e.target.value)} />
           </div>
         )}
       </div>

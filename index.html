@@ -23177,6 +23177,8 @@ function VlabPendulumExperiment({ onReading }) {
   const [t, setT] = useState(0);
   const [answer, setAnswer] = useState("");
   const [checked, setChecked] = useState(null);
+  const [angAnswer, setAngAnswer] = useState("");
+  const [angChecked, setAngChecked] = useState(null);
   const raf = React.useRef(0);
   const last = React.useRef(0);
   const g = 9.8;
@@ -23190,7 +23192,7 @@ function VlabPendulumExperiment({ onReading }) {
     if (!swinging) return undefined;
     last.current = performance.now();
     const tick = (now) => {
-      setT((x) => x + (now - last.current) / 1000);
+      setT((x) => { const n = x + (now - last.current) / 1000; if (n >= 20) { setSwinging(false); return 20; } return n; });
       last.current = now;
       raf.current = requestAnimationFrame(tick);
     };
@@ -23199,7 +23201,7 @@ function VlabPendulumExperiment({ onReading }) {
   }, [swinging]);
 
   useEffect(() => {
-    setT(0); setSwinging(false); setChecked(null);
+    setT(0); setSwinging(false); setChecked(null); setAngChecked(null); setAngAnswer("");
     if (onReading) onReading(`طول آونگ: ${length} سانتی‌متر | زاویه‌ی رهاسازی: ${angle} درجه | دوره‌ی تناوب: ${period.toFixed(2)} ثانیه`);
     // eslint-disable-next-line
   }, [length, angle]);
@@ -23221,7 +23223,7 @@ function VlabPendulumExperiment({ onReading }) {
     }
   }
   const [ax, ay] = pt(R, -90), [bx2, by2] = pt(R, 90);
-  const [rx, ry] = pt(px, angle), [lx2, ly2] = pt(px, -angle);
+  const [rx, ry] = pt(R - 12, angle), [lx2, ly2] = pt(R - 12, -angle);
 
   const check = () => {
     const v = parseFloat(String(answer).replace(/[۰-۹]/g, (d) => "۰۱۲۳۴۵۶۷۸۹".indexOf(d)).replace(/[٫,،]/g, "."));
@@ -23230,6 +23232,18 @@ function VlabPendulumExperiment({ onReading }) {
     if (err <= 0.02 + period * 0.01) setChecked({ ok: true, msg: `✅ درست است! جواب تو با جواب سامانه (${f2(period)} ثانیه) یکی است.` });
     else if (Math.abs(v - period * 10) < 0.2 * period * 10 || Math.abs(v - period / 10) < 0.2 * period / 10) setChecked({ ok: false, msg: "❌ مرتبه‌ی عدد فرق دارد — یادت باشد طول را به متر تبدیل کنی (سانتی‌متر ÷ ۱۰۰)." });
     else setChecked({ ok: false, msg: `❌ هنوز با جواب سامانه نمی‌خواند (جواب سامانه: ${f2(period)} ثانیه). محاسبه را دوباره بررسی کن: ابتدا L ÷ g، بعد جذر، بعد × ۲π.` });
+  };
+  const tSel = Math.round(t * 10) / 10;
+  const thetaAt = (T) => angle * Math.cos((2 * Math.PI * tSel) / T);
+  const checkAngle = () => {
+    const v = parseFloat(String(angAnswer).replace(/[۰-۹]/g, (d) => "۰۱۲۳۴۵۶۷۸۹".indexOf(d)).replace(/[٫,،]/g, "."));
+    if (isNaN(v)) { setAngChecked({ ok: false, msg: "یک عدد بنویس." }); return; }
+    let lo = 1e9, hi = -1e9;
+    for (let k = -6; k <= 6; k++) { const a = thetaAt(period + k * 0.001); lo = Math.min(lo, a); hi = Math.max(hi, a); }
+    const exact = thetaAt(period);
+    if (v >= lo - 0.3 && v <= hi + 0.3) setAngChecked({ ok: true, msg: `✅ درست است! زاویه‌ی سامانه ${fa(exact.toFixed(1))} درجه است.` });
+    else if (Math.abs(v + exact) < 0.5) setAngChecked({ ok: false, msg: "❌ قدرمطلق درست است ولی علامت فرق دارد (مثبت = سمت راست، منفی = سمت چپ)." });
+    else setAngChecked({ ok: false, msg: `❌ هنوز نمی‌خواند (جواب سامانه: ${fa(exact.toFixed(1))} درجه). یادت باشد زاویه‌ی داخل cos بر حسب رادیان است: ۲π × t ÷ T، و ماشین‌حساب روی rad باشد.` });
   };
   const ltr = { direction: "ltr", unicodeBidi: "isolate", display: "inline-block" };
   const box = { background: "#101a3d", border: "1px solid #2a3a73", borderRadius: 10, padding: "10px 14px", color: "#e8ecf8", fontSize: 13, lineHeight: 2 };
@@ -23274,6 +23288,8 @@ function VlabPendulumExperiment({ onReading }) {
           <VlabRange min="20" max="150" value={length} onChange={(e) => setLength(+e.target.value)} disabled={swinging} />
           <label className="vlab-ctrl-label">زاویه‌ی رهاسازی — θ (درجه، تا ۳۰ برای فرمول دقیق)</label>
           <VlabRange min="5" max="30" value={angle} onChange={(e) => setAngle(+e.target.value)} disabled={swinging} />
+          <label className="vlab-ctrl-label">زمان پس از رهاسازی — t (ثانیه)؛ آونگ در همان لحظه می‌ایستد</label>
+          <VlabRange min="0" max="20" step="0.1" value={tSel} onChange={(e) => { setSwinging(false); setT(+e.target.value); setAngChecked(null); }} />
         </div>
         <div style={{ display: "flex", gap: 8, alignItems: "center" }}>
           <button type="button" className="pqb-submit-btn" onClick={() => setSwinging((x) => !x)}>{swinging ? "⏸️ توقف" : "▶️ رها کن"}</button>
@@ -23300,6 +23316,20 @@ function VlabPendulumExperiment({ onReading }) {
         </div>
         {checked && <div style={{ marginTop: 6, color: checked.ok ? "#7be0a4" : "#ffb199" }}>{checked.msg}</div>}
         {checked && checked.ok && <div style={{ ...ltr, marginTop: 4, color: "#a9b2d6", fontSize: 12 }}>{"f = 1 / T = " + freq.toFixed(2) + " Hz"}</div>}
+      </div>
+      <div style={{ ...box, marginTop: 8 }}>
+        <div><b>زاویه در لحظه‌ی دلخواه:</b> زاویه = زاویه‌ی رهاسازی × cos( ۲π × زمان ÷ دوره‌ی تناوب )</div>
+        <div style={ltr}>θ = θ₀ · cos( 2π · t / T )</div>
+        <div style={{ color: "#a9b2d6", fontSize: 12 }}>θ₀: زاویه‌ی رهاسازی — t: زمانی که انتخاب کردی — T: دوره‌ی تناوب بالا (زاویه داخل cos بر حسب رادیان؛ مثبت = سمت راست)</div>
+        <div style={{ marginTop: 6 }}><b>جایگذاری عددها:</b></div>
+        <div style={ltr}>{"θ = " + angle + " × cos( 2π × " + tSel.toFixed(1) + " ÷ " + period.toFixed(2) + " ) = ?"}</div>
+        <div style={{ display: "flex", gap: 8, alignItems: "center", flexWrap: "wrap", marginTop: 6 }}>
+          <span>زاویه‌ی تو (درجه):</span>
+          <input type="text" inputMode="decimal" dir="ltr" value={angAnswer} onChange={(e) => setAngAnswer(e.target.value)} onKeyDown={(e) => { if (e.key === "Enter") checkAngle(); }}
+            style={{ width: 90, textAlign: "center", fontFamily: "inherit", fontSize: 14, fontWeight: 700, color: "#1c2540", background: "#fbf7ec", border: "1px solid #e0a83e", borderRadius: 8, padding: "4px 6px" }} />
+          <button type="button" className="pqb-submit-btn" onClick={checkAngle} disabled={!angAnswer.trim()}>بررسی با سامانه</button>
+        </div>
+        {angChecked && <div style={{ marginTop: 6, color: angChecked.ok ? "#7be0a4" : "#ffb199" }}>{angChecked.msg}</div>}
       </div>
       <div className="vlab-readout" style={{ marginTop: 8 }}>
         هرچه نخ بلندتر باشد، دوره‌ی تناوب بیشتر است (T با √L متناسب است). دقت کن: زاویه‌ی رهاسازی در دوره‌ی تناوب تأثیری ندارد (برای زاویه‌های کوچک).

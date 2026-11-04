@@ -26645,43 +26645,146 @@ function VlabDissolveTemperatureExperiment({ onReading }) {
 function VlabReactionRateExperiment({ onReading }) {
   const [concentration, setConcentration] = useState(1);
   const [temp, setTemp] = useState(25);
+  const [simT, setSimT] = useState(0); // زمان شبیه‌سازی‌شده‌ی واکنش (ثانیه)
+  const [running, setRunning] = useState(false);
+  const [, molTick] = useState(0);
+  const SPEEDUP = 10; // هر ثانیه‌ی واقعی = ۱۰ ثانیه‌ی آزمایش
   const tempFactor = 1 + (temp - 25) / 50;
   const reactionTime = vlabClamp(60 / (concentration * tempFactor), 2, 120);
+  const progress = vlabClamp(simT / reactionTime, 0, 1);
+  const product = (1 - Math.exp(-3 * progress)) / (1 - Math.exp(-3)); // سهم محصول (۰ تا ۱)
+  const finished = progress >= 1;
+  const rate = 1 / reactionTime;
 
   useEffect(() => {
-    if (onReading) onReading(`غلظت: ${concentration} مولار | دما: ${temp}°C | زمان کامل‌شدن واکنش ≈ ${reactionTime.toFixed(1)} ثانیه`);
+    if (onReading) onReading(`غلظت: ${concentration} مولار | دما: ${temp}°C | زمان کامل‌شدن واکنش ≈ ${reactionTime.toFixed(1)} ثانیه | پیشرفت: ${(product * 100).toFixed(0)}٪`);
     // eslint-disable-next-line
-  }, [concentration, temp]);
+  }, [concentration, temp, finished]);
 
-  const colorProgress = vlabClamp(1 - reactionTime / 60, 0.08, 1);
-  // هرچه واکنش سریع‌تر (reactionTime کمتر)، حباب‌های بیشتر و سریع‌تر نشان‌دهنده‌ی برخوردِ بیشترِ
-  // مولکول‌هاست — قبلاً هیچ انیمیشنی برایِ «درحالِ واکنش‌بودن» وجود نداشت، فقط یک رنگِ ثابت.
-  const fizzCount = Math.round(vlabClamp(14 - reactionTime / 10, 2, 12));
-  const fizzDur = vlabClamp(reactionTime / 40, 0.5, 2.4);
+  // با تغییر غلظت یا دما، آزمایش از اول
+  useEffect(() => { setSimT(0); setRunning(false); }, [concentration, temp]);
+
+  // زمان‌سنج واقعی واکنش (با شتاب ×۱۰)
+  useEffect(() => {
+    if (!running) return;
+    let raf, last = performance.now();
+    const step = (now) => {
+      const dt = Math.min(now - last, 60) / 1000;
+      last = now;
+      let done = false;
+      setSimT((t) => {
+        const nt = t + dt * SPEEDUP;
+        if (nt >= reactionTime) { done = true; return reactionTime; }
+        return nt;
+      });
+      if (done) { setRunning(false); return; }
+      raf = requestAnimationFrame(step);
+    };
+    raf = requestAnimationFrame(step);
+    return () => cancelAnimationFrame(raf);
+  }, [running, reactionTime]);
+
+  // مدل مولکولی: تعداد مولکول‌های واکنش‌گر ۱ با غلظت، سرعت با دما؛ برخوردها فلاش می‌زنند
+  const molRef = React.useRef({ A: [], B: [], flashes: [] });
+  const BX = 212, BY = 26, BW = 100, BH = 72;
+  useEffect(() => {
+    const nA = Math.round(concentration * 10), nB = 8;
+    const mk = (n) => Array.from({ length: n }, () => ({ x: BX + 6 + Math.random() * (BW - 12), y: BY + 6 + Math.random() * (BH - 12), a: Math.random() * 6.283 }));
+    molRef.current = { A: mk(nA), B: mk(nB), flashes: [] };
+  }, [concentration]);
+  useEffect(() => {
+    let raf, last = performance.now(), fr = 0;
+    const step = (now) => {
+      const dt = Math.min(now - last, 48) / 16.6;
+      last = now;
+      const sp = 0.35 + temp / 32;
+      const M = molRef.current;
+      const mv = (m) => {
+        m.a += (Math.random() - 0.5) * 0.4 * dt;
+        m.x += Math.cos(m.a) * sp * dt;
+        m.y += Math.sin(m.a) * sp * dt;
+        if (m.x < BX + 4) { m.x = BX + 4; m.a = Math.PI - m.a; }
+        if (m.x > BX + BW - 4) { m.x = BX + BW - 4; m.a = Math.PI - m.a; }
+        if (m.y < BY + 4) { m.y = BY + 4; m.a = -m.a; }
+        if (m.y > BY + BH - 4) { m.y = BY + BH - 4; m.a = -m.a; }
+      };
+      M.A.forEach(mv); M.B.forEach(mv);
+      M.flashes = M.flashes.filter((f) => (f.life -= dt) > 0);
+      for (const p of M.A) for (const q of M.B) {
+        const dx = p.x - q.x, dy = p.y - q.y;
+        if (dx * dx + dy * dy < 40 && M.flashes.length < 14) M.flashes.push({ x: (p.x + q.x) / 2, y: (p.y + q.y) / 2, life: 8 });
+      }
+      fr++;
+      if (fr % 2 === 0) molTick((t) => t + 1);
+      raf = requestAnimationFrame(step);
+    };
+    raf = requestAnimationFrame(step);
+    return () => cancelAnimationFrame(raf);
+  }, [temp]);
+
+  const liquidColor = vlabMixHexColor("#b9dcff", "#e2622f", product);
+  const fizzCount = running ? Math.round(vlabClamp(14 - reactionTime / 10, 3, 12)) : 0;
+  const fizzDur = vlabClamp(reactionTime / 40, 0.6, 2.4);
+  const tReal = simT / SPEEDUP; // ثانیه‌ی واقعی از شروع
+  const dropT = running || (simT > 0 && tReal < 0.7) ? vlabClamp(tReal / 0.6, 0, 1) : null;
+  const M = molRef.current;
 
   return (
     <div className="vlab-exp">
-      {/* دو محلول واکنش‌گر، کرنومتر و دماسنج که در فهرست وسایل بودند، اضافه شدند؛ زمینه‌ی تیره و
-          ارلن‌مایرِ شیشه‌ایِ واقعی (با خطِ برجستگیِ نور) جایگزینِ طرحِ تختِ قبلی شد، و حباب‌های جوشش
-          با سرعتی متناسب با سرعتِ واکنش اضافه شدند. */}
-      <svg viewBox="0 0 320 150" className="vlab-svg" style={{ background: "#0b1330", borderRadius: "10px" }}>
-        <path d="M140,30 L140,80 L110,135 L210,135 L180,80 L180,30 Z" fill="rgba(170,200,230,0.1)" stroke="#8fb4e0" strokeWidth="2" />
-        <path d="M140,80 L117,130 L203,130 L180,80 Z" fill={`rgba(226,98,47,${colorProgress})`} />
-        <path d="M144,33 L144,78" stroke="#eaf3ff" strokeWidth="2" opacity="0.22" />
-        <g clipPath="none">
-          {Array.from({ length: fizzCount }).map((_, i) => (
-            <circle key={i} cx={125 + ((i * 37) % 70)} cy="125" r={1.6 + (i % 3) * 0.6} fill="#ffd9a8" opacity="0.8">
-              <animate attributeName="cy" from="125" to="85" dur={`${fizzDur}s`} begin={`${i * 0.15}s`} repeatCount="indefinite" />
-              <animate attributeName="opacity" from="0.8" to="0" dur={`${fizzDur}s`} begin={`${i * 0.15}s`} repeatCount="indefinite" />
-            </circle>
-          ))}
-        </g>
-        <VlabDropperMini x={100} y={55} rotate={-20} color="#2f6fe2" />
-        <VlabDropperMini x={222} y={55} rotate={20} color="#e2622f" />
-        <text x="88" y="30" fontSize="7" fill="#9aa3c0" textAnchor="middle">واکنش‌گر ۱</text>
-        <text x="212" y="30" fontSize="7" fill="#9aa3c0" textAnchor="middle">واکنش‌گر ۲</text>
-        <VlabThermometerMini x={236} y={92} temp={temp} minT={0} maxT={80} h={40} />
-        <VlabStopwatchIcon x={272} y={30} scale={1.0} readout={`${reactionTime.toFixed(0)}s`} />
+      <svg viewBox="0 0 320 200" className="vlab-svg" style={{ background: "#03060f", borderRadius: "10px" }}>
+        <defs>
+          <linearGradient id="rrGlass" x1="0" x2="1">
+            <stop offset="0" stopColor="#fff" stopOpacity="0.28" />
+            <stop offset="0.2" stopColor="#fff" stopOpacity="0.05" />
+            <stop offset="0.85" stopColor="#fff" stopOpacity="0.04" />
+            <stop offset="1" stopColor="#fff" stopOpacity="0.2" />
+          </linearGradient>
+        </defs>
+        <ellipse cx="100" cy="172" rx="70" ry="6" fill="#000" opacity="0.45" />
+        <line x1="10" y1="170" x2="205" y2="170" stroke="#1a2238" strokeWidth="2" />
+
+        {/* ارلن: دیوار پشتیِ دهانه، مایع، بدنه‌ی شیشه‌ای */}
+        <ellipse cx="100" cy="72" rx="20" ry="4" fill="#cfd8e8" fillOpacity="0.05" stroke="#8fa3c4" strokeWidth="1" />
+        <path d="M68,118 L40,164 A60,8 0 0 0 160,164 L132,118 Z" fill={liquidColor} opacity="0.88" />
+        <ellipse cx="100" cy="118" rx="32" ry="4" fill={liquidColor} />
+        <ellipse cx="100" cy="118" rx="32" ry="4" fill="#fff" opacity="0.22" />
+        {Array.from({ length: fizzCount }).map((_, i) => (
+          <circle key={"fz" + i + "-" + fizzDur.toFixed(1)} cx={62 + ((i * 37) % 76)} cy="150" r={1.5 + (i % 3) * 0.6} fill="#fff" fillOpacity="0.2" stroke="#ffe3c2" strokeWidth="0.6">
+            <animate attributeName="cy" from="156" to="119" dur={`${fizzDur}s`} begin={`${i * 0.14}s`} repeatCount="indefinite" />
+            <animate attributeName="opacity" values="0;0.9;0.9;0" keyTimes="0;0.1;0.8;1" dur={`${fizzDur}s`} begin={`${i * 0.14}s`} repeatCount="indefinite" />
+          </circle>
+        ))}
+        <path d="M80,70 L80,100 L40,164 A60,8 0 0 0 160,164 L120,100 L120,70 A20,4 0 0 1 80,70 Z" fill="url(#rrGlass)" />
+        <path d="M80,70 L80,100 L40,164 A60,8 0 0 0 160,164 L120,100 L120,70" fill="none" stroke="#cfd8e8" strokeWidth="2" strokeLinejoin="round" />
+        <path d="M80,70 A20,4 0 0 0 120,70" fill="none" stroke="#e8eefb" strokeWidth="2" />
+        <path d="M84,76 L84,98 L50,152" stroke="#fff" strokeWidth="3" strokeLinecap="round" fill="none" opacity="0.14" />
+        {[0, 1, 2].map((g) => (<line key={"rg" + g} x1={64 - g * 6} y1={130 + g * 13} x2={72 - g * 6} y2={130 + g * 13} stroke="#e8eefb" strokeWidth="1" opacity="0.7" />))}
+
+        {/* دو قطره‌چکان، بالای دهانه و رو به پایین */}
+        {[{ x: 90, c: "#2f6fe2", bulb: "#8fb8d9", liq: "#7ac2ff", lab: "واکنش‌گر ۱", lx: 52 }, { x: 110, c: "#e2622f", bulb: "#e0908f", liq: "#ff8a7a", lab: "واکنش‌گر ۲", lx: 148 }].map((d, k) => (
+          <g key={"dr" + k} transform="translate(0,22)">
+            <path d={`M${d.x - 4},20 Q${d.x - 4},6 ${d.x},6 Q${d.x + 4},6 ${d.x + 4},20 Z`} fill={d.bulb} stroke="#4a5a7a" strokeWidth="1" />
+            <rect x={d.x - 3.5} y="20" width="7" height="30" fill="#dce8f5" fillOpacity="0.85" stroke="#8fa3c4" strokeWidth="1" />
+            <rect x={d.x - 2} y="26" width="4" height="20" fill={d.liq} opacity="0.75" />
+            <path d={`M${d.x - 3.5},50 L${d.x + 3.5},50 L${d.x + 1},60 L${d.x - 1},60 Z`} fill="#dce8f5" fillOpacity="0.9" stroke="#8fa3c4" strokeWidth="0.8" />
+            <text x={d.lx} y="18" fontSize="7.5" fill="#9aa3c0" textAnchor="middle">{d.lab}</text>
+          </g>
+        ))}
+        {dropT !== null && [90, 110].map((x, k) => (
+          <ellipse key={"fd" + k} cx={x} cy={82 + (118 - 82) * dropT * dropT} rx="1.8" ry="2.8" fill={k === 0 ? "#4ab0ff" : "#ff7a52"} />
+        ))}
+
+        <VlabThermometerMini x={186} y={96} temp={temp} minT={0} maxT={80} h={58} />
+
+        {/* مدل مولکولی */}
+        <text x={BX + BW / 2} y="18" fontSize="8.5" fontWeight="700" fill="#cfd6ea" textAnchor="middle">نمای مولکولی</text>
+        <rect x={BX} y={BY} width={BW} height={BH} rx="6" fill="#0a1530" stroke="#2f6fe2" strokeWidth="1.2" />
+        {M.A.map((m, i) => (<circle key={"ma" + i} cx={m.x} cy={m.y} r="3.2" fill="#4a8fe8" stroke="#bcd8ff" strokeWidth="0.5" />))}
+        {M.B.map((m, i) => (<circle key={"mb" + i} cx={m.x} cy={m.y} r="3.2" fill="#e2622f" stroke="#ffc9a8" strokeWidth="0.5" />))}
+        {M.flashes.map((f, i) => (<circle key={"mf" + i} cx={f.x} cy={f.y} r={3 + (8 - f.life) * 0.9} fill="none" stroke="#ffe066" strokeWidth="1.2" opacity={f.life / 8} />))}
+        <text x={BX + BW / 2} y={BY + BH + 11} fontSize="7" fill="#9aa3c0" textAnchor="middle">برخورد = جرقه‌ی زرد</text>
+
+        <VlabStopwatchIcon x={262} y={136} scale={0.85} seconds={simT % 60} maxSeconds={60} readout={`${simT.toFixed(0)}s`} />
       </svg>
       <div className="vlab-controls">
         <div className="vlab-ctrl-col" style={{ flex: 1 }}>
@@ -26690,11 +26793,31 @@ function VlabReactionRateExperiment({ onReading }) {
           <label className="vlab-ctrl-label">دما (°C): {temp}</label>
           <VlabRange min="0" max="80" value={temp} onChange={(e) => setTemp(+e.target.value)} />
         </div>
+        <div className="vlab-ctrl-col">
+          <button type="button" className="pqb-submit-btn" onClick={() => { if (finished) setSimT(0); setRunning((r) => !r); }}>{running ? "⏸ توقف" : finished ? "↺ دوباره" : "▶ شروع واکنش"}</button>
+          <button type="button" className="vlab-toggle-btn" onClick={() => { setRunning(false); setSimT(0); }}>⟲ از اول</button>
+        </div>
       </div>
+      {(() => {
+        const X = (t) => 44 + (t / (reactionTime * 1.15)) * 262, Y = (f) => 150 - f * 110;
+        const pts = [];
+        for (let k = 0; k <= 60; k++) { const pr = (k / 60) * 1.15; const f = (1 - Math.exp(-3 * pr)) / (1 - Math.exp(-3)); pts.push(`${X(pr * reactionTime)},${Y(Math.min(f, 1.0))}`); }
+        return (
+          <svg viewBox="0 0 320 175" className="vlab-svg" style={{ background: "#03060f", maxWidth: 520, marginTop: 8 }}>
+            <text x="160" y="13" fontSize="9" fontWeight="700" fill="#cfd6ea" textAnchor="middle">مقدار محصول بر حسب زمان</text>
+            <line x1="44" y1="150" x2="308" y2="150" stroke="#8fa0c8" /><line x1="44" y1="150" x2="44" y2="30" stroke="#8fa0c8" />
+            {[0, 0.5, 1].map((f) => (<g key={"ry" + f}><line x1="44" y1={Y(f)} x2="308" y2={Y(f)} stroke="#2a3a73" strokeDasharray="2 4" strokeWidth="0.6" /><text x="38" y={Y(f) + 3} fontSize="7.5" fill="#cfd6ea" textAnchor="end">{f === 0 ? "۰" : f === 0.5 ? "۵۰٪" : "۱۰۰٪"}</text></g>))}
+            {[0, 0.5, 1].map((u) => (<g key={"rx" + u}><line x1={X(u * reactionTime)} y1="150" x2={X(u * reactionTime)} y2="154" stroke="#8fa0c8" /><text x={X(u * reactionTime)} y="164" fontSize="8" fill="#cfd6ea" textAnchor="middle" style={{ direction: "ltr", unicodeBidi: "isolate" }}>{(u * reactionTime).toFixed(u === 0 ? 0 : 1) + " s"}</text></g>))}
+            <polyline points={pts.join(" ")} fill="none" stroke="#ffb86b" strokeWidth="2" />
+            <circle cx={X(simT)} cy={Y(product)} r="5" fill="#ffd98a" stroke="#03060f" strokeWidth="1.2" />
+          </svg>
+        );
+      })()}
+      <VlabMeterRow height={160} meters={[{ label: "سرعت واکنش", unit: "1/s", value: rate, ranges: [0.05, 0.1, 0.25, 0.5], maj: 5, decimals: 3 }, { label: "پیشرفت واکنش", unit: "٪", value: product * 100, ranges: [100], maj: 5, decimals: 0 }]} />
       <div className="vlab-readout">
-        زمان تقریبی کامل‌شدن واکنش ≈ <b>{reactionTime.toFixed(1)} ثانیه</b>
+        زمان تقریبی کامل‌شدن واکنش ≈ <b>{reactionTime.toFixed(1)} ثانیه</b> (آزمایش با شتاب ×۱۰ نمایش داده می‌شود)
         <br />
-        غلظت یا دمای بالاتر، برخورد مولکول‌ها و سرعت واکنش را بیشتر می‌کند.
+        غلظت یا دمای بالاتر یعنی مولکول‌های بیشتر و سریع‌تر، برخوردهای بیشتر و واکنش سریع‌تر.
       </div>
       {reactionTime > 2 && reactionTime < 120 ? (
         <VlabFormulaCheck title="سرعت واکنش" fa="سرعت واکنش = ۱ ÷ زمان واکنش" en="rate = 1 / t" legend="هرچه زمان تکمیل واکنش کمتر باشد، سرعت بیشتر است." subst={`rate = 1 ÷ ${reactionTime.toFixed(0)} s = ?`} label="سرعت:" answer={1 / reactionTime} unit="بر ثانیه" decimals={3} />

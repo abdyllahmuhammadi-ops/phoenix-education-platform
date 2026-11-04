@@ -22392,12 +22392,12 @@ const VLAB_SUBJECTS = ["فیزیک", "شیمی", "زیست‌شناسی", "بر�
 /* ============================================================
    ققنوس — آمپرمتر و ولت‌مترِ عقربه‌ایِ دقیق (با برد خودکار، مثل مولتی‌متر)
    ============================================================ */
-function VlabMeter({ x, y, value, ranges, unit, label, size, decimals }) {
+function VlabMeter({ x, y, value, ranges, unit, label, size, decimals, maj }) {
   const v = Math.max(0, Number(value) || 0);
   const max = ranges.find((r) => v <= r) || ranges[ranges.length - 1];
   const frac = vlabClamp(v / max, 0, 1);
   const k = size || 1.5;
-  const R = 22, START = -135, SWEEP = 270, MAJ = 5, MIN = 50;
+  const R = 22, START = -135, SWEEP = 270, MAJ = maj || 5, MIN = (maj || 5) * 10;
   const d = decimals == null ? (max < 1 ? 3 : max <= 10 ? 2 : 1) : decimals;
   const fa = (t) => String(t).replace(/\d/g, (q) => "۰۱۲۳۴۵۶۷۸۹"[q]).replace(".", ".");
   const fmt = (t) => fa(Math.abs(t - Math.round(t)) < 1e-9 ? String(Math.round(t)) : t.toFixed(max < 1 ? 2 : 1));
@@ -22415,7 +22415,7 @@ function VlabMeter({ x, y, value, ranges, unit, label, size, decimals }) {
       })}
       {Array.from({ length: MAJ + 1 }).map((_, i) => {
         const a = ((START + (SWEEP / MAJ) * i) * Math.PI) / 180;
-        return <text key={"mn" + i} x={Math.sin(a) * (R - 9.5)} y={-Math.cos(a) * (R - 9.5) + 1.9} fontSize="5.4" fontWeight="700" fill="#1c2540" textAnchor="middle">{fmt((max / MAJ) * i)}</text>;
+        return <text key={"mn" + i} x={Math.sin(a) * (R - 9.5)} y={-Math.cos(a) * (R - 9.5) + 1.9} fontSize={MAJ > 6 ? 4.6 : 5.4} fontWeight="700" fill="#1c2540" textAnchor="middle">{fmt((max / MAJ) * i)}</text>;
       })}
       <text x="0" y="-7" fontSize="11" fontWeight="800" fill="#c0392b" textAnchor="middle" style={{ direction: "ltr", unicodeBidi: "isolate" }}>{unit}</text>
       <g style={{ transformOrigin: "0px 0px", transform: `rotate(${ang}deg)`, transition: "transform 0.5s cubic-bezier(.3,.7,.4,1)" }}>
@@ -23882,6 +23882,33 @@ function VlabStatesOfMatterExperiment({ onReading }) {
         <rect x="252" y={170 - vlabClamp((temp + 20) / 120, 0, 1) * 148} width="14" height={vlabClamp((temp + 20) / 120, 0, 1) * 148} fill={mercuryColor} />
         <circle cx="259" cy="182" r="12" fill={mercuryColor} />
       </svg>
+      {(() => {
+        const mass = 0.5;
+        const Qice = mass * 2.1 * 10, Qmelt = mass * 334, Qwater = mass * 4.18 * 100, Qboil = mass * 2260;
+        const pts = [[0, -10], [Qice, 0], [Qice + Qmelt, 0], [Qice + Qmelt + Qwater, 100], [Qice + Qmelt + Qwater + Qboil, 100], [Qice + Qmelt + Qwater + Qboil + mass * 2.0 * 10, 110]];
+        const QMAX = pts[5][0];
+        const X = (q) => 44 + (q / QMAX) * 262, Y = (t) => 150 - ((t + 10) / 120) * 112;
+        let qNow;
+        if (temp < 0) qNow = mass * 2.1 * (temp + 10);
+        else if (temp === 0) qNow = Qice;
+        else if (temp < 100) qNow = Qice + Qmelt + mass * 4.18 * temp;
+        else if (temp === 100) qNow = Qice + Qmelt + Qwater;
+        else qNow = Qice + Qmelt + Qwater + Qboil + mass * 2.0 * (temp - 100);
+        return (
+          <svg viewBox="0 0 320 175" className="vlab-svg" style={{ background: "#0b1330", maxWidth: 520, marginTop: 8 }}>
+            <text x="160" y="13" fontSize="9" fontWeight="700" fill="#cfd6ea" textAnchor="middle">منحنی گرمایش ۰٫۵ کیلوگرم آب</text>
+            <line x1="44" y1="150" x2="308" y2="150" stroke="#8fa0c8" /><line x1="44" y1="150" x2="44" y2="30" stroke="#8fa0c8" />
+            {[0, 50, 100].map((t) => (<g key={"sy" + t}><line x1="40" y1={Y(t)} x2="44" y2={Y(t)} stroke="#8fa0c8" /><text x="36" y={Y(t) + 3} fontSize="8" fill="#cfd6ea" textAnchor="end">{String(t).replace(/\d/g, (d) => "۰۱۲۳۴۵۶۷۸۹"[d])}</text><line x1="44" y1={Y(t)} x2="308" y2={Y(t)} stroke="#2a3a73" strokeDasharray="2 4" strokeWidth="0.6" /></g>))}
+            <text x="48" y="28" fontSize="7.5" fill="#9fb0e0">دما (°C)</text>
+            <text x="306" y="162" fontSize="7.5" fill="#9fb0e0" textAnchor="end">گرمای داده‌شده (kJ)</text>
+            <polyline points={pts.map(([q, t]) => `${X(q)},${Y(t)}`).join(" ")} fill="none" stroke="#7be0a4" strokeWidth="2" />
+            <text x={X(Qice + Qmelt / 2)} y={Y(0) - 5} fontSize="7.5" fill="#ffd98a" textAnchor="middle">ذوب</text>
+            <text x={X(Qice + Qmelt + Qwater + Qboil / 2)} y={Y(100) - 5} fontSize="7.5" fill="#ffd98a" textAnchor="middle">جوش</text>
+            <circle cx={X(qNow)} cy={Y(temp)} r="5" fill="#ffd98a" stroke="#0b1330" strokeWidth="1.2" />
+            <text x={X(qNow)} y={Y(temp) - 9} fontSize="8" fill="#ffd98a" textAnchor="middle" style={{ direction: "ltr", unicodeBidi: "isolate" }}>{temp + "°"}</text>
+          </svg>
+        );
+      })()}
       <div className="vlab-controls">
         <div className="vlab-ctrl-col" style={{ flex: 1 }}>
           <label className="vlab-ctrl-label">دما (درجه‌ی سانتی‌گراد): {temp}</label>
@@ -23894,6 +23921,11 @@ function VlabStatesOfMatterExperiment({ onReading }) {
         <br />
         نکته: در دمای ۰°C و ۱۰۰°C، دما تا کامل تغییر حالت، ثابت می‌ماند.
       </div>
+      {temp > 0 && temp < 100 ? (
+        <VlabFormulaCheck title="گرمای لازم" fa="گرما = جرم × گرمای ویژه × تغییر دما" en="Q = m · c · ΔT" legend="آب: c = ۴٫۱۸ کیلوژول بر کیلوگرم‌درجه — جرم آب = ۰٫۵ کیلوگرم، گرم‌شدن از ۰ تا دمای فعلی" subst={`Q = 0.5 × 4.18 × ${temp} = ?`} label="گرمای لازم:" answer={0.5 * 4.18 * temp} unit="kJ" decimals={1} />
+      ) : (
+        <div style={{ color: "#6b7399", fontSize: 12, marginTop: 8 }}>برای محاسبه‌ی گرمای لازم، دما را بین ۰ و ۱۰۰ درجه (آب مایع) بگذار.</div>
+      )}
     </div>
   );
 }
@@ -24002,6 +24034,19 @@ function VlabAcidBaseExperiment({ onReading }) {
           </g>
         )}
       </svg>
+      <>
+        <VlabMeterRow height={160} meters={[{ label: "pH‌سنج", unit: "pH", value: ph, ranges: [14], maj: 7, decimals: 1 }]} />
+        <svg viewBox="0 0 320 64" className="vlab-svg" style={{ background: "#0b1330", maxWidth: 520, marginTop: 8 }}>
+          <text x="160" y="12" fontSize="8.5" fill="#cfd6ea" textAnchor="middle">کاغذ pH (شناساگر عمومی)</text>
+          {colors.slice(0, 15).map((c, i) => (
+            <g key={"pc" + i}>
+              <rect x={10 + i * 20.4} y="18" width="20.4" height="22" fill={c} stroke="#0b1330" strokeWidth="0.8" />
+              <text x={20.2 + i * 20.4} y="52" fontSize="8" fill="#cfd6ea" textAnchor="middle">{String(i).replace(/\d/g, (d) => "۰۱۲۳۴۵۶۷۸۹"[d])}</text>
+            </g>
+          ))}
+          <polygon points={`${20.2 + ph * 20.4 - 5},14 ${20.2 + ph * 20.4 + 5},14 ${20.2 + ph * 20.4},21`} fill="#ffd98a" stroke="#0b1330" strokeWidth="0.6" style={{ transition: "all 0.4s" }} />
+        </svg>
+      </>
       <div className="vlab-controls">
         <div className="vlab-ctrl-col">
           <button type="button" className="pqb-submit-btn" style={{ background: "linear-gradient(135deg,#e2622f,var(--t-accD,#c8862b))" }} onClick={() => addDrop("acid")}>
@@ -24022,6 +24067,7 @@ function VlabAcidBaseExperiment({ onReading }) {
         <br />
         در شناساگر عمومی: قرمز = اسیدی قوی، سبز = خنثی، بنفش = بازی قوی.
       </div>
+      <VlabFormulaCheck title="pH و غلظت" fa="pH = منفیِ لگاریتمِ غلظتِ یون هیدروژن" en="pH = −log₁₀ [H⁺]" legend={"[H⁺] = 10^(−" + Math.round(ph) + ") مول بر لیتر"} subst={`pH = −log₁₀( 10^(−${Math.round(ph)}) ) = ?`} label="pH:" answer={Math.round(ph)} unit="" decimals={0} />
     </div>
   );
 }
@@ -24438,6 +24484,7 @@ function VlabMicroscopeExperiment({ onReading }) {
         <br />
         نمونه با پنس روی لام گذاشته می‌شود، با قطره‌چکان یک قطره آب/رنگ‌آمیزی روی آن می‌چکد و لامل روی آن قرار می‌گیرد — بعد زیر میکروسکوپ قرار می‌گیرد.
       </div>
+      <VlabFormulaCheck title="بزرگ‌نمایی کل" fa="بزرگ‌نمایی کل = بزرگ‌نمایی عدسی چشمی × بزرگ‌نمایی عدسی شیئی" en="M = M_eye × M_obj" legend={"عدسی چشمی ۱۰× است. عدسی شیئی در این وضعیت: " + [4, 10, 40, 100][zoom - 1] + "×"} subst={`M = 10 × ${[4, 10, 40, 100][zoom - 1]} = ?`} label="بزرگ‌نمایی کل:" answer={10 * [4, 10, 40, 100][zoom - 1]} unit="برابر" decimals={0} />
     </div>
   );
 }
@@ -24982,6 +25029,7 @@ function VlabPhotosynthesisExperiment({ onReading }) {
         <br />
         هرچه نور بیشتر باشد، گیاه فتوسنتز بیشتری انجام می‌دهد و اکسیژن بیشتری تولید می‌کند — تا جایی که عوامل دیگر (مثل دی‌اکسید کربن) محدودکننده شوند.
       </div>
+      <VlabFormulaCheck title="آهنگ فتوسنتز" fa="آهنگ تولید اکسیژن = تعداد حباب ÷ زمان" en="rate = N / t" legend="فرض کن در ۵ دقیقه، حباب‌ها را شمرده‌ای" subst={`rate = ${bubbleRate * 5} ÷ 5 min = ?`} label="آهنگ:" answer={bubbleRate} unit="حباب بر دقیقه" decimals={0} />
     </div>
   );
 }
@@ -26106,6 +26154,26 @@ function VlabCapacitorExperiment({ onReading }) {
         {/* سیمِ − از ریلِ بازگشت به ته‌ی تختِ باتری (قطب منفیِ واقعی) */}
         <path d="M44,140 L44,130 L32,130 L32,126" fill="none" stroke="#3a9bd5" strokeWidth="2.4" />
       </svg>
+      {(() => {
+        const X = (u) => 44 + (u / 5) * 262, Y = (f) => 150 - f * 110;
+        const up = [], dn = [];
+        for (let k = 0; k <= 50; k++) { const u = k / 10; up.push(`${X(u)},${Y(1 - Math.exp(-u))}`); dn.push(`${X(u)},${Y(Math.exp(-u))}`); }
+        const f = chargePercent / 100;
+        const u = mode === "discharging" ? vlabClamp(-Math.log(Math.max(f, 0.0067)), 0, 5) : vlabClamp(-Math.log(Math.max(1 - f, 0.0067)), 0, 5);
+        return (
+          <svg viewBox="0 0 320 175" className="vlab-svg" style={{ background: "#0b1330", maxWidth: 520, marginTop: 8 }}>
+            <text x="160" y="13" fontSize="9" fontWeight="700" fill="#cfd6ea" textAnchor="middle">نمودار ولتاژ خازن بر حسب زمان</text>
+            <line x1="44" y1="150" x2="308" y2="150" stroke="#8fa0c8" /><line x1="44" y1="150" x2="44" y2="30" stroke="#8fa0c8" />
+            {[0, 1, 2, 3, 4, 5].map((k) => (<g key={"cx" + k}><line x1={X(k)} y1="150" x2={X(k)} y2="154" stroke="#8fa0c8" /><text x={X(k)} y="164" fontSize="8" fill="#cfd6ea" textAnchor="middle" style={{ direction: "ltr", unicodeBidi: "isolate" }}>{k === 0 ? "0" : k + "τ"}</text></g>))}
+            {[0, 0.63, 1].map((v) => (<g key={"cy" + v}><line x1="40" y1={Y(v)} x2="44" y2={Y(v)} stroke="#8fa0c8" /><line x1="44" y1={Y(v)} x2="308" y2={Y(v)} stroke="#2a3a73" strokeDasharray="2 4" strokeWidth="0.6" /><text x="36" y={Y(v) + 3} fontSize="7.5" fill="#cfd6ea" textAnchor="end">{v === 0.63 ? "۶۳٪" : v === 1 ? "۱۰۰٪" : "۰"}</text></g>))}
+            <polyline points={up.join(" ")} fill="none" stroke="#7be0a4" strokeWidth="1.8" opacity={mode === "discharging" ? 0.35 : 1} />
+            <polyline points={dn.join(" ")} fill="none" stroke="#ff8a4c" strokeWidth="1.8" opacity={mode === "charging" ? 0.35 : 0.9} />
+            <text x={X(3)} y={Y(0.93)} fontSize="7.5" fill="#7be0a4">شارژ</text>
+            <text x={X(1.6)} y={Y(0.14) - 4} fontSize="7.5" fill="#ff8a4c">دشارژ</text>
+            <circle cx={X(u)} cy={Y(f)} r="5" fill="#ffd98a" stroke="#0b1330" strokeWidth="1.2" />
+          </svg>
+        );
+      })()}
       <VlabMeterRow meters={[{ label: "ولت‌متر — ولتاژ خازن", unit: "V", value: (9 * chargePercent) / 100, ranges: [10] }, { label: "آمپرمتر — جریان مدار", unit: "mA", value: mode === "charging" ? (9 * (1 - chargePercent / 100)) / resistance : mode === "discharging" ? (9 * (chargePercent / 100)) / resistance : 0, ranges: [0.1, 0.2, 0.5, 1, 2, 5, 10, 20] }]} />
       <div style={{ color: "#6b7399", fontSize: 11.5, textAlign: "center", margin: "4px 0" }}>باتری ۹ ولت — R بر حسب کیلواهم است، پس جریان بر حسب میلی‌آمپر می‌شود.</div>
       <div className="vlab-controls">
@@ -26240,6 +26308,7 @@ function VlabDensityFloatingExperiment({ onReading }) {
         {floats && material === "پلاستیک" && "✅ چون چگالی‌اش از آب کمتر است، شناور می‌ماند — بیشترِ آن زیرِ آب و بخشِ کوچکی از آن بیرون از آب است."}
         {!floats && "⬇️ چون چگالی‌اش از آب بیشتر است، ته می‌رود و به کفِ ظرف می‌رسد."}
       </div>
+      <VlabFormulaCheck title="چگالی" fa="چگالی = جرم ÷ حجم" en="ρ = m / V" legend="حجم نمونه ۵۰ سانتی‌متر مکعب است. اگر چگالی از ۱ (آب) کمتر باشد، جسم شناور می‌ماند." subst={`ρ = ${(density * 50).toFixed(1)} g ÷ 50 cm³ = ?`} label="چگالی:" answer={density} unit="g/cm³" decimals={2} />
     </div>
   );
 }
@@ -26458,6 +26527,9 @@ function VlabReactionRateExperiment({ onReading }) {
         <br />
         غلظت یا دمای بالاتر، برخورد مولکول‌ها و سرعت واکنش را بیشتر می‌کند.
       </div>
+      {reactionTime > 2 && reactionTime < 120 ? (
+        <VlabFormulaCheck title="سرعت واکنش" fa="سرعت واکنش = ۱ ÷ زمان واکنش" en="rate = 1 / t" legend="هرچه زمان تکمیل واکنش کمتر باشد، سرعت بیشتر است." subst={`rate = 1 ÷ ${reactionTime.toFixed(0)} s = ?`} label="سرعت:" answer={1 / reactionTime} unit="بر ثانیه" decimals={3} />
+      ) : null}
     </div>
   );
 }
@@ -26602,6 +26674,7 @@ function VlabHeartRateExperiment({ onReading }) {
         @keyframes vlabRunLegs { 0%, 100% { transform: rotate(${ampDeg}deg); } 50% { transform: rotate(-${ampDeg}deg); } }
         @keyframes vlabRunArms { 0%, 100% { transform: rotate(-${ampDeg}deg); } 50% { transform: rotate(${ampDeg}deg); } }
       `}</style>
+      <VlabFormulaCheck title="فاصله‌ی دو ضربان" fa="فاصله‌ی دو ضربان (ثانیه) = ۶۰ ÷ ضربان در دقیقه" en="T = 60 / BPM" legend={"ضربان فعلی: " + heartRate + " ضربه در دقیقه"} subst={`T = 60 ÷ ${heartRate} = ?`} label="فاصله‌ی دو ضربان:" answer={60 / heartRate} unit="ثانیه" decimals={2} />
     </div>
   );
 }
@@ -27372,6 +27445,7 @@ function VlabElectricityConductionExperiment({ onReading }) {
           <text x="129" y="58" fontSize="8" fill="#e2622f" textAnchor="middle" fontWeight="700">مدار باز است ⛔</text>
         )}
       </svg>
+      <VlabMeterRow meters={[{ label: "آمپرمتر — جریان مدار", unit: "A", value: current, ranges: [0.5, 1, 2] }]} height={165} />
       <div className="vlab-controls">
         <div className="vlab-toggle-row" style={{ flexWrap: "wrap" }}>
           {Object.keys(MATERIALS).map((m) => (

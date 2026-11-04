@@ -22431,6 +22431,45 @@ function VlabRange({ min, max, step, value, onChange, style, ...rest }) {
   );
 }
 
+/* ============================================================
+   ققنوس — کادر مشترکِ «فرمول و بررسیِ جواب» برای آزمایش‌ها:
+   فرمول فارسی + انگلیسی، جایگذاریِ عددهای انتخاب‌شده، و مقایسه‌ی جوابِ دانش‌آموز با جوابِ سامانه
+   ============================================================ */
+function VlabFormulaCheck({ title, fa, en, legend, subst, answer, unit, decimals = 2, label }) {
+  const [txt, setTxt] = useState("");
+  const [res, setRes] = useState(null);
+  useEffect(() => { setRes(null); }, [answer]);
+  const toFa = (n) => String(n).replace(/\d/g, (d) => "۰۱۲۳۴۵۶۷۸۹"[d]).replace(/\./g, "٫");
+  const shown = toFa(Number(answer).toFixed(decimals)) + " " + unit;
+  const check = () => {
+    const v = parseFloat(String(txt).replace(/[۰-۹]/g, (d) => "۰۱۲۳۴۵۶۷۸۹".indexOf(d)).replace(/[٫,،]/g, "."));
+    if (isNaN(v)) { setRes({ ok: false, msg: "یک عدد بنویس." }); return; }
+    const tol = Math.max(0.5 * Math.pow(10, -decimals), Math.abs(answer) * 0.015);
+    if (Math.abs(v - answer) <= tol) setRes({ ok: true, msg: "✅ درست است! جواب تو با جواب سامانه (" + shown + ") یکی است." });
+    else if (answer !== 0 && (Math.abs(v / answer - 10) < 0.2 || Math.abs(v / answer - 0.1) < 0.02 || Math.abs(v / answer - 100) < 2 || Math.abs(v / answer - 0.01) < 0.002 || Math.abs(v / answer - 1000) < 20 || Math.abs(v / answer - 0.001) < 0.0002)) setRes({ ok: false, msg: "❌ مرتبه‌ی عدد فرق دارد — یکای عددها (مثلاً سانتی‌متر ↔ متر، کیلو ↔ ساده) را بررسی کن." });
+    else setRes({ ok: false, msg: "❌ هنوز با جواب سامانه نمی‌خواند (جواب سامانه: " + shown + "). عددها را دوباره در فرمول بگذار و مرحله‌به‌مرحله حساب کن." });
+  };
+  const ltr = { direction: "ltr", unicodeBidi: "isolate", display: "inline-block" };
+  const box = { background: "#101a3d", border: "1px solid #2a3a73", borderRadius: 10, padding: "10px 14px", color: "#e8ecf8", fontSize: 13, lineHeight: 2, marginTop: 8 };
+  return (
+    <div style={box}>
+      <div><b>{title}:</b> {fa}</div>
+      <div style={ltr}>{en}</div>
+      {legend && <div style={{ color: "#a9b2d6", fontSize: 12 }}>{legend}</div>}
+      <div style={{ marginTop: 6 }}><b>جایگذاری عددها:</b></div>
+      <div style={ltr}>{subst}</div>
+      <div style={{ display: "flex", gap: 8, alignItems: "center", flexWrap: "wrap", marginTop: 6 }}>
+        <span>{label || "جواب تو:"}</span>
+        <input type="text" inputMode="decimal" dir="ltr" value={txt} onChange={(e) => setTxt(e.target.value)} onKeyDown={(e) => { if (e.key === "Enter") check(); }}
+          style={{ width: 90, textAlign: "center", fontFamily: "inherit", fontSize: 14, fontWeight: 700, color: "#1c2540", background: "#fbf7ec", border: "1px solid #e0a83e", borderRadius: 8, padding: "4px 6px" }} />
+        <span style={{ color: "#a9b2d6" }}>{unit}</span>
+        <button type="button" className="pqb-submit-btn" onClick={check} disabled={!String(txt).trim()}>بررسی با سامانه</button>
+      </div>
+      {res && <div style={{ marginTop: 6, color: res.ok ? "#7be0a4" : "#ffb199" }}>{res.msg}</div>}
+    </div>
+  );
+}
+
 const VLAB_EXPERIMENTS = [
   {
     id: "lever",
@@ -23165,6 +23204,11 @@ function VlabLeverExperiment({ onReading }) {
           </div>
         </>
       )}
+      {leverType === "یک" ? (
+        <VlabFormulaCheck title="شرط تعادل" fa="وزن چپ × فاصله‌ی چپ = وزن راست × فاصله‌ی راست" en="m₁ · d₁ = m₂ · d₂" legend="m: وزنه (کیلوگرم) — d: فاصله از تکیه‌گاه" subst={`${leftMass} × ${leftDist} = m₂ × ${rightDist}  →  m₂ = ?`} label="وزن راست برای تعادل:" answer={(leftMass * leftDist) / rightDist} unit="کیلوگرم" decimals={2} />
+      ) : (
+        <VlabFormulaCheck title="کمترین نیروی لازم" fa="نیرو × فاصله‌ی نیرو = (جرم بار × g) × فاصله‌ی بار" en="F · d_F = (m · g) · d_L" legend="g = ۱۰ نیوتن بر کیلوگرم — d: فاصله از تکیه‌گاه" subst={`F × ${effortDist} = (${loadMass} × 10) × ${loadDist}  →  F = ?`} label="کمترین نیرو:" answer={minForce} unit="نیوتن" decimals={2} />
+      )}
     </div>
   );
 }
@@ -23454,6 +23498,7 @@ function VlabOhmExperiment({ onReading }) {
         <br />
         هرچه جریان بیشتر باشد، لامپ روشن‌تر می‌شود.
       </div>
+      <VlabFormulaCheck title="قانون اهم" fa="جریان = ولتاژ ÷ مقاومت" en="I = V / R" legend="I: جریان (آمپر) — V: ولتاژ (ولت) — R: مقاومت (اهم)" subst={`I = ${voltage} ÷ ${resistance} = ?`} label="جریان:" answer={current} unit="آمپر" decimals={3} />
     </div>
   );
 }
@@ -23590,6 +23635,10 @@ function VlabSeriesParallelExperiment({ onReading }) {
         <br />
         در حالت سری، جریان دو لامپ برابر است؛ در حالت موازی، ولتاژ دو لامپ برابر است.
       </div>
+      <>
+        <VlabFormulaCheck title="مقاومت معادل" fa={mode === "سری" ? "مقاومت کل = جمع مقاومت‌ها" : "مقاومت کل = حاصل‌ضرب ÷ مجموع"} en={mode === "سری" ? "R_t = R₁ + R₂" : "R_t = (R₁ · R₂) / (R₁ + R₂)"} legend="R بر حسب اهم" subst={mode === "سری" ? `R_t = ${r1} + ${r2} = ?` : `R_t = (${r1} × ${r2}) ÷ (${r1} + ${r2}) = ?`} label="مقاومت کل:" answer={totalR} unit="اهم" decimals={2} />
+        <VlabFormulaCheck title="جریان کل" fa="جریان کل = ولتاژ باتری ÷ مقاومت کل" en="I = V / R_t" legend="ولتاژ باتری = ۹ ولت" subst={`I = 9 ÷ ${totalR.toFixed(2)} = ?`} label="جریان کل:" answer={voltage / totalR} unit="آمپر" decimals={3} />
+      </>
     </div>
   );
 }
@@ -24418,6 +24467,10 @@ function VlabFreeFallExperiment({ onReading }) {
         <br />
         هرچه g (شتاب گرانش آن سیاره) بیشتر باشد، جسم سریع‌تر سقوط می‌کند.
       </div>
+      <>
+        <VlabFormulaCheck title="زمان سقوط" fa="زمان = √( ۲ × ارتفاع ÷ شتاب گرانش )" en="t = √( 2h / g )" legend={"h: ارتفاع (متر) — g: شتاب گرانش " + planet + " (متر بر مجذور ثانیه)"} subst={`t = √( 2 × ${height} ÷ ${g} ) = ?`} label="زمان سقوط:" answer={time} unit="ثانیه" decimals={2} />
+        <VlabFormulaCheck title="سرعت لحظه‌ی برخورد" fa="سرعت = شتاب گرانش × زمان" en="v = g · t" legend="با زمانِ به‌دست‌آمده از بالا" subst={`v = ${g} × ${time.toFixed(2)} = ?`} label="سرعت:" answer={finalVelocity} unit="m/s" decimals={1} />
+      </>
     </div>
   );
 }
@@ -25104,6 +25157,7 @@ function VlabPulleyExperiment({ onReading }) {
         <br />
         قرقره‌ی متحرک نیروی لازم را نصف می‌کند، اما باید طناب را دو برابر بیشتر بکشی — دقیقاً همین روی خط‌کش دیده می‌شود.
       </div>
+      <VlabFormulaCheck title="نیروی لازم" fa="نیرو = وزن بار ÷ مزیت مکانیکی" en="F = W / n" legend="n: تعداد رشته‌های طنابی که بار را نگه می‌دارند (ثابت ۱، متحرک ۲، مرکب ۳)" subst={`F = ${load} ÷ ${ma} = ?`} label="نیروی لازم:" answer={forceNeeded} unit="کیلوگرم‌نیرو" decimals={2} />
     </div>
   );
 }
@@ -25258,6 +25312,7 @@ function VlabFrictionExperiment({ onReading }) {
         <br />
         فاصله‌ی جابجایی روی خط‌کش: <b>{pulled ? travelCm : 0} سانتی‌متر</b> — هرچه سطح زبرتر باشد (مثل شن)، اصطکاک بیشتر و جابجایی کمتر است.
       </div>
+      <VlabFormulaCheck title="نیروی اصطکاک" fa="اصطکاک = ضریب اصطکاک × جرم × شتاب گرانش" en="f = μ · m · g" legend="μ: ضریب اصطکاک سطح — m: جرم (کیلوگرم) — g = ۹٫۸" subst={`f = ${coeff} × ${mass} × 9.8 = ?`} label="نیروی اصطکاک:" answer={frictionForce} unit="نیوتن" decimals={1} />
     </div>
   );
 }
@@ -25484,6 +25539,7 @@ function VlabNewtonSecondLawExperiment({ onReading }) {
         <br />
         جابجایی گاری (روی خط‌کش): <b>{pulled ? TRAVEL_M.toFixed(2) : "0.00"} متر</b> در <b>{elapsed.toFixed(1)} ثانیه</b> — با نیروی ثابت، هرچه جرم بیشتر باشد، شتاب و جابجایی کمتر است.
       </div>
+      <VlabFormulaCheck title="قانون دوم نیوتن" fa="شتاب = نیرو ÷ جرم" en="a = F / m" legend="F: نیرو (نیوتن) — m: جرم (کیلوگرم) — a: شتاب (متر بر مجذور ثانیه)" subst={`a = ${force} ÷ ${mass} = ?`} label="شتاب:" answer={acceleration} unit="m/s²" decimals={2} />
     </div>
   );
 }
@@ -25586,6 +25642,10 @@ function VlabNewtonThirdLawExperiment({ onReading }) {
         <br />
         جابجاییِ گاریِ آبی (جرم {mass1}): <b>{pushed ? d1.toFixed(0) : 0} واحد</b> — جابجاییِ گاریِ نارنجی (جرم {mass2}): <b>{pushed ? d2.toFixed(0) : 0} واحد</b> — چون نیرو یکسان است، گاریِ سبک‌تر شتابِ بیشتری می‌گیرد و بیشتر جابجا می‌شود.
       </div>
+      <>
+        <VlabFormulaCheck title="شتاب گاری ۱" fa="شتاب = نیروی فنر ÷ جرم گاری" en="a₁ = F / m₁" legend="نیروی فنر به هر دو گاری برابر است (F = ۱۲ نیوتن) ولی در خلاف جهت هم" subst={`a₁ = 12 ÷ ${mass1} = ?`} label="شتاب گاری ۱:" answer={12 / mass1} unit="m/s²" decimals={2} />
+        <VlabFormulaCheck title="شتاب گاری ۲" fa="شتاب = نیروی فنر ÷ جرم گاری" en="a₂ = F / m₂" legend="همان نیرو، جرم متفاوت ← شتاب متفاوت" subst={`a₂ = 12 ÷ ${mass2} = ?`} label="شتاب گاری ۲:" answer={12 / mass2} unit="m/s²" decimals={2} />
+      </>
     </div>
   );
 }
@@ -25612,7 +25672,7 @@ function VlabLedVoltageExperiment({ onReading }) {
         {/* سیم طلایی (+): از دکمه‌ی بالاییِ باتری → مقاومت محافظ */}
         <path d="M32,53 L32,35 L70,35 L70,75" fill="none" stroke="#f2c572" strokeWidth="2.6" />
         <path d="M70,75 L75,67 L82,83 L89,67 L96,83 L103,67 L108,75" fill="none" stroke="#f2c572" strokeWidth="2.6" />
-        <text x="89" y="56" fontSize="7.5" fill="#9aa3c0" textAnchor="middle">مقاومت محافظ</text>
+        <text x="89" y="56" fontSize="7.5" fill="#9aa3c0" textAnchor="middle">مقاومت محافظ ۳۳۰ Ω</text>
         <line x1="108" y1="75" x2="130" y2="75" stroke="#f2c572" strokeWidth="2.6" />
         {/* سیم آبی (−): ته‌ی تختِ باتری → ریل برگشت */}
         <path d="M32,126 L32,140 L280,140" fill="none" stroke="#3a9bd5" strokeWidth="2.6" />
@@ -25636,6 +25696,7 @@ function VlabLedVoltageExperiment({ onReading }) {
         <br />
         هر LED یک «ولتاژ آستانه» دارد که زیر آن اصلاً روشن نمی‌شود.
       </div>
+      <VlabFormulaCheck title="جریان LED" fa="جریان = (ولتاژ باتری − ولتاژ آستانه) ÷ مقاومت محافظ" en="I = (V − V_f) / R" legend="V_f = ۲ ولت، R = ۳۳۰ اهم. اگر V کمتر از V_f باشد، جریان صفر است و LED خاموش می‌ماند." subst={`I = (${voltage} − ${threshold}) ÷ 330 = ?`} label="جریان:" answer={Math.max(0, (voltage - threshold) / 330) * 1000} unit="میلی‌آمپر" decimals={1} />
     </div>
   );
 }
@@ -25747,6 +25808,7 @@ function VlabElectromagnetExperiment({ onReading }) {
         <br />
         هرچه دور سیم‌پیچ یا جریان بیشتر باشد، میدان مغناطیسی قوی‌تر می‌شود.
       </div>
+      <VlabFormulaCheck title="قدرت آهنربا" fa="قدرت آهنربای الکتریکی با (تعداد دور × جریان) متناسب است" en="B ∝ N · I" legend="N: تعداد دور سیم‌پیچ — I: جریان (آمپر) — حاصل‌ضرب بر حسب «آمپر‌دور»" subst={`N · I = ${turns} × ${current} = ?`} label="حاصل‌ضرب:" answer={turns * current} unit="آمپر‌دور" decimals={1} />
     </div>
   );
 }
@@ -25895,6 +25957,7 @@ function VlabCapacitorExperiment({ onReading }) {
         <br />
         «شارژ کردن» کلید را به باتری وصل می‌کند؛ «تخلیه کردن» باتری را دور می‌زند تا خازن از رویِ مقاومت دشارژ شود.
       </div>
+      <VlabFormulaCheck title="ثابت زمانی" fa="ثابت زمانی = مقاومت × ظرفیت خازن" en="τ = R · C" legend="R بر حسب اهم و C بر حسب فاراد (۱ میکروفاراد = ۰٫۰۰۰۰۰۱ فاراد) — نتیجه بر حسب ثانیه؛ پس از حدود ۵τ خازن تقریباً کامل شارژ می‌شود" subst={`τ = (${resistance * 1000} Ω) × (${capacitance} µF = ${capacitance / 1e6} F) = ?`} label="ثابت زمانی:" answer={tau / 1000} unit="ثانیه" decimals={3} />
     </div>
   );
 }

@@ -23171,41 +23171,138 @@ function VlabLeverExperiment({ onReading }) {
 
 /* ---------- ۲. آونگ ساده ---------- */
 function VlabPendulumExperiment({ onReading }) {
-  const [length, setLength] = useState(80);
+  const [length, setLength] = useState(80);   // سانتی‌متر
+  const [angle, setAngle] = useState(15);     // درجه
   const [swinging, setSwinging] = useState(false);
+  const [t, setT] = useState(0);
+  const [answer, setAnswer] = useState("");
+  const [checked, setChecked] = useState(null);
+  const raf = React.useRef(0);
+  const last = React.useRef(0);
   const g = 9.8;
-  const period = 2 * Math.PI * Math.sqrt(length / 100 / g);
+  const Lm = length / 100;
+  const period = 2 * Math.PI * Math.sqrt(Lm / g);
+  const freq = 1 / period;
+  const fa = (n) => String(n).replace(/\d/g, (d) => "۰۱۲۳۴۵۶۷۸۹"[d]);
+  const f2 = (n) => fa(n.toFixed(2));
 
   useEffect(() => {
-    if (onReading) onReading(`طول آونگ: ${length} سانتی‌متر | دوره‌ی تناوب محاسبه‌شده: ${period.toFixed(2)} ثانیه`);
+    if (!swinging) return undefined;
+    last.current = performance.now();
+    const tick = (now) => {
+      setT((x) => x + (now - last.current) / 1000);
+      last.current = now;
+      raf.current = requestAnimationFrame(tick);
+    };
+    raf.current = requestAnimationFrame(tick);
+    return () => cancelAnimationFrame(raf.current);
+  }, [swinging]);
+
+  useEffect(() => {
+    setT(0); setSwinging(false); setChecked(null);
+    if (onReading) onReading(`طول آونگ: ${length} سانتی‌متر | زاویه‌ی رهاسازی: ${angle} درجه | دوره‌ی تناوب: ${period.toFixed(2)} ثانیه`);
     // eslint-disable-next-line
-  }, [length]);
+  }, [length, angle]);
+
+  const theta = angle * Math.cos((2 * Math.PI * t) / period); // درجه
+  const cx = 180, cy = 44, R = 146;
+  const px = length * 0.95;
+  const rad = (d) => (d * Math.PI) / 180;
+  const pt = (r, d) => [cx + r * Math.sin(rad(d)), cy + r * Math.cos(rad(d))];
+  const bx = cx + px * Math.sin(rad(theta)), by = cy + px * Math.cos(rad(theta));
+  const ticks = [];
+  for (let d = -90; d <= 90; d += 2) {
+    const major = d % 10 === 0, mid = d % 5 === 0;
+    const [x1, y1] = pt(R, d), [x2, y2] = pt(R - (major ? 12 : mid ? 8 : 5), d);
+    ticks.push(<line key={"t" + d} x1={x1} y1={y1} x2={x2} y2={y2} stroke={major ? "#f2c572" : "#8fa0c8"} strokeWidth={major ? 1.2 : 0.7} />);
+    if (major && d !== 0) {
+      const [lx, ly] = pt(R + 11, d);
+      ticks.push(<text key={"l" + d} x={lx} y={ly + 3} fontSize="8.5" fill="#cfd6ea" textAnchor="middle">{fa(Math.abs(d))}</text>);
+    }
+  }
+  const [ax, ay] = pt(R, -90), [bx2, by2] = pt(R, 90);
+  const [rx, ry] = pt(px, angle), [lx2, ly2] = pt(px, -angle);
+
+  const check = () => {
+    const v = parseFloat(String(answer).replace(/[۰-۹]/g, (d) => "۰۱۲۳۴۵۶۷۸۹".indexOf(d)).replace(/[٫,،]/g, "."));
+    if (isNaN(v)) { setChecked({ ok: false, msg: "یک عدد بنویس." }); return; }
+    const err = Math.abs(v - period);
+    if (err <= 0.02 + period * 0.01) setChecked({ ok: true, msg: `✅ درست است! جواب تو با جواب سامانه (${f2(period)} ثانیه) یکی است.` });
+    else if (Math.abs(v - period * 10) < 0.2 * period * 10 || Math.abs(v - period / 10) < 0.2 * period / 10) setChecked({ ok: false, msg: "❌ مرتبه‌ی عدد فرق دارد — یادت باشد طول را به متر تبدیل کنی (سانتی‌متر ÷ ۱۰۰)." });
+    else setChecked({ ok: false, msg: `❌ هنوز با جواب سامانه نمی‌خواند (جواب سامانه: ${f2(period)} ثانیه). محاسبه را دوباره بررسی کن: ابتدا L ÷ g، بعد جذر، بعد × ۲π.` });
+  };
+  const ltr = { direction: "ltr", unicodeBidi: "isolate", display: "inline-block" };
+  const box = { background: "#101a3d", border: "1px solid #2a3a73", borderRadius: 10, padding: "10px 14px", color: "#e8ecf8", fontSize: 13, lineHeight: 2 };
 
   return (
     <div className="vlab-exp">
-      <svg viewBox="0 0 320 220" className="vlab-svg">
-        <line x1="160" y1="15" x2="160" y2="25" stroke="#5b4636" strokeWidth="6" />
-        <g
-          className={swinging ? "vlab-pendulum-swing" : ""}
-          style={{ transformOrigin: "160px 20px", animationDuration: swinging ? period.toFixed(2) + "s" : undefined }}
-        >
-          <line x1="160" y1="20" x2="160" y2={20 + length} stroke="#8a6d3b" strokeWidth="2" />
-          <circle cx="160" cy={20 + length} r="14" fill="#c8862b" />
-        </g>
+      <svg viewBox="0 0 360 310" className="vlab-svg" style={{ background: "#0b1330", maxWidth: 460 }}>
+        <defs>
+          <radialGradient id="pnBob" cx="35%" cy="28%" r="75%">
+            <stop offset="0%" stopColor="#fff3cf" /><stop offset="35%" stopColor="#e0a83e" /><stop offset="100%" stopColor="#6a4a12" />
+          </radialGradient>
+          <linearGradient id="pnBar" x1="0" y1="0" x2="0" y2="1">
+            <stop offset="0%" stopColor="#c9d0e4" /><stop offset="100%" stopColor="#6b7599" />
+          </linearGradient>
+        </defs>
+        {/* پایه‌ی آویز */}
+        <rect x="8" y="26" width="344" height="9" rx="4" fill="url(#pnBar)" />
+        <rect x="8" y="26" width="9" height="276" rx="3" fill="url(#pnBar)" />
+        <rect x="343" y="26" width="9" height="276" rx="3" fill="url(#pnBar)" />
+        <rect x="4" y="298" width="352" height="8" rx="3" fill="#4a5478" />
+        <rect x="170" y="35" width="20" height="10" rx="2" fill="#8fa0c8" />
+        {/* نیم‌دایره‌ی مدرج */}
+        <path d={`M ${ax} ${ay} A ${R} ${R} 0 0 0 ${bx2} ${by2}`} fill="rgba(143,160,200,0.06)" stroke="#8fa0c8" strokeWidth="1.2" />
+        <path d={`M ${pt(R - 12, -90)[0]} ${pt(R - 12, -90)[1]} A ${R - 12} ${R - 12} 0 0 0 ${pt(R - 12, 90)[0]} ${pt(R - 12, 90)[1]}`} fill="none" stroke="#8fa0c8" strokeWidth="0.6" />
+        {ticks}
+        <line x1={cx} y1={cy} x2={cx} y2={cy + R} stroke="#5a6a9c" strokeDasharray="4 4" strokeWidth="0.9" />
+        {/* خطوط دامنه‌ی نوسان */}
+        <line x1={cx} y1={cy} x2={rx} y2={ry} stroke="#e2622f" strokeDasharray="3 3" strokeWidth="0.8" opacity="0.7" />
+        <line x1={cx} y1={cy} x2={lx2} y2={ly2} stroke="#e2622f" strokeDasharray="3 3" strokeWidth="0.8" opacity="0.7" />
+        {/* نخ و گلوله */}
+        <line x1={cx} y1={cy} x2={bx} y2={by} stroke="#e8e0c8" strokeWidth="1.6" />
+        <circle cx={cx} cy={cy} r="2.6" fill="#c9d0e4" />
+        <circle cx={bx} cy={by} r="12" fill="url(#pnBob)" stroke="#3b2a08" strokeWidth="0.8" />
+        {/* اندازه‌ی طول */}
+        <text x={cx + 8} y={cy + px / 2 + 4} fontSize="10" fill="#f2c572" style={{ direction: "ltr", unicodeBidi: "isolate" }}>{"L = " + length + " cm"}</text>
+        <text x="180" y="22" fontSize="10" fill="#cfd6ea" textAnchor="middle">{"θ = " + fa(theta.toFixed(1)) + "°"}</text>
       </svg>
+
       <div className="vlab-controls">
         <div className="vlab-ctrl-col" style={{ flex: 1 }}>
-          <label className="vlab-ctrl-label">طول آونگ (سانتی‌متر): {length}</label>
+          <label className="vlab-ctrl-label">طول نخ — L (سانتی‌متر)</label>
           <VlabRange min="20" max="150" value={length} onChange={(e) => setLength(+e.target.value)} disabled={swinging} />
+          <label className="vlab-ctrl-label">زاویه‌ی رهاسازی — θ (درجه، تا ۳۰ برای فرمول دقیق)</label>
+          <VlabRange min="5" max="30" value={angle} onChange={(e) => setAngle(+e.target.value)} disabled={swinging} />
         </div>
-        <button type="button" className="pqb-submit-btn" onClick={() => setSwinging((s) => !s)}>
-          {swinging ? "⏸️ توقف نوسان" : "▶️ شروع نوسان"}
-        </button>
+        <div style={{ display: "flex", gap: 8, alignItems: "center" }}>
+          <button type="button" className="pqb-submit-btn" onClick={() => setSwinging((x) => !x)}>{swinging ? "⏸️ توقف" : "▶️ رها کن"}</button>
+          <button type="button" className="pqb-submit-btn" style={{ background: "transparent", color: "#36457f", border: "1px solid #aab4e0" }} onClick={() => { setSwinging(false); setT(0); }}>↺ از اول</button>
+        </div>
       </div>
-      <div className="vlab-readout">
-        دوره‌ی تناوب (T) = 2π√(L/g) ≈ <b>{period.toFixed(2)} ثانیه</b>
-        <br />
-        هرچه آونگ بلندتر باشد، نوسانش کندتر (دوره‌ی تناوبش بیشتر) است.
+
+      <div style={box}>
+        ⏱️ کرنومتر: <b>{f2(t)}</b> ثانیه &nbsp;|&nbsp; نوسان کامل: <b>{fa(Math.floor(t / period))}</b>
+        <div style={{ color: "#a9b2d6", fontSize: 12 }}>برای اندازه‌گیری: زمان چند نوسان کامل را بخوان و بر تعدادشان تقسیم کن.</div>
+      </div>
+
+      <div style={{ ...box, marginTop: 8 }}>
+        <div><b>فرمول:</b> دوره‌ی تناوب = ۲π × √( طول ÷ شتاب گرانش )</div>
+        <div style={ltr}>T = 2π √( L / g )</div>
+        <div style={{ color: "#a9b2d6", fontSize: 12 }}>T: دوره‌ی تناوب (ثانیه) — L: طول نخ (متر) — g = ۹٫۸ متر بر مجذور ثانیه</div>
+        <div style={{ marginTop: 6 }}><b>جایگذاری عددها:</b></div>
+        <div style={ltr}>{"T = 2 × 3.1416 × √( " + Lm.toFixed(2) + " ÷ 9.8 ) = ?"}</div>
+        <div style={{ display: "flex", gap: 8, alignItems: "center", flexWrap: "wrap", marginTop: 6 }}>
+          <span>جواب تو (ثانیه):</span>
+          <input type="text" inputMode="decimal" dir="ltr" value={answer} onChange={(e) => setAnswer(e.target.value)} onKeyDown={(e) => { if (e.key === "Enter") check(); }}
+            style={{ width: 90, textAlign: "center", fontFamily: "inherit", fontSize: 14, fontWeight: 700, color: "#1c2540", background: "#fbf7ec", border: "1px solid #e0a83e", borderRadius: 8, padding: "4px 6px" }} />
+          <button type="button" className="pqb-submit-btn" onClick={check} disabled={!answer.trim()}>بررسی با سامانه</button>
+        </div>
+        {checked && <div style={{ marginTop: 6, color: checked.ok ? "#7be0a4" : "#ffb199" }}>{checked.msg}</div>}
+        {checked && checked.ok && <div style={{ ...ltr, marginTop: 4, color: "#a9b2d6", fontSize: 12 }}>{"f = 1 / T = " + freq.toFixed(2) + " Hz"}</div>}
+      </div>
+      <div className="vlab-readout" style={{ marginTop: 8 }}>
+        هرچه نخ بلندتر باشد، دوره‌ی تناوب بیشتر است (T با √L متناسب است). دقت کن: زاویه‌ی رهاسازی در دوره‌ی تناوب تأثیری ندارد (برای زاویه‌های کوچک).
       </div>
     </div>
   );

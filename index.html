@@ -24954,9 +24954,9 @@ function VlabDissolvingExperiment({ onReading }) {
         </defs>
         <rect x="30" y="178" width="260" height="8" fill="#262c3a" />
         {/* بدنه‌ی شیشه‌ای ظرف — بلندتر شد تا روغنِ ضخیم‌تر هیچ‌وقت از لبه بیرون نزند */}
-        <path d="M100,32 L100,166 Q100,174 108,174 L212,174 Q220,174 220,166 L220,32" fill="none" stroke="#8fa3c4" strokeWidth="2.6" />
+        <VlabGlassBack x1={100} x2={220} top={32} ry={7} />
         {/* آبِ تیره‌تر تا ذراتِ سفید رویش واضح دیده شوند */}
-        <path d="M102,48 L102,166 Q102,172 108,172 L212,172 Q218,172 218,166 L218,48 Z" fill="#0c2334" opacity="0.92" />
+        <path d="M102,48 L102,168 A58,6 0 0 0 218,168 L218,48 Z" fill="#0c2334" opacity="0.92" />
         <ellipse cx="160" cy="48" rx="58" ry="6" fill="#133448" opacity="0.65" />
         {/* در ظرف: یک درِ تخت روی لبه، با دسته و یک شکافِ کوچک که دسته‌ی هم‌زن از آن رد می‌شود */}
         <ellipse cx="160" cy="30" rx="64" ry="7" fill="#c7cedd" stroke="#5b6472" strokeWidth="2" opacity="0.95" />
@@ -25021,6 +25021,7 @@ function VlabDissolvingExperiment({ onReading }) {
             توده نشسته)، اما برای روغن فقط تا داخلِ ناحیه‌ی روغن+آب می‌رود، نه کفِ خالیِ ظرف. با هر
             کلیکِ «هم بزن» یک حرکتِ مدارِ کوچکِ دایره‌ای (مثل هم‌زدنِ واقعی، داخلِ لیوان) انجام می‌دهد */}
         <VlabStirSpoonMini x={160} y={78} reach={spoonReach} stirKey={stirCount} handleTop={-70} />
+              <VlabGlassFront x1={100} x2={220} top={32} bottom={168} ry={7} id="dsv" />
       </svg>
       <div className="vlab-controls">
         <div className="vlab-ctrl-col">
@@ -25638,27 +25639,61 @@ function VlabNewtonFirstLawExperiment({ onReading }) {
 
   return (
     <div className="vlab-exp">
-      <svg viewBox="0 0 400 230" className="vlab-svg" style={{ background: "#0b1330", borderRadius: "10px" }}>
-        <rect x="55" y="170" width="10" height="40" fill="#5b4636" />
-        <rect x="335" y="170" width="10" height="40" fill="#5b4636" />
-        <rect x="35" y="155" width="330" height="16" rx="2" fill="#8a6d3b" stroke="#5b4636" strokeWidth="1.6" />
-        {/* پارچه‌ی رومیزی، متحرک؛ مدتِ انیمیشن دقیقاً برابرِ pullDuration محاسبه‌شده است */}
+      <svg viewBox="0 0 400 230" className="vlab-svg" style={{ background: "#03060f", borderRadius: "10px" }}>
+        <defs>
+          <linearGradient id="n1Wood" x1="0" y1="0" x2="0" y2="1">
+            <stop offset="0" stopColor="#b88a4a" />
+            <stop offset="1" stopColor="#7a5528" />
+          </linearGradient>
+          <linearGradient id="n1Glass" x1="0" x2="1">
+            <stop offset="0" stopColor="#fff" stopOpacity="0.5" />
+            <stop offset="0.25" stopColor="#dff0ff" stopOpacity="0.25" />
+            <stop offset="1" stopColor="#bcd8f5" stopOpacity="0.45" />
+          </linearGradient>
+        </defs>
+        <ellipse cx="200" cy="214" rx="170" ry="8" fill="#000" opacity="0.45" />
+        {/* خط‌کش بالای صحنه: جابه‌جایی لیوان بر حسب سانتی‌متر */}
+        <line x1="200" y1="30" x2="395" y2="30" stroke="#8fa3c8" strokeWidth="1.2" />
+        {Array.from({ length: 20 }).map((_, k) => (
+          <g key={"nr" + k}>
+            <line x1={200 + k * 10} y1="30" x2={200 + k * 10} y2={k % 5 === 0 ? 38 : 34} stroke="#8fa3c8" strokeWidth="1" />
+            {k % 5 === 0 && <text x={200 + k * 10} y="49" fontSize="8" fill="#cfd6ea" textAnchor="middle" style={{ direction: "ltr", unicodeBidi: "isolate" }}>{k + " cm"}</text>}
+          </g>
+        ))}
+        <text x="104" y="33" fontSize="9" fill="#9fb0e0" textAnchor="middle">خط‌کشِ جابه‌جایی لیوان</text>
+        <g style={{ transform: `translateX(${pulled ? Math.min(cupTravel, 195) : 0}px)`, transition: `transform ${pullDuration}s ease-out` }}>
+          <polygon points="196,22 204,22 200,29" fill="#ffd98a" />
+        </g>
+        {/* میز چوبی */}
+        <rect x="55" y="172" width="10" height="38" rx="2" fill="#5b4636" />
+        <rect x="335" y="172" width="10" height="38" rx="2" fill="#5b4636" />
+        <rect x="35" y="155" width="330" height="17" rx="3" fill="url(#n1Wood)" stroke="#4a3520" strokeWidth="1.4" />
+        {[0, 1, 2, 3].map((g) => (<path key={"wg" + g} d={`M${50 + g * 80},160 Q${90 + g * 80},157 ${130 + g * 80},161`} fill="none" stroke="#5b3d1c" strokeWidth="0.7" opacity="0.5" />))}
+        {/* رومیزی: چهارخانه با ریشه‌های لبه */}
         <g style={{ transform: `translateX(${pulled ? CLOTH_TRAVEL : 0}px)`, transition: `transform ${pullDuration}s linear` }}>
-          <rect x="70" y="140" width="230" height="14" rx="2" fill="#f6f1e0" stroke="#c8a35a" strokeWidth="1.6" />
-          {Array.from({ length: 11 }).map((_, i) => (
-            <line key={i} x1={78 + i * 20} y1="140" x2={78 + i * 20} y2="154" stroke="#dcc794" strokeWidth="1" />
-          ))}
-          <line x1="300" y1="147" x2={300 + handLen} y2="147" stroke="#e2622f" strokeWidth="3.4" strokeLinecap="round" />
-          <polygon points={`${300 + handLen},141 ${300 + handLen},153 ${300 + handLen + 9},147`} fill="#e2622f" />
+          <rect x="70" y="140" width="230" height="15" rx="2" fill="#f6f1e0" stroke="#c8a35a" strokeWidth="1.4" />
+          {Array.from({ length: 12 }).map((_, k) => (<rect key={"ck" + k} x={70 + k * 20} y={k % 2 === 0 ? 140 : 147.5} width="20" height="7.5" fill="#d9534f" opacity="0.28" />))}
+          {Array.from({ length: 12 }).map((_, k) => (<rect key={"ck2" + k} x={70 + k * 20} y={k % 2 === 0 ? 147.5 : 140} width="20" height="7.5" fill="#fff" opacity="0.0" />))}
+          {Array.from({ length: 22 }).map((_, k) => (<line key={"fr" + k} x1={300} y1={141 + k * 0.6} x2={304} y2={141 + k * 0.6} stroke="#c8a35a" strokeWidth="0.8" />))}
+          <line x1="300" y1="147" x2={300 + handLen} y2="147" stroke="#ff7a3d" strokeWidth="3.6" strokeLinecap="round" />
+          <polygon points={`${300 + handLen},140 ${300 + handLen},154 ${300 + handLen + 10},147`} fill="#ff7a3d" />
         </g>
-        {/* لیوان، جابجاییِ مستقل از پارچه بر اساسِ فیزیکِ تکانه محاسبه و رسم می‌شود */}
+        {/* لیوان آب روی رومیزی */}
         <g style={{ transform: `translateX(${pulled ? cupTravel : 0}px)`, transition: `transform ${pullDuration}s ease-out` }}>
-          <path d="M 178 100 L 222 100 L 216 140 L 184 140 Z" fill="#eaf0fb" stroke="#9fb0d6" strokeWidth="1.8" />
-          <ellipse cx="200" cy="100" rx="22" ry="5" fill="#f4f8ff" stroke="#9fb0d6" strokeWidth="1.6" />
-          <path d="M 222 108 q 14 2 14 14 q 0 12 -14 12" fill="none" stroke="#9fb0d6" strokeWidth="3" />
+          <ellipse cx="200" cy="140" rx="17" ry="3" fill="#000" opacity="0.3" />
+          <path d="M 178 96 L 222 96 L 216 140 L 184 140 Z" fill="url(#n1Glass)" stroke="#cfe0f7" strokeWidth="1.6" />
+          <path d="M 180.5 112 L 219.5 112 L 216 140 L 184 140 Z" fill="#4aa3ee" opacity="0.55" />
+          <ellipse cx="200" cy="112" rx="19.5" ry="4" fill="#8ec9ff" opacity="0.85" />
+          <ellipse cx="200" cy="96" rx="22" ry="5" fill="#eef6ff" fillOpacity="0.35" stroke="#e4f0ff" strokeWidth="1.6" />
+          <path d="M 222 106 q 14 2 14 14 q 0 12 -14 12" fill="none" stroke="#cfe0f7" strokeWidth="3" />
+          <path d="M 184 100 L 187 136" stroke="#fff" strokeWidth="2.4" strokeLinecap="round" opacity="0.45" />
         </g>
-        <text x="200" y="196" fontSize="12" fill="#f2e3b8" textAnchor="middle" fontWeight="700">میز</text>
+        <text x="200" y="198" fontSize="12" fill="#f2e3b8" textAnchor="middle" fontWeight="700">میز</text>
       </svg>
+      <VlabMeterRow height={160} meters={[
+        { label: "سرعت پارچه", unit: "m/s", value: pullSpeed * 0.09, ranges: [1], maj: 5, decimals: 2 },
+        { label: "جابه‌جایی لیوان", unit: "cm", value: pulled ? Math.min(cupTravel / 10, 23) : 0, ranges: [25], maj: 5, decimals: 1 },
+      ]} />
       <div className="vlab-controls">
         <div className="vlab-ctrl-col" style={{ flex: 1 }}>
           <label className="vlab-ctrl-label">سرعتِ کشیدنِ پارچه: {pullSpeed}</label>
@@ -25673,6 +25708,7 @@ function VlabNewtonFirstLawExperiment({ onReading }) {
         <br />
         جابجاییِ لیوان: <b>{pulled ? cupPercent.toFixed(0) : 0}٪</b> مسیرِ پارچه — طبقِ قانونِ اول نیوتن، لیوان به دلیلِ اینرسی تمایل دارد در حالتِ سکون بماند؛ هرچه پارچه سریع‌تر کشیده شود، نیروی اصطکاک فرصتِ کمتری برایِ تغییرِ سرعتِ لیوان دارد.
       </div>
+      <VlabFormulaCheck title="مدتِ اثرِ اصطکاک" fa="زمان = مسافتِ کشیدنِ پارچه ÷ سرعتِ پارچه" en="t = d / v" legend="مسافتِ کشیدنِ پارچه d = ۰٫۲۳ متر و سرعت پارچه v = سرعتِ انتخاب‌شده × ۰٫۰۹ متر بر ثانیه" subst={`t = 0.23 ÷ (${pullSpeed} × 0.09) = ?`} label="زمان:" answer={0.23 / (pullSpeed * 0.09)} unit="s" decimals={2} />
     </div>
   );
 }
@@ -26697,7 +26733,7 @@ function VlabHeartRateExperiment({ onReading }) {
           قلبِ تختِ تک‌رنگ، حالا یک دستگاهِ ضربان‌سنجِ واقعیِ بیمارستانی (صفحه‌ی سیاه با خطِ ECGِ سبزِ
           متحرک) و یک قلبِ با گرادیانِ سه‌بعدی و رگ‌های خروجی کشیده شد. ارتفاعِ viewBox به 230 افزایش
           یافت تا جای کافی برایِ آدمکِ در حالِ راه‌رفتن/دویدن در پایینِ صحنه باز شود. */}
-      <svg viewBox="0 0 320 230" className="vlab-svg" style={{ background: "#0b1330", borderRadius: "10px" }}>
+      <svg viewBox="0 0 320 230" className="vlab-svg" style={{ background: "#03060f", borderRadius: "10px" }}>
         <defs>
           <radialGradient id="heartGrad" cx="35%" cy="30%" r="75%">
             <stop offset="0%" stopColor="#ff7a5c" />
@@ -26767,16 +26803,20 @@ function VlabHeartRateExperiment({ onReading }) {
 
           {/* پای عقب */}
           <g style={{ transformOrigin: "0px -5px", animation: `vlabRunLegs ${legDur}s ease-in-out infinite`, animationDelay: `${legDur / 2}s` }}>
-            <line x1="0" y1="-5" x2="0" y2="22" stroke="#2f5fb0" strokeWidth="4.5" strokeLinecap="round" />
+            <line x1="0" y1="-5" x2="0" y2="22" stroke="#2f5fb0" strokeWidth="5.5" strokeLinecap="round" />
+            <line x1="0" y1="23" x2="6" y2="23" stroke="#fff" strokeWidth="3.4" strokeLinecap="round" />
           </g>
           {/* پای جلو */}
           <g style={{ transformOrigin: "0px -5px", animation: `vlabRunLegs ${legDur}s ease-in-out infinite` }}>
-            <line x1="0" y1="-5" x2="0" y2="22" stroke="#3d72cc" strokeWidth="4.5" strokeLinecap="round" />
+            <line x1="0" y1="-5" x2="0" y2="22" stroke="#3d72cc" strokeWidth="5.5" strokeLinecap="round" />
+            <line x1="0" y1="23" x2="6" y2="23" stroke="#fff" strokeWidth="3.4" strokeLinecap="round" />
           </g>
 
           {/* تنه و سر */}
-          <line x1="0" y1="-34" x2="0" y2="-5" stroke="#e8c3a0" strokeWidth="4.5" strokeLinecap="round" />
+          <line x1="0" y1="-32" x2="0" y2="-5" stroke="#e2622f" strokeWidth="9" strokeLinecap="round" />
           <circle cx="0" cy="-41" r="7" fill="#e8c3a0" stroke="#c8926a" strokeWidth="1" />
+          <path d="M-7,-42 Q-6,-50 2,-49 Q8,-48 7,-42 Q2,-45 -7,-42 Z" fill="#3a2a1c" />
+          <circle cx="3" cy="-41" r="0.9" fill="#3a2a1c" />
 
           {/* بازویِ عقب */}
           <g style={{ transformOrigin: "0px -32px", animation: `vlabRunArms ${legDur}s ease-in-out infinite`, animationDelay: `${legDur / 2}s` }}>
@@ -26790,6 +26830,7 @@ function VlabHeartRateExperiment({ onReading }) {
           <text x="0" y="46" fontSize="8" fill="#9aa3c0" textAnchor="middle">{runLabel}</text>
         </g>
       </svg>
+      <VlabMeterRow height={160} meters={[{ label: "ضربان قلب", unit: "BPM", value: heartRate, ranges: [200], maj: 5, decimals: 0 }, { label: "ضربان در ۱۵ ثانیه", unit: "", value: heartRate / 4, ranges: [50], maj: 5, decimals: 0 }]} />
       <div className="vlab-controls">
         <div className="vlab-ctrl-col" style={{ flex: 1 }}>
           <label className="vlab-ctrl-label">سطح فعالیت بدنی: {activityLabel}</label>
@@ -26808,6 +26849,7 @@ function VlabHeartRateExperiment({ onReading }) {
         @keyframes vlabRunArms { 0%, 100% { transform: rotate(-${ampDeg}deg); } 50% { transform: rotate(${ampDeg}deg); } }
       `}</style>
       <VlabFormulaCheck title="فاصله‌ی دو ضربان" fa="فاصله‌ی دو ضربان (ثانیه) = ۶۰ ÷ ضربان در دقیقه" en="T = 60 / BPM" legend={"ضربان فعلی: " + heartRate + " ضربه در دقیقه"} subst={`T = 60 ÷ ${heartRate} = ?`} label="فاصله‌ی دو ضربان:" answer={60 / heartRate} unit="ثانیه" decimals={2} />
+      <VlabFormulaCheck title="شمارش ضربان" fa="ضربان در دقیقه = تعداد ضربه در ۱۵ ثانیه × ۴" en="BPM = N × 4" legend="با حسگر انگشت، ضربه‌ها را ۱۵ ثانیه می‌شماریم" subst={`BPM = ${(heartRate / 4).toFixed(1)} × 4 = ?`} label="ضربان:" answer={heartRate} unit="BPM" decimals={0} />
     </div>
   );
 }
@@ -27291,15 +27333,13 @@ function VlabEnzymeActivityExperiment({ onReading }) {
           یک پایه‌ی گیره‌دارِ آزمایشگاهی که لوله را نگه می‌دارد، و زمینه‌ی تیره‌ی هماهنگ با بقیه‌ی آزمایش‌ها. */}
       <svg viewBox="0 0 320 185" className="vlab-svg" style={{ background: "#0b1330", borderRadius: "10px" }}>
         {/* حمامِ آب: ظرفِ شیشه‌ای با آبِ رنگ‌متغیر (آبی سرد → نارنجیِ گرم) و خطوطِ موج */}
-        <path d="M68,58 L68,150 Q68,158 76,158 L244,158 Q252,158 252,150 L252,58" fill="none" stroke="#8fb4e0" strokeWidth="2" />
-        <path
-          d="M70,95 L70,150 Q70,156 76,156 L244,156 Q250,156 250,150 L250,95 Z"
-          fill={vlabMixHexColor("#2f6fe2", "#e2622f", vlabClamp(temp / 90, 0, 1))}
-          opacity="0.35"
-        />
-        <path d="M70,95 Q90,90 110,95 T150,95 T190,95 T230,95 T250,95" fill="none" stroke="#8fb4e0" strokeWidth="1.2" opacity="0.5" />
-        <line x1="76" y1="62" x2="76" y2="150" stroke="#eaf3ff" strokeWidth="3" opacity="0.15" />
-        <text x="160" y="172" fontSize="7.5" fill="#9aa3c0" textAnchor="middle">حمام آب (دمای قابل‌تنظیم)</text>
+        <rect x="0" y="0" width="320" height="185" fill="#03060f" />
+        <ellipse cx="160" cy="166" rx="100" ry="6" fill="#000" opacity="0.4" />
+        <VlabGlassBack x1={68} x2={252} top={58} ry={7} />
+        <path d="M70,95 L70,150 A90,7 0 0 0 250,150 L250,95 Z" fill={vlabMixHexColor("#2f6fe2", "#e2622f", vlabClamp(temp / 90, 0, 1))} opacity="0.5" />
+        <ellipse cx="160" cy="95" rx="90" ry="6" fill={vlabMixHexColor("#4a8fe8", "#ff8a4c", vlabClamp(temp / 90, 0, 1))} opacity="0.7" />
+        <ellipse cx="160" cy="95" rx="90" ry="6" fill="none" stroke="#e8f4ff" strokeWidth="0.7" opacity="0.5" />
+        <text x="160" y="180" fontSize="7.5" fill="#9aa3c0" textAnchor="middle">حمام آب (دمای قابل‌تنظیم)</text>
         <VlabThermometerMini x={224} y={66} temp={temp} minT={0} maxT={90} h={70} />
 
         {/* پایه‌ی گیره‌دارِ آزمایشگاهی: ستونِ فلزی + بازوی گیره که لوله‌ی آزمایش را مایل نگه می‌دارد */}
@@ -27320,8 +27360,28 @@ function VlabEnzymeActivityExperiment({ onReading }) {
             </circle>
           ))}
         </g>
-        <text x="160" y="12" fontSize="7" fill="#9aa3c0" textAnchor="middle">نمونه‌ی کاتالاز (جگر/سیب‌زمینی) در لوله‌ی آزمایش</text>
+        <VlabGlassFront x1={68} x2={252} top={58} bottom={150} ry={7} id="enz" />
+        <text x="160" y="12" fontSize="7.5" fill="#9aa3c0" textAnchor="middle">نمونه‌ی کاتالاز (جگر/سیب‌زمینی) در لوله‌ی آزمایش</text>
       </svg>
+      <VlabMeterRow height={160} meters={[{ label: "فعالیت آنزیم", unit: "٪", value: activity, ranges: [100], maj: 5, decimals: 0 }, { label: "دمای حمام", unit: "°C", value: temp, ranges: [100], maj: 5, decimals: 0 }]} />
+      {(() => {
+        const X = (t) => 44 + (t / 90) * 262, Y = (a) => 150 - (a / 100) * 112;
+        const act = (t) => (t > 60 ? vlabClamp(5 - (t - 60), 0, 5) : vlabClamp(100 * Math.exp(-Math.pow(t - 37, 2) / 400), 0, 100));
+        const pts = [];
+        for (let t = 0; t <= 90; t += 2) pts.push(`${X(t)},${Y(act(t))}`);
+        return (
+          <svg viewBox="0 0 320 175" className="vlab-svg" style={{ background: "#03060f", maxWidth: 520, marginTop: 8 }}>
+            <text x="160" y="13" fontSize="9" fontWeight="700" fill="#cfd6ea" textAnchor="middle">فعالیت آنزیم بر حسب دما</text>
+            <line x1="44" y1="150" x2="308" y2="150" stroke="#8fa0c8" /><line x1="44" y1="150" x2="44" y2="30" stroke="#8fa0c8" />
+            {[0, 30, 60, 90].map((t) => (<g key={"ex" + t}><line x1={X(t)} y1="150" x2={X(t)} y2="154" stroke="#8fa0c8" /><text x={X(t)} y="164" fontSize="8" fill="#cfd6ea" textAnchor="middle" style={{ direction: "ltr", unicodeBidi: "isolate" }}>{t + "°"}</text></g>))}
+            {[0, 50, 100].map((a) => (<g key={"ey" + a}><line x1="44" y1={Y(a)} x2="308" y2={Y(a)} stroke="#2a3a73" strokeDasharray="2 4" strokeWidth="0.6" /><text x="38" y={Y(a) + 3} fontSize="8" fill="#cfd6ea" textAnchor="end" style={{ direction: "ltr", unicodeBidi: "isolate" }}>{a}</text></g>))}
+            <line x1={X(37)} y1={Y(100)} x2={X(37)} y2="150" stroke="#7be0a4" strokeDasharray="3 3" strokeWidth="0.8" opacity="0.7" />
+            <text x={X(37) + 58} y={Y(100) + 4} fontSize="8" fill="#7be0a4" textAnchor="middle">دمای بهینه: ۳۷ درجه</text>
+            <polyline points={pts.join(" ")} fill="none" stroke="#ffb86b" strokeWidth="2" />
+            <circle cx={X(temp)} cy={Y(activity)} r="5" fill="#ffd98a" stroke="#03060f" strokeWidth="1.2" />
+          </svg>
+        );
+      })()}
       <div className="vlab-controls">
         <div className="vlab-ctrl-col" style={{ flex: 1 }}>
           <label className="vlab-ctrl-label">دمای محیط (°C): {temp}</label>

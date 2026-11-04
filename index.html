@@ -22846,7 +22846,7 @@ function VlabOhmExperiment({ onReading }) {
   const CURRENT_REF = 1.5;
   const brightnessRatio = vlabClamp(current / CURRENT_REF, 0, 1);
   const t = Math.pow(brightnessRatio, 0.5); // 0..1 برای درخشش لامپ
-  const filamentColor = vlabMixHexColor("#2a2a30", "#ffffff", t);
+  const filamentColor = vlabMixHexColor("#2a2a30", "#ffd23f", t);
 
   useEffect(() => {
     if (onReading) onReading(`ولتاژ: ${voltage} ولت | مقاومت: ${resistance} اهم | جریان = V/R = ${current.toFixed(2)} آمپر`);
@@ -22865,8 +22865,8 @@ function VlabOhmExperiment({ onReading }) {
         <rect x="0" y="0" width="320" height="205" rx="12" fill="#0b1330" />
 
         {/* هاله‌ی نور — با افزایش جریان بزرگ‌تر و پررنگ‌تر می‌شود */}
-        <circle cx="222" cy="55" r={30 + t * 34} fill="#f3f6ff" opacity={0.03 + t * 0.32} />
-        <circle cx="222" cy="55" r={18 + t * 22} fill="#f3f6ff" opacity={0.06 + t * 0.5} />
+        <circle cx="222" cy="55" r={30 + t * 34} fill="#ffd84d" opacity={0.03 + t * 0.32} />
+        <circle cx="222" cy="55" r={18 + t * 22} fill="#ffd84d" opacity={0.06 + t * 0.5} />
 
         {/* باتری: عکسِ واقعیِ باتریِ نوستالژیکِ «قوه پارس» — دکمه‌ی فلزیِ بالا = +، ته‌ی تخت = − (قطبِ واقعی) */}
         <VlabBatteryPhoto x={31} y={60} width={42} />
@@ -22895,10 +22895,10 @@ function VlabOhmExperiment({ onReading }) {
 
         {/* رشته‌ی داغ (فیلامان) — رنگش از خاکستری تیره‌ی خاموش تا سفید درخشان تغییر می‌کند */}
         <path d="M 214,94 L 214,58 L 222,73 L 230,58 L 230,94" fill="none" stroke={filamentColor} strokeWidth="2.4" strokeLinecap="round" />
-        <circle cx="222" cy="55" r={3 + t * 8} fill="#ffffff" opacity={0.1 + t * 0.85} />
+        <circle cx="222" cy="55" r={3 + t * 8} fill="#ffe066" opacity={0.1 + t * 0.85} />
 
         {/* پرتوهای نور — فقط وقتی لامپ روشن است دیده می‌شوند */}
-        <g stroke="#f3f6ff" strokeWidth="2" strokeLinecap="round" opacity={t * 0.8}>
+        <g stroke="#ffd84d" strokeWidth="2" strokeLinecap="round" opacity={t * 0.8}>
           <line x1="222" y1="12" x2="222" y2="2" />
           <line x1="256" y1="55" x2="266" y2="55" />
           <line x1="246" y1="28" x2="253" y2="21" />
@@ -22954,12 +22954,12 @@ function vlabMiniBulbContacts(cx, baseTopY) {
 // یک لامپ واقعی کوچک (حباب رشته‌ای روی زمینه‌ی تیره) برای استفاده‌ی مشترک در حالت سری و موازی —
 // درخشش سفیدش از جریان واقعی عبوری از آن (t: صفر تا یک) به‌دست می‌آید، دقیقاً مثل آزمایش قانون اهم.
 function VlabMiniBulb({ cx, baseTopY, t }) {
-  const filamentColor = vlabMixHexColor("#2a2a30", "#ffffff", t);
+  const filamentColor = vlabMixHexColor("#2a2a30", "#ffd23f", t);
   const glowY = baseTopY - 28;
   return (
     <g>
-      <circle cx={cx} cy={glowY} r={16 + t * 18} fill="#f3f6ff" opacity={0.03 + t * 0.3} />
-      <circle cx={cx} cy={glowY} r={10 + t * 11} fill="#f3f6ff" opacity={0.06 + t * 0.48} />
+      <circle cx={cx} cy={glowY} r={16 + t * 18} fill="#ffd84d" opacity={0.03 + t * 0.3} />
+      <circle cx={cx} cy={glowY} r={10 + t * 11} fill="#ffd84d" opacity={0.06 + t * 0.48} />
       <path
         d={`M ${cx - 10},${baseTopY} C ${cx - 10},${baseTopY - 14} ${cx - 17},${baseTopY - 20} ${cx - 17},${baseTopY - 34} C ${cx - 17},${baseTopY - 48} ${cx - 10},${baseTopY - 50} ${cx},${baseTopY - 50} C ${cx + 10},${baseTopY - 50} ${cx + 17},${baseTopY - 48} ${cx + 17},${baseTopY - 34} C ${cx + 17},${baseTopY - 20} ${cx + 10},${baseTopY - 14} ${cx + 10},${baseTopY} Z`}
         fill="rgba(255,255,255,0.08)"
@@ -22977,7 +22977,7 @@ function VlabMiniBulb({ cx, baseTopY, t }) {
         strokeWidth="1.6"
         strokeLinecap="round"
       />
-      <circle cx={cx} cy={glowY} r={2 + t * 4.5} fill="#ffffff" opacity={0.1 + t * 0.85} />
+      <circle cx={cx} cy={glowY} r={2 + t * 4.5} fill="#ffe066" opacity={0.1 + t * 0.85} />
     </g>
   );
 }
@@ -26576,7 +26576,7 @@ function VlabElectricityConductionExperiment({ onReading }) {
   const conducts = MATERIALS[material].conducts;
   const current = conducts ? 1.1 : 0;
   const t = Math.pow(vlabClamp(current / 1.5, 0, 1), 0.5);
-  const filamentColor = vlabMixHexColor("#2a2a30", "#ffffff", t);
+  const filamentColor = vlabMixHexColor("#2a2a30", "#ffd23f", t);
 
   useEffect(() => {
     if (onReading)
@@ -26587,8 +26587,8 @@ function VlabElectricityConductionExperiment({ onReading }) {
   return (
     <div className="vlab-exp">
       <svg viewBox="0 0 320 200" className="vlab-svg" style={{ background: "#0b1330", borderRadius: "10px" }}>
-        <circle cx="222" cy="52" r={28 + t * 30} fill="#f3f6ff" opacity={0.03 + t * 0.3} />
-        <circle cx="222" cy="52" r={16 + t * 20} fill="#f3f6ff" opacity={0.06 + t * 0.48} />
+        <circle cx="222" cy="52" r={28 + t * 30} fill="#ffd84d" opacity={0.03 + t * 0.3} />
+        <circle cx="222" cy="52" r={16 + t * 20} fill="#ffd84d" opacity={0.06 + t * 0.48} />
 
         <VlabBatteryPhoto x={30} y={58} width={40} />
         <text x="50" y="155" fontSize="10" fill="#aab3cc" textAnchor="middle">باتری</text>
@@ -26619,7 +26619,7 @@ function VlabElectricityConductionExperiment({ onReading }) {
           strokeWidth="1.5"
         />
         <path d="M 214,94 L 214,58 L 222,73 L 230,58 L 230,94" fill="none" stroke={filamentColor} strokeWidth="2.4" strokeLinecap="round" />
-        <circle cx="222" cy="55" r={3 + t * 8} fill="#ffffff" opacity={0.1 + t * 0.85} />
+        <circle cx="222" cy="55" r={3 + t * 8} fill="#ffe066" opacity={0.1 + t * 0.85} />
 
         {!conducts && (
           <text x="129" y="58" fontSize="8" fill="#e2622f" textAnchor="middle" fontWeight="700">مدار باز است ⛔</text>

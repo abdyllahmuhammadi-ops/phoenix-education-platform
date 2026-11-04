@@ -14744,11 +14744,78 @@ async function teamApprovedKonkurQuestions(subject, grade) {
    داشبورد مدیر سامانه — تنها نقشی که به شهریه/پرداخت دسترسی دارد
    ============================================================ */
 
+// داده‌ی آزمایشی (فقط برای امتحان آمار): کدهای مدرسه‌ی جدا (۹۹۰۰۰۰۰۱…) تا هرگز با داده‌ی واقعی قاطی نشود
+const PSAD_DEMO_SCHOOLS = [
+  { code: "99000001", name: "دبستان آزمایشی ۱", province: "خراسان شمالی", county: "بجنورد", bakhsh: "مرکزی" },
+  { code: "99000002", name: "دبیرستان آزمایشی ۲", province: "خراسان رضوی", county: "مشهد", bakhsh: "مرکزی" },
+  { code: "99000003", name: "هنرستان آزمایشی ۳", province: "تهران", county: "ری", bakhsh: "مرکزی" },
+];
+async function psadSeedDemo() {
+  const DAY = 24 * 60 * 60 * 1000;
+  const names = [["علی", "رضایی"], ["سارا", "احمدی"], ["محمد", "کریمی"], ["زهرا", "موسوی"], ["حسین", "نوری"], ["مریم", "صادقی"]];
+  for (let si = 0; si < PSAD_DEMO_SCHOOLS.length; si++) {
+    const sc = PSAD_DEMO_SCHOOLS[si];
+    await authStorageSet("school-info:" + sc.code, JSON.stringify({ schoolName: sc.name, province: sc.province, county: sc.county, bakhsh: sc.bakhsh }), true);
+    const classes = ["7/1", "8/1"];
+    await authStorageSet("school-classes:" + sc.code, JSON.stringify(classes), true);
+    for (let ci = 0; ci < classes.length; ci++) {
+      const roster = [];
+      for (let k = 0; k < 3; k++) {
+        const n = names[(si * 2 + ci + k) % names.length];
+        roster.push({ firstName: n[0], lastName: n[1], studentCode: "D" + si + ci + k, gender: k % 2 === 0 ? "male" : "female", grade: ci === 0 ? "هفتم" : "هشتم", fieldOfStudy: "—", isForeignStudent: si === 2 && k === 2, country: si === 2 && k === 2 ? "افغانستان" : undefined });
+      }
+      await authStorageSet("gradebook-roster:" + sc.code + ":" + skey(classes[ci]), JSON.stringify(roster), true);
+    }
+    const offsets = [0, 2, 10, 25];
+    const payments = offsets.map((o, i) => ({
+      nationalCode: "00" + sc.code.slice(-3) + String(1000000 + i * 111).slice(0, 5),
+      amount: 500000 + (si * 100000) + i * 50000,
+      date: new Date(Date.now() - o * DAY).toLocaleDateString("fa-IR"),
+      timestamp: Date.now() - o * DAY - i * 3600000,
+      province: sc.province, county: sc.county,
+      trackingCode: Array.from({ length: 13 }, (_, j) => (si + i + j) % 10).join(""),
+      demo: true,
+    }));
+    await authStorageSet("school-payments:" + sc.code, JSON.stringify(payments), true);
+  }
+  for (const key of ["all-schools-registry", "all-registered-schools"]) {
+    let list = [];
+    try { const raw = await authStorageGet(key, true); if (raw) list = JSON.parse(raw); } catch (e) { list = []; }
+    for (const sc of PSAD_DEMO_SCHOOLS) if (!list.includes(sc.code)) list.push(sc.code);
+    await authStorageSet(key, JSON.stringify(list), true);
+  }
+}
+async function psadClearDemo() {
+  const demoCodes = PSAD_DEMO_SCHOOLS.map((x) => x.code);
+  const del = async (key) => {
+    try { if (window.storage && window.storage.delete) await window.storage.delete(key, true); } catch (e) {}
+    try { window.localStorage.removeItem("phoenix_auth::" + key); } catch (e) {}
+  };
+  for (const code of demoCodes) {
+    await del("school-info:" + code);
+    await del("school-payments:" + code);
+    await del("school-classes:" + code);
+    for (const cls of ["7/1", "8/1"]) await del("gradebook-roster:" + code + ":" + skey(cls));
+  }
+  for (const key of ["all-schools-registry", "all-registered-schools"]) {
+    try {
+      const raw = await authStorageGet(key, true);
+      if (!raw) continue;
+      const list = JSON.parse(raw).filter((c) => !demoCodes.includes(c));
+      await authStorageSet(key, JSON.stringify(list), true);
+    } catch (e) {}
+  }
+}
+
 function SystemAdminDashboardStep({ onBack, onOpenQuestionBank, onOpenSystemSuggestionBox, onOpenRegistrationStats, onOpenTeam }) {
   const [schoolCodes, setSchoolCodes] = useState([]);
   const [paymentsBySchool, setPaymentsBySchool] = useState({});
   const [loading, setLoading] = useState(true);
   const [selectedSchoolCode, setSelectedSchoolCode] = useState(null);
+  const [reloadKey, setReloadKey] = useState(0);
+  const [demoBusy, setDemoBusy] = useState(false);
+  const [regionProvince, setRegionProvince] = useState("");
+  const [regionCounty, setRegionCounty] = useState("");
 
   useEffect(() => {
     (async () => {
@@ -14775,7 +14842,7 @@ function SystemAdminDashboardStep({ onBack, onOpenQuestionBank, onOpenSystemSugg
       }
       setLoading(false);
     })();
-  }, []);
+  }, [reloadKey]);
 
   const totalRevenue = Object.values(paymentsBySchool).reduce(
     (sum, list) => sum + list.reduce((s, p) => s + (p.amount || 0), 0),
@@ -14925,6 +14992,8 @@ function SystemAdminDashboardStep({ onBack, onOpenQuestionBank, onOpenSystemSugg
     }
     return regionSortDir === "asc" ? av - bv : bv - av;
   });
+
+  const regionRowsShown = regionRows.filter((r) => (!regionProvince || r.province === regionProvince) && (!regionCounty || r.county === regionCounty));
 
   const handleRegionSort = (key) => {
     if (regionSortKey === key) {
@@ -15208,6 +15277,16 @@ function SystemAdminDashboardStep({ onBack, onOpenQuestionBank, onOpenSystemSugg
               <h2 id="psad-region-section" style={{ fontSize: 15, fontWeight: 800, color: "#1c2540", margin: "24px 0 12px" }}>
                 تفکیک شهریه‌ی دریافتی بر اساس استان و شهرستان
               </h2>
+              <div style={{ display: "flex", flexWrap: "wrap", gap: 10, marginBottom: 12 }}>
+                <select style={{ height: 42, flex: "1 1 140px", borderRadius: 10, border: "1.4px solid #d9c9a0", background: "#fff", padding: "0 10px", fontSize: 14, fontFamily: "inherit", color: "#1c2540" }} value={regionProvince} onChange={(e) => { setRegionProvince(e.target.value); setRegionCounty(""); }}>
+                  <option value="">همه‌ی استان‌ها</option>
+                  {provinces.map((pv) => <option key={pv} value={pv}>{pv}</option>)}
+                </select>
+                <select style={{ height: 42, flex: "1 1 140px", borderRadius: 10, border: "1.4px solid #d9c9a0", background: "#fff", padding: "0 10px", fontSize: 14, fontFamily: "inherit", color: "#1c2540" }} value={regionCounty} disabled={!regionProvince} onChange={(e) => setRegionCounty(e.target.value)}>
+                  <option value="">{regionProvince ? "همه‌ی شهرستان‌ها" : "ابتدا استان را انتخاب کنید"}</option>
+                  {(countyMap[regionProvince] || []).map((c) => <option key={c} value={c}>{c}</option>)}
+                </select>
+              </div>
               <div className="psad-detail-table-wrap" style={{ marginBottom: 24 }}>
                 <table className="psad-detail-table">
                   <thead>
@@ -15230,7 +15309,7 @@ function SystemAdminDashboardStep({ onBack, onOpenQuestionBank, onOpenSystemSugg
                     </tr>
                   </thead>
                   <tbody>
-                    {regionRows.map((r, idx) => (
+                    {regionRowsShown.map((r, idx) => (
                       <tr key={idx}>
                         <td className="psad-detail-name">{r.province}</td>
                         <td className="psad-detail-name">{r.county}</td>
@@ -15239,13 +15318,24 @@ function SystemAdminDashboardStep({ onBack, onOpenQuestionBank, onOpenSystemSugg
                         <td>{formatRial(r.monthly)}</td>
                       </tr>
                     ))}
-                    {regionRows.length === 0 && (
+                    {regionRowsShown.length === 0 && (
                       <tr>
-                        <td colSpan={5} style={{ padding: 20, color: "#8a8060" }}>هنوز داده‌ای برای نمایش وجود ندارد.</td>
+                        <td colSpan={5} style={{ padding: 20, color: "#8a8060" }}>{regionRows.length === 0 ? "هنوز داده‌ای برای نمایش وجود ندارد. برای امتحان، پایین همین صفحه «ساخت داده‌ی آزمایشی» را بزنید." : "برای این استان/شهرستان پرداختی ثبت نشده است."}</td>
                       </tr>
                     )}
                   </tbody>
                 </table>
+              </div>
+
+              <div style={{ background: "#fff8e8", border: "1px dashed #d9c9a0", borderRadius: 14, padding: "12px 14px", marginBottom: 24 }}>
+                <div style={{ fontWeight: 800, fontSize: 13.5, color: "#1c2540", marginBottom: 4 }}>🧪 داده‌ی آزمایشی (فقط برای امتحان آمار)</div>
+                <div style={{ fontSize: 12, color: "#6b7399", lineHeight: 1.9, marginBottom: 8 }}>
+                  این سامانه فعلاً داده را در همین مرورگر نگه می‌دارد، پس تا وقتی کسی پرداخت یا ثبت‌نام کامل نکرده، آمار خالی است. با این دکمه سه مدرسه‌ی نمونه (کدهای ۹۹۰۰۰۰۰۱ تا ۹۹۰۰۰۰۰۳) با دانش‌آموز و پرداخت ساخته می‌شود و با «پاک‌کردن» کاملاً حذف می‌شود؛ هیچ داده‌ی واقعی را تغییر نمی‌دهد.
+                </div>
+                <div style={{ display: "flex", gap: 8, flexWrap: "wrap" }}>
+                  <button type="button" disabled={demoBusy} onClick={async () => { setDemoBusy(true); await psadSeedDemo(); setReloadKey((k) => k + 1); setDemoBusy(false); }} style={{ height: 40, padding: "0 16px", borderRadius: 10, border: "none", background: "linear-gradient(135deg, var(--t-accD,#c8862b), var(--t-acc,#e0a83e))", color: "#241503", fontWeight: 800, fontFamily: "inherit", cursor: "pointer" }}>ساخت داده‌ی آزمایشی</button>
+                  <button type="button" disabled={demoBusy} onClick={async () => { setDemoBusy(true); await psadClearDemo(); setReloadKey((k) => k + 1); setDemoBusy(false); }} style={{ height: 40, padding: "0 16px", borderRadius: 10, border: "1.4px solid #d9c9a0", background: "#fff", color: "#1c2540", fontWeight: 700, fontFamily: "inherit", cursor: "pointer" }}>پاک‌کردن داده‌ی آزمایشی</button>
+                </div>
               </div>
 
               <div className="psad-total-box">
@@ -15618,7 +15708,7 @@ function SystemAdminRegistrationStats({ onBack }) {
                   ))}
                   {active.rows.length === 0 && (
                     <tr>
-                      <td colSpan={3} style={{ padding: 20, color: "#8a8060" }}>هنوز هیچ دانش‌آموزی ثبت‌نام نکرده است.</td>
+                      <td colSpan={3} style={{ padding: 20, color: "#8a8060" }}>هنوز هیچ دانش‌آموزی در آمار نیست. دانش‌آموزان بعد از پرداخت شهریه وارد این آمار می‌شوند. برای امتحان، در «داشبورد مدیر سامانه» دکمه‌ی «ساخت داده‌ی آزمایشی» را بزنید.</td>
                     </tr>
                   )}
                 </tbody>
@@ -32483,40 +32573,40 @@ function PalRoleSwitch() {
   return (
     <>
       <style>{`
-        .prs-pill { position: fixed; bottom: 14px; left: 62px; z-index: 9990; height: 40px; padding: 0 14px; border-radius: 999px; border: 1.5px solid var(--t-accL,#f2c572); background: var(--t-dark,#0e1638); color: var(--t-accL,#f2c572); font-family: 'Vazirmatn', Tahoma, Arial, sans-serif; font-weight: 700; font-size: 12.5px; cursor: pointer; box-shadow: 0 6px 18px rgba(0,0,0,0.35); }
-        body:has(.pal-root) .prs-pill, body:has(.prc-root) .prs-pill { display: none; }
-        .prs-ov { position: fixed; inset: 0; z-index: 9991; background: rgba(5,8,22,0.6); display: flex; align-items: center; justify-content: center; padding: 16px; }
-        .prs-box { background: #fff; border-radius: 20px; padding: 20px 18px; max-width: 380px; width: 100%; max-height: 86vh; overflow: auto; direction: rtl; font-family: 'Vazirmatn', Tahoma, Arial, sans-serif; }
-        .prs-h { font-weight: 800; font-size: 15px; color: #1c2540; margin: 0 0 12px; text-align: center; }
-        .prs-sec { font-weight: 700; font-size: 12.5px; color: #6b7399; margin: 14px 0 6px; }
-        .prs-btn { display: block; width: 100%; text-align: right; padding: 12px 14px; margin-bottom: 8px; border-radius: 12px; border: 1.5px solid #e3e6ef; background: #fff; font-family: inherit; font-weight: 700; font-size: 14px; color: #1c2540; cursor: pointer; }
-        .prs-btn.on { border-color: var(--t-acc,#e0a83e); background: color-mix(in srgb, var(--t-acc,#e0a83e) 12%, #fff); }
-        .prs-note { font-size: 11.5px; color: #6b7399; line-height: 1.9; }
-        .prs-close { margin-top: 12px; width: 100%; height: 40px; border-radius: 12px; border: none; background: #1c2540; color: #fff; font-family: inherit; font-weight: 700; cursor: pointer; }
+        .prsw-pill { position: fixed; bottom: 14px; left: 62px; z-index: 9990; height: 40px; padding: 0 14px; border-radius: 999px; border: 1.5px solid var(--t-accL,#f2c572); background: var(--t-dark,#0e1638); color: var(--t-accL,#f2c572); font-family: 'Vazirmatn', Tahoma, Arial, sans-serif; font-weight: 700; font-size: 12.5px; cursor: pointer; box-shadow: 0 6px 18px rgba(0,0,0,0.35); }
+        body:has(.pal-root) .prsw-pill, body:has(.prc-root) .prsw-pill { display: none; }
+        .prsw-ov { position: fixed; inset: 0; z-index: 9991; background: rgba(5,8,22,0.6); display: flex; align-items: center; justify-content: center; padding: 16px; }
+        .prsw-box { background: #fff; border-radius: 20px; padding: 20px 18px; max-width: 380px; width: 100%; max-height: 86vh; overflow: auto; direction: rtl; font-family: 'Vazirmatn', Tahoma, Arial, sans-serif; }
+        .prsw-h { font-weight: 800; font-size: 15px; color: #1c2540; margin: 0 0 12px; text-align: center; }
+        .prsw-sec { font-weight: 700; font-size: 12.5px; color: #6b7399; margin: 14px 0 6px; }
+        .prsw-btn { display: block; width: 100%; text-align: right; padding: 12px 14px; margin-bottom: 8px; border-radius: 12px; border: 1.5px solid #e3e6ef; background: #fff; font-family: inherit; font-weight: 700; font-size: 14px; color: #1c2540; cursor: pointer; }
+        .prsw-btn.on { border-color: var(--t-acc,#e0a83e); background: color-mix(in srgb, var(--t-acc,#e0a83e) 12%, #fff); }
+        .prsw-note { font-size: 11.5px; color: #6b7399; line-height: 1.9; }
+        .prsw-close { margin-top: 12px; width: 100%; height: 40px; border-radius: 12px; border: none; background: #1c2540; color: #fff; font-family: inherit; font-weight: 700; cursor: pointer; }
       `}</style>
-      <button type="button" className="prs-pill" onClick={() => { load(); setOpen(true); }}>🔄 تغییر نقش</button>
+      <button type="button" className="prsw-pill" onClick={() => { load(); setOpen(true); }}>🔄 تغییر نقش</button>
       {open && (
-        <div className="prs-ov" onClick={() => setOpen(false)}>
-          <div className="prs-box" onClick={(e) => e.stopPropagation()}>
-            <h3 className="prs-h">نقش‌های شما</h3>
+        <div className="prsw-ov" onClick={() => setOpen(false)}>
+          <div className="prsw-box" onClick={(e) => e.stopPropagation()}>
+            <h3 className="prsw-h">نقش‌های شما</h3>
             {info.roles.map((r) => (
-              <button key={r} type="button" className={"prs-btn" + (r === info.current ? " on" : "")} onClick={async () => { setOpen(false); const prof = await palProfileOf(info.phone, r); try { await authStorageSet("last-session", JSON.stringify({ role: r, phone: info.phone }), false); } catch (e) {} api().login && api().login(r, prof, info.phone); }}>
+              <button key={r} type="button" className={"prsw-btn" + (r === info.current ? " on" : "")} onClick={async () => { setOpen(false); const prof = await palProfileOf(info.phone, r); try { await authStorageSet("last-session", JSON.stringify({ role: r, phone: info.phone }), false); } catch (e) {} api().login && api().login(r, prof, info.phone); }}>
                 {names[r] || r}{r === info.current ? "  ✓ (فعلی)" : ""}
               </button>
             ))}
             {info.team && (
-              <button type="button" className="prs-btn" onClick={() => { setOpen(false); api().logout && api().logout(); }}>
+              <button type="button" className="prsw-btn" onClick={() => { setOpen(false); api().logout && api().logout(); }}>
                 🛠️ {(TEAM_ROLES[info.team.role] && TEAM_ROLES[info.team.role].label) || "مدیر فنی"} (ورود با رمز تیمی از صفحه ورود)
               </button>
             )}
-            {missing.length > 0 && <div className="prs-sec">افزودن نقش</div>}
+            {missing.length > 0 && <div className="prsw-sec">افزودن نقش</div>}
             {missing.map((r) => (
-              <button key={r} type="button" className="prs-btn" onClick={() => { setOpen(false); window.__palAddRole = { phone: info.phone, role: r }; api().addRole && api().addRole(r, info.phone); }}>
+              <button key={r} type="button" className="prsw-btn" onClick={() => { setOpen(false); window.__palAddRole = { phone: info.phone, role: r }; api().addRole && api().addRole(r, info.phone); }}>
                 ➕ افزودن نقش {names[r]}
               </button>
             ))}
-            {!info.team && <p className="prs-note">نقش «مدیر فنی» را فقط مدیر سامانه تعریف می‌کند.</p>}
-            <button type="button" className="prs-close" onClick={() => setOpen(false)}>بستن</button>
+            {!info.team && <p className="prsw-note">نقش «مدیر فنی» را فقط مدیر سامانه تعریف می‌کند.</p>}
+            <button type="button" className="prsw-close" onClick={() => setOpen(false)}>بستن</button>
           </div>
         </div>
       )}

@@ -22802,6 +22802,42 @@ const VLAB_EXPERIMENTS = [
     intro: "یک ماده را در شکافِ مدار قرار بده و ببین مدار بسته می‌شود و لامپ روشن می‌شود (رسانا) یا نه (نارسانا/عایق).",
     tools: ["باتری", "لامپ", "سیم", "نمونه‌های مختلفِ مواد"],
   },
+  {
+    id: "refraction",
+    subject: "فیزیک",
+    level: "متوسطه دوم",
+    title: "شکست نور (قانون اسنل)",
+    icon: "🔦",
+    intro: "پرتوی لیزر را از هوا به آب، شیشه یا الماس بتابان و زاویه‌ی فرود را تغییر بده. زاویه‌ی شکست را با قانون اسنل حساب کن (n₁ sin θ₁ = n₂ sin θ₂) و ببین چه زمانی بازتابِ کلی رخ می‌دهد.",
+    tools: ["قلم لیزر", "محیط شفاف (آب، شیشه، الماس)", "نیم‌دایره‌ی مدرج (نقاله)"],
+  },
+  {
+    id: "convex-lens",
+    subject: "فیزیک",
+    level: "متوسطه دوم",
+    title: "عدسی محدب و تشکیل تصویر",
+    icon: "🔍",
+    intro: "جسم را جلوی عدسی محدب جابه‌جا کن و با سه پرتوی اصلی ببین تصویر کجا و چگونه (حقیقی یا مجازی، بزرگ یا کوچک) تشکیل می‌شود. معادله‌ی عدسی: 1/f = 1/dₒ + 1/dᵢ.",
+    tools: ["عدسی محدب", "جسم (پیکان)", "نیمکت اپتیک با خط‌کش", "پرده"],
+  },
+  {
+    id: "projectile",
+    subject: "فیزیک",
+    level: "متوسطه دوم",
+    title: "حرکت پرتابی",
+    icon: "🚀",
+    intro: "سرعت و زاویه‌ی پرتاب را انتخاب کن، توپ را رها کن و برد، اوج و زمان پرواز را با فرمول حساب کن و با نتیجه‌ی سامانه مقایسه کن.",
+    tools: ["توپ‌خانه (پرتاب‌کننده)", "متر", "کرنومتر"],
+  },
+  {
+    id: "archimedes",
+    subject: "فیزیک",
+    level: "متوسطه اول",
+    title: "نیروی شناوری (ارشمیدس)",
+    icon: "⚓",
+    intro: "یک جسم را به نیروسنج آویزان کن و کم‌کم در آب فرو ببر. ببین وزن ظاهری چطور کم می‌شود و نیروی شناوری را با فرمول Fb = ρ g V حساب کن.",
+    tools: ["نیروسنج", "جسم‌های فلزی", "بشر آب", "نخ"],
+  },
 ];
 
 function vlabClamp(v, min, max) {
@@ -27873,6 +27909,366 @@ function VlabElectricityConductionExperiment({ onReading }) {
   );
 }
 
+function VlabRefractionExperiment({ onReading }) {
+  const MEDIA = [
+    { name: "آب", n: 1.33, color: "#3a86d9" },
+    { name: "شیشه", n: 1.5, color: "#5fbfa5" },
+    { name: "الماس", n: 2.42, color: "#cfe0ff" },
+  ];
+  const [mi, setMi] = useState(0);
+  const [theta1, setTheta1] = useState(40);
+  const [dirIn, setDirIn] = useState(true); // true: هوا → محیط ، false: محیط → هوا
+  const med = MEDIA[mi];
+  const n1 = dirIn ? 1 : med.n, n2 = dirIn ? med.n : 1;
+  const RAD = Math.PI / 180;
+  const s2 = (n1 * Math.sin(theta1 * RAD)) / n2;
+  const tir = s2 > 1;
+  const theta2 = tir ? 90 : Math.asin(s2) / RAD;
+  const thetaC = !dirIn ? Math.asin(1 / med.n) / RAD : null;
+
+  useEffect(() => {
+    if (onReading) onReading(`محیط: ${med.name} (n=${med.n}) | جهت: ${dirIn ? "هوا→" + med.name : med.name + "→هوا"} | زاویه‌ی فرود: ${theta1}° | ${tir ? "بازتابِ کلی" : "زاویه‌ی شکست: " + theta2.toFixed(1) + "°"}`);
+    // eslint-disable-next-line
+  }, [mi, theta1, dirIn]);
+
+  const O = { x: 160, y: 118 }, L = 104;
+  const sI = dirIn ? -1 : 1; // نیم‌صفحه‌ی پرتوی فرودی: -1 بالا ، +1 پایین
+  const sT = -sI;
+  const sinA = Math.sin(theta1 * RAD), cosA = Math.cos(theta1 * RAD);
+  const start = { x: O.x - L * sinA, y: O.y + sI * L * cosA };
+  const refr = { x: O.x + L * Math.sin(theta2 * RAD), y: O.y + sT * L * Math.cos(theta2 * RAD) };
+  const refl = { x: O.x + L * sinA, y: O.y + sI * L * cosA };
+  const arcPts = (th, sy, sx, r) => Array.from({ length: 13 }).map((_, k) => { const f = (th * k) / 12 * RAD; return `${O.x + sx * r * Math.sin(f)},${O.y + sy * r * Math.cos(f)}`; }).join(" ");
+  const ux = -sinA, uy = sI * cosA; // جهت بیرونیِ پرتو از نقطه‌ی فرود به منبع
+  const laserAng = (Math.atan2(uy, ux) / RAD);
+  const f1 = (x) => String(x).replace(/\d/g, (d) => "۰۱۲۳۴۵۶۷۸۹"[d]);
+  const ticks = [];
+  for (let a = 0; a <= 90; a += 10) {
+    [[-1, sI], [1, sT]].forEach(([sx, sy]) => {
+      const x1 = O.x + sx * 66 * Math.sin(a * RAD), y1 = O.y + sy * 66 * Math.cos(a * RAD);
+      const x2 = O.x + sx * (a % 30 === 0 ? 58 : 61) * Math.sin(a * RAD), y2 = O.y + sy * (a % 30 === 0 ? 58 : 61) * Math.cos(a * RAD);
+      ticks.push(<line key={"pt" + a + sx} x1={x1} y1={y1} x2={x2} y2={y2} stroke="#8fa3c8" strokeWidth={a % 30 === 0 ? 1.2 : 0.7} />);
+      if (a % 30 === 0) ticks.push(<text key={"pl" + a + sx} x={O.x + sx * 75 * Math.sin(a * RAD)} y={O.y + sy * 75 * Math.cos(a * RAD) + 2.5} fontSize="7" fill="#cfd6ea" textAnchor="middle" style={{ direction: "ltr", unicodeBidi: "isolate" }}>{a}</text>);
+    });
+  }
+  const beam = (a, b, op) => (
+    <g>
+      <line x1={a.x} y1={a.y} x2={b.x} y2={b.y} stroke="#ff4b4b" strokeWidth="6" opacity={0.18 * op} strokeLinecap="round" />
+      <line x1={a.x} y1={a.y} x2={b.x} y2={b.y} stroke="#ff6a5a" strokeWidth="2.2" opacity={op} strokeLinecap="round" />
+    </g>
+  );
+  return (
+    <div className="vlab-exp">
+      <svg viewBox="0 0 320 236" className="vlab-svg" style={{ background: "#03060f", borderRadius: "10px" }}>
+        <defs>
+          <linearGradient id="refMed" x1="0" y1="0" x2="0" y2="1">
+            <stop offset="0" stopColor={med.color} stopOpacity="0.55" />
+            <stop offset="1" stopColor={med.color} stopOpacity="0.2" />
+          </linearGradient>
+        </defs>
+        <rect x="14" y={O.y} width="292" height={O.y - 24} fill="url(#refMed)" stroke="#9fb6d8" strokeWidth="1.4" />
+        <text x="64" y={O.y + 16} fontSize="9" fill="#e8f0ff" fontWeight="700" textAnchor="middle">{med.name} (n = {med.n})</text>
+        <text x="56" y="34" fontSize="9" fill="#9fb0e0" fontWeight="700" textAnchor="middle">هوا (n = ۱)</text>
+        <line x1="14" y1={O.y} x2="306" y2={O.y} stroke="#e8eefb" strokeWidth="1.6" />
+        <line x1={O.x} y1="22" x2={O.x} y2="226" stroke="#7f8fb8" strokeWidth="1" strokeDasharray="4 4" />
+        <text x={O.x + 5} y="30" fontSize="7.5" fill="#9fb0e0">خط عمود</text>
+        {ticks}
+        {tir ? (
+          <g>
+            {beam(start, O, 1)}
+            {beam(O, refl, 1)}
+          </g>
+        ) : (
+          <g>
+            {beam(start, O, 1)}
+            {beam(O, refr, 1)}
+            {beam(O, refl, 0.2)}
+          </g>
+        )}
+        <polyline points={arcPts(theta1, sI, -1, 34)} fill="none" stroke="#ffd98a" strokeWidth="1.6" />
+        {!tir && <polyline points={arcPts(theta2, sT, 1, 34)} fill="none" stroke="#7be0a4" strokeWidth="1.6" />}
+        {tir && <polyline points={arcPts(theta1, sI, 1, 34)} fill="none" stroke="#ffd98a" strokeWidth="1.6" strokeDasharray="3 2" />}
+        <text x={O.x - 50 * Math.sin((theta1 / 2) * RAD) - 4} y={O.y + sI * 50 * Math.cos((theta1 / 2) * RAD) + 3} fontSize="8.5" fill="#ffd98a" textAnchor="middle" fontWeight="700" style={{ direction: "ltr", unicodeBidi: "isolate" }}>{"θ₁=" + theta1 + "°"}</text>
+        {!tir && <text x={O.x + 52 * Math.sin((theta2 / 2) * RAD) + 6} y={O.y + sT * 50 * Math.cos((theta2 / 2) * RAD) + 3} fontSize="8.5" fill="#7be0a4" textAnchor="middle" fontWeight="700" style={{ direction: "ltr", unicodeBidi: "isolate" }}>{"θ₂=" + theta2.toFixed(1) + "°"}</text>}
+        {tir && <text x="160" y="226" fontSize="10" fill="#ffb347" textAnchor="middle" fontWeight="700">بازتابِ کلی! پرتو وارد هوا نمی‌شود</text>}
+        {/* قلم لیزر */}
+        <g transform={`translate(${start.x},${start.y}) rotate(${laserAng})`}>
+          <rect x="3" y="-4.5" width="30" height="9" rx="3" fill="#7b8294" stroke="#3d4450" strokeWidth="1" />
+          <rect x="3" y="-4.5" width="8" height="9" rx="2" fill="#c9d1de" />
+          <circle cx="3" cy="0" r="2" fill="#ff6a5a" />
+        </g>
+      </svg>
+      <VlabMeterRow height={160} meters={[{ label: "زاویه‌ی فرود θ₁", unit: "°", value: theta1, ranges: [90], maj: 9, decimals: 1 }, { label: tir ? "زاویه‌ی بازتاب" : "زاویه‌ی شکست θ₂", unit: "°", value: tir ? theta1 : theta2, ranges: [90], maj: 9, decimals: 1 }]} />
+      <div className="vlab-controls">
+        <div className="vlab-ctrl-col" style={{ flex: 1 }}>
+          <div className="vlab-num-row" style={{ marginBottom: 6 }}>
+            {MEDIA.map((m, k) => (<button key={m.name} type="button" className={"vlab-num-btn" + (mi === k ? " active" : "")} onClick={() => setMi(k)}>{m.name}</button>))}
+          </div>
+          <div className="vlab-num-row" style={{ marginBottom: 6 }}>
+            <button type="button" className={"vlab-num-btn" + (dirIn ? " active" : "")} onClick={() => setDirIn(true)}>هوا ← {med.name}</button>
+            <button type="button" className={"vlab-num-btn" + (!dirIn ? " active" : "")} onClick={() => setDirIn(false)}>{med.name} ← هوا</button>
+          </div>
+          <label className="vlab-ctrl-label">زاویه‌ی فرود θ₁ (درجه): {theta1}</label>
+          <VlabRange min="0" max="85" step="1" value={theta1} onChange={(e) => setTheta1(+e.target.value)} />
+        </div>
+      </div>
+      <div className="vlab-readout">
+        {tir ? <>زاویه‌ی فرود از <b>زاویه‌ی بحرانی ({thetaC.toFixed(1)}°)</b> بیشتر است؛ پرتو کاملاً بازتاب می‌شود.</> : <>زاویه‌ی شکست ≈ <b>{theta2.toFixed(1)}°</b>. وقتی نور از محیط کم‌چگال‌تر به محیط غلیظ‌تر می‌رود، به خط عمود نزدیک می‌شود و برعکس.</>}
+        {thetaC !== null && !tir && <><br />زاویه‌ی بحرانی این محیط: <b>{thetaC.toFixed(1)}°</b></>}
+      </div>
+      {!tir && (
+        <VlabFormulaCheck title="قانون اسنل" fa="ضریب شکست اول × سینوس زاویه‌ی فرود = ضریب شکست دوم × سینوس زاویه‌ی شکست" en="n₁ sin θ₁ = n₂ sin θ₂" legend={`n₁ = ${n1}، n₂ = ${n2}، θ₁ = ${theta1}° — زاویه‌ی شکست را با ماشین‌حساب (sin⁻¹) بنویس`} subst={`sin θ₂ = (${n1} × sin ${theta1}°) ÷ ${n2} = ${s2.toFixed(3)} ⇒ θ₂ = ?`} label="θ₂:" answer={theta2} unit="°" decimals={1} />
+      )}
+    </div>
+  );
+}
+
+function VlabConvexLensExperiment({ onReading }) {
+  const [f, setF] = useState(10);
+  const [dO, setDO] = useState(30);
+  const K = 2.2, LX = 160, AY = 100, HO = 10; // مقیاس px بر cm ، مرکز عدسی ، محور اصلی ، ارتفاع جسم (cm)
+  const nearF = Math.abs(dO - f) < 0.5;
+  const dI = nearF ? null : (dO * f) / (dO - f);
+  const m = dI === null ? null : -dI / dO;
+  const real = dI !== null && dI > 0;
+  useEffect(() => {
+    if (onReading) onReading(`فاصله‌ی کانونی: ${f} cm | فاصله‌ی جسم: ${dO} cm | ${dI === null ? "تصویر تشکیل نمی‌شود" : "فاصله‌ی تصویر: " + dI.toFixed(1) + " cm، بزرگ‌نمایی: " + m.toFixed(2)}`);
+    // eslint-disable-next-line
+  }, [f, dO]);
+  const xo = LX - K * dO, yo = AY - K * HO;
+  const xi = dI === null ? null : LX + K * dI;
+  const yi = m === null ? null : AY - K * HO * m;
+  const xF1 = LX - K * f, xF2 = LX + K * f;
+  const lineTo = (x0, y0, x1, y1, xEnd) => { const t = (xEnd - x0) / (x1 - x0); return { x: xEnd, y: y0 + (y1 - y0) * t }; };
+  // پرتو ۱: موازی محور ← از کانون دوم ؛ پرتو ۲: از مرکز ؛ پرتو ۳: از کانون اول ← موازی
+  const r1End = lineTo(LX, yo, xF2, AY, 300);
+  const r2End = lineTo(xo, yo, LX, AY, 300);
+  const y3 = yo + (AY - yo) * ((LX - xo) / (xF1 - xo));
+  const ray = (x1, y1, x2, y2, c, dash, w) => <line x1={x1} y1={y1} x2={x2} y2={y2} stroke={c} strokeWidth={w || 1.5} strokeDasharray={dash ? "4 3" : null} />;
+  const rulerTicks = [];
+  for (let d = -60; d <= 60; d += 10) {
+    rulerTicks.push(<g key={"rt" + d}><line x1={LX + K * d} y1="168" x2={LX + K * d} y2="174" stroke="#8fa3c8" strokeWidth="1" /><text x={LX + K * d} y="186" fontSize="7.5" fill="#cfd6ea" textAnchor="middle" style={{ direction: "ltr", unicodeBidi: "isolate" }}>{Math.abs(d)}</text></g>);
+  }
+  const desc = dI === null ? "جسم در کانون است: پرتوهای خروجی موازی‌اند و تصویری تشکیل نمی‌شود." : `تصویر ${real ? "حقیقی" : "مجازی"}، ${m < 0 ? "وارونه" : "مستقیم"} و ${Math.abs(m) > 1.02 ? "بزرگ‌تر" : Math.abs(m) < 0.98 ? "کوچک‌تر" : "هم‌اندازه"} از جسم`;
+  return (
+    <div className="vlab-exp">
+      <svg viewBox="0 0 320 196" className="vlab-svg" style={{ background: "#03060f", borderRadius: "10px" }}>
+        <defs>
+          <clipPath id="lensClip"><rect x="4" y="20" width="312" height="146" /></clipPath>
+          <linearGradient id="lensGrad" x1="0" x2="1"><stop offset="0" stopColor="#bfe6ff" stopOpacity="0.55" /><stop offset="0.5" stopColor="#e9f6ff" stopOpacity="0.35" /><stop offset="1" stopColor="#8fc9f0" stopOpacity="0.55" /></linearGradient>
+        </defs>
+        <line x1="6" y1={AY} x2="314" y2={AY} stroke="#5b6a96" strokeWidth="1" strokeDasharray="5 4" />
+        <path d={`M${LX},34 Q${LX + 15},${AY} ${LX},166 Q${LX - 15},${AY} ${LX},34 Z`} fill="url(#lensGrad)" stroke="#cfe6ff" strokeWidth="1.6" />
+        {[[xF1, "F"], [xF2, "F'"], [LX - 2 * K * f, "2F"], [LX + 2 * K * f, "2F'"]].map(([x, t], k) => (x > 10 && x < 310 ? (<g key={"fp" + k}><circle cx={x} cy={AY} r="2.6" fill="#ffd98a" /><text x={x} y={AY + 13} fontSize="8" fill="#ffd98a" textAnchor="middle" style={{ direction: "ltr", unicodeBidi: "isolate" }}>{t}</text></g>) : null))}
+        <g clipPath="url(#lensClip)">
+          {dI !== null && (
+            <g>
+              {ray(xo, yo, LX, yo, "#ff6a5a")}
+              {ray(LX, yo, r1End.x, r1End.y, "#ff6a5a")}
+              {ray(xo, yo, r2End.x, r2End.y, "#7be0a4")}
+              {ray(xo, yo, LX, y3, "#7fb4ff")}
+              {ray(LX, y3, 300, y3, "#7fb4ff")}
+              {!real && (
+                <g opacity="0.8">
+                  {ray(LX, yo, xi, yi, "#ff6a5a", true, 1.2)}
+                  {ray(xo, yo, xi, yi, "#7be0a4", true, 1.2)}
+                  {ray(LX, y3, xi, yi, "#7fb4ff", true, 1.2)}
+                </g>
+              )}
+            </g>
+          )}
+          {dI === null && (
+            <g>
+              {ray(xo, yo, LX, yo, "#ff6a5a")}{ray(LX, yo, 300, yo, "#ff6a5a")}
+              {ray(xo, yo, 300, lineTo(xo, yo, LX, AY, 300).y, "#7be0a4")}
+            </g>
+          )}
+          {/* جسم: پیکان زرد */}
+          <line x1={xo} y1={AY} x2={xo} y2={yo} stroke="#ffd98a" strokeWidth="3" />
+          <polygon points={`${xo - 5},${yo + 7} ${xo + 5},${yo + 7} ${xo},${yo - 1}`} fill="#ffd98a" />
+          {/* تصویر: پیکان سبز (حقیقی) یا خط‌چین (مجازی) */}
+          {dI !== null && xi > 6 && xi < 314 && Math.abs(yi - AY) < 140 && (
+            <g opacity={real ? 1 : 0.7}>
+              <line x1={xi} y1={AY} x2={xi} y2={yi} stroke="#7be0a4" strokeWidth="3" strokeDasharray={real ? null : "4 3"} />
+              <polygon points={m < 0 ? `${xi - 5},${yi - 7} ${xi + 5},${yi - 7} ${xi},${yi + 1}` : `${xi - 5},${yi + 7} ${xi + 5},${yi + 7} ${xi},${yi - 1}`} fill="#7be0a4" />
+            </g>
+          )}
+        </g>
+        {dI !== null && (xi <= 6 || xi >= 314) && <text x="160" y="30" fontSize="9" fill="#ffb347" textAnchor="middle">تصویر خیلی دور است (خارج از صفحه)</text>}
+        <line x1={LX - 60 * K} y1="170" x2={LX + 60 * K} y2="170" stroke="#8fa3c8" strokeWidth="1.2" />
+        {rulerTicks}
+        <text x="26" y="30" fontSize="8" fill="#ffd98a" textAnchor="middle">▮ جسم</text>
+        <text x="26" y="42" fontSize="8" fill="#7be0a4" textAnchor="middle">▮ تصویر</text>
+      </svg>
+      <VlabMeterRow height={160} meters={[{ label: "فاصله‌ی تصویر", unit: "cm", value: dI === null ? 0 : Math.abs(dI), ranges: [30, 100, 300, 1000], maj: 5, decimals: 1 }, { label: "بزرگ‌نمایی |m|", unit: "×", value: m === null ? 0 : Math.abs(m), ranges: [1, 3, 10, 50, 200], maj: 5, decimals: 2 }]} />
+      <div className="vlab-controls">
+        <div className="vlab-ctrl-col" style={{ flex: 1 }}>
+          <label className="vlab-ctrl-label">فاصله‌ی کانونی f (cm): {f}</label>
+          <VlabRange min="5" max="20" step="1" value={f} onChange={(e) => setF(+e.target.value)} />
+          <label className="vlab-ctrl-label">فاصله‌ی جسم تا عدسی (cm): {dO}</label>
+          <VlabRange min="4" max="60" step="1" value={dO} onChange={(e) => setDO(+e.target.value)} />
+        </div>
+      </div>
+      <div className="vlab-readout">{desc}<br />پرتو قرمز موازی محور، پرتو سبز از مرکز عدسی و پرتو آبی از کانون می‌گذرد؛ جای برخوردشان تصویر است.</div>
+      {dI !== null && (
+        <VlabFormulaCheck title="معادله‌ی عدسی" fa="یک بر فاصله‌ی کانونی = یک بر فاصله‌ی جسم + یک بر فاصله‌ی تصویر" en="1/f = 1/dₒ + 1/dᵢ" legend="اگر جواب منفی شد یعنی تصویر مجازی است (هم‌طرف جسم)" subst={`1/${f} = 1/${dO} + 1/dᵢ ⇒ dᵢ = (${dO} × ${f}) ÷ (${dO} − ${f}) = ?`} label="dᵢ:" answer={dI} unit="cm" decimals={1} />
+      )}
+    </div>
+  );
+}
+
+function VlabProjectileExperiment({ onReading }) {
+  const [v0, setV0] = useState(25);
+  const [ang, setAng] = useState(45);
+  const [t, setT] = useState(0);
+  const [running, setRunning] = useState(false);
+  const G = 9.8, RAD = Math.PI / 180;
+  const vx = v0 * Math.cos(ang * RAD), vy0 = v0 * Math.sin(ang * RAD);
+  const T = (2 * vy0) / G, R = vx * T, H = (vy0 * vy0) / (2 * G);
+  const K = 1.6, X0 = 24, GY = 168;
+  useEffect(() => { setT(0); setRunning(false); }, [v0, ang]);
+  useEffect(() => {
+    if (!running) return;
+    let raf, last = performance.now();
+    const step = (now) => {
+      const dt = Math.min(now - last, 60) / 1000; last = now;
+      let done = false;
+      setT((tt) => { const nt = tt + dt; if (nt >= T) { done = true; return T; } return nt; });
+      if (done) { setRunning(false); return; }
+      raf = requestAnimationFrame(step);
+    };
+    raf = requestAnimationFrame(step);
+    return () => cancelAnimationFrame(raf);
+  }, [running, T]);
+  useEffect(() => {
+    if (onReading) onReading(`سرعت اولیه: ${v0} m/s | زاویه: ${ang}° | برد: ${R.toFixed(1)} m | ارتفاع اوج: ${H.toFixed(1)} m | زمان پرواز: ${T.toFixed(2)} s`);
+    // eslint-disable-next-line
+  }, [v0, ang]);
+  const px = (xm) => X0 + K * xm, py = (ym) => GY - K * ym;
+  const pos = (tt) => ({ x: vx * tt, y: Math.max(0, vy0 * tt - 0.5 * G * tt * tt) });
+  const arc = [];
+  for (let k = 0; k <= 60; k++) { const p = pos((T * k) / 60); arc.push(`${px(p.x)},${py(p.y)}`); }
+  const cur = pos(t);
+  const speedNow = Math.sqrt(vx * vx + Math.pow(vy0 - G * t, 2));
+  const trail = [];
+  for (let k = 0; k <= 24; k++) { const tt = (t * k) / 24; if (tt <= t) { const p = pos(tt); trail.push(<circle key={"tr" + k} cx={px(p.x)} cy={py(p.y)} r="1.6" fill="#ffd98a" opacity={0.35 + 0.5 * (k / 24)} />); } }
+  const barrelAng = -ang;
+  return (
+    <div className="vlab-exp">
+      <svg viewBox="0 0 320 200" className="vlab-svg" style={{ background: "#03060f", borderRadius: "10px" }}>
+        {[0, 20, 40, 60, 80].map((hm) => (<g key={"gh" + hm}><line x1={X0} y1={py(hm)} x2="314" y2={py(hm)} stroke="#1c2748" strokeWidth="0.8" /><text x="20" y={py(hm) + 3} fontSize="7" fill="#7f8fb8" textAnchor="end">{hm}</text></g>))}
+        {[0, 40, 80, 120, 160].map((xm) => (<g key={"gv" + xm}><line x1={px(xm)} y1="20" x2={px(xm)} y2={GY} stroke="#1c2748" strokeWidth="0.8" /><text x={px(xm)} y={GY + 12} fontSize="7" fill="#7f8fb8" textAnchor="middle">{xm}</text></g>))}
+        <text x="316" y={GY + 12} fontSize="7" fill="#9fb0e0" textAnchor="end">متر</text>
+        <rect x="0" y={GY} width="320" height="32" fill="#16301f" />
+        <line x1="0" y1={GY} x2="320" y2={GY} stroke="#4fae6b" strokeWidth="2" />
+        <polyline points={arc.join(" ")} fill="none" stroke="#5b7fd0" strokeWidth="1.2" strokeDasharray="4 4" opacity="0.8" />
+        <line x1={px(R / 2)} y1={py(H)} x2={px(R / 2)} y2={GY} stroke="#7be0a4" strokeWidth="0.8" strokeDasharray="2 3" opacity="0.7" />
+        <text x={px(R / 2) + 4} y={py(H) + 3} fontSize="7.5" fill="#7be0a4">H = {H.toFixed(1)} m</text>
+        <circle cx={px(R)} cy={GY} r="3" fill="#ff6a5a" /><text x={px(R)} y={GY - 6} fontSize="7.5" fill="#ff8a7a" textAnchor="middle">R = {R.toFixed(0)} m</text>
+        {trail}
+        {/* توپ */}
+        <ellipse cx={px(cur.x)} cy={GY + 2} rx="5" ry="1.6" fill="#000" opacity={0.4} />
+        <circle cx={px(cur.x)} cy={py(cur.y)} r="5" fill="#e8eefb" stroke="#9fb0d6" strokeWidth="1" />
+        {/* توپ‌خانه */}
+        <g transform={`translate(${X0},${GY - 6}) rotate(${barrelAng})`}>
+          <rect x="-4" y="-5" width="30" height="10" rx="4" fill="#4a5470" stroke="#8fa0c8" strokeWidth="1" />
+          <rect x="20" y="-6" width="8" height="12" rx="2" fill="#2f3850" />
+        </g>
+        <circle cx={X0} cy={GY - 6} r="7" fill="#2f3850" stroke="#8fa0c8" strokeWidth="1.2" />
+        <circle cx={X0 - 2} cy={GY - 1} r="9" fill="none" stroke="#6b7399" strokeWidth="2" />
+        <VlabStopwatchIcon x={282} y={34} scale={0.8} seconds={t % 60} maxSeconds={60} readout={t.toFixed(1) + "s"} />
+      </svg>
+      <VlabMeterRow height={160} meters={[{ label: "سرعتِ لحظه‌ای", unit: "m/s", value: speedNow, ranges: [50], maj: 5, decimals: 1 }, { label: "ارتفاعِ لحظه‌ای", unit: "m", value: cur.y, ranges: [20, 50, 100], maj: 5, decimals: 1 }]} />
+      <div className="vlab-controls">
+        <div className="vlab-ctrl-col" style={{ flex: 1 }}>
+          <label className="vlab-ctrl-label">سرعت اولیه v₀ (m/s): {v0}</label>
+          <VlabRange min="5" max="40" step="1" value={v0} onChange={(e) => setV0(+e.target.value)} />
+          <label className="vlab-ctrl-label">زاویه‌ی پرتاب θ (درجه): {ang}</label>
+          <VlabRange min="5" max="85" step="1" value={ang} onChange={(e) => setAng(+e.target.value)} />
+        </div>
+        <div className="vlab-ctrl-col">
+          <button type="button" className="pqb-submit-btn" onClick={() => { if (t >= T) setT(0); setRunning((r) => !r); }}>{running ? "⏸ توقف" : "🚀 پرتاب"}</button>
+          <button type="button" className="vlab-toggle-btn" onClick={() => { setRunning(false); setT(0); }}>⟲ از اول</button>
+        </div>
+      </div>
+      <div className="vlab-readout">برد ≈ <b>{R.toFixed(1)} متر</b> | اوج ≈ <b>{H.toFixed(1)} متر</b> | زمان پرواز ≈ <b>{T.toFixed(2)} ثانیه</b><br />مؤلفه‌ی افقیِ سرعت ثابت می‌ماند و مؤلفه‌ی عمودی با شتاب گرانش (g = ۹٫۸) کم و بعد زیاد می‌شود. بیشترین برد در زاویه‌ی ۴۵ درجه است.</div>
+      <VlabFormulaCheck title="برد پرتابه" fa="برد = (مجذور سرعت اولیه × سینوس دو برابر زاویه) ÷ g" en="R = v₀² · sin(2θ) / g" legend="g = ۹٫۸ m/s²" subst={`R = (${v0}² × sin ${2 * ang}°) ÷ 9.8 = ?`} label="R:" answer={R} unit="m" decimals={1} />
+      <VlabFormulaCheck title="ارتفاع اوج" fa="ارتفاع اوج = (مجذور سرعت اولیه × مجذور سینوس زاویه) ÷ (۲g)" en="H = v₀² · sin²θ / 2g" legend="g = ۹٫۸ m/s²" subst={`H = (${v0}² × sin²${ang}°) ÷ (2 × 9.8) = ?`} label="H:" answer={H} unit="m" decimals={1} />
+    </div>
+  );
+}
+
+function VlabArchimedesExperiment({ onReading }) {
+  const MATS = [{ name: "آلومینیوم", rho: 2700, c1: "#c5ccd8", c2: "#8f99ad" }, { name: "آهن", rho: 7800, c1: "#8a92a2", c2: "#4f5668" }, { name: "مس", rho: 8900, c1: "#e0925a", c2: "#9c5a2c" }, { name: "سرب", rho: 11300, c1: "#6f7686", c2: "#3a3f4c" }];
+  const [mi, setMi] = useState(0);
+  const [V, setV] = useState(100); // cm³
+  const [frac, setFrac] = useState(0); // بخشِ فرورفته (۰ تا ۱)
+  const mat = MATS[mi];
+  const G = 9.8, RHO_W = 1000;
+  const Vm3 = V / 1e6;
+  const W = mat.rho * Vm3 * G;
+  const Vsub = V * frac;
+  const Fb = RHO_W * G * (Vsub / 1e6);
+  const Wapp = W - Fb;
+  useEffect(() => {
+    if (onReading) onReading(`جنس: ${mat.name} | حجم: ${V} cm³ | وزن در هوا: ${W.toFixed(2)} N | بخش فرورفته: ${(frac * 100).toFixed(0)}٪ | نیروی شناوری: ${Fb.toFixed(2)} N | وزن ظاهری: ${Wapp.toFixed(2)} N`);
+    // eslint-disable-next-line
+  }, [mi, V, frac]);
+  const side = Math.cbrt(V) * 6; // px
+  const base = 188, rise = (Vsub / 100) * 3.2, level = base - rise;
+  const top = level - (1 - frac) * side, bottom = level + frac * side;
+  const cx = 160, hw = side / 2, d = side * 0.28;
+  const waterColor = "#3a86d9";
+  return (
+    <div className="vlab-exp">
+      <svg viewBox="0 0 320 262" className="vlab-svg" style={{ background: "#03060f", borderRadius: "10px" }}>
+        <defs>
+          <linearGradient id="arBlk" x1="0" x2="1"><stop offset="0" stopColor={mat.c1} /><stop offset="1" stopColor={mat.c2} /></linearGradient>
+          <clipPath id="arSub"><rect x="60" y={level} width="200" height="120" /></clipPath>
+        </defs>
+        <ellipse cx="160" cy="250" rx="112" ry="6" fill="#000" opacity="0.4" />
+        {/* پایه و بازو */}
+        <rect x="44" y="14" width="6" height="238" fill="#6b7280" /><rect x="30" y="248" width="34" height="6" rx="2" fill="#4a5060" />
+        <rect x="44" y="14" width="116" height="6" rx="2" fill="#6b7280" />
+        <VlabSpringScale x={160} y={14} size={0.72} force={Wapp} maxForce={Math.max(5, Math.ceil(W / 5) * 5)} unit="N" label="" />
+        <VlabGlassBack x1={90} x2={230} top={126} ry={9} />
+        <path d={`M92,${level} L92,242 A68,8 0 0 0 228,242 L228,${level} Z`} fill={waterColor} opacity="0.42" />
+        <ellipse cx="160" cy={level} rx="68" ry="7" fill="#6aa8ff" opacity="0.6" />
+        {/* نخ */}
+        <line x1={cx} y1="64" x2={cx} y2={top - d * 0.4} stroke="#cfd6ea" strokeWidth="1.2" />
+        {/* بلوک (مکعب سه‌بعدی) */}
+        <g>
+          <rect x={cx - hw} y={top} width={side} height={side} fill="url(#arBlk)" stroke="#1c2230" strokeWidth="1" />
+          <polygon points={`${cx - hw},${top} ${cx + hw},${top} ${cx + hw - d * 0.5},${top - d * 0.5} ${cx - hw - d * 0.5},${top - d * 0.5}`} fill={mat.c1} stroke="#1c2230" strokeWidth="0.8" opacity="0.95" />
+          <rect x={cx - hw} y={top} width={side} height={side} fill={waterColor} opacity="0.3" clipPath="url(#arSub)" />
+          <circle cx={cx} cy={top - d * 0.4} r="1.8" fill="#cfd6ea" />
+        </g>
+        <VlabGlassFront x1={90} x2={230} top={126} bottom={242} ry={9} id="arch" />
+        <text x="160" y="258" fontSize="8" fill="#9fb0e0" textAnchor="middle">آب (ρ = ۱۰۰۰ kg/m³)</text>
+        <text x="258" y="40" fontSize="9" fill="#cfd6ea" textAnchor="middle" fontWeight="700">{mat.name}</text>
+        <text x="258" y="52" fontSize="8" fill="#9fb0e0" textAnchor="middle" style={{ direction: "ltr", unicodeBidi: "isolate" }}>{"ρ = " + mat.rho}</text>
+      </svg>
+      <VlabMeterRow height={160} meters={[{ label: "وزن در هوا", unit: "N", value: W, ranges: [5, 10, 20, 40], maj: 5, decimals: 2 }, { label: "نیروی شناوری", unit: "N", value: Fb, ranges: [1, 3, 10], maj: 5, decimals: 2 }, { label: "وزن ظاهری", unit: "N", value: Wapp, ranges: [5, 10, 20, 40], maj: 5, decimals: 2 }]} />
+      <div className="vlab-controls">
+        <div className="vlab-ctrl-col" style={{ flex: 1 }}>
+          <div className="vlab-num-row" style={{ marginBottom: 6 }}>{MATS.map((m, k) => (<button key={m.name} type="button" className={"vlab-num-btn" + (mi === k ? " active" : "")} onClick={() => setMi(k)}>{m.name}</button>))}</div>
+          <label className="vlab-ctrl-label">حجم جسم (cm³): {V}</label>
+          <VlabRange min="50" max="300" step="10" value={V} onChange={(e) => setV(+e.target.value)} />
+          <label className="vlab-ctrl-label">بخشِ فرورفته در آب (٪): {Math.round(frac * 100)}</label>
+          <VlabRange min="0" max="100" step="5" value={Math.round(frac * 100)} onChange={(e) => setFrac(+e.target.value / 100)} />
+        </div>
+      </div>
+      <div className="vlab-readout">وقتی جسم در آب فرو می‌رود، نیروی شناوری رو به بالا آن را سبک‌تر نشان می‌دهد: وزن ظاهری = وزن − نیروی شناوری. هرچه حجمِ فرورفته بیشتر باشد، نیروی شناوری بیشتر است.</div>
+      {Vsub > 0 && (
+        <VlabFormulaCheck title="نیروی شناوری (ارشمیدس)" fa="نیروی شناوری = چگالی مایع × g × حجم فرورفته" en="Fb = ρ · g · V" legend="ρ آب = ۱۰۰۰ kg/m³ ، g = ۹٫۸ ، حجم را به متر مکعب تبدیل کن (هر ۱ cm³ = ۰٫۰۰۰۰۰۱ m³)" subst={`Fb = 1000 × 9.8 × ${(Vsub / 1e6).toFixed(6)} = ?`} label="Fb:" answer={Fb} unit="N" decimals={2} />
+      )}
+      {Vsub > 0 && (
+        <VlabFormulaCheck title="وزن ظاهری" fa="وزن ظاهری = وزن در هوا − نیروی شناوری" en="W' = W − Fb" legend="وزن در هوا و نیروی شناوری را از عقربه‌ها بخوان" subst={`W' = ${W.toFixed(2)} − ${Fb.toFixed(2)} = ?`} label="W':" answer={Wapp} unit="N" decimals={2} />
+      )}
+    </div>
+  );
+}
+
 const VLAB_COMPONENTS = {
   lever: VlabLeverExperiment,
   pendulum: VlabPendulumExperiment,
@@ -27902,6 +28298,10 @@ const VLAB_COMPONENTS = {
   "enzyme-activity": VlabEnzymeActivityExperiment,
   "heat-transfer": VlabHeatTransferExperiment,
   "electricity-conduction": VlabElectricityConductionExperiment,
+  "refraction": VlabRefractionExperiment,
+  "convex-lens": VlabConvexLensExperiment,
+  "projectile": VlabProjectileExperiment,
+  "archimedes": VlabArchimedesExperiment,
 };
 
 function StudentVirtualLabView({ onBack, grade, studentCode, schoolCode }) {

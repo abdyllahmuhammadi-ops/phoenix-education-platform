@@ -1347,6 +1347,7 @@ function AuthLanding({ language, onLanguageChange, onContinue, onViewPerformance
   const [mode, setMode] = useState("login"); // "login" | "register"
   const [lastSession, setLastSession] = useState(null);
   const [showAll, setShowAll] = useState(false);
+  const [roleChoice, setRoleChoice] = useState(null); // { phone, options }
   const [themeId, setThemeId] = useState(palLoadTheme);
   const [themeOpen, setThemeOpen] = useState(false);
   const palTheme = PAL_THEMES.find((x) => x.id === themeId) || PAL_THEMES[0];
@@ -1464,6 +1465,36 @@ function AuthLanding({ language, onLanguageChange, onContinue, onViewPerformance
   const [loginPassword, setLoginPassword] = useState("");
   const [loginError, setLoginError] = useState("");
 
+  const palOpenChooser = async (phone, roleList) => {
+    const options = roleList.map((rk) => {
+      const r = roles.find((x) => x.key === rk);
+      return { key: rk, label: rk === "admin" ? "مدیر مدرسه" : (r ? r.label : rk), icon: r ? r.icon : null };
+    });
+    if (roleList.includes("teacher")) {
+      try {
+        const members = await teamLoad("team-members", []);
+        const m = members.find((x) => x.mobile === teamDigits(phone) && x.active);
+        if (m) options.push({ key: "teamMember", label: (TEAM_ROLES[m.role] && TEAM_ROLES[m.role].label) || "مدیر فنی", icon: null, member: m });
+      } catch (e) {}
+    }
+    if (options.length < 2) return false;
+    setRoleChoice({ phone, options });
+    return true;
+  };
+  const palEnterRole = async (phone, opt, teamCode) => {
+    if (opt.key === "teamMember") {
+      const m = await teamTryLogin(teamDigits(phone), (teamCode || "").trim());
+      if (!m) return false;
+      onLoginSuccess("teamMember", { member: m }, m.mobile);
+      return true;
+    }
+    const wt = (pr, ms, fb) => Promise.race([pr, new Promise((res) => setTimeout(() => res(fb), ms))]);
+    const profile = await wt(palProfileOf(phone, opt.key), 3000, {});
+    try { await wt(authStorageSet("last-session", JSON.stringify({ role: opt.key, phone }), false), 2000, null); } catch (e) {}
+    onLoginSuccess(opt.key, profile || {}, phone);
+    return true;
+  };
+
   const handleLoginAttempt = async () => {
     if (!loginPhone.trim()) {
       setLoginError("لطفاً شماره موبایل را وارد کنید.");
@@ -1488,6 +1519,11 @@ function AuthLanding({ language, onLanguageChange, onContinue, onViewPerformance
     if (storedCode) {
       if (storedCode === loginPassword.trim()) {
         setLoginError("");
+        // چندنقشی (معلم + ولی / مدیر مدرسه / مدیر فنی): ابتدا نقش را انتخاب کند
+        try {
+          const rl = await palRolesOf(loginPhone.trim());
+          if (await palOpenChooser(loginPhone.trim(), rl)) return;
+        } catch (e) {}
         // ورود آسان و هوشمند: اگر پروفایلی از ثبت‌نام قبلی موجود باشد، مستقیم به داشبورد برو
         try {
           const role = await authStorageGet("login-role:" + loginPhone.trim(), false);
@@ -1536,6 +1572,17 @@ function AuthLanding({ language, onLanguageChange, onContinue, onViewPerformance
     }
     setRecoveryResult("notfound");
   };
+
+  if (roleChoice) {
+    return (
+      <PalRoleChooser
+        phone={roleChoice.phone}
+        options={roleChoice.options}
+        onBack={() => setRoleChoice(null)}
+        onPick={palEnterRole}
+      />
+    );
+  }
 
   return (
     <div dir={t.dir} className="pal-root" style={palThemeVars(palTheme)}>
@@ -2016,6 +2063,10 @@ function AuthLanding({ language, onLanguageChange, onContinue, onViewPerformance
                 onClick={async () => {
                   // ورود آسان: اگر پروفایلی از قبل ذخیره شده باشد، مستقیم به داشبورد برو؛ وگرنه ادامه‌ی ثبت‌نام
                   try {
+                    const rl = await palRolesOf(lastSession.phone);
+                    if (await palOpenChooser(lastSession.phone, rl)) return;
+                  } catch (e) {}
+                  try {
                     const role = await authStorageGet("login-role:" + lastSession.phone, false);
                     const profileRaw = await authStorageGet("login-profile:" + lastSession.phone, false);
                     if (role && onLoginSuccess) {
@@ -2054,7 +2105,7 @@ function AuthLanding({ language, onLanguageChange, onContinue, onViewPerformance
           </div>
           )}
 
-          {!(mode === "login" && lastSession && !showAll) && (
+          {mode !== "login" && (
           <h1 className="pal-title">
             {mode === "login" ? t.welcomeTitleLogin : t.welcomeTitleRegister}
           </h1>
@@ -2065,7 +2116,7 @@ function AuthLanding({ language, onLanguageChange, onContinue, onViewPerformance
 
           
 
-          <div className={"pal-role-grid" + (mode === "login" && lastSession && !showAll ? " pal-role-single" : "")} style={mode === "login" && lastSession && !showAll ? { display: "none" } : undefined}>
+          <div className={"pal-role-grid" + (mode === "login" && lastSession && !showAll ? " pal-role-single" : "")} style={mode === "login" ? { display: "none" } : undefined}>
             {roles.filter((r) => mode === "register" || !lastSession || showAll || r.key === lastSession.role).map((role) => (
               <div
                 key={role.key}
@@ -7489,11 +7540,49 @@ function TuitionPaymentStep({ academicInfo, onBack, onFinish }) {
    ورود هوشمند — ذخیره‌ی پروفایل هر نقش پس از ثبت‌نام، برای ورود آسان با رمز در دفعات بعد
    ============================================================ */
 
+async function palRolesOf(phone) {
+  try {
+    const raw = await authStorageGet("login-roles:" + phone, false);
+    if (raw) { const arr = JSON.parse(raw); if (Array.isArray(arr) && arr.length) return arr; }
+    const legacy = await authStorageGet("login-role:" + phone, false);
+    return legacy ? [legacy] : [];
+  } catch (e) { return []; }
+}
+async function palProfileOf(phone, role) {
+  try {
+    const raw = await authStorageGet("login-profile:" + phone + ":" + role, false);
+    if (raw) return JSON.parse(raw);
+    const legacyRole = await authStorageGet("login-role:" + phone, false);
+    if (legacyRole === role) {
+      const lp = await authStorageGet("login-profile:" + phone, false);
+      return lp ? JSON.parse(lp) : {};
+    }
+  } catch (e) {}
+  return {};
+}
+// افزودنِ نقشِ دوم فقط برای معلمِ واردشده مجاز است (ولی یا مدیر مدرسه)؛ نقشِ فنی را فقط مدیر سامانه تعریف می‌کند
+function palAddRolePending(phone) {
+  try {
+    const f = window.__palAddRole;
+    return !!(f && f.phone && String(f.phone).trim() === String(phone || "").trim());
+  } catch (e) { return false; }
+}
 async function saveLoginProfile(phone, role, profileData) {
   try {
     if (!phone) return;
-    await authStorageSet("login-role:" + phone, role, false);
-    await authStorageSet("login-profile:" + phone, JSON.stringify(profileData || {}), false);
+    const prior = await palRolesOf(phone);
+    const adding = palAddRolePending(phone) && prior.includes("teacher") && (role === "guardian" || role === "admin");
+    if (adding) {
+      const next = prior.includes(role) ? prior : prior.concat([role]);
+      await authStorageSet("login-roles:" + phone, JSON.stringify(next), false);
+      await authStorageSet("login-profile:" + phone + ":" + role, JSON.stringify(profileData || {}), false);
+      window.__palAddRole = null;
+    } else {
+      await authStorageSet("login-role:" + phone, role, false);
+      await authStorageSet("login-profile:" + phone, JSON.stringify(profileData || {}), false);
+      await authStorageSet("login-roles:" + phone, JSON.stringify([role]), false);
+      await authStorageSet("login-profile:" + phone + ":" + role, JSON.stringify(profileData || {}), false);
+    }
     if (["student","guardian","teacher","admin","healthInstructor","healthMonitor"].includes(role)) await authStorageSet("last-session", JSON.stringify({ role, phone }), false);
   } catch (e) {
     console.error("saveLoginProfile failed:", e);
@@ -7549,7 +7638,8 @@ function GuardianRegistration({ onBack, onContinue, onOpenMessages, prefillPhone
       return;
     }
     setIssueSaving(true);
-    const codeSave = await authStorageSet("login-code:" + mobile, code, true);
+    const addMode = palAddRolePending(mobile) && (await palRolesOf(mobile)).includes("teacher");
+    const codeSave = addMode ? { ok: true } : await authStorageSet("login-code:" + mobile, code, true);
     if (!codeSave.ok) {
       setIssueSaving(false);
       setIssueError("ذخیره‌ی رمز ورود ناموفق بود. لطفاً دوباره روی همین دکمه بزنید — اطلاعات فرم شما حفظ شده است.");
@@ -7557,7 +7647,7 @@ function GuardianRegistration({ onBack, onContinue, onOpenMessages, prefillPhone
     }
     await saveLoginProfile(mobile, "guardian", {});
     setIssueSaving(false);
-    setLastCode(code);
+    setLastCode(addMode ? "" : code);
     setIssued(true);
   };
 
@@ -7944,8 +8034,14 @@ function GuardianRegistration({ onBack, onContinue, onOpenMessages, prefillPhone
           ) : (
             <div className="pgr-issued-box">
               <div className="pgr-issued-title">✓ ثبت‌نام با موفقیت انجام شد</div>
+              {lastCode ? (
+              <>
               <p className="pgr-issued-text">رمز ورود شما همین‌جا نمایش داده شده — همین حالا یادداشت کنید.<br />این رمز را در اختیار دیگران قرار ندهید.</p>
               <div className="pgr-testmode-code" style={{ fontSize: 22, letterSpacing: 3, fontWeight: 800, textAlign: "center", margin: "10px 0" }}>{lastCode}</div>
+              </>
+              ) : (
+              <p className="pgr-issued-text">نقش جدید به حساب شما افزوده شد. رمز ورود شما تغییری نکرد و با همان رمز وارد می‌شوید.</p>
+              )}
               <button
                 type="button"
                 className="pgr-submit"
@@ -8658,14 +8754,15 @@ function AdminRegistration({ onBack, onContinue, prefillPhone }) {
       return;
     }
     setIssueSaving(true);
-    const codeSave = await authStorageSet("login-code:" + mobile, code, true);
+    const addMode = palAddRolePending(mobile) && (await palRolesOf(mobile)).includes("teacher");
+    const codeSave = addMode ? { ok: true } : await authStorageSet("login-code:" + mobile, code, true);
     if (!codeSave.ok) {
       setIssueSaving(false);
       setIssueError("ذخیره‌ی رمز ورود ناموفق بود. لطفاً دوباره روی همین دکمه بزنید — اطلاعات فرم شما حفظ شده است.");
       return;
     }
     setIssueSaving(false);
-    setLastCode(code);
+    setLastCode(addMode ? "" : code);
     setIssued(true);
   };
 
@@ -9067,8 +9164,14 @@ function AdminRegistration({ onBack, onContinue, prefillPhone }) {
           ) : (
             <div className="pad-issued-box">
               <div className="pad-issued-title">✓ ثبت‌نام با موفقیت انجام شد</div>
+              {lastCode ? (
+              <>
               <p className="pad-issued-text">رمز ورود شما همین‌جا نمایش داده شده — همین حالا یادداشت کنید.<br />این رمز را در اختیار دیگران قرار ندهید.</p>
               <div className="pad-testmode-code" style={{ fontSize: 22, letterSpacing: 3, fontWeight: 800, textAlign: "center", margin: "10px 0" }}>{lastCode}</div>
+              </>
+              ) : (
+              <p className="pad-issued-text">نقش جدید به حساب شما افزوده شد. رمز ورود شما تغییری نکرد و با همان رمز وارد می‌شوید.</p>
+              )}
               <button type="button" className="pad-submit" onClick={() => {
                 saveLoginProfile(mobile, "admin", { schoolCode: adminSchoolCode, schoolName: adminSchoolName });
                 onContinue(adminSchoolCode, adminSchoolName);
@@ -31657,6 +31760,45 @@ function PhoenixApp() {
     };
   }, []);
 
+  const handleLoginSuccess = (role, profile, phone) => {
+        if (role === "teamMember") {
+          setTeamMemberSession(profile.member);
+          setScreen("teamDashboard");
+          return;
+        }
+        if (role === "student") {
+          setStudentAcademicInfo(profile || {});
+          setScreen("studentDashboard");
+        } else if (role === "teacher") {
+          setTeacherSchoolCode(profile.schoolCode || "");
+          setTeacherClasses([]);
+          setTeacherSchools(profile.schools || []);
+          setTeacherMainSubject(profile.mainSubject === "همه‌ی دروس (آموزگار پایه)" ? "" : profile.mainSubject || "");
+          setTeacherFullName(profile.fullName || "");
+          setTeacherGender(profile.gender || "");
+          setTeacherPhone(phone || "");
+          setScreen("teacherHome");
+        } else if (role === "admin") {
+          setAdminSchoolCode(profile.schoolCode || "");
+          setAdminSchoolName(profile.schoolName || "");
+          setScreen("adminDashboard");
+        } else if (role === "guardian") {
+          setGuardianAuthenticated(true);
+          setScreen("performanceView");
+        } else if (role === "healthInstructor") {
+          setScreen("healthInstructorDashboard");
+        } else if (role === "healthMonitor") {
+          setScreen("healthMonitorDashboard");
+        } else if (role === "systemAdmin") {
+          setScreen("systemAdminDashboard");
+        }
+      };
+  window.__phoenixApi = {
+    login: handleLoginSuccess,
+    logout: () => { setScreen("welcome"); },
+    addRole: (role, phone) => { setPrefillPhone(phone || ""); setScreen(role === "admin" ? "adminRegistration" : "guardianRegistration"); },
+  };
+
   if (screen === "teamManagement") {
     return <TeamManagementView onBack={() => setScreen("systemAdminDashboard")} />;
   }
@@ -32259,43 +32401,128 @@ function PhoenixApp() {
       onTestMasterAccess={() => setScreen("testMasterAccess")}
       onOpenDemo={() => setScreen("demoPreview")}
       onOpenTrustInfo={() => setScreen("trustInfo")}
-      onLoginSuccess={(role, profile, phone) => {
-        if (role === "teamMember") {
-          setTeamMemberSession(profile.member);
-          setScreen("teamDashboard");
-          return;
-        }
-        if (role === "student") {
-          setStudentAcademicInfo(profile || {});
-          setScreen("studentDashboard");
-        } else if (role === "teacher") {
-          setTeacherSchoolCode(profile.schoolCode || "");
-          setTeacherClasses([]);
-          setTeacherSchools(profile.schools || []);
-          setTeacherMainSubject(profile.mainSubject === "همه‌ی دروس (آموزگار پایه)" ? "" : profile.mainSubject || "");
-          setTeacherFullName(profile.fullName || "");
-          setTeacherGender(profile.gender || "");
-          setTeacherPhone(phone || "");
-          setScreen("teacherHome");
-        } else if (role === "admin") {
-          setAdminSchoolCode(profile.schoolCode || "");
-          setAdminSchoolName(profile.schoolName || "");
-          setScreen("adminDashboard");
-        } else if (role === "guardian") {
-          setGuardianAuthenticated(true);
-          setScreen("performanceView");
-        } else if (role === "healthInstructor") {
-          setScreen("healthInstructorDashboard");
-        } else if (role === "healthMonitor") {
-          setScreen("healthMonitorDashboard");
-        } else if (role === "systemAdmin") {
-          setScreen("systemAdminDashboard");
-        }
-      }}
+      onLoginSuccess={handleLoginSuccess}
     />
   );
 }
 
+
+function PalRoleChooser({ phone, options, onBack, onPick }) {
+  const [teamOpt, setTeamOpt] = useState(null);
+  const [code, setCode] = useState("");
+  const [err, setErr] = useState("");
+  const [busy, setBusy] = useState("");
+  const masked = phone && phone.length > 6 ? phone.slice(0, 4) + "***" + phone.slice(-3) : phone;
+  const emoji = { teacher: "🧑‍🏫", guardian: "👪", admin: "🛡️", student: "🎓", teamMember: "🛠️" };
+  return (
+    <div dir="rtl" className="prc-root">
+      <style>{`
+        .prc-root, .prc-root * { box-sizing: border-box; font-family: 'Vazirmatn', Tahoma, Arial, sans-serif; }
+        .prc-root { min-height: 100vh; min-height: 100dvh; display: flex; align-items: center; justify-content: center; padding: 20px 14px; background: linear-gradient(180deg, color-mix(in srgb, var(--t-dark,#0e1638) 45%, #000) 0%, color-mix(in srgb, var(--t-dark,#0e1638) 92%, #000) 100%); }
+        .prc-card { width: 100%; max-width: 420px; background: linear-gradient(180deg, var(--t-paper,#fbf7ec), color-mix(in srgb, var(--t-paper,#fbf7ec) 90%, var(--t-acc,#e0a83e))); border-radius: 22px; padding: 24px 20px 22px; box-shadow: 0 20px 50px rgba(0,0,0,0.35); border: 1px solid color-mix(in srgb, var(--t-acc,#e0a83e) 30%, transparent); }
+        .prc-back { border: none; background: none; color: color-mix(in srgb, var(--t-accD,#c8862b) 84%, #000); font-weight: 700; font-size: 12.5px; cursor: pointer; padding: 0; margin-bottom: 10px; }
+        .prc-title { margin: 0; color: #1c2540; font-size: 20px; font-weight: 800; }
+        .prc-sub { margin: 6px 0 18px; color: #6b7399; font-size: 12.5px; }
+        .prc-opt { width: 100%; display: flex; align-items: center; gap: 14px; text-align: right; padding: 16px 16px; margin-bottom: 10px; border-radius: 16px; border: 1.5px solid color-mix(in srgb, var(--t-acc,#e0a83e) 40%, var(--t-paper,#fbf7ec)); background: #fff; cursor: pointer; font-size: 16px; font-weight: 800; color: #1c2540; }
+        .prc-opt:hover { border-color: var(--t-acc,#e0a83e); box-shadow: 0 0 0 3px color-mix(in srgb, var(--t-acc,#e0a83e) 22%, transparent); }
+        .prc-ico { width: 46px; height: 46px; border-radius: 14px; display: flex; align-items: center; justify-content: center; font-size: 24px; background: linear-gradient(135deg, var(--t-accL,#f2c572), var(--t-accD,#c8862b)); }
+        .prc-in { width: 100%; height: 46px; border-radius: 12px; border: 1.4px solid color-mix(in srgb, var(--t-acc,#e0a83e) 40%, var(--t-paper,#fbf7ec)); padding: 0 14px; font-size: 16px; text-align: center; letter-spacing: 3px; margin: 8px 0; }
+        .prc-go { width: 100%; height: 46px; border-radius: 12px; border: none; background: linear-gradient(135deg, var(--t-accD,#c8862b), var(--t-acc,#e0a83e)); color: #241503; font-weight: 800; font-size: 15px; cursor: pointer; }
+        .prc-err { color: #c0392b; font-size: 12.5px; margin: 4px 0; }
+      `}</style>
+      <div className="prc-card">
+        <button type="button" className="prc-back" onClick={onBack}>→ بازگشت</button>
+        <h1 className="prc-title">با کدام نقش وارد می‌شوید؟</h1>
+        <p className="prc-sub">شماره {masked} چند نقش دارد. یکی را انتخاب کنید.</p>
+        {err && !teamOpt && <div className="prc-err">{err}</div>}
+        {!teamOpt && options.map((o) => (
+          <button key={o.key} type="button" className="prc-opt" onClick={async () => { if (o.key === "teamMember") { setTeamOpt(o); setErr(""); } else { setBusy(o.key); setErr(""); try { await onPick(phone, o); } catch (e) { setErr("ورود انجام نشد؛ دوباره تلاش کنید. (" + String((e && e.message) || e).slice(0, 80) + ")"); } setBusy(""); } }}>
+            <span className="prc-ico">{emoji[o.key] || "👤"}</span>
+            <span>{o.label}{busy === o.key ? " …" : ""}</span>
+          </button>
+        ))}
+        {teamOpt && (
+          <div>
+            <div style={{ fontWeight: 800, color: "#1c2540", marginBottom: 4 }}>🛠️ {teamOpt.label}</div>
+            <div style={{ fontSize: 12.5, color: "#6b7399" }}>رمز تیمی (۶ رقم) را که مدیر سامانه به شما داده وارد کنید.</div>
+            <input className="prc-in" type="password" inputMode="numeric" maxLength={6} placeholder="••••••" value={code} onChange={(e) => setCode(e.target.value)} />
+            {err && <div className="prc-err">{err}</div>}
+            <button type="button" className="prc-go" onClick={async () => { const ok = await onPick(phone, teamOpt, code); if (!ok) setErr("رمز تیمی اشتباه است."); }}>ورود</button>
+            <button type="button" className="prc-back" style={{ marginTop: 10 }} onClick={() => { setTeamOpt(null); setCode(""); setErr(""); }}>→ انتخاب نقش دیگر</button>
+          </div>
+        )}
+      </div>
+    </div>
+  );
+}
+
+function PalRoleSwitch() {
+  const [open, setOpen] = useState(false);
+  const [info, setInfo] = useState(null); // { phone, roles, isTeacher, team }
+  const load = async () => {
+    try {
+      const raw = await authStorageGet("last-session", false);
+      if (!raw) { setInfo(null); return; }
+      const ls = JSON.parse(raw);
+      const roles = await palRolesOf(ls.phone);
+      let team = null;
+      if (roles.includes("teacher")) {
+        try {
+          const members = await teamLoad("team-members", []);
+          team = members.find((x) => x.mobile === teamDigits(ls.phone) && x.active) || null;
+        } catch (e) {}
+      }
+      setInfo(roles.includes("teacher") ? { phone: ls.phone, roles, team, current: ls.role } : null);
+    } catch (e) { setInfo(null); }
+  };
+  useEffect(() => { load(); const t = setInterval(load, 2500); return () => clearInterval(t); }, []);
+  if (!info) return null;
+  const names = { teacher: "معلم", guardian: "ولی", admin: "مدیر مدرسه" };
+  const api = () => window.__phoenixApi || {};
+  const missing = ["guardian", "admin"].filter((r) => !info.roles.includes(r));
+  return (
+    <>
+      <style>{`
+        .prs-pill { position: fixed; bottom: 14px; left: 62px; z-index: 9990; height: 40px; padding: 0 14px; border-radius: 999px; border: 1.5px solid var(--t-accL,#f2c572); background: var(--t-dark,#0e1638); color: var(--t-accL,#f2c572); font-family: 'Vazirmatn', Tahoma, Arial, sans-serif; font-weight: 700; font-size: 12.5px; cursor: pointer; box-shadow: 0 6px 18px rgba(0,0,0,0.35); }
+        body:has(.pal-root) .prs-pill, body:has(.prc-root) .prs-pill { display: none; }
+        .prs-ov { position: fixed; inset: 0; z-index: 9991; background: rgba(5,8,22,0.6); display: flex; align-items: center; justify-content: center; padding: 16px; }
+        .prs-box { background: #fff; border-radius: 20px; padding: 20px 18px; max-width: 380px; width: 100%; max-height: 86vh; overflow: auto; direction: rtl; font-family: 'Vazirmatn', Tahoma, Arial, sans-serif; }
+        .prs-h { font-weight: 800; font-size: 15px; color: #1c2540; margin: 0 0 12px; text-align: center; }
+        .prs-sec { font-weight: 700; font-size: 12.5px; color: #6b7399; margin: 14px 0 6px; }
+        .prs-btn { display: block; width: 100%; text-align: right; padding: 12px 14px; margin-bottom: 8px; border-radius: 12px; border: 1.5px solid #e3e6ef; background: #fff; font-family: inherit; font-weight: 700; font-size: 14px; color: #1c2540; cursor: pointer; }
+        .prs-btn.on { border-color: var(--t-acc,#e0a83e); background: color-mix(in srgb, var(--t-acc,#e0a83e) 12%, #fff); }
+        .prs-note { font-size: 11.5px; color: #6b7399; line-height: 1.9; }
+        .prs-close { margin-top: 12px; width: 100%; height: 40px; border-radius: 12px; border: none; background: #1c2540; color: #fff; font-family: inherit; font-weight: 700; cursor: pointer; }
+      `}</style>
+      <button type="button" className="prs-pill" onClick={() => { load(); setOpen(true); }}>🔄 تغییر نقش</button>
+      {open && (
+        <div className="prs-ov" onClick={() => setOpen(false)}>
+          <div className="prs-box" onClick={(e) => e.stopPropagation()}>
+            <h3 className="prs-h">نقش‌های شما</h3>
+            {info.roles.map((r) => (
+              <button key={r} type="button" className={"prs-btn" + (r === info.current ? " on" : "")} onClick={async () => { setOpen(false); const prof = await palProfileOf(info.phone, r); try { await authStorageSet("last-session", JSON.stringify({ role: r, phone: info.phone }), false); } catch (e) {} api().login && api().login(r, prof, info.phone); }}>
+                {names[r] || r}{r === info.current ? "  ✓ (فعلی)" : ""}
+              </button>
+            ))}
+            {info.team && (
+              <button type="button" className="prs-btn" onClick={() => { setOpen(false); api().logout && api().logout(); }}>
+                🛠️ {(TEAM_ROLES[info.team.role] && TEAM_ROLES[info.team.role].label) || "مدیر فنی"} (ورود با رمز تیمی از صفحه ورود)
+              </button>
+            )}
+            {missing.length > 0 && <div className="prs-sec">افزودن نقش</div>}
+            {missing.map((r) => (
+              <button key={r} type="button" className="prs-btn" onClick={() => { setOpen(false); window.__palAddRole = { phone: info.phone, role: r }; api().addRole && api().addRole(r, info.phone); }}>
+                ➕ افزودن نقش {names[r]}
+              </button>
+            ))}
+            {!info.team && <p className="prs-note">نقش «مدیر فنی» را فقط مدیر سامانه تعریف می‌کند.</p>}
+            <button type="button" className="prs-close" onClick={() => setOpen(false)}>بستن</button>
+          </div>
+        </div>
+      )}
+    </>
+  );
+}
 
 function PalThemeFab() {
   const [open, setOpen] = useState(false);
@@ -32343,7 +32570,7 @@ function PalThemeFab() {
 }
 
 const root = ReactDOM.createRoot(document.getElementById("root"));
-root.render(<><PhoenixApp /><PalThemeFab /></>);
+root.render(<><PhoenixApp /><PalThemeFab /><PalRoleSwitch /></>);
 </script>
 <script>
   (function boot() {

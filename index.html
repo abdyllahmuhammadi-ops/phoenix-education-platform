@@ -15278,13 +15278,13 @@ function SystemAdminDashboardStep({ onBack, onOpenQuestionBank, onOpenSystemSugg
                 تفکیک شهریه‌ی دریافتی بر اساس استان و شهرستان
               </h2>
               <div style={{ display: "flex", flexWrap: "wrap", gap: 10, marginBottom: 12 }}>
-                <select style={{ height: 42, flex: "1 1 140px", borderRadius: 10, border: "1.4px solid #d9c9a0", background: "#fff", padding: "0 10px", fontSize: 14, fontFamily: "inherit", color: "#1c2540" }} value={regionProvince} onChange={(e) => { setRegionProvince(e.target.value); setRegionCounty(""); }}>
-                  <option value="">همه‌ی استان‌ها</option>
-                  {provinces.map((pv) => <option key={pv} value={pv}>{pv}</option>)}
+                <select style={{ height: 42, flex: "1 1 140px", borderRadius: 10, border: "1.4px solid #d9c9a0", background: "#fff", padding: "0 10px", fontSize: 16, fontFamily: "inherit", color: "#1c2540", colorScheme: "light" }} value={regionProvince} onChange={(e) => { setRegionProvince(e.target.value); setRegionCounty(""); }}>
+                  <option value="" style={{ background: "#fff", color: "#1c2540" }}>همه‌ی استان‌ها</option>
+                  {provinces.map((pv) => <option key={pv} value={pv} style={{ background: "#fff", color: "#1c2540" }}>{pv}</option>)}
                 </select>
-                <select style={{ height: 42, flex: "1 1 140px", borderRadius: 10, border: "1.4px solid #d9c9a0", background: "#fff", padding: "0 10px", fontSize: 14, fontFamily: "inherit", color: "#1c2540" }} value={regionCounty} disabled={!regionProvince} onChange={(e) => setRegionCounty(e.target.value)}>
-                  <option value="">{regionProvince ? "همه‌ی شهرستان‌ها" : "ابتدا استان را انتخاب کنید"}</option>
-                  {(countyMap[regionProvince] || []).map((c) => <option key={c} value={c}>{c}</option>)}
+                <select style={{ height: 42, flex: "1 1 140px", borderRadius: 10, border: "1.4px solid #d9c9a0", background: "#fff", padding: "0 10px", fontSize: 16, fontFamily: "inherit", color: "#1c2540", colorScheme: "light" }} value={regionCounty} disabled={!regionProvince} onChange={(e) => setRegionCounty(e.target.value)}>
+                  <option value="" style={{ background: "#fff", color: "#1c2540" }}>{regionProvince ? "همه‌ی شهرستان‌ها" : "ابتدا استان را انتخاب کنید"}</option>
+                  {(countyMap[regionProvince] || []).map((c) => <option key={c} value={c} style={{ background: "#fff", color: "#1c2540" }}>{c}</option>)}
                 </select>
               </div>
               <div className="psad-detail-table-wrap" style={{ marginBottom: 24 }}>

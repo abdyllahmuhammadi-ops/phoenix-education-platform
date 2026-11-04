@@ -23030,83 +23030,73 @@ function VlabLeverExperiment({ onReading }) {
     // eslint-disable-next-line
   }, [leverType, leftMass, leftDist, rightMass, rightDist, loadMass, loadDist, effortDist, appliedForce]);
 
-  // به‌جای یک دایره‌ی بزرگ، هر کیلوگرم یک «وزنه» (پلاکِ فلزیِ آویزان با قلاب) جداگانه رسم می‌شود — مثلاً
-  // ۵ کیلوگرم یعنی دقیقاً ۵ وزنه‌ی روی هم. فاصله از تکیه‌گاه هم مثل یک خط‌کش با خط‌های کوچک درجه‌بندی‌شده
-  // روی بازو نشان داده می‌شود، نه فقط یک عدد شناور.
-  const pivotX = 160;
-  const renderArm = (mass, dist, hookX, color) => {
-    const ticks = [];
-    for (let i = 1; i <= dist; i++) {
-      const x = pivotX + (hookX - pivotX) * (i / dist);
-      const isLast = i === dist;
-      ticks.push(
-        <line key={"t" + i} x1={x} y1="106" x2={x} y2={isLast ? 96 : 100} stroke="#8a6d3b" strokeWidth={isLast ? 1.6 : 1} opacity={isLast ? 0.9 : 0.45} />
-      );
-    }
-    const plates = [];
-    for (let j = 0; j < mass; j++) {
-      const y = 138 + j * 8;
-      plates.push(
-        <g key={"p" + j}>
-          <rect x={hookX - 11} y={y} width="22" height="9" rx="3" fill={color} stroke="rgba(0,0,0,0.28)" />
-          <rect x={hookX - 9} y={y + 1} width="18" height="2.4" rx="1.2" fill="rgba(255,255,255,0.3)" />
-          <ellipse cx={hookX} cy={y + 4.6} rx="3" ry="2" fill="rgba(0,0,0,0.25)" />
-        </g>
-      );
-    }
-    return (
-      <g>
-        {ticks}
-        <text x={hookX} y="92" fontSize="10" fontWeight="700" fill="#8a6d3b" textAnchor="middle">{dist}</text>
-        <line x1={hookX} y1="114" x2={hookX} y2="120" stroke={color} strokeWidth="2" />
-        <circle cx={hookX} cy="120" r="3.2" fill="none" stroke={color} strokeWidth="1.6" />
-        <text x={hookX} y="133" fontSize="11" fontWeight="700" fill={color} textAnchor="middle">{mass} kg</text>
-        {plates}
-      </g>
-    );
-  };
+  // ---- نسخه‌ی دقیق‌تر و زیباتر: مقیاسِ خطی (هر واحد فاصله = تعداد ثابتی پیکسل)، وزنه‌ها همیشه
+  // عمودی آویزان‌اند (نه کج‌شده همراهِ بازو)، چرخشِ نرمِ بازو با rAF، و جهتِ درستِ بلندشدنِ بازو در
+  // نوعِ دوم و سوم (نیرویِ رو‌به‌بالا بازو را بالا می‌برد). ----
+  const fa = (n) => String(n).replace(/\d/g, (d) => "۰۱۲۳۴۵۶۷۸۹"[d]);
+  const diff1 = torqueRight - torqueLeft;
+  const target1 = diff1 === 0 ? 0 : Math.sign(diff1) * Math.min(14, 3 + Math.abs(diff1) * 0.4);
+  const diff2 = effortTorque - loadTorque;
+  const target2 = diff2 <= 0 ? 0 : -Math.min(14, 3 + diff2 * 0.01); // منفی = سرِ راستِ بازو بالا می‌رود
+  const targetTilt = leverType === "یک" ? target1 : target2;
+  const [shownTilt, setShownTilt] = useState(targetTilt);
+  const curTilt = React.useRef(targetTilt);
+  useEffect(() => {
+    let id = 0;
+    const step = () => {
+      const d = targetTilt - curTilt.current;
+      if (Math.abs(d) < 0.02) { curTilt.current = targetTilt; setShownTilt(targetTilt); return; }
+      curTilt.current += d * 0.14;
+      setShownTilt(curTilt.current);
+      id = requestAnimationFrame(step);
+    };
+    id = requestAnimationFrame(step);
+    return () => cancelAnimationFrame(id);
+  }, [targetTilt]);
+  const rad = (shownTilt * Math.PI) / 180;
+  const cosT = Math.cos(rad), sinT = Math.sin(rad);
 
-  // رسمِ میله‌ی نوعِ دوم/سوم: تکیه‌گاه در سرِ چپ (x=30)، بار و نیرو هر دو روی همین بازو با فاصله‌ی
-  // متفاوت از تکیه‌گاه. نیرو با یک فلشِ روبه‌بالا (طولش متناسب با مقدار نیرو) نشان داده می‌شود.
-  const singlePivotX = 30;
-  const unit = 24;
-  const renderSingleBeam = () => {
-    const loadX = singlePivotX + loadDist * unit;
-    const effortX = singlePivotX + effortDist * unit;
-    const ticks = [];
-    for (let i = 1; i <= 10; i++) {
-      const x = singlePivotX + i * unit;
-      ticks.push(<line key={"st" + i} x1={x} y1="106" x2={x} y2={i % 5 === 0 ? 98 : 102} stroke="#8a6d3b" strokeWidth={i % 5 === 0 ? 1.4 : 0.8} opacity={i % 5 === 0 ? 0.8 : 0.4} />);
-    }
-    const plates = [];
-    for (let j = 0; j < loadMass; j++) {
-      const y = 138 + j * 8;
-      plates.push(
-        <g key={"lp" + j}>
-          <rect x={loadX - 11} y={y} width="22" height="9" rx="3" fill="#2f6fe2" stroke="rgba(0,0,0,0.28)" />
-          <rect x={loadX - 9} y={y + 1} width="18" height="2.4" rx="1.2" fill="rgba(255,255,255,0.3)" />
-          <ellipse cx={loadX} cy={y + 4.6} rx="3" ry="2" fill="rgba(0,0,0,0.25)" />
+  const metalGrad = (id, c1, c2, c3) => (
+    <linearGradient id={id} x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0%" stopColor={c1} /><stop offset="45%" stopColor={c2} /><stop offset="100%" stopColor={c3} />
+    </linearGradient>
+  );
+  // وزنه‌ی آویزان: حلقه، نخ و پشته‌ای از وزنه‌های شیاردار (هر کیلوگرم = یک وزنه)
+  const hanger = (hx, hy, mass, light, dark, label, key) => {
+    const disks = [];
+    for (let j = 0; j < mass; j++) {
+      const y = hy + 30 + j * 6.5;
+      disks.push(
+        <g key={"d" + j}>
+          <rect x={hx - 15} y={y} width="30" height="6" rx="2" fill={`url(#lvr-w-${key})`} stroke="rgba(0,0,0,0.5)" strokeWidth="0.6" />
+          <rect x={hx - 13} y={y + 0.8} width="26" height="1.3" rx="0.6" fill="rgba(255,255,255,0.35)" />
+          <rect x={hx - 3} y={y + 2.2} width="6" height="2.4" rx="1" fill="rgba(0,0,0,0.35)" />
         </g>
       );
     }
-    const arrowLen = 14 + appliedForce * 1.1;
     return (
       <g>
-        {ticks}
-        <text x={loadX} y="92" fontSize="9" fontWeight="700" fill="#2f6fe2" textAnchor="middle">بار</text>
-        <line x1={loadX} y1="114" x2={loadX} y2="120" stroke="#2f6fe2" strokeWidth="2" />
-        <circle cx={loadX} cy="120" r="3.2" fill="none" stroke="#2f6fe2" strokeWidth="1.6" />
-        <text x={loadX} y="133" fontSize="10" fontWeight="700" fill="#2f6fe2" textAnchor="middle">{loadMass} kg</text>
-        {plates}
-        {/* نیرویِ اعمالی: فلشِ روبه‌بالا از دستِ کاربر، طولش با مقدارِ نیرو متناسب است */}
-        <g>
-          <line x1={effortX} y1="106" x2={effortX} y2={106 - arrowLen} stroke="#e2622f" strokeWidth="3" strokeLinecap="round" />
-          <polygon points={`${effortX - 6},${106 - arrowLen + 10} ${effortX + 6},${106 - arrowLen + 10} ${effortX},${106 - arrowLen}`} fill="#e2622f" />
-          <text x={effortX} y={106 - arrowLen - 6} fontSize="9" fontWeight="700" fill="#e2622f" textAnchor="middle">نیرو</text>
-        </g>
+        <defs>{metalGrad("lvr-w-" + key, light, light, dark)}</defs>
+        <circle cx={hx} cy={hy + 7} r="3" fill="none" stroke="#cfd6ea" strokeWidth="1.4" />
+        <line x1={hx} y1={hy + 10} x2={hx} y2={hy + 26} stroke="#cfd6ea" strokeWidth="1.2" />
+        <rect x={hx - 3} y={hy + 24} width="6" height="6" rx="1.5" fill="#8fa0c8" />
+        {disks}
+        <text x={hx} y={hy + 30 + mass * 6.5 + 12} fontSize="10.5" fontWeight="700" fill={light} textAnchor="middle">{fa(mass)} kg</text>
       </g>
     );
   };
+  const rulerTicks = (cx0, unitPx, dir) => {
+    const out = [];
+    for (let d = 1; d <= 10; d++) {
+      const x = cx0 + dir * d * unitPx;
+      const major = d % 5 === 0;
+      out.push(<line key={"rt" + dir + d} x1={x} y1="115" x2={x} y2={major ? 108 : 111} stroke="#f2c572" strokeWidth={major ? 1.4 : 0.8} />);
+      out.push(<text key={"rn" + dir + d} x={x} y="105" fontSize="7.5" fill="#cfd6ea" textAnchor="middle">{fa(d)}</text>);
+    }
+    return out;
+  };
+  const status = leverType === "یک" ? status1 : status2;
+  const balanced = leverType === "یک" ? diff1 === 0 : Math.abs(diff2) <= 5;
 
   return (
     <div className="vlab-exp">
@@ -23126,38 +23116,55 @@ function VlabLeverExperiment({ onReading }) {
         {leverType === "دو" && "مثال‌های واقعی: فرغون، فندق‌شکن، درِ بطری (بازکن)، پاروی قایق"}
         {leverType === "سه" && "مثال‌های واقعی: انبرِ غذا، چوبِ ماهی‌گیری، بازویِ انسان، جارو"}
       </div>
-      <svg viewBox="0 0 320 230" className="vlab-svg">
+      <svg viewBox="0 0 360 270" className="vlab-svg" style={{ background: "#0b1330", maxWidth: 480 }}>
         <defs>
-          <linearGradient id="lvr-beam-grad" x1="0" y1="0" x2="0" y2="1">
-            <stop offset="0%" stopColor="#7a5f3d" />
-            <stop offset="55%" stopColor="#5b4636" />
-            <stop offset="100%" stopColor="#473626" />
-          </linearGradient>
-          <linearGradient id="lvr-fulcrum-grad" x1="0" y1="0" x2="0" y2="1">
-            <stop offset="0%" stopColor="#a9854f" />
-            <stop offset="100%" stopColor="#6b4e28" />
-          </linearGradient>
+          {metalGrad("lvr-beam", "#c79a5a", "#8a6234", "#5a3d1c")}
+          {metalGrad("lvr-fulc", "#9aa7c9", "#66729a", "#3a4468")}
         </defs>
-        {/* خط تراز — یک مرجع افقی ثابت (خارج از چرخش بازو) تا تعادل اهرم با آن سنجیده شود. */}
-        <line x1="18" y1="110" x2="302" y2="110" stroke="#b9bfce" strokeWidth="1" strokeDasharray="4 4" opacity="0.55" />
+        {/* خط ترازِ مرجع */}
+        <line x1="10" y1="120" x2="350" y2="120" stroke={balanced ? "#7be0a4" : "#7f8fc4"} strokeDasharray="5 4" strokeWidth="1.1" opacity="0.9" />
+        <text x="180" y="40" fontSize="9.5" textAnchor="middle" fill={balanced ? "#7be0a4" : "#9fb0e0"}>{"خط تعادل (نقطه‌چین افقی) — زاویه‌ی بازو: " + fa(Math.abs(shownTilt).toFixed(1)) + "°"}</text>
         {leverType === "یک" ? (
           <>
-            <polygon points="150,140 170,140 160,110" fill="url(#lvr-fulcrum-grad)" />
-            <g transform={`rotate(${tiltDeg1} 160 110)`}>
-              <rect x="30" y="106" width="260" height="8" rx="4" fill="url(#lvr-beam-grad)" />
-              {renderArm(leftMass, leftDist, 30 + (10 - leftDist) * 8, "#e2622f")}
-              {renderArm(rightMass, rightDist, 290 - (10 - rightDist) * 8, "#2f6fe2")}
+            <polygon points="150,198 210,198 180,127" fill="url(#lvr-fulc)" stroke="#2a3460" strokeWidth="1" />
+            <rect x="120" y="198" width="120" height="8" rx="3" fill="#3a4468" />
+            <g transform={`rotate(${shownTilt} 180 120)`}>
+              <rect x="15" y="115" width="330" height="10" rx="3" fill="url(#lvr-beam)" stroke="#2c1d0b" strokeWidth="0.8" />
+              <rect x="15" y="115.8" width="330" height="1.8" rx="0.9" fill="rgba(255,255,255,0.3)" />
+              {rulerTicks(180, 15, -1)}
+              {rulerTicks(180, 15, 1)}
+              <text x="180" y="105" fontSize="7.5" fill="#cfd6ea" textAnchor="middle">۰</text>
             </g>
+            <circle cx="180" cy="120" r="4.5" fill="#cfd6ea" stroke="#2a3460" />
+            {hanger(180 - leftDist * 15 * cosT, 120 - leftDist * 15 * sinT, leftMass, "#ff8a4c", "#8a3a10", "l1", "L")}
+            {hanger(180 + rightDist * 15 * cosT, 120 + rightDist * 15 * sinT, rightMass, "#4da3ff", "#164a8a", "r1", "R")}
           </>
         ) : (
           <>
-            <polygon points="20,140 40,140 30,110" fill="url(#lvr-fulcrum-grad)" />
-            <g transform={`rotate(${tiltDeg2} 30 110)`}>
-              <rect x="26" y="106" width="268" height="8" rx="4" fill="url(#lvr-beam-grad)" />
-              {renderSingleBeam()}
+            <polygon points="8,198 64,198 36,127" fill="url(#lvr-fulc)" stroke="#2a3460" strokeWidth="1" />
+            <rect x="4" y="198" width="100" height="8" rx="3" fill="#3a4468" />
+            <g transform={`rotate(${shownTilt} 36 120)`}>
+              <rect x="26" y="115" width="290" height="10" rx="3" fill="url(#lvr-beam)" stroke="#2c1d0b" strokeWidth="0.8" />
+              <rect x="26" y="115.8" width="290" height="1.8" rx="0.9" fill="rgba(255,255,255,0.3)" />
+              {rulerTicks(36, 27, 1)}
+              <text x="36" y="105" fontSize="7.5" fill="#cfd6ea" textAnchor="middle">۰</text>
             </g>
+            <circle cx="36" cy="120" r="4.5" fill="#cfd6ea" stroke="#2a3460" />
+            {hanger(36 + loadDist * 27 * cosT, 120 + loadDist * 27 * sinT, loadMass, "#4da3ff", "#164a8a", "l2", "B")}
+            {(() => {
+              const ex = 36 + effortDist * 27 * cosT, ey = 125 + effortDist * 27 * sinT;
+              const len = 18 + appliedForce * 0.45;
+              return (
+                <g>
+                  <line x1={ex} y1={ey + len} x2={ex} y2={ey + 4} stroke="#ff8a4c" strokeWidth="3.4" strokeLinecap="round" />
+                  <polygon points={`${ex - 7},${ey + 12} ${ex + 7},${ey + 12} ${ex},${ey}`} fill="#ff8a4c" />
+                  <text x={ex} y={ey + len + 14} fontSize="10.5" fontWeight="700" fill="#ff8a4c" textAnchor="middle" style={{ direction: "ltr", unicodeBidi: "isolate" }}>{"F = " + appliedForce + " N"}</text>
+                </g>
+              );
+            })()}
           </>
         )}
+        <text x="180" y="22" fontSize="12" fontWeight="700" textAnchor="middle" fill={balanced ? "#7be0a4" : "#ffd98a"}>{status}</text>
       </svg>
       {leverType === "یک" ? (
         <>

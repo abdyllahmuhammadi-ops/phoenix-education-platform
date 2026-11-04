@@ -22838,6 +22838,78 @@ const VLAB_EXPERIMENTS = [
     intro: "یک جسم را به نیروسنج آویزان کن و کم‌کم در آب فرو ببر. ببین وزن ظاهری چطور کم می‌شود و نیروی شناوری را با فرمول Fb = ρ g V حساب کن.",
     tools: ["نیروسنج", "جسم‌های فلزی", "بشر آب", "نخ"],
   },
+  {
+    id: "titration",
+    subject: "شیمی",
+    level: "متوسطه دوم",
+    title: "تیتراسیون اسید و باز",
+    icon: "🧪",
+    intro: "از بورت، محلول باز (NaOH) را قطره‌قطره به اسید مجهول اضافه کن تا رنگ فنول‌فتالئین صورتی شود. حجم مصرفی را بخوان و غلظت اسید را با Ca·Va = Cb·Vb به دست بیاور.",
+    tools: ["بورت", "ارلن‌مایر", "فنول‌فتالئین", "پایه‌ی فلزی"],
+  },
+  {
+    id: "water-electrolysis",
+    subject: "شیمی",
+    level: "متوسطه دوم",
+    title: "الکترولیز آب",
+    icon: "⚡",
+    intro: "با عبور جریان از آب، آن را به هیدروژن و اکسیژن تجزیه کن. ولتاژ و زمان را تغییر بده، حجم گازها را ببین و با قانون فاراده حساب کن.",
+    tools: ["منبع تغذیه", "دو الکترود", "لوله‌های جمع‌آوری گاز", "بشر آب"],
+  },
+  {
+    id: "boyle-law",
+    subject: "شیمی",
+    level: "متوسطه دوم",
+    title: "قانون بویل (فشار و حجم گاز)",
+    icon: "💨",
+    intro: "پیستون را جابه‌جا کن و ببین فشار گاز در دمای ثابت چطور با حجم عوض می‌شود. نمودار فشار–حجم را ببین و P₁V₁ = P₂V₂ را بررسی کن.",
+    tools: ["سرنگ گازی با پیستون", "فشارسنج", "نمودار P–V"],
+  },
+  {
+    id: "molarity",
+    subject: "شیمی",
+    level: "متوسطه دوم",
+    title: "غلظت مولار محلول",
+    icon: "⚗️",
+    intro: "جرم ماده را با ترازو بسنج، در بالن ژوژه حل کن و تا خط نشانه آب بریز. غلظت مولار را بسنج و ببین رنگ محلول چطور با غلظت عوض می‌شود.",
+    tools: ["ترازو", "بالن ژوژه", "نمک‌های رنگی"],
+  },
+  {
+    id: "solution-conductivity",
+    subject: "شیمی",
+    level: "متوسطه اول",
+    title: "رسانایی الکتریکی محلول‌ها",
+    icon: "💡",
+    intro: "الکترودها را در آب مقطر، شکر، اتانول، نمک، اسید و باز بگذار و ببین کدام لامپ را روشن می‌کند. غلظت را تغییر بده و مقاومت محلول را با قانون اهم حساب کن.",
+    tools: ["لامپ", "منبع ۶ ولت", "دو الکترود", "بشر"],
+  },
+  {
+    id: "distillation",
+    subject: "شیمی",
+    level: "متوسطه دوم",
+    title: "تقطیر ساده",
+    icon: "⚗️",
+    intro: "مخلوط آب و اتانول را گرم کن. اتانول زودتر می‌جوشد، در مبرد مایع می‌شود و جدا جمع می‌شود. گرمای لازم را با Q = m·c·ΔT حساب کن.",
+    tools: ["بالن ته‌گرد", "ترمومتر", "مبرد لیبیگ", "چراغ الکلی", "ظرف گیرنده"],
+  },
+  {
+    id: "wave-speed",
+    subject: "فیزیک",
+    level: "متوسطه دوم",
+    title: "موج و سرعت آن",
+    icon: "🌊",
+    intro: "طنابی را با بسامدهای مختلف تکان بده و طول موج را تغییر بده. سرعت موج را با v = f·λ حساب کن و دوره‌ی تناوب را بسنج.",
+    tools: ["طناب", "نوسان‌گر (دست)", "خط‌کش"],
+  },
+  {
+    id: "faraday-induction",
+    subject: "برق و الکترونیک",
+    level: "متوسطه دوم",
+    title: "القای الکترومغناطیسی (فاراده)",
+    icon: "🧲",
+    intro: "آهن‌ربا را داخل و بیرون سیم‌پیچ ببر و جریان القایی را در گالوانومتر ببین. دور، میدان و سرعت را تغییر بده و ε = N·B·A/Δt را حساب کن.",
+    tools: ["سیم‌پیچ", "آهن‌ربای میله‌ای", "گالوانومتر"],
+  },
 ];
 
 function vlabClamp(v, min, max) {
@@ -28269,6 +28341,523 @@ function VlabArchimedesExperiment({ onReading }) {
   );
 }
 
+function VlabTitrationExperiment({ onReading }) {
+  const ACIDS = [0.06, 0.08, 0.1, 0.12, 0.15];
+  const [seed, setSeed] = useState(2);
+  const [vol, setVol] = useState(0);
+  const [reveal, setReveal] = useState(false);
+  const Ca = ACIDS[seed], Cb = 0.1, Va = 25;
+  const Veq = (Ca * Va) / Cb;
+  const molH = Ca * Va - Cb * vol; // میلی‌مول
+  const totV = (Va + vol) / 1000;
+  let pH;
+  if (Math.abs(molH) < 0.002) pH = 7;
+  else if (molH > 0) pH = -Math.log10(molH / 1000 / totV);
+  else pH = 14 + Math.log10(-molH / 1000 / totV);
+  pH = Math.max(0.5, Math.min(13.5, pH));
+  const pink = pH > 8.2;
+  const mix = pink ? Math.min(1, (pH - 8.2) / 1.6) : 0;
+  useEffect(() => {
+    if (onReading) onReading(`حجم باز مصرفی: ${vol.toFixed(1)} mL | pH: ${pH.toFixed(1)} | ${pink ? "رنگ صورتی (گذشتن از نقطه‌ی هم‌ارزی)" : "بی‌رنگ"}`);
+    // eslint-disable-next-line
+  }, [vol, seed]);
+  const bTop = 30, bBot = 150, bx = 160; // بورت: ۰ بالا ، ۵۰ پایین
+  const levelY = bTop + (vol / 50) * (bBot - bTop);
+  const liq = vlabMixHexColor ? vlabMixHexColor("#e9f0f5", "#ff3b9a", mix) : "#e9f0f5";
+  const flaskLiqTop = 222, ticks = [];
+  for (let v = 0; v <= 50; v += 5) ticks.push(<g key={"bt" + v}><line x1={bx - 8} y1={bTop + (v / 50) * (bBot - bTop)} x2={bx - 3} y2={bTop + (v / 50) * (bBot - bTop)} stroke="#cfd6ea" strokeWidth="1" /><text x={bx - 12} y={bTop + (v / 50) * (bBot - bTop) + 2.5} fontSize="6.5" fill="#cfd6ea" textAnchor="end">{v}</text></g>);
+  const atEnd = vol >= Veq - 1e-9 && vol <= Veq + 0.6;
+  return (
+    <div className="vlab-exp">
+      <svg viewBox="0 0 320 290" className="vlab-svg" style={{ background: "#03060f", borderRadius: "10px" }}>
+        <defs>
+          <linearGradient id="ttGlass" x1="0" x2="1"><stop offset="0" stopColor="#fff" stopOpacity="0.5" /><stop offset="0.3" stopColor="#fff" stopOpacity="0.08" /><stop offset="1" stopColor="#fff" stopOpacity="0.3" /></linearGradient>
+        </defs>
+        <rect x="236" y="22" width="6" height="250" fill="#6b7280" /><rect x="214" y="268" width="50" height="7" rx="2" fill="#4a5060" />
+        <rect x="186" y="40" width="54" height="4" fill="#6b7280" /><rect x="180" y="36" width="12" height="12" rx="2" fill="#8b93a4" />
+        {/* بورت */}
+        <rect x={bx - 6} y={bTop - 6} width="12" height={bBot - bTop + 12} rx="3" fill="url(#ttGlass)" stroke="#cfe0ff" strokeWidth="1" />
+        <rect x={bx - 4.5} y={levelY} width="9" height={bBot - levelY} fill="#e8f0ff" opacity="0.78" />
+        <ellipse cx={bx} cy={levelY} rx="4.5" ry="1.2" fill="#fff" opacity="0.8" />
+        {ticks}
+        <rect x={bx - 12} y={bBot + 5} width="24" height="7" rx="2" fill="#cbd2de" /><rect x={bx - 3} y={bBot + 12} width="6" height="14" fill="#9aa4b8" />
+        <path d={`M${bx - 2},${bBot + 26} L${bx},${bBot + 34} L${bx + 2},${bBot + 26}Z`} fill="#cfe0ff" opacity="0.9" />
+        {vol > 0 && vol < 50 && (
+          <circle cx={bx} cy={bBot + 34} r="2.4" fill="#e8f0ff"><animate attributeName="cy" values={`${bBot + 30};${flaskLiqTop + 4}`} dur="0.7s" repeatCount="indefinite" keyTimes="0;1" calcMode="spline" keySplines="0.5 0 1 0.6" /><animate attributeName="opacity" values="1;1;0" keyTimes="0;0.85;1" dur="0.7s" repeatCount="indefinite" /></circle>
+        )}
+        {/* ارلن */}
+        <path d={`M${bx - 11},196 L${bx - 11},218 L${bx - 52},268 Q${bx - 56},276 ${bx - 46},276 L${bx + 46},276 Q${bx + 56},276 ${bx + 52},268 L${bx + 11},218 L${bx + 11},196 Z`} fill="url(#ttGlass)" stroke="#cfe0ff" strokeWidth="1.4" />
+        <path d={`M${bx - 33},248 L${bx - 52},268 Q${bx - 56},276 ${bx - 46},276 L${bx + 46},276 Q${bx + 56},276 ${bx + 52},268 L${bx + 33},248 Z`} fill={liq} opacity="0.88" />
+        <ellipse cx={bx} cy="248" rx="33" ry="4" fill={liq} opacity="0.95" />
+        <text x="262" y="60" fontSize="8" fill="#9fb0e0" textAnchor="middle">بورت</text>
+        <text x="262" y="70" fontSize="7.5" fill="#cfd6ea" textAnchor="middle" style={{ direction: "ltr", unicodeBidi: "isolate" }}>NaOH 0.1 M</text>
+        <text x="90" y="262" fontSize="7.5" fill="#cfd6ea" textAnchor="middle" style={{ direction: "ltr", unicodeBidi: "isolate" }}>25 mL HCl</text>
+        <text x="90" y="273" fontSize="7.5" fill="#9fb0e0" textAnchor="middle">فنول‌فتالئین</text>
+      </svg>
+      <VlabMeterRow height={160} meters={[{ label: "حجم مصرفی", unit: "mL", value: vol, ranges: [50], maj: 5, decimals: 1 }, { label: "pH محلول", unit: "", value: pH, ranges: [14], maj: 7, decimals: 1 }]} />
+      <div className="vlab-controls">
+        <div className="vlab-ctrl-col" style={{ flex: 1 }}>
+          <label className="vlab-ctrl-label">حجم باز اضافه‌شده (mL): {vol.toFixed(1)}</label>
+          <VlabRange min="0" max="50" step="0.1" value={vol} onChange={(e) => setVol(+e.target.value)} />
+        </div>
+        <div className="vlab-ctrl-col">
+          <button type="button" className="vlab-toggle-btn" onClick={() => { setSeed((seed + 1 + Math.floor(Math.random() * 4)) % ACIDS.length); setVol(0); setReveal(false); }}>🔄 اسید تازه (مجهول)</button>
+          <button type="button" className="vlab-toggle-btn" onClick={() => setReveal((r) => !r)}>{reveal ? "پنهان" : "نمایش پاسخ"}</button>
+        </div>
+      </div>
+      <div className="vlab-readout">غلظتِ اسید مجهول است. باز را قطره‌قطره اضافه کن تا رنگ <b>صورتی</b> تازه پایدار شود؛ همان نقطه‌ی پایان است. {reveal && <>غلظت واقعی اسید: <b>{Ca} mol/L</b></>}</div>
+      {atEnd && (
+        <VlabFormulaCheck title="تیتراسیون (خنثی‌سازی)" fa="تعداد مول اسید = تعداد مول باز ← غلظت اسید × حجم اسید = غلظت باز × حجم باز" en="Ca · Va = Cb · Vb" legend="Cb = ۰٫۱ mol/L ، Va = ۲۵ mL ، Vb را از بورت (همان حجم نقطه‌ی پایان) بخوان" subst={`Ca = (0.1 × ${vol.toFixed(1)}) ÷ 25 = ?`} label="Ca:" answer={(Cb * vol) / Va} unit="mol/L" decimals={3} />
+      )}
+    </div>
+  );
+}
+
+function VlabElectrolysisExperiment({ onReading }) {
+  const [volt, setVolt] = useState(6);
+  const [time, setTime] = useState(300);
+  const F = 96485, VM = 24.5;
+  const I = Math.max(0, (volt - 1.8)) * 0.25; // A
+  const nH2 = (I * time) / (2 * F);
+  const vH2 = nH2 * VM * 1000, vO2 = vH2 / 2; // mL
+  useEffect(() => {
+    if (onReading) onReading(`ولتاژ: ${volt} V | جریان: ${I.toFixed(2)} A | زمان: ${time} s | هیدروژن: ${vH2.toFixed(1)} mL | اکسیژن: ${vO2.toFixed(1)} mL`);
+    // eslint-disable-next-line
+  }, [volt, time]);
+  const bubbles = I > 0 ? Array.from({ length: Math.min(7, 2 + Math.round(I * 3)) }) : [];
+  const tubeTop = 70, tubeBot = 170, h = tubeBot - tubeTop;
+  const fillH = (v, max) => Math.min(h - 6, (v / max) * (h - 6));
+  const maxV = 60;
+  const hh = fillH(vH2, maxV), ho = fillH(vO2, maxV);
+  const tube = (cx, gas, col, label, symbol, bx) => (
+    <g>
+      <rect x={cx - 15} y={tubeTop} width="30" height={h + 26} rx="8" fill="url(#elGlass)" stroke="#cfe0ff" strokeWidth="1.1" />
+      <rect x={cx - 14} y={tubeTop + 4 + 0} width="28" height={h - 6 - gas + 0} fill="#3a86d9" opacity="0.38" transform={`translate(0,${gas > 0 ? 0 : 0})`} clipPath="none" />
+      <rect x={cx - 14} y={tubeTop + 4} width="28" height={gas} fill={col} opacity="0.3" />
+      <text x={cx} y={tubeTop - 6} fontSize="9" fill={col} textAnchor="middle" fontWeight="700" style={{ direction: "ltr", unicodeBidi: "isolate" }}>{symbol}</text>
+      <text x={cx} y={tubeTop - 17} fontSize="7.5" fill="#9fb0e0" textAnchor="middle">{label}</text>
+    </g>
+  );
+  return (
+    <div className="vlab-exp">
+      <svg viewBox="0 0 320 240" className="vlab-svg" style={{ background: "#03060f", borderRadius: "10px" }}>
+        <defs>
+          <linearGradient id="elGlass" x1="0" x2="1"><stop offset="0" stopColor="#fff" stopOpacity="0.45" /><stop offset="0.3" stopColor="#fff" stopOpacity="0.06" /><stop offset="1" stopColor="#fff" stopOpacity="0.25" /></linearGradient>
+        </defs>
+        <VlabGlassBack x1={70} x2={250} top={118} ry={9} />
+        <path d="M72,120 L72,208 A88,9 0 0 0 248,208 L248,120 Z" fill="#3a86d9" opacity="0.4" />
+        <ellipse cx="160" cy="120" rx="88" ry="8" fill="#6aa8ff" opacity="0.55" />
+        {/* لوله‌های آزمایش */}
+        {tube(125, hh, "#ffd98a", "کاتد (−)", "H₂", 125)}
+        {tube(195, ho, "#9fe3ff", "آند (+)", "O₂", 195)}
+        {/* الکترودها */}
+        <rect x="123" y="170" width="4" height="40" fill="#b9c1d0" /><rect x="193" y="170" width="4" height="40" fill="#b9c1d0" />
+        <path d="M125,210 L125,226 L40,226 L40,60 L60,60" fill="none" stroke="#3a86ff" strokeWidth="2" />
+        <path d="M195,210 L195,230 L280,230 L280,60 L260,60" fill="none" stroke="#ff5a5a" strokeWidth="2" />
+        {bubbles.map((_, k) => (
+          <g key={"eb" + k}>
+            <circle r="1.9" fill="#ffd98a" opacity="0.9"><animate attributeName="cy" values={`186;${tubeTop + 12 + (h - hh - 10 > 0 ? 0 : 0)}`} dur={`${1.1 + k * 0.17}s`} repeatCount="indefinite" /><animate attributeName="cx" values={`${123 - (k % 3) * 0};${123 + (k % 3) * 2}`} dur={`${1.1 + k * 0.17}s`} repeatCount="indefinite" /></circle>
+            <circle r="1.9" fill="#9fe3ff" opacity="0.9"><animate attributeName="cy" values={`186;${tubeTop + 12}`} dur={`${1.3 + k * 0.15}s`} repeatCount="indefinite" /><animate attributeName="cx" values={`${197 - (k % 3)};${197 + (k % 3) * 2}`} dur={`${1.3 + k * 0.15}s`} repeatCount="indefinite" /></circle>
+          </g>
+        ))}
+        <VlabGlassFront x1={70} x2={250} top={118} bottom={208} ry={9} id="elec" />
+        <g transform="translate(12,8)"><rect x="40" y="24" width="40" height="32" rx="4" fill="#2f3850" stroke="#8fa0c8" /><text x="60" y="44" fontSize="9" fill="#ffd98a" textAnchor="middle" style={{ direction: "ltr", unicodeBidi: "isolate" }}>{volt} V</text></g>
+        <text x="160" y="236" fontSize="8" fill="#9fb0e0" textAnchor="middle">آب + کمی اسید سولفوریک</text>
+      </svg>
+      <VlabMeterRow height={160} meters={[{ label: "جریان", unit: "A", value: I, ranges: [1, 2, 3], maj: 5, decimals: 2 }, { label: "گاز H₂", unit: "mL", value: vH2, ranges: [10, 30, 100, 300], maj: 5, decimals: 1 }, { label: "گاز O₂", unit: "mL", value: vO2, ranges: [5, 15, 50, 150], maj: 5, decimals: 1 }]} />
+      <div className="vlab-controls">
+        <div className="vlab-ctrl-col" style={{ flex: 1 }}>
+          <label className="vlab-ctrl-label">ولتاژ (V): {volt}</label>
+          <VlabRange min="0" max="12" step="0.5" value={volt} onChange={(e) => setVolt(+e.target.value)} />
+          <label className="vlab-ctrl-label">زمان (s): {time}</label>
+          <VlabRange min="0" max="600" step="10" value={time} onChange={(e) => setTime(+e.target.value)} />
+        </div>
+      </div>
+      <div className="vlab-readout">برای شروع الکترولیز آب، ولتاژ باید از حدود ۱٫۸ ولت بیشتر شود. حجمِ هیدروژن همیشه <b>دو برابر</b> اکسیژن است (۲H₂O → ۲H₂ + O₂).</div>
+      {I > 0 && time > 0 && (
+        <VlabFormulaCheck title="قانون فاراده" fa="مول هیدروژن = (جریان × زمان) ÷ (۲ × ثابت فاراده)  ؛ حجم = مول × ۲۴٫۵ لیتر" en="n(H₂) = I·t / (2F)" legend="F = ۹۶۴۸۵ C/mol ، حجم مولی گاز ۲۴٫۵ L/mol — جواب را بر حسب میلی‌لیتر بنویس" subst={`V(H₂) = ${I.toFixed(2)} × ${time} ÷ (2 × 96485) × 24.5 × 1000 = ?`} label="V(H₂):" answer={vH2} unit="mL" decimals={1} />
+      )}
+    </div>
+  );
+}
+
+function VlabBoyleExperiment({ onReading }) {
+  const [vol, setVol] = useState(100);
+  const [, setTick] = useState(0);
+  const parts = React.useRef(null);
+  const volRef = React.useRef(vol);
+  volRef.current = vol;
+  const P = 100 / vol; // atm ، P₁V₁ = 100
+  useEffect(() => {
+    if (onReading) onReading(`حجم: ${vol} mL | فشار: ${P.toFixed(2)} atm | P×V = ${(P * vol).toFixed(0)}`);
+    // eslint-disable-next-line
+  }, [vol]);
+  useEffect(() => {
+    parts.current = Array.from({ length: 22 }).map((_, i) => ({ x: Math.random(), y: Math.random(), vx: (Math.random() - 0.5) * 0.9, vy: (Math.random() - 0.5) * 0.9 }));
+    let raf, last = performance.now();
+    const step = (now) => {
+      const dt = Math.min(now - last, 40) / 1000; last = now;
+      const frac = volRef.current / 100;
+      parts.current.forEach((p) => {
+        p.x += (p.vx * dt) / Math.max(0.35, frac) * 0.9; p.y += p.vy * dt * 0.9;
+        if (p.x < 0) { p.x = 0; p.vx *= -1; } if (p.x > 1) { p.x = 1; p.vx *= -1; }
+        if (p.y < 0) { p.y = 0; p.vy *= -1; } if (p.y > 1) { p.y = 1; p.vy *= -1; }
+      });
+      setTick((t) => (t + 1) % 1e6);
+      raf = requestAnimationFrame(step);
+    };
+    raf = requestAnimationFrame(step);
+    return () => cancelAnimationFrame(raf);
+  }, []);
+  const CX0 = 40, CW = 150, TOP = 40, BOT = 184, H = BOT - TOP;
+  const pistonY = BOT - (vol / 100) * H;
+  const gx0 = 214, gy0 = 40, gw = 92, gh = 120; // نمودار P–V
+  const gp = (v, p) => [gx0 + (v / 100) * gw, gy0 + gh - (Math.min(p, 5) / 5) * gh];
+  const curve = []; for (let v = 20; v <= 100; v += 4) { const [x, y] = gp(v, 100 / v); curve.push(`${x},${y}`); }
+  const [cx, cy] = gp(vol, P);
+  return (
+    <div className="vlab-exp">
+      <svg viewBox="0 0 320 224" className="vlab-svg" style={{ background: "#03060f", borderRadius: "10px" }}>
+        <defs><linearGradient id="byGlass" x1="0" x2="1"><stop offset="0" stopColor="#fff" stopOpacity="0.4" /><stop offset="0.3" stopColor="#fff" stopOpacity="0.05" /><stop offset="1" stopColor="#fff" stopOpacity="0.22" /></linearGradient></defs>
+        <rect x={CX0} y={TOP} width={CW} height={H + 6} rx="4" fill="url(#byGlass)" stroke="#cfe0ff" strokeWidth="1.3" />
+        <rect x={CX0 + 2} y={pistonY} width={CW - 4} height={BOT - pistonY} fill="#9fb6ff" opacity="0.1" />
+        {parts.current && parts.current.map((p, k) => (<circle key={"bp" + k} cx={CX0 + 6 + p.x * (CW - 12)} cy={pistonY + 8 + p.y * Math.max(1, BOT - pistonY - 14)} r="3.2" fill="#ffd98a" opacity="0.95" />))}
+        <rect x={CX0 + 2} y={pistonY - 8} width={CW - 4} height="8" rx="2" fill="#7b8294" stroke="#3d4450" />
+        <rect x={CX0 + CW / 2 - 4} y={TOP - 18} width="8" height={pistonY - TOP + 12} fill="#9aa4b8" />
+        <rect x={CX0 + CW / 2 - 22} y={TOP - 26} width="44" height="9" rx="4" fill="#4a5470" />
+        {[0, 25, 50, 75, 100].map((v) => (<g key={"by" + v}><line x1={CX0 + CW} y1={BOT - (v / 100) * H} x2={CX0 + CW + 6} y2={BOT - (v / 100) * H} stroke="#cfd6ea" /><text x={CX0 + CW + 9} y={BOT - (v / 100) * H + 2.5} fontSize="7" fill="#cfd6ea">{v}</text></g>))}
+        <text x={CX0 + CW / 2} y={BOT + 18} fontSize="8" fill="#9fb0e0" textAnchor="middle">دمای ثابت — مقدار گاز ثابت</text>
+        <line x1={gx0} y1={gy0 + gh} x2={gx0 + gw} y2={gy0 + gh} stroke="#8fa3c8" /><line x1={gx0} y1={gy0} x2={gx0} y2={gy0 + gh} stroke="#8fa3c8" />
+        <polyline points={curve.join(" ")} fill="none" stroke="#5b7fd0" strokeWidth="1.6" />
+        <circle cx={cx} cy={cy} r="4" fill="#ff6a5a" />
+        <text x={gx0 + gw / 2} y={gy0 + gh + 14} fontSize="8" fill="#9fb0e0" textAnchor="middle">حجم</text>
+        <text x={gx0 - 6} y={gy0 + 6} fontSize="8" fill="#9fb0e0" textAnchor="end">فشار</text>
+        <text x={gx0 + gw / 2} y={gy0 - 8} fontSize="8.5" fill="#cfd6ea" textAnchor="middle" fontWeight="700">نمودار فشار–حجم</text>
+      </svg>
+      <VlabMeterRow height={160} meters={[{ label: "فشار گاز", unit: "atm", value: P, ranges: [1, 3, 6], maj: 5, decimals: 2 }, { label: "حجم گاز", unit: "mL", value: vol, ranges: [100], maj: 5, decimals: 0 }]} />
+      <div className="vlab-controls">
+        <div className="vlab-ctrl-col" style={{ flex: 1 }}>
+          <label className="vlab-ctrl-label">حجم گاز (mL): {vol}</label>
+          <VlabRange min="20" max="100" step="1" value={vol} onChange={(e) => setVol(+e.target.value)} />
+        </div>
+      </div>
+      <div className="vlab-readout">با فشردن پیستون، مولکول‌ها در فضای کوچک‌تری بیشتر به دیواره برخورد می‌کنند و فشار بالا می‌رود. حاصل‌ضرب <b>P × V = {(P * vol).toFixed(0)}</b> ثابت می‌ماند.</div>
+      <VlabFormulaCheck title="قانون بویل" fa="در دمای ثابت: فشار اول × حجم اول = فشار دوم × حجم دوم" en="P₁V₁ = P₂V₂" legend="حالت اول: ۱ atm و ۱۰۰ mL" subst={`P₂ = (1 × 100) ÷ ${vol} = ?`} label="P₂:" answer={P} unit="atm" decimals={2} />
+    </div>
+  );
+}
+
+function VlabMolarityExperiment({ onReading }) {
+  const SOL = [{ name: "نمک خوراکی NaCl", M: 58.5, color: "#e6f2ff" }, { name: "مس سولفات CuSO₄", M: 159.6, color: "#1e78e6" }, { name: "پتاسیم پرمنگنات KMnO₄", M: 158, color: "#8a1fc2" }];
+  const [si, setSi] = useState(1);
+  const [mass, setMass] = useState(16);
+  const [vol, setVol] = useState(500);
+  const s = SOL[si];
+  const mol = mass / s.M, C = mol / (vol / 1000);
+  const tone = Math.min(1, C / 0.5);
+  const col = vlabMixHexColor("#dff0ff", s.color, si === 0 ? 0.05 : Math.max(0.08, tone));
+  useEffect(() => {
+    if (onReading) onReading(`ماده: ${s.name} | جرم: ${mass} g | حجم: ${vol} mL | مول: ${mol.toFixed(3)} | غلظت مولار: ${C.toFixed(3)} mol/L`);
+    // eslint-disable-next-line
+  }, [si, mass, vol]);
+  const lvl = 62;
+  return (
+    <div className="vlab-exp">
+      <svg viewBox="0 0 320 250" className="vlab-svg" style={{ background: "#03060f", borderRadius: "10px" }}>
+        <defs><linearGradient id="mlGlass" x1="0" x2="1"><stop offset="0" stopColor="#fff" stopOpacity="0.45" /><stop offset="0.3" stopColor="#fff" stopOpacity="0.05" /><stop offset="1" stopColor="#fff" stopOpacity="0.25" /></linearGradient></defs>
+        {/* بالن ژوژه */}
+        <path d="M148,24 L148,98 Q96,118 96,170 Q96,222 160,222 Q224,222 224,170 Q224,118 172,98 L172,24 Z" fill="url(#mlGlass)" stroke="#cfe0ff" strokeWidth="1.4" />
+        <path d={`M148,${lvl} L148,98 Q96,118 96,170 Q96,222 160,222 Q224,222 224,170 Q224,118 172,98 L172,${lvl} Z`} fill={col} opacity="0.85" />
+        <ellipse cx="160" cy={lvl} rx="12" ry="2.2" fill="#fff" opacity="0.7" />
+        <line x1="144" y1={lvl} x2="176" y2={lvl} stroke="#ff6a5a" strokeWidth="1.2" />
+        <text x="236" y={lvl + 3} fontSize="7.5" fill="#ff8a7a" textAnchor="middle">خط نشانه ({vol} mL)</text>
+        <rect x="145" y="14" width="30" height="10" rx="3" fill="#7a8294" />
+        {/* ترازو و جرم */}
+        <rect x="236" y="170" width="68" height="14" rx="3" fill="#4a5470" /><rect x="242" y="156" width="56" height="14" rx="2" fill="#2f3850" />
+        <text x="270" y="166" fontSize="8" fill="#ffd98a" textAnchor="middle" style={{ direction: "ltr", unicodeBidi: "isolate" }}>{mass} g</text>
+        <ellipse cx="270" cy="150" rx="26" ry="4" fill="#9aa4b8" />
+        <ellipse cx="270" cy="144" rx="14" ry="6" fill={s.color} stroke="#fff" strokeOpacity="0.3" />
+        <text x="270" y="198" fontSize="8" fill="#9fb0e0" textAnchor="middle">ترازو</text>
+        <text x="68" y="60" fontSize="8.5" fill="#cfd6ea" textAnchor="middle" fontWeight="700">{s.name.split(" ")[0]}</text><text x="68" y="72" fontSize="7.5" fill="#9fb0e0" textAnchor="middle">بالن ژوژه</text>
+        <text x="160" y="240" fontSize="8" fill="#9fb0e0" textAnchor="middle" style={{ direction: "ltr", unicodeBidi: "isolate" }}>{"M = " + s.M + " g/mol"}</text>
+      </svg>
+      <VlabMeterRow height={160} meters={[{ label: "مول ماده", unit: "mol", value: mol, ranges: [0.5, 1, 2], maj: 5, decimals: 3 }, { label: "غلظت مولار", unit: "mol/L", value: C, ranges: [0.5, 1, 2, 5], maj: 5, decimals: 3 }]} />
+      <div className="vlab-controls">
+        <div className="vlab-ctrl-col" style={{ flex: 1 }}>
+          <div className="vlab-num-row" style={{ marginBottom: 6 }}>{SOL.map((m, k) => (<button key={m.name} type="button" className={"vlab-num-btn" + (si === k ? " active" : "")} onClick={() => setSi(k)}>{m.name.split(" ")[1]}</button>))}</div>
+          <label className="vlab-ctrl-label">جرم ماده (g): {mass}</label>
+          <VlabRange min="1" max="80" step="1" value={mass} onChange={(e) => setMass(+e.target.value)} />
+          <label className="vlab-ctrl-label">حجم محلول (mL): {vol}</label>
+          <VlabRange min="100" max="1000" step="50" value={vol} onChange={(e) => setVol(+e.target.value)} />
+        </div>
+      </div>
+      <div className="vlab-readout">هرچه جرم بیشتر یا حجم کمتر باشد، محلول غلیظ‌تر و رنگ آن پررنگ‌تر است. غلظت مولار یعنی تعداد مولِ ماده در هر لیتر محلول.</div>
+      <VlabFormulaCheck title="غلظت مولار" fa="غلظت مولار = (جرم ÷ جرم مولی) ÷ حجم محلول بر حسب لیتر" en="M = (m / Mₘ) / V" legend="حجم را به لیتر تبدیل کن (۱۰۰۰ mL = ۱ L)" subst={`C = (${mass} ÷ ${s.M}) ÷ ${(vol / 1000).toFixed(2)} = ?`} label="C:" answer={C} unit="mol/L" decimals={3} />
+    </div>
+  );
+}
+
+function VlabSolutionConductivityExperiment({ onReading }) {
+  const SUBS = [
+    { name: "آب مقطر", k: 0.0, ions: "یون ندارد" },
+    { name: "شکر", k: 0.0, ions: "مولکولی؛ یون نمی‌دهد" },
+    { name: "اتانول", k: 0.0, ions: "مولکولی؛ یون نمی‌دهد" },
+    { name: "نمک خوراکی", k: 100, ions: "Na⁺ و Cl⁻" },
+    { name: "هیدروکلریک اسید", k: 340, ions: "H⁺ و Cl⁻" },
+    { name: "سدیم هیدروکسید", k: 200, ions: "Na⁺ و OH⁻" },
+  ];
+  const [si, setSi] = useState(3);
+  const [conc, setConc] = useState(0.5);
+  const s = SUBS[si];
+  const V = 6;
+  const I = Math.min(260, s.k * conc * 0.8 * 1); // mA
+  const bright = Math.min(1, I / 120);
+  const R = I > 0 ? V / (I / 1000) : Infinity;
+  useEffect(() => {
+    if (onReading) onReading(`ماده: ${s.name} | غلظت: ${conc} mol/L | جریان: ${I.toFixed(1)} mA | لامپ: ${bright > 0.02 ? Math.round(bright * 100) + "٪ روشن" : "خاموش"}`);
+    // eslint-disable-next-line
+  }, [si, conc]);
+  const ionN = s.k > 0 ? Math.round(4 + conc * 14) : 0;
+  const ions = Array.from({ length: ionN }).map((_, k) => ({ x: 112 + ((k * 37) % 96), y: 156 + ((k * 53) % 38), pos: k % 2 === 0 }));
+  return (
+    <div className="vlab-exp">
+      <svg viewBox="0 0 320 232" className="vlab-svg" style={{ background: "#03060f", borderRadius: "10px" }}>
+        <defs>
+          <radialGradient id="scBulb" cx="0.5" cy="0.5" r="0.5"><stop offset="0" stopColor="#fff7b0" stopOpacity={0.95 * bright} /><stop offset="1" stopColor="#ffd34d" stopOpacity="0" /></radialGradient>
+        </defs>
+        <circle cx="160" cy="50" r="46" fill="url(#scBulb)" />
+        <circle cx="160" cy="46" r="17" fill={bright > 0.02 ? "#fff3a0" : "#2a3350"} fillOpacity={bright > 0.02 ? 0.5 + 0.5 * bright : 1} stroke="#c9d1de" strokeWidth="1.5" />
+        <path d="M152,60 Q155,40 160,46 Q165,52 168,34" fill="none" stroke={bright > 0.02 ? "#fff" : "#6b7390"} strokeWidth="1.3" />
+        <rect x="150" y="62" width="20" height="14" rx="2" fill="#8b93a4" />
+        <path d="M156,76 L156,96 L96,96 L96,172" fill="none" stroke="#ff5a5a" strokeWidth="2" />
+        <path d="M164,76 L164,100 L240,100 L240,124 L226,124" fill="none" stroke="#3a86ff" strokeWidth="2" />
+        <rect x="222" y="120" width="26" height="10" rx="2" fill="#2f3850" /><text x="235" y="128" fontSize="7" fill="#ffd98a" textAnchor="middle" style={{ direction: "ltr", unicodeBidi: "isolate" }}>6 V</text>
+        <path d="M222,125 L200,125 L200,140 L212,140" fill="none" stroke="#3a86ff" strokeWidth="2" display="none" />
+        <path d="M222,128 L212,128 L212,172" fill="none" stroke="#3a86ff" strokeWidth="2" />
+        <VlabGlassBack x1={84} x2={236} top={136} ry={8} />
+        <path d="M86,152 L86,206 A74,8 0 0 0 234,206 L234,152 Z" fill="#3a86d9" opacity="0.32" />
+        <ellipse cx="160" cy="152" rx="74" ry="7" fill="#6aa8ff" opacity="0.5" />
+        <rect x="94" y="118" width="4" height="80" fill="#c5ccd8" /><rect x="210" y="118" width="4" height="80" fill="#c5ccd8" />
+        {ions.map((p, k) => (<g key={"ic" + k}><circle r="3" fill={p.pos ? "#ff8a7a" : "#7fb4ff"}><animate attributeName="cx" values={`${p.x};${p.pos ? p.x + 10 : p.x - 10};${p.x}`} dur={`${2 + (k % 4) * 0.4}s`} repeatCount="indefinite" /><animate attributeName="cy" values={`${p.y};${p.y + 3};${p.y}`} dur={`${1.6 + (k % 3) * 0.3}s`} repeatCount="indefinite" /></circle><text x={p.x} y={p.y + 2} fontSize="5" fill="#03060f" textAnchor="middle" style={{ pointerEvents: "none" }}></text></g>))}
+        <VlabGlassFront x1={84} x2={236} top={136} bottom={206} ry={8} id="scond" />
+        <text x="160" y="224" fontSize="8.5" fill="#cfd6ea" textAnchor="middle">{s.name}{conc > 0 && s.k > 0 ? "" : ""} — {s.ions}</text>
+      </svg>
+      <VlabMeterRow height={160} meters={[{ label: "جریان", unit: "mA", value: I, ranges: [20, 60, 120, 260], maj: 5, decimals: 1 }, { label: "روشنایی لامپ", unit: "٪", value: bright * 100, ranges: [100], maj: 5, decimals: 0 }]} />
+      <div className="vlab-controls">
+        <div className="vlab-ctrl-col" style={{ flex: 1 }}>
+          <div className="vlab-num-row" style={{ marginBottom: 6, flexWrap: "wrap" }}>{SUBS.map((m, k) => (<button key={m.name} type="button" className={"vlab-num-btn" + (si === k ? " active" : "")} onClick={() => setSi(k)}>{m.name}</button>))}</div>
+          <label className="vlab-ctrl-label">غلظت (mol/L): {conc}</label>
+          <VlabRange min="0.05" max="1" step="0.05" value={conc} onChange={(e) => setConc(+e.target.value)} />
+        </div>
+      </div>
+      <div className="vlab-readout">{s.k > 0 ? <>محلول‌های الکترولیت یون دارند و جریان را می‌رسانند؛ هرچه یون بیشتر (غلظت بالاتر)، لامپ روشن‌تر.</> : <>این ماده در آب یون نمی‌سازد (نافل‌الکترولیت)؛ جریانی نمی‌گذرد و لامپ خاموش می‌ماند.</>}</div>
+      {I > 0.5 && (
+        <VlabFormulaCheck title="قانون اهم" fa="مقاومت محلول = ولتاژ ÷ جریان" en="R = V / I" legend="جریان را از mA به آمپر ببر (۱۰۰۰ mA = ۱ A)" subst={`R = 6 ÷ (${I.toFixed(1)} ÷ 1000) = ?`} label="R:" answer={R} unit="Ω" decimals={1} />
+      )}
+    </div>
+  );
+}
+
+function VlabDistillationExperiment({ onReading }) {
+  const [T, setT] = useState(25);
+  const [etPct, setEtPct] = useState(40);
+  const VT = 200, Vet = (VT * etPct) / 100, Vw = VT - Vet;
+  const collEt = Vet * Math.max(0, Math.min(1, (T - 72) / 10));
+  const collW = Vw * Math.max(0, Math.min(1, (T - 96) / 4));
+  const coll = collEt + collW;
+  const boiling = T >= 72;
+  const Q = (200 * 4.18 * Math.max(0, T - 25)) / 1000; // kJ
+  useEffect(() => {
+    if (onReading) onReading(`دمای محلول: ${T}°C | اتانول اولیه: ${etPct}٪ | جمع‌آوری‌شده: ${coll.toFixed(0)} mL (اتانول ${collEt.toFixed(0)}، آب ${collW.toFixed(0)}) | گرمای داده‌شده: ${Q.toFixed(1)} kJ`);
+    // eslint-disable-next-line
+  }, [T, etPct]);
+  const liqTop = 148 - (1 - 0) * 0;
+  const dropCount = boiling ? Math.min(5, 1 + Math.round((T - 72) / 6)) : 0;
+  const recvLvl = 200 - (coll / VT) * 30;
+  const curve = [];
+  for (let t = 25; t <= 105; t += 5) curve.push(`${22 + (t - 25) * 1.2},${96 - ((t - 25) / 80) * 60}`);
+  return (
+    <div className="vlab-exp">
+      <svg viewBox="0 0 320 236" className="vlab-svg" style={{ background: "#03060f", borderRadius: "10px" }}>
+        <defs>
+          <linearGradient id="dsGlass" x1="0" x2="1"><stop offset="0" stopColor="#fff" stopOpacity="0.45" /><stop offset="0.3" stopColor="#fff" stopOpacity="0.06" /><stop offset="1" stopColor="#fff" stopOpacity="0.25" /></linearGradient>
+          <linearGradient id="dsTube" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stopColor="#bfe6ff" stopOpacity="0.6" /><stop offset="1" stopColor="#6aa8d8" stopOpacity="0.35" /></linearGradient>
+        </defs>
+        {/* بالن ته‌گرد */}
+        <path d="M70,40 L70,64 Q36,88 36,122 Q36,160 82,160 Q128,160 128,122 Q128,88 94,64 L94,40 Z" fill="url(#dsGlass)" stroke="#cfe0ff" strokeWidth="1.3" />
+        <path d="M44,128 Q36,160 82,160 Q128,160 120,128 Z" fill={boiling ? "#7db6e8" : "#6aa8ff"} opacity="0.5" />
+        <ellipse cx="82" cy="128" rx="38" ry="3.5" fill="#9fcbff" opacity="0.6" />
+        {boiling && Array.from({ length: 6 }).map((_, k) => (<circle key={"db" + k} cx={58 + k * 9} r="1.8" fill="#fff" opacity="0.8"><animate attributeName="cy" values="152;130" dur={`${0.8 + k * 0.15}s`} repeatCount="indefinite" /></circle>))}
+        {boiling && <path d="M78,100 Q82,88 86,100" fill="none" stroke="#bfe6ff" strokeWidth="1.2" opacity="0.5" />}
+        {/* ترمومتر */}
+        <rect x="80" y="14" width="4" height="64" rx="2" fill="#f0f4ff" /><rect x="81" y={14 + 64 * (1 - (T - 20) / 90)} width="2" height={64 * ((T - 20) / 90) + 2} fill="#ff4040" /><circle cx="82" cy="82" r="3.2" fill="#ff4040" />
+        <text x="96" y="22" fontSize="8" fill="#ffd98a" style={{ direction: "ltr", unicodeBidi: "isolate" }}>{T}°C</text>
+        <rect x="68" y="36" width="28" height="6" rx="2" fill="#a0724a" />
+        {/* لوله‌ی خروجی و مبرد لیبیگ */}
+        <path d="M94,48 L112,48 L128,64" fill="none" stroke="#cfe0ff" strokeWidth="2.5" />
+        <g transform="translate(120,58) rotate(26)">
+          <rect x="0" y="0" width="150" height="22" rx="4" fill="url(#dsTube)" stroke="#cfe0ff" strokeWidth="1.2" />
+          <rect x="6" y="8" width="138" height="6" rx="3" fill="#e9f6ff" opacity="0.55" />
+          <rect x="-6" y="12" width="10" height="4" fill="#3a86ff" /><rect x="144" y="6" width="10" height="4" fill="#3a86ff" />
+        </g>
+        <text x="190" y="52" fontSize="8" fill="#9fb0e0" textAnchor="middle">مبرد (آب سرد)</text>
+        {/* گیرنده */}
+        {dropCount > 0 && Array.from({ length: dropCount }).map((_, k) => (<circle key={"dd" + k} cx="262" r="2" fill="#bfe6ff"><animate attributeName="cy" values="140;184" dur="0.7s" begin={`${k * 0.14}s`} repeatCount="indefinite" /></circle>))}
+        <VlabGlassBack x1={228} x2={290} top={176} ry={5} />
+        <path d={`M229,${recvLvl} L229,214 A32,5 0 0 0 289,214 L289,${recvLvl} Z`} fill={collW > 1 ? "#5aa0ff" : "#8fd0ff"} opacity="0.55" />
+        <VlabGlassFront x1={228} x2={290} top={176} bottom={214} ry={5} id="dsrec" />
+        <text x="259" y="230" fontSize="8" fill="#9fb0e0" textAnchor="middle">مایع تقطیرشده</text>
+        {/* چراغ */}
+        <rect x="68" y="190" width="28" height="22" rx="5" fill="#4a5470" stroke="#8fa0c8" /><rect x="80" y="184" width="4" height="8" fill="#8b93a4" />
+        {T > 25 && <path d={`M82,184 Q73,${176 - Math.min(6, (T - 25) * 0.1)} 82,${166 - Math.min(4, (T - 25) * 0.07)} Q91,${176 - Math.min(6, (T - 25) * 0.1)} 82,184Z`} fill="#ffb24d" opacity="0.9" />}
+        <text x="82" y="226" fontSize="8" fill="#9fb0e0" textAnchor="middle">چراغ الکلی</text>
+        {/* نمودار دما */}
+        <rect x="170" y="100" width="130" height="62" fill="none" />
+      </svg>
+      <VlabMeterRow height={160} meters={[{ label: "دمای محلول", unit: "°C", value: T, ranges: [110], maj: 11, decimals: 0 }, { label: "مایع جمع‌شده", unit: "mL", value: coll, ranges: [50, 100, 200], maj: 5, decimals: 0 }]} />
+      <div className="vlab-controls">
+        <div className="vlab-ctrl-col" style={{ flex: 1 }}>
+          <label className="vlab-ctrl-label">دمای محلول (°C): {T}</label>
+          <VlabRange min="25" max="105" step="1" value={T} onChange={(e) => setT(+e.target.value)} />
+          <label className="vlab-ctrl-label">درصد اتانول در مخلوط (٪): {etPct}</label>
+          <VlabRange min="10" max="80" step="5" value={etPct} onChange={(e) => setEtPct(+e.target.value)} />
+        </div>
+      </div>
+      <div className="vlab-readout">اتانول زودتر (حدود ۷۸°C) به جوش می‌آید؛ بخارش در مبرد سرد و مایع می‌شود و جدا از آب جمع می‌گردد. آب تا نزدیک ۱۰۰°C در بالن باقی می‌ماند.<br />اتانول جمع‌شده: <b>{collEt.toFixed(0)} mL</b> | آب جمع‌شده: <b>{collW.toFixed(0)} mL</b></div>
+      {T > 25 && (
+        <VlabFormulaCheck title="گرمای لازم برای گرم‌کردن ۲۰۰ g محلول (تقریب آب)" fa="گرما = جرم × گرمای ویژه × تغییر دما" en="Q = m · c · ΔT" legend="m = ۲۰۰ g ، c = ۴٫۱۸ J/g·°C ، دمای اول = ۲۵°C — جواب را بر حسب کیلوژول بنویس" subst={`Q = 200 × 4.18 × (${T} − 25) ÷ 1000 = ?`} label="Q:" answer={Q} unit="kJ" decimals={1} />
+      )}
+    </div>
+  );
+}
+
+function VlabWaveExperiment({ onReading }) {
+  const [freq, setFreq] = useState(4);
+  const [lam, setLam] = useState(40);
+  const [ph, setPh] = useState(0);
+  const fr = React.useRef({ f: freq });
+  fr.current.f = freq;
+  useEffect(() => {
+    let raf, last = performance.now();
+    const step = (now) => { const dt = Math.min(now - last, 50) / 1000; last = now; setPh((p) => (p + 2 * Math.PI * fr.current.f * dt * 0.25) % (2 * Math.PI * 1000)); raf = requestAnimationFrame(step); };
+    raf = requestAnimationFrame(step);
+    return () => cancelAnimationFrame(raf);
+  }, []);
+  const v = (freq * lam) / 100; // m/s
+  const Tp = 1 / freq;
+  useEffect(() => {
+    if (onReading) onReading(`بسامد: ${freq} Hz | طول موج: ${lam} cm | سرعت موج: ${v.toFixed(2)} m/s | دوره: ${Tp.toFixed(2)} s`);
+    // eslint-disable-next-line
+  }, [freq, lam]);
+  const X0 = 20, X1 = 300, Y0 = 96, A = 30, K = 2.8; // 2.8 px/cm
+  const pts = [];
+  for (let x = 0; x <= 280; x += 2) pts.push(`${X0 + x},${Y0 - A * Math.sin((2 * Math.PI * (x / K)) / lam - ph)}`);
+  // علامت‌گذاری یک طول موج از قله تا قله‌ی بعدی
+  const x1 = (lam * K) * 0.25 + 0; // قله‌ی ابتدا: ‎sin=1 ‎ عبارت‌ست از ‎2πx/(λ)-ph=π/2
+  const peakX = (((Math.PI / 2 + ph) % (2 * Math.PI)) / (2 * Math.PI)) * lam * K;
+  const p1 = peakX, p2 = peakX + lam * K;
+  const bob = Y0 - A * Math.sin(-ph + 0);
+  return (
+    <div className="vlab-exp">
+      <svg viewBox="0 0 320 170" className="vlab-svg" style={{ background: "#03060f", borderRadius: "10px" }}>
+        <line x1={X0} y1={Y0} x2={X1} y2={Y0} stroke="#2b3760" strokeDasharray="4 4" />
+        <polyline points={pts.join(" ")} fill="none" stroke="#7fb4ff" strokeWidth="2.6" strokeLinecap="round" />
+        <polyline points={pts.join(" ")} fill="none" stroke="#bfe0ff" strokeWidth="0.8" />
+        <circle cx={X0} cy={bob} r="5" fill="#ffd98a" stroke="#fff" strokeWidth="1" />
+        <rect x="6" y="64" width="12" height="64" rx="4" fill="#4a5470" stroke="#8fa0c8" />
+        {p2 < 282 && (
+          <g>
+            <line x1={X0 + p1} y1={Y0 - A - 10} x2={X0 + p2} y2={Y0 - A - 10} stroke="#7be0a4" strokeWidth="1.4" /><line x1={X0 + p1} y1={Y0 - A - 14} x2={X0 + p1} y2={Y0 - A - 6} stroke="#7be0a4" /><line x1={X0 + p2} y1={Y0 - A - 14} x2={X0 + p2} y2={Y0 - A - 6} stroke="#7be0a4" />
+            <text x={(X0 + p1 + X0 + p2) / 2} y={Y0 - A - 16} fontSize="8.5" fill="#7be0a4" textAnchor="middle" fontWeight="700">λ = {lam} cm</text>
+          </g>
+        )}
+        <line x1="302" y1={Y0 - A} x2="302" y2={Y0 + A} stroke="#ffb84d" strokeWidth="1" /><text x="298" y={Y0 + A + 12} fontSize="8" fill="#ffb84d" textAnchor="end">دامنه</text>
+        <text x="160" y="160" fontSize="8" fill="#9fb0e0" textAnchor="middle">نمایش ۴ بار آهسته‌تر از حالت واقعی</text>
+      </svg>
+      <VlabMeterRow height={160} meters={[{ label: "سرعت موج", unit: "m/s", value: v, ranges: [2, 5, 10, 40], maj: 5, decimals: 2 }, { label: "دوره‌ی تناوب", unit: "s", value: Tp, ranges: [0.5, 1], maj: 5, decimals: 2 }]} />
+      <div className="vlab-controls">
+        <div className="vlab-ctrl-col" style={{ flex: 1 }}>
+          <label className="vlab-ctrl-label">بسامد f (هرتز): {freq}</label>
+          <VlabRange min="1" max="10" step="0.5" value={freq} onChange={(e) => setFreq(+e.target.value)} />
+          <label className="vlab-ctrl-label">طول موج λ (cm): {lam}</label>
+          <VlabRange min="15" max="90" step="5" value={lam} onChange={(e) => setLam(+e.target.value)} />
+        </div>
+      </div>
+      <div className="vlab-readout">سرعت موج برابر است با بسامد × طول موج. دست را سریع‌تر تکان بدهی (بسامد بیشتر)، قله‌ها به هم نزدیک‌تر می‌شوند، مگر این‌که سرعت موج (جنس طناب) عوض شود.</div>
+      <VlabFormulaCheck title="سرعت موج" fa="سرعت موج = بسامد × طول موج" en="v = f · λ" legend="طول موج را به متر ببر (۱۰۰ cm = ۱ m)" subst={`v = ${freq} × ${(lam / 100).toFixed(2)} = ?`} label="v:" answer={v} unit="m/s" decimals={2} />
+      <VlabFormulaCheck title="دوره‌ی تناوب" fa="دوره = ۱ ÷ بسامد" en="T = 1 / f" legend="" subst={`T = 1 ÷ ${freq} = ?`} label="T:" answer={Tp} unit="s" decimals={3} />
+    </div>
+  );
+}
+
+function VlabInductionExperiment({ onReading }) {
+  const [N, setN] = useState(200);
+  const [Bt, setBt] = useState(0.3);
+  const [v, setV] = useState(0.5);
+  const [t, setT] = useState(0);
+  const [run, setRun] = useState(true);
+  const vr = React.useRef(v); vr.current = v;
+  const A = 0.002, D = 0.1;
+  const emf = (N * Bt * A * v) / D;
+  useEffect(() => {
+    if (!run) return;
+    let raf, last = performance.now();
+    const step = (now) => { const dt = Math.min(now - last, 50) / 1000; last = now; setT((x) => x + dt * vr.current * 5); raf = requestAnimationFrame(step); };
+    raf = requestAnimationFrame(step);
+    return () => cancelAnimationFrame(raf);
+  }, [run]);
+  useEffect(() => {
+    if (onReading) onReading(`تعداد دور: ${N} | میدان آهن‌ربا: ${Bt} T | سرعت حرکت: ${v} m/s | نیروی محرکه‌ی القایی: ${emf.toFixed(2)} V`);
+    // eslint-disable-next-line
+  }, [N, Bt, v]);
+  // موقعیت: موج مثلثی بین ۰ و ۱ ؛ جهت حرکت
+  const cyc = ((t % 2) + 2) % 2;
+  const pos = cyc < 1 ? cyc : 2 - cyc; // 0=بیرون ، 1=داخل
+  const dir = cyc < 1 ? 1 : -1;
+  const inst = run ? dir * emf : 0;
+  const mx = 40 + pos * 100;
+  const needle = Math.max(-1, Math.min(1, inst / 5)) * 50;
+  const turns = Math.max(4, Math.round(N / 25));
+  const coil = [];
+  for (let k = 0; k < turns; k++) coil.push(<ellipse key={"ic" + k} cx={170 + (k * 54) / Math.max(1, turns - 1)} cy="70" rx="8" ry="20" fill="none" stroke="#e0925a" strokeWidth="2.2" />);
+  return (
+    <div className="vlab-exp">
+      <svg viewBox="0 0 320 190" className="vlab-svg" style={{ background: "#03060f", borderRadius: "10px" }}>
+        {coil}
+        <path d="M162,86 L150,110 L110,110 L110,150" fill="none" stroke="#e0925a" strokeWidth="1.6" /><path d="M232,86 L246,110 L276,110 L276,150" fill="none" stroke="#e0925a" strokeWidth="1.6" />
+        {/* آهن‌ربا */}
+        <g transform={`translate(${mx},70)`}>
+          <rect x="-46" y="-11" width="46" height="22" fill="#ff4d4d" stroke="#222" /><text x="-23" y="4" fontSize="10" fill="#fff" textAnchor="middle" fontWeight="700">N</text>
+          <rect x="0" y="-11" width="46" height="22" fill="#3a6dff" stroke="#222" /><text x="23" y="4" fontSize="10" fill="#fff" textAnchor="middle" fontWeight="700">S</text>
+        </g>
+        {/* گالوانومتر */}
+        <circle cx="193" cy="150" r="30" fill="#f3efe2" stroke="#8fa0c8" strokeWidth="3" />
+        <path d="M168,150 A25,25 0 0 1 218,150" fill="none" stroke="#999" strokeWidth="1" />
+        {[-50, -25, 0, 25, 50].map((a) => (<line key={"g" + a} x1={193 + 22 * Math.sin((a * Math.PI) / 180 * 0.9)} y1={150 - 22 * Math.cos((a * Math.PI) / 180 * 0.9)} x2={193 + 26 * Math.sin((a * Math.PI) / 180 * 0.9)} y2={150 - 26 * Math.cos((a * Math.PI) / 180 * 0.9)} stroke="#333" strokeWidth="1" />))}
+        <line x1="193" y1="168" x2={193 + 22 * Math.sin((needle * Math.PI) / 180 * 0.9)} y2={168 - 22 * Math.cos((needle * Math.PI) / 180 * 0.9)} stroke="#e03a3a" strokeWidth="2" strokeLinecap="round" />
+        <circle cx="193" cy="168" r="3" fill="#333" />
+        <text x="193" y="186" fontSize="8" fill="#9fb0e0" textAnchor="middle">گالوانومتر</text>
+        <path d="M110,150 L163,150" fill="none" stroke="#e0925a" strokeWidth="1.6" /><path d="M223,150 L276,150" fill="none" stroke="#e0925a" strokeWidth="1.6" />
+        <text x="160" y="30" fontSize="9" fill="#9fb0e0" textAnchor="middle">{run ? (dir > 0 ? "آهن‌ربا در حال ورود" : "آهن‌ربا در حال خروج") : "آهن‌ربا ایستاده → جریانی نیست"}</text>
+      </svg>
+      <VlabMeterRow height={160} meters={[{ label: "نیروی محرکه‌ی القایی", unit: "V", value: emf, ranges: [1, 3, 10, 30], maj: 5, decimals: 2 }, { label: "سرعت آهن‌ربا", unit: "m/s", value: run ? v : 0, ranges: [1], maj: 5, decimals: 2 }]} />
+      <div className="vlab-controls">
+        <div className="vlab-ctrl-col" style={{ flex: 1 }}>
+          <label className="vlab-ctrl-label">تعداد دور سیم‌پیچ: {N}</label>
+          <VlabRange min="50" max="500" step="50" value={N} onChange={(e) => setN(+e.target.value)} />
+          <label className="vlab-ctrl-label">میدان آهن‌ربا (تسلا): {Bt}</label>
+          <VlabRange min="0.1" max="0.5" step="0.05" value={Bt} onChange={(e) => setBt(+e.target.value)} />
+          <label className="vlab-ctrl-label">سرعت حرکت (m/s): {v}</label>
+          <VlabRange min="0.1" max="1" step="0.1" value={v} onChange={(e) => setV(+e.target.value)} />
+        </div>
+        <div className="vlab-ctrl-col"><button type="button" className="pqb-submit-btn" onClick={() => setRun((r) => !r)}>{run ? "⏸ توقف" : "▶ حرکت"}</button></div>
+      </div>
+      <div className="vlab-readout">فقط وقتی شارِ مغناطیسی تغییر می‌کند (آهن‌ربا در حرکت است) جریان القا می‌شود؛ جهت جریان هنگام ورود و خروج وارونه است.</div>
+      <VlabFormulaCheck title="قانون القای فاراده" fa="نیروی محرکه‌ی القایی = تعداد دور × تغییر شار ÷ زمان؛ تغییر شار = میدان × سطح" en="ε = N · B · A / Δt" legend="A = ۲۰ cm² = ۰٫۰۰۲ m² ، Δt = ۰٫۱ ÷ v (آهن‌ربا ۱۰ cm جابه‌جا می‌شود)" subst={`ε = ${N} × ${Bt} × 0.002 ÷ (0.1 ÷ ${v}) = ?`} label="ε:" answer={emf} unit="V" decimals={2} />
+    </div>
+  );
+}
+
 const VLAB_COMPONENTS = {
   lever: VlabLeverExperiment,
   pendulum: VlabPendulumExperiment,
@@ -28302,6 +28891,14 @@ const VLAB_COMPONENTS = {
   "convex-lens": VlabConvexLensExperiment,
   "projectile": VlabProjectileExperiment,
   "archimedes": VlabArchimedesExperiment,
+  "titration": VlabTitrationExperiment,
+  "water-electrolysis": VlabElectrolysisExperiment,
+  "boyle-law": VlabBoyleExperiment,
+  "molarity": VlabMolarityExperiment,
+  "solution-conductivity": VlabSolutionConductivityExperiment,
+  "distillation": VlabDistillationExperiment,
+  "wave-speed": VlabWaveExperiment,
+  "faraday-induction": VlabInductionExperiment,
 };
 
 function StudentVirtualLabView({ onBack, grade, studentCode, schoolCode }) {

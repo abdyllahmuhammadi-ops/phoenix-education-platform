@@ -23974,63 +23974,105 @@ function VlabAcidBaseExperiment({ onReading }) {
     // eslint-disable-next-line
   }, [dropAnim]);
 
-  const ACID_TIP = { x: 68, y: 67 };
-  const BASE_TIP = { x: 252, y: 67 };
-  const LIQUID_TARGET = { x: 160, y: 100 };
+  const LIQ_Y = 118; // سطح مایع داخل بشر
+  const ACID_TIP = { x: 140, y: 60 };
+  const BASE_TIP = { x: 180, y: 60 };
 
+  // قطره دقیقاً از نوک قطره‌چکان (بالای دهانه‌ی بشر) به‌صورت عمودی و شتاب‌دار سقوط می‌کند
   let drop = null;
   if (dropAnim) {
     const t = vlabClamp((performance.now() - dropAnim.t0) / DROP_DURATION, 0, 1);
     const from = dropAnim.side === "acid" ? ACID_TIP : BASE_TIP;
+    const fall = vlabClamp(t / 0.8, 0, 1);
+    const landedT = vlabClamp((t - 0.8) / 0.2, 0, 1);
     drop = {
-      x: from.x + (LIQUID_TARGET.x - from.x) * t,
-      y: from.y + (LIQUID_TARGET.y - from.y) * t,
+      x: from.x,
+      y: from.y + (LIQ_Y - from.y) * fall * fall,
       color: dropAnim.side === "acid" ? "#ff6a52" : "#4ab0ff",
-      opacity: t > 0.88 ? 1 - (t - 0.88) / 0.12 : 1,
-      landed: t > 0.88,
-      rippleR: t > 0.88 ? (t - 0.88) / 0.12 * 14 : 0,
+      landed: t > 0.8,
+      rippleR: landedT * 22,
+      op: 1 - landedT,
     };
   }
 
   return (
     <div className="vlab-exp">
       <svg viewBox="0 0 320 190" className="vlab-svg">
-        {/* زمینه‌ی تیره‌ی آزمایشگاهی — همان زبان بصری سایر آزمایش‌های شیشه‌آلات */}
-        <rect x="0" y="0" width="320" height="190" fill="#0b1330" />
-        {/* میز آزمایشگاه */}
-        <line x1="15" y1="172" x2="305" y2="172" stroke="#2a3658" strokeWidth="2" />
+        <defs>
+          <linearGradient id="abGlass" x1="0" x2="1">
+            <stop offset="0" stopColor="#ffffff" stopOpacity="0.28" />
+            <stop offset="0.18" stopColor="#ffffff" stopOpacity="0.06" />
+            <stop offset="0.8" stopColor="#ffffff" stopOpacity="0.04" />
+            <stop offset="1" stopColor="#ffffff" stopOpacity="0.22" />
+          </linearGradient>
+          <linearGradient id="abLiq" x1="0" x2="1">
+            <stop offset="0" stopColor="#000" stopOpacity="0.25" />
+            <stop offset="0.3" stopColor="#000" stopOpacity="0" />
+            <stop offset="0.75" stopColor="#000" stopOpacity="0.05" />
+            <stop offset="1" stopColor="#000" stopOpacity="0.3" />
+          </linearGradient>
+        </defs>
+        <rect x="0" y="0" width="320" height="190" fill="#03060f" />
+        <ellipse cx="160" cy="170" rx="100" ry="9" fill="#000" opacity="0.35" />
+        <line x1="15" y1="172" x2="305" y2="172" stroke="#1a2238" strokeWidth="2" />
 
-        {/* قطره‌چکان اسید — سمت چپ، مایل به سمت بالن */}
-        <g transform="translate(90,20) rotate(25)">
-          <ellipse cx="0" cy="0" rx="9" ry="12" fill="#e0908f" stroke="#8a3a3a" strokeWidth="1.2" />
-          <rect x="-5" y="10" width="10" height="32" fill="#dce8f5" stroke="#8fa3c4" strokeWidth="1.2" opacity="0.85" />
-          <rect x="-3.3" y="16" width="6.6" height="22" fill="#ff8a7a" opacity="0.55" />
-          <path d="M-5,42 L5,42 L0,52 Z" fill="#dce8f5" stroke="#8fa3c4" strokeWidth="1" opacity="0.85" />
-        </g>
-        <text x="68" y="86" textAnchor="middle" fontSize="10" fontWeight="700" fill="#ff8a7a">اسید</text>
+        {/* دیواره‌ی پشتی دهانه‌ی بشر */}
+        <ellipse cx="160" cy="62" rx="65" ry="9" fill="#cfd8e8" fillOpacity="0.04" stroke="#8fa3c4" strokeWidth="1.2" />
 
-        {/* قطره‌چکان باز — سمت راست، مایل به سمت بالن */}
-        <g transform="translate(230,20) rotate(-25)">
-          <ellipse cx="0" cy="0" rx="9" ry="12" fill="#8fb8d9" stroke="#3a5a7a" strokeWidth="1.2" />
-          <rect x="-5" y="10" width="10" height="32" fill="#dce8f5" stroke="#8fa3c4" strokeWidth="1.2" opacity="0.85" />
-          <rect x="-3.3" y="16" width="6.6" height="22" fill="#7ac2ff" opacity="0.55" />
-          <path d="M-5,42 L5,42 L0,52 Z" fill="#dce8f5" stroke="#8fa3c4" strokeWidth="1" opacity="0.85" />
-        </g>
-        <text x="252" y="86" textAnchor="middle" fontSize="10" fontWeight="700" fill="#7ac2ff">باز</text>
+        {/* مایع: بدنه + سطح بیضوی */}
+        <path d={`M97,${LIQ_Y} L97,162 A63,8.5 0 0 0 223,162 L223,${LIQ_Y} Z`} fill={color} opacity="0.85" />
+        <path d={`M97,${LIQ_Y} L97,162 A63,8.5 0 0 0 223,162 L223,${LIQ_Y} Z`} fill="url(#abLiq)" />
+        <ellipse cx="160" cy={LIQ_Y} rx="63" ry="8" fill={color} />
+        <ellipse cx="160" cy={LIQ_Y} rx="63" ry="8" fill="#fff" opacity="0.22" />
+        <ellipse cx="160" cy={LIQ_Y} rx="63" ry="8" fill="none" stroke="#fff" strokeWidth="0.8" opacity="0.5" />
 
-        {/* بالن ارلن (Erlenmeyer) — ظرف اصلی محلول */}
-        <path d="M110,30 L110,90 L85,150 Q100,165 160,165 Q220,165 235,150 L210,90 L210,30 Z" fill="none" stroke="#cfd8e8" strokeWidth="3" />
-        <path d="M112,95 L87,148 Q101,161 159,161 Q219,161 233,148 L208,95 Z" fill={color} opacity="0.82" />
-        {/* خط‌های درجه‌بندی روی بدنه‌ی بالن، مثل شیشه‌آلات واقعی */}
-        <line x1="98" y1="120" x2="106" y2="120" stroke="#8fa3c4" strokeWidth="1" />
-        <line x1="93" y1="140" x2="103" y2="140" stroke="#8fa3c4" strokeWidth="1" />
+        {/* بدنه‌ی شیشه‌ای بشر */}
+        <path d="M95,62 L95,163 A65,9 0 0 0 225,163 L225,62 A65,9 0 0 1 95,62 Z" fill="url(#abGlass)" />
+        <path d="M95,62 L95,163 A65,9 0 0 0 225,163 L225,62" fill="none" stroke="#cfd8e8" strokeWidth="2" />
+        {/* لب و فرجه‌ی بشر */}
+        <path d="M95,62 A65,9 0 0 0 225,62" fill="none" stroke="#e8eefb" strokeWidth="2.2" />
+        <path d="M95,62 L83,57 L96,57" fill="none" stroke="#cfd8e8" strokeWidth="1.6" strokeLinejoin="round" />
+        {/* ته بشر */}
+        <path d="M100,160 A60,7 0 0 0 220,160" fill="none" stroke="#fff" strokeWidth="0.8" opacity="0.35" />
         {/* درخشش شیشه */}
-        <path d="M118,35 L118,88 L104,118" fill="none" stroke="#ffffff" strokeWidth="2" opacity="0.12" strokeLinecap="round" />
+        <path d="M105,72 L105,150" stroke="#fff" strokeWidth="4" strokeLinecap="round" opacity="0.18" />
+        <path d="M215,76 L215,146" stroke="#fff" strokeWidth="2" strokeLinecap="round" opacity="0.12" />
+        {/* نشانه‌های درجه‌بندی (مثل بشر ۲۵۰ میلی‌لیتری) */}
+        {[0, 1, 2, 3, 4].map((i) => {
+          const y = 148 - i * 18;
+          return (
+            <g key={"abt" + i}>
+              <line x1="190" y1={y} x2={i % 2 === 0 ? 211 : 204} y2={y} stroke="#e8eefb" strokeWidth="1.2" opacity="0.9" />
+              {i % 2 === 0 && (<text x="186" y={y + 2.6} fontSize="7" fill="#e8eefb" textAnchor="end" style={{ direction: "ltr", unicodeBidi: "isolate" }}>{50 + i * 50}</text>)}
+            </g>
+          );
+        })}
+        <text x="132" y="152" fontSize="8" fontWeight="700" fill="#e8eefb" opacity="0.8" textAnchor="middle" style={{ direction: "ltr", unicodeBidi: "isolate" }}>250 ml</text>
+        {/* لبه‌ی جلویی دهانه */}
+        <path d="M95,62 A65,9 0 0 0 225,62" fill="none" stroke="#fff" strokeWidth="0.8" opacity="0.5" transform="translate(0,1.5)" />
+
+        {/* قطره‌چکان اسید — عمودی، نوک رو به پایین، بالای دهانه‌ی بشر */}
+        <g>
+          <path d="M133,24 Q133,6 140,6 Q147,6 147,24 Z" fill="#e0908f" stroke="#8a3a3a" strokeWidth="1.2" />
+          <rect x="135" y="24" width="10" height="26" fill="#dce8f5" fillOpacity="0.85" stroke="#8fa3c4" strokeWidth="1.2" />
+          <rect x="137" y="30" width="6" height="18" fill="#ff8a7a" opacity="0.7" />
+          <path d="M135,50 L145,50 L141,60 L139,60 Z" fill="#dce8f5" fillOpacity="0.9" stroke="#8fa3c4" strokeWidth="1" />
+        </g>
+        <text x="118" y="20" textAnchor="middle" fontSize="10" fontWeight="700" fill="#ff8a7a">اسید</text>
+
+        {/* قطره‌چکان باز */}
+        <g>
+          <path d="M173,24 Q173,6 180,6 Q187,6 187,24 Z" fill="#8fb8d9" stroke="#3a5a7a" strokeWidth="1.2" />
+          <rect x="175" y="24" width="10" height="26" fill="#dce8f5" fillOpacity="0.85" stroke="#8fa3c4" strokeWidth="1.2" />
+          <rect x="177" y="30" width="6" height="18" fill="#7ac2ff" opacity="0.7" />
+          <path d="M175,50 L185,50 L181,60 L179,60 Z" fill="#dce8f5" fillOpacity="0.9" stroke="#8fa3c4" strokeWidth="1" />
+        </g>
+        <text x="202" y="20" textAnchor="middle" fontSize="10" fontWeight="700" fill="#7ac2ff">باز</text>
 
         {drop && (
           <g>
-            <circle cx={drop.x} cy={drop.y} r="3.2" fill={drop.color} opacity={drop.opacity} />
-            {drop.landed && <circle cx={LIQUID_TARGET.x} cy={LIQUID_TARGET.y} r={drop.rippleR} fill="none" stroke={drop.color} strokeWidth="1.2" opacity={1 - drop.rippleR / 14} />}
+            {!drop.landed && <path d={`M${drop.x},${drop.y - 5} Q${drop.x + 3.2},${drop.y + 1} ${drop.x},${drop.y + 3.2} Q${drop.x - 3.2},${drop.y + 1} ${drop.x},${drop.y - 5} Z`} fill={drop.color} />}
+            {drop.landed && <ellipse cx={drop.x} cy={LIQ_Y} rx={drop.rippleR} ry={drop.rippleR * 0.28} fill="none" stroke={drop.color} strokeWidth="1.3" opacity={drop.op} />}
           </g>
         )}
       </svg>

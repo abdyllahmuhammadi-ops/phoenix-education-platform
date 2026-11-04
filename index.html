@@ -24688,34 +24688,24 @@ function VlabSimpleSwitchExperiment({ onReading }) {
       سیم‌های رنگی قطب‌دار و یک لامپ واقعی به‌جای دایره‌ی تخت زرد. */}
   return (
     <div className="vlab-exp">
-      <svg viewBox="0 -20 320 190" className="vlab-svg" style={{ background: "#0b1330", borderRadius: "10px" }}>
-        {/* باتری: عکسِ واقعیِ باتریِ نوستالژیکِ «قوه پارس» — دکمه‌ی فلزیِ بالا = +، ته‌ی تخت = − */}
+      <svg viewBox="0 -20 320 190" className="vlab-svg" style={{ background: "#03060f", borderRadius: "10px" }}>
         <VlabBatteryPhoto x={23.5} y={68} width={39} />
-        {/* سیم طلایی (+): از دکمه‌ی بالاییِ باتری → پایه‌ی لولای کلید */}
-        <path d="M43,68 L43,55 L150,55 L150,130" fill="none" stroke="#f2c572" strokeWidth="2.6" />
-        {/* کلید دوباره طراحی شد: کاربر گفت شکل کلید و سیمِ طرفِ لامپ درست نیست. قبلاً وقتی کلید باز بود،
-            هیچ سیمی بین پایه‌ی دومِ کلید و لامپ دیده نمی‌شد (انگار آن سیم اصلاً وجود ندارد)، و لولا/پایه‌ها
-            هم فقط دو نقطه‌ی شناور بودند. حالا: یک صفحه‌ی نصبِ کوچک زیرِ لولا، یک پایه‌ی ثابت و ایستاده
-            برای تماسِ دوم (که سیمِ طلاییِ آن به لامپ همیشه و در هر دو حالت وصل است — چون آن سیم واقعاً
-            همیشه آن‌جاست)، و فقط تیغه‌ی متحرکِ کلید (با یک دستگیره‌ی گرد در نوک) بین بازوباز/بسته جابه‌جا
-            می‌شود. */}
-        <rect x="143" y="128" width="14" height="6" rx="1.5" fill="#1c2540" stroke="#4a4f60" strokeWidth="0.6" />
-        <rect x="190" y="112" width="12" height="6" rx="1.5" fill="#1c2540" stroke="#4a4f60" strokeWidth="0.6" />
-        <line x1="196" y1="112" x2="196" y2="105" stroke="#cfd8e8" strokeWidth="2.2" strokeLinecap="round" />
-        {/* سیمِ طلاییِ همیشگیِ کلید → لامپ (دیگر فقط در حالت بسته دیده نمی‌شود) */}
-        <path d="M196,112 L196,119 L240,119" fill="none" stroke="#f2c572" strokeWidth="2.6" />
+        {/* سیم + : دکمه‌ی باتری ← بالا ← پایه‌ی لولای کلید */}
+        <path d="M43,68 L43,30 L90,30" fill="none" stroke="#f2c572" strokeWidth="2.6" strokeLinejoin="round" />
+        {/* سیم از تماس دوم کلید ← راست لامپ ← ته‌ی لامپ (همیشه وصل) */}
+        <path d="M150,30 L285,30 L285,126 L240,126 L240,119" fill="none" stroke="#f2c572" strokeWidth="2.6" strokeLinejoin="round" />
+        {/* تیغه‌ی کلید: بسته = افقی روی تماس، باز = بالا آمده */}
         {closed ? (
-          <line x1="150" y1="130" x2="196" y2="105" stroke="#d9ac5e" strokeWidth="3.4" strokeLinecap="round" />
+          <line x1="90" y1="30" x2="150" y2="30" stroke="#d9ac5e" strokeWidth="3.6" strokeLinecap="round" />
         ) : (
-          <line x1="150" y1="130" x2="174" y2="88" stroke="#d9ac5e" strokeWidth="3.4" strokeLinecap="round" />
+          <line x1="90" y1="30" x2="136" y2="2" stroke="#d9ac5e" strokeWidth="3.6" strokeLinecap="round" />
         )}
-        <circle cx="150" cy="130" r="4" fill="#cfd8e8" stroke="#5b6472" strokeWidth="0.8" />
-        <circle cx="196" cy="105" r="3.5" fill={closed ? "#f2c572" : "#5b6472"} stroke="#cfd8e8" strokeWidth="0.8" />
-        {!closed && <circle cx="174" cy="88" r="3" fill="#8a6d3b" stroke="#cfd8e8" strokeWidth="0.8" />}
-        <text x="168" y="149" fontSize="8" fill="#9aa3c0" textAnchor="middle">کلید</text>
+        <circle cx="90" cy="30" r="4.2" fill="#cfd8e8" stroke="#5b6472" strokeWidth="0.8" />
+        <circle cx="150" cy="30" r="4" fill={closed ? "#f2c572" : "#5b6472"} stroke="#cfd8e8" strokeWidth="0.8" />
+        <text x="120" y="50" fontSize="9" fill="#9aa3c0" textAnchor="middle">کلید {closed ? "(بسته)" : "(باز)"}</text>
         <VlabMiniBulb cx={240} baseTopY={100} t={closed ? 0.9 : 0} />
-        {/* سیم آبی (−): بدنه‌ی فلزی لامپ → ته‌ی تختِ باتری (قطب منفیِ واقعی) */}
-        <path d="M230,110 L230,40 L36,40 L36,147 L43,147" fill="none" stroke="#3a9bd5" strokeWidth="2.6" />
+        {/* سیم − : بدنه‌ی لامپ ← پایین ← ته‌ی باتری */}
+        <path d="M222,108 L200,108 L200,160 L43,160 L43,148" fill="none" stroke="#3a9bd5" strokeWidth="2.6" strokeLinejoin="round" />
       </svg>
       <div className="vlab-controls">
         <div className="vlab-ctrl-col">
@@ -25050,9 +25040,8 @@ function VlabPhotosynthesisExperiment({ onReading }) {
         {Array.from({ length: 4 }).map((_, i) => (
           <line key={i} x1="158" y1={18 + i * 6} x2="153" y2={18 + i * 6} stroke="#5b6472" strokeWidth="0.6" />
         ))}
-        <line x1="178" y1="68" x2="200" y2="40" stroke="#6b7399" strokeWidth="0.8" />
-        <text x="202" y="35" fontSize="7" fill="#cfd8e8" textAnchor="start">لوله‌ی آزمایشِ مدرج</text>
-        <text x="202" y="43" fontSize="7" fill="#cfd8e8" textAnchor="start">(جمع‌آوری گاز اکسیژن)</text>
+        <polyline points="160,22 188,22" fill="none" stroke="#6b7399" strokeWidth="0.8" />
+        <text x="252" y="20" fontSize="7.5" fill="#cfd8e8" textAnchor="middle">لوله‌ی مدرج: جمع‌آوری اکسیژن</text>
         {bubbles.map((_, i) => (
           <circle key={i} cx={145 + (i % 3) * 7} cy="160" r="2.6" fill="#fff" opacity="0.85">
             <animate attributeName="cy" from="160" to="45" dur={`${bubbleDuration}s`} begin={`${i * 0.3}s`} repeatCount="indefinite" />
@@ -27122,7 +27111,7 @@ function VlabDiffusionExperiment({ onReading }) {
         {/* کرونومترِ عقربه‌ایِ واقعی: چون حالا زمان به‌طورِ خودکار و پیوسته جلو می‌رود (نه با نوارِ
             لغزنده)، عقربه مثلِ یک کرونومترِ واقعی هر ۶۰ ثانیه یک دور کامل می‌زند و عددِ کلِ زمانِ
             سپری‌شده زیرش نوشته می‌شود */}
-        <VlabStopwatchIcon x={50} y={36} scale={1.6} seconds={elapsed % 60} maxSeconds={60} readout={`${elapsed.toFixed(0)}s`} />
+        <VlabStopwatchIcon x={46} y={24} scale={1.15} seconds={elapsed % 60} maxSeconds={60} readout={`${elapsed.toFixed(0)}s`} />
       </svg>
       <div className="vlab-controls">
         <div className="vlab-ctrl-col" style={{ flex: 1 }}>
@@ -27329,7 +27318,13 @@ function VlabHeatTransferExperiment({ onReading }) {
             <rect x="70" y="86" width="220" height="14" rx="3" fill="url(#heatRodGrad)" stroke="#2c3140" strokeWidth="1.5" />
             <line x1="70" y1="89" x2="290" y2="89" stroke="#fff" strokeWidth="1" opacity="0.22" />
             <VlabThermometerMini x={298} y={60} temp={farEndTemp} minT={0} maxT={100} h={55} />
-            <text x="180" y="130" fontSize="9" fill="#9aa3c0" textAnchor="middle">جبهه‌ی داغ (نارنجی) با گذشتِ زمان در طولِ میله‌ی فلزی جلو می‌رود</text>
+            {Array.from({ length: 11 }).map((_, k) => (
+              <g key={"hr" + k}>
+                <line x1={70 + k * 22} y1="102" x2={70 + k * 22} y2={k % 5 === 0 ? 112 : 108} stroke="#8fa3c8" strokeWidth="1" />
+                {k % 5 === 0 && <text x={70 + k * 22 - (k === 10 ? 8 : 0)} y="136" fontSize="7.5" fill="#cfd6ea" textAnchor="middle" style={{ direction: "ltr", unicodeBidi: "isolate" }}>{k * 10 + " cm"}</text>}
+              </g>
+            ))}
+            <text x="180" y="150" fontSize="9" fill="#9aa3c0" textAnchor="middle">جبهه‌ی داغ (نارنجی) با گذشتِ زمان در طولِ میله‌ی فلزی جلو می‌رود</text>
           </g>
         )}
         {mode === "همرفت" && (

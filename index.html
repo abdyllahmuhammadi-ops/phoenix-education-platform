@@ -24278,13 +24278,15 @@ function VlabPlantGrowthExperiment({ onReading }) {
   }, [day, height, maturity]);
 
   const healthy = lastGrowth >= 2 || day === 0 || (height >= 100 && lightFactor * waterFactor > 0.5);
-  const leafColor = healthy ? "#3fae4e" : "#c7b23a";
+  const leafColorBase = healthy ? "#3fae4e" : "#c7b23a";
 
   // مرحله‌ی رشد بر اساس قد و بلوغ: دانه → جوانه → نهال → گیاه بزرگ → شکوفه → میوه — نه فقط یک خط و چند بیضی
   // که فرقی با هم ندارند، و نه این‌که داستان گیاه درست در لحظه‌ی شکوفه‌دادن تمام شود.
   const stage =
     height <= 0 ? "seed" : height < 12 ? "sprout" : height < 40 ? "young" : height < 90 ? "grown" : maturity >= MATURITY_TARGET ? "fruiting" : "flowering";
 
+  // در مرحله‌ی میوه، گیاه پیر می‌شود: برگ‌ها کمتر، زرد و آویزان (انرژی گیاه صرف میوه شده)
+  const leafColor = stage === "fruiting" ? "#d2b83c" : leafColorBase;
   const potCx = 160;
   const potTopY = 158, potBottomY = 175, potTopW = 60, potBottomW = 44;
   const soilY = potTopY + 2;
@@ -24293,7 +24295,7 @@ function VlabPlantGrowthExperiment({ onReading }) {
 
   // تعداد جفت‌برگ را بر اساس قد تعیین می‌کنیم، نه فاصله‌ی ثابتِ پیکسلی روی ساقه — چون روی ساقه‌های کوتاه
   // (نهال تازه) فاصله‌ی ثابت اصلاً جایی برای حتی یک برگ باقی نمی‌گذاشت و ساقه کاملاً خالی دیده می‌شد.
-  const leafPairCount = vlabClamp(Math.floor(height / 13), 0, 6);
+  const leafPairCount = stage === "fruiting" ? 3 : vlabClamp(Math.floor(height / 13), 0, 6);
   const leafYs = [];
   const stemLen = stemBaseY - stemTopY;
   for (let i = 1; i <= leafPairCount; i++) {
@@ -24366,13 +24368,23 @@ function VlabPlantGrowthExperiment({ onReading }) {
           </g>
         )}
 
-        {(stage === "young" || stage === "grown" || stage === "flowering" || stage === "fruiting") &&
+        {(stage === "young" || stage === "grown" || stage === "flowering") &&
           leafYs.map((y, i) => (
             <g key={i}>
               <path d={`M${potCx},${y} Q${potCx - 11},${y - 7} ${potCx - 21},${y} Q${potCx - 11},${y + 7} ${potCx},${y} Z`} fill={leafColor} stroke="#2c6e3f" strokeWidth="0.6" />
               <line x1={potCx} y1={y} x2={potCx - 18} y2={y} stroke="#2c6e3f" strokeWidth="0.6" opacity="0.5" />
               <path d={`M${potCx},${y - 7} Q${potCx + 11},${y - 14} ${potCx + 21},${y - 7} Q${potCx + 11},${y} ${potCx},${y - 7} Z`} fill={leafColor} stroke="#2c6e3f" strokeWidth="0.6" />
               <line x1={potCx} y1={y - 7} x2={potCx + 18} y2={y - 7} stroke="#2c6e3f" strokeWidth="0.6" opacity="0.5" />
+            </g>
+          ))}
+        {/* مرحله‌ی میوه: فقط سه جفت برگ زرد که از وسط ساقه رو به پایین آویزان و خمیده‌اند */}
+        {stage === "fruiting" &&
+          leafYs.map((y, i) => (
+            <g key={"dl" + i}>
+              <path d={`M${potCx},${y} Q${potCx - 12},${y - 1} ${potCx - 17},${y + 17} Q${potCx - 8},${y + 8} ${potCx},${y + 2} Z`} fill={leafColor} stroke="#8a6d1c" strokeWidth="0.7" />
+              <path d={`M${potCx},${y} Q${potCx - 11},${y + 2} ${potCx - 16},${y + 15}`} fill="none" stroke="#8a6d1c" strokeWidth="0.5" opacity="0.6" />
+              <path d={`M${potCx},${y - 6} Q${potCx + 12},${y - 7} ${potCx + 17},${y + 11} Q${potCx + 8},${y + 2} ${potCx},${y - 4} Z`} fill={i === 1 ? "#b98f2a" : leafColor} stroke="#8a6d1c" strokeWidth="0.7" />
+              <path d={`M${potCx},${y - 6} Q${potCx + 11},${y - 5} ${potCx + 16},${y + 9}`} fill="none" stroke="#8a6d1c" strokeWidth="0.5" opacity="0.6" />
             </g>
           ))}
 

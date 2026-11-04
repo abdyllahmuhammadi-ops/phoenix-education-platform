@@ -7274,6 +7274,95 @@ function WeeklyScheduleStep({ academicInfo, onBack, onContinue }) {
 }
 
 /* ============================================================
+   ققنوس — دسترسی رایگان (فقط مدیر سامانه فهرست را می‌سازد؛ دانش‌آموز هیچ برچسبی نمی‌بیند)
+   ============================================================ */
+function palNormDigits(v) {
+  return String(v || "").replace(/[۰-۹]/g, (d) => "۰۱۲۳۴۵۶۷۸۹".indexOf(d)).replace(/[٠-٩]/g, (d) => "٠١٢٣٤٥٦٧٨٩".indexOf(d)).replace(/\D/g, "");
+}
+async function phoenixFreeLoad() {
+  try {
+    const raw = await authStorageGet("free-access", true);
+    const o = raw ? JSON.parse(raw) : {};
+    return { schools: Array.isArray(o.schools) ? o.schools : [], students: Array.isArray(o.students) ? o.students : [] };
+  } catch (e) { return { schools: [], students: [] }; }
+}
+async function phoenixFreeSave(data) { return authStorageSet("free-access", JSON.stringify(data), true); }
+function palFreeActive(item) { return !item.until || item.until >= Date.now(); }
+async function phoenixIsFree(nationalCode, schoolCode) {
+  const d = await phoenixFreeLoad();
+  const n = palNormDigits(nationalCode), c = palNormDigits(schoolCode);
+  return d.students.some((x) => x.nid === n && palFreeActive(x)) || d.schools.some((x) => x.code === c && palFreeActive(x));
+}
+
+function PsadFreeAccess() {
+  const [data, setData] = useState({ schools: [], students: [] });
+  const [tab, setTab] = useState("school");
+  const [text, setText] = useState("");
+  const [until, setUntil] = useState("");
+  const [msg, setMsg] = useState("");
+  useEffect(() => { (async () => { if (await waitForStorage()) setData(await phoenixFreeLoad()); })(); }, []);
+  const len = tab === "school" ? 8 : 10;
+  const add = async () => {
+    const tokens = text.split(/[\s,،;؛]+/).map(palNormDigits).filter(Boolean);
+    const good = [...new Set(tokens.filter((t) => t.length === len))];
+    const bad = tokens.length - good.length;
+    if (!good.length) { setMsg("کد معتبر پیدا نشد؛ هر کد باید " + len.toLocaleString("fa-IR") + " رقم باشد."); return; }
+    const untilTs = until ? new Date(until + "T23:59:59").getTime() : 0;
+    const next = { schools: [...data.schools], students: [...data.students] };
+    const key = tab === "school" ? "schools" : "students", f = tab === "school" ? "code" : "nid";
+    for (const g of good) {
+      const i = next[key].findIndex((x) => x[f] === g);
+      const rec = { [f]: g, until: untilTs || 0, added: Date.now() };
+      if (i >= 0) next[key][i] = rec; else next[key].push(rec);
+    }
+    const r = await phoenixFreeSave(next);
+    if (!r.ok) { setMsg("ذخیره ناموفق بود؛ دوباره تلاش کنید."); return; }
+    setData(next); setText("");
+    setMsg(good.length.toLocaleString("fa-IR") + " مورد ثبت شد" + (bad ? " — " + bad.toLocaleString("fa-IR") + " مورد نامعتبر نادیده گرفته شد." : "."));
+  };
+  const remove = async (f, v) => {
+    const key = f === "code" ? "schools" : "students";
+    const next = { ...data, [key]: data[key].filter((x) => x[f] !== v) };
+    await phoenixFreeSave(next); setData(next);
+  };
+  const list = tab === "school" ? data.schools : data.students;
+  const f = tab === "school" ? "code" : "nid";
+  const fmt = (x) => (x.until ? "تا " + new Date(x.until).toLocaleDateString("fa-IR") : "دائمی") + (x.until && x.until < Date.now() ? " (منقضی)" : "");
+  const box = { width: "100%", border: "1px solid rgba(28,37,64,0.18)", borderRadius: 10, padding: "9px 12px", fontFamily: "inherit", fontSize: 13, background: "#fff", direction: "ltr", textAlign: "left" };
+  return (
+    <details style={{ marginBottom: 20, background: "#fff", border: "1px solid rgba(28,37,64,0.1)", borderRadius: 14, padding: "12px 16px" }}>
+      <summary style={{ cursor: "pointer", fontWeight: 800, color: "#1c2540", fontSize: 14 }}>🎓 دسترسی رایگان — مدرسه‌ها و دانش‌آموزان ({(data.schools.length + data.students.length).toLocaleString("fa-IR")})</summary>
+      <div style={{ marginTop: 12 }}>
+        <p style={{ color: "#6b7399", fontSize: 12, lineHeight: 1.9, margin: "0 0 10px" }}>فقط شما این فهرست را می‌بینید. دانش‌آموز رایگان هیچ برچسبی نمی‌بیند و مرحله‌ی پرداخت برایش بی‌صدا رد می‌شود.</p>
+        <div style={{ display: "flex", gap: 8, marginBottom: 10 }}>
+          {[["school", "مدرسه (کد ۸ رقمی)"], ["student", "دانش‌آموز (کد ملی)"]].map(([k, l]) => (
+            <button key={k} type="button" onClick={() => { setTab(k); setMsg(""); }} style={{ flex: 1, padding: "8px 6px", borderRadius: 10, border: "1px solid " + (tab === k ? "#c8862b" : "rgba(28,37,64,0.15)"), background: tab === k ? "rgba(224,168,62,0.18)" : "transparent", fontWeight: 700, fontSize: 12.5, cursor: "pointer", fontFamily: "inherit", color: "#1c2540" }}>{l}</button>
+          ))}
+        </div>
+        <textarea rows={3} style={box} placeholder={tab === "school" ? "یک یا چند کد مدرسه — با فاصله، ویرگول یا خط جدید" : "یک یا چند کد ملی — با فاصله، ویرگول یا خط جدید"} value={text} onChange={(e) => setText(e.target.value)} />
+        <div style={{ display: "flex", gap: 8, alignItems: "center", margin: "8px 0", flexWrap: "wrap" }}>
+          <label style={{ fontSize: 12, color: "#6b7399" }}>تاریخ پایان (اختیاری):</label>
+          <input type="date" value={until} onChange={(e) => setUntil(e.target.value)} style={{ ...box, width: "auto", padding: "6px 10px" }} />
+          <button type="button" className="psad-query-btn" onClick={add} disabled={!text.trim()} style={{ marginRight: "auto" }}>افزودن</button>
+        </div>
+        {msg && <p style={{ fontSize: 12.5, color: "#2c6e3f", margin: "4px 0 8px" }}>{msg}</p>}
+        {list.length === 0 ? <p className="psad-empty" style={{ padding: "12px 0" }}>هنوز موردی ثبت نشده است.</p> : (
+          <div style={{ maxHeight: 240, overflowY: "auto", display: "flex", flexDirection: "column", gap: 6 }}>
+            {list.map((x) => (
+              <div key={x[f]} style={{ display: "flex", justifyContent: "space-between", alignItems: "center", padding: "7px 10px", border: "1px solid rgba(28,37,64,0.08)", borderRadius: 10, fontSize: 12.5 }}>
+                <span style={{ direction: "ltr", fontWeight: 700 }}>{x[f]}</span>
+                <span style={{ color: "#8a8060" }}>{fmt(x)}</span>
+                <button type="button" onClick={() => remove(f, x[f])} style={{ background: "none", border: "none", color: "#c0392b", cursor: "pointer", fontSize: 12.5, fontFamily: "inherit" }}>حذف</button>
+              </div>
+            ))}
+          </div>
+        )}
+      </div>
+    </details>
+  );
+}
+
+/* ============================================================
    ققنوس — آموزش برای فردا
    پرداخت شهریه و صدور رمز ورود
    ============================================================ */
@@ -7303,7 +7392,23 @@ function TuitionPaymentStep({ academicInfo, onBack, onFinish }) {
   const [payError, setPayError] = useState("");
   const [paySaving, setPaySaving] = useState(false);
 
-  const handlePay = async () => {
+  const [isFree, setIsFree] = useState(false);
+  const [freeChecked, setFreeChecked] = useState(false);
+  useEffect(() => {
+    let alive = true;
+    (async () => {
+      try {
+        if (await waitForStorage()) {
+          const fr = await phoenixIsFree(academicInfo && academicInfo.nationalCode, academicInfo && academicInfo.schoolCode);
+          if (alive && fr) { setIsFree(true); handlePay(true); }
+        }
+      } catch (e) {}
+      if (alive) setFreeChecked(true);
+    })();
+    return () => { alive = false; };
+  }, []);
+
+  const handlePay = async (free) => {
     const code = String(Math.floor(100000 + Math.random() * 900000));
     const phone = academicInfo && academicInfo.studentPhone;
     setPayError("");
@@ -7334,7 +7439,8 @@ function TuitionPaymentStep({ academicInfo, onBack, onFinish }) {
 
         const record = {
           nationalCode: info.nationalCode || "",
-          amount: amount || 0,
+          amount: free === true ? 0 : (amount || 0),
+          free: free === true ? true : undefined,
           date: new Date().toLocaleDateString("fa-IR"),
           timestamp: Date.now(),
           province: info.province || "",
@@ -7477,7 +7583,9 @@ function TuitionPaymentStep({ academicInfo, onBack, onFinish }) {
             <span key={i} className="ptp-ember" style={{ left: e.l, animationDelay: e.d }} />
           ))}
 
-          {!paid ? (
+          {!paid && ((isFree && !payError) || !freeChecked) ? (
+            <div className="ptp-success"><p className="ptp-success-text">{payError || "در حال تکمیل ثبت‌نام..."}</p></div>
+          ) : !paid ? (
             <>
               <button type="button" className="ptp-back" onClick={onBack}>
                 → بازگشت
@@ -7503,7 +7611,7 @@ function TuitionPaymentStep({ academicInfo, onBack, onFinish }) {
               </div>
 
               {payError && <p style={{ color: "#c0392b", fontSize: 12.5, textAlign: "center", margin: "0 0 10px" }}>{payError}</p>}
-              <button type="button" className="ptp-pay-btn" onClick={handlePay} disabled={!amount || paySaving}>
+              <button type="button" className="ptp-pay-btn" onClick={() => handlePay(false)} disabled={!amount || paySaving}>
                 {paySaving ? "در حال ثبت رمز ورود..." : "پرداخت و دریافت رمز ورود"}
                 <span style={{ fontSize: 20 }}>←</span>
               </button>
@@ -7514,7 +7622,7 @@ function TuitionPaymentStep({ academicInfo, onBack, onFinish }) {
                 <div className="ptp-success-tagline">سرمایه‌گذاری برای آینده بهتر و فردای روشن‌تر</div>
               </div>
               <div className="ptp-success-icon">✓</div>
-              <div className="ptp-success-title">پرداخت با موفقیت انجام شد</div>
+              <div className="ptp-success-title">{isFree ? "ثبت‌نام شما تکمیل شد" : "پرداخت با موفقیت انجام شد"}</div>
               <p className="ptp-success-text">رمز ورود شما در همین صفحه نمایش داده شده است — آن را همین حالا یادداشت کنید.<br />این رمز نباید در اختیار دیگران قرار گیرد.</p>
               <div className="ptp-code-box">
                 <div className="ptp-code-label">رمز ورود شما</div>
@@ -15448,6 +15556,8 @@ function SystemAdminDashboardStep({ onBack, onOpenQuestionBank, onOpenSystemSugg
               📊 آمار ثبت‌نام‌کنندگان (کلاس، مدرسه، منطقه، رشته، پایه، جنسیت)
             </button>
           )}
+
+          <PsadFreeAccess />
 
           <SystemSuggestionAdminView />
 

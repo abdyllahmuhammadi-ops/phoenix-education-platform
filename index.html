@@ -14744,6 +14744,38 @@ async function teamApprovedKonkurQuestions(subject, grade) {
    داشبورد مدیر سامانه — تنها نقشی که به شهریه/پرداخت دسترسی دارد
    ============================================================ */
 
+// کشوی ساده و مطمئن (به‌جای select بومیِ مرورگر که در بعضی مرورگرها فهرستش خالی/نامرئی نمایش داده می‌شود)
+function PalSelect({ value, onChange, options, placeholder, disabled, style }) {
+  const [open, setOpen] = useState(false);
+  const ref = React.useRef(null);
+  useEffect(() => {
+    if (!open) return undefined;
+    const h = (e) => { if (ref.current && !ref.current.contains(e.target)) setOpen(false); };
+    document.addEventListener("mousedown", h);
+    document.addEventListener("touchstart", h);
+    return () => { document.removeEventListener("mousedown", h); document.removeEventListener("touchstart", h); };
+  }, [open]);
+  const cur = options.find((o) => o === value);
+  return (
+    <div ref={ref} style={{ position: "relative", flex: "1 1 140px", minWidth: 130, ...(style || {}) }}>
+      <button type="button" disabled={disabled} onClick={() => setOpen((o) => !o)}
+        style={{ width: "100%", height: 42, borderRadius: 10, border: "1.4px solid #d9c9a0", background: disabled ? "#f3efe3" : "#fff", color: disabled ? "#9aa0b4" : "#1c2540", padding: "0 12px", fontSize: 14, fontFamily: "inherit", fontWeight: 600, cursor: disabled ? "default" : "pointer", display: "flex", alignItems: "center", justifyContent: "space-between", gap: 8, textAlign: "right" }}>
+        <span style={{ overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{cur || placeholder}</span>
+        <span style={{ fontSize: 11, color: "#a8741f" }}>▾</span>
+      </button>
+      {open && !disabled && (
+        <div style={{ position: "absolute", top: 46, right: 0, left: 0, zIndex: 50, background: "#fff", border: "1.4px solid #d9c9a0", borderRadius: 12, boxShadow: "0 12px 30px rgba(0,0,0,0.25)", maxHeight: 260, overflowY: "auto" }}>
+          <div onClick={() => { onChange(""); setOpen(false); }} style={{ padding: "10px 12px", fontSize: 13.5, cursor: "pointer", color: "#6b7399", fontWeight: 700, borderBottom: "1px solid #f0e8d0" }}>{placeholder}</div>
+          {options.length === 0 && <div style={{ padding: "10px 12px", fontSize: 13, color: "#9aa0b4" }}>موردی نیست</div>}
+          {options.map((o) => (
+            <div key={o} onClick={() => { onChange(o); setOpen(false); }} style={{ padding: "10px 12px", fontSize: 14, cursor: "pointer", color: "#1c2540", background: o === value ? "#fff3d6" : "#fff", fontWeight: o === value ? 800 : 500 }}>{o}</div>
+          ))}
+        </div>
+      )}
+    </div>
+  );
+}
+
 // داده‌ی آزمایشی (فقط برای امتحان آمار): کدهای مدرسه‌ی جدا (۹۹۰۰۰۰۰۱…) تا هرگز با داده‌ی واقعی قاطی نشود
 const PSAD_DEMO_SCHOOLS = [
   { code: "99000001", name: "دبستان آزمایشی ۱", province: "خراسان شمالی", county: "بجنورد", bakhsh: "مرکزی" },
@@ -15278,14 +15310,8 @@ function SystemAdminDashboardStep({ onBack, onOpenQuestionBank, onOpenSystemSugg
                 تفکیک شهریه‌ی دریافتی بر اساس استان و شهرستان
               </h2>
               <div style={{ display: "flex", flexWrap: "wrap", gap: 10, marginBottom: 12 }}>
-                <select style={{ height: 42, flex: "1 1 140px", borderRadius: 10, border: "1.4px solid #d9c9a0", background: "#fff", padding: "0 10px", fontSize: 16, fontFamily: "inherit", color: "#1c2540", colorScheme: "light" }} value={regionProvince} onChange={(e) => { setRegionProvince(e.target.value); setRegionCounty(""); }}>
-                  <option value="" style={{ background: "#fff", color: "#1c2540" }}>همه‌ی استان‌ها</option>
-                  {provinces.map((pv) => <option key={pv} value={pv} style={{ background: "#fff", color: "#1c2540" }}>{pv}</option>)}
-                </select>
-                <select style={{ height: 42, flex: "1 1 140px", borderRadius: 10, border: "1.4px solid #d9c9a0", background: "#fff", padding: "0 10px", fontSize: 16, fontFamily: "inherit", color: "#1c2540", colorScheme: "light" }} value={regionCounty} disabled={!regionProvince} onChange={(e) => setRegionCounty(e.target.value)}>
-                  <option value="" style={{ background: "#fff", color: "#1c2540" }}>{regionProvince ? "همه‌ی شهرستان‌ها" : "ابتدا استان را انتخاب کنید"}</option>
-                  {(countyMap[regionProvince] || []).map((c) => <option key={c} value={c} style={{ background: "#fff", color: "#1c2540" }}>{c}</option>)}
-                </select>
+                <PalSelect value={regionProvince} onChange={(v) => { setRegionProvince(v); setRegionCounty(""); }} options={provinces} placeholder="همه‌ی استان‌ها" />
+                <PalSelect value={regionCounty} onChange={setRegionCounty} options={countyMap[regionProvince] || []} placeholder={regionProvince ? "همه‌ی شهرستان‌ها" : "ابتدا استان را انتخاب کنید"} disabled={!regionProvince} />
               </div>
               <div className="psad-detail-table-wrap" style={{ marginBottom: 24 }}>
                 <table className="psad-detail-table">
@@ -15539,6 +15565,10 @@ function SystemAdminRegistrationStats({ onBack }) {
   const [error, setError] = useState("");
   const [records, setRecords] = useState([]);
   const [dim, setDim] = useState("province"); // province | county | bakhsh | school | class | grade | field | gender | country
+  const [fProvince, setFProvince] = useState("");
+  const [fCounty, setFCounty] = useState("");
+  const [fBakhsh, setFBakhsh] = useState("");
+  const [fSchool, setFSchool] = useState("");
 
   useEffect(() => {
     (async () => {
@@ -15612,9 +15642,14 @@ function SystemAdminRegistrationStats({ onBack }) {
     })();
   }, []);
 
+  const recs = records.filter((r) => (!fProvince || r.province === fProvince) && (!fCounty || r.county === fCounty) && (!fBakhsh || r.bakhsh === fBakhsh) && (!fSchool || (r.schoolName + "  —  کد " + r.schoolCode) === fSchool));
+  const uniq = (arr) => Array.from(new Set(arr)).sort((a, b) => String(a).localeCompare(String(b), "fa"));
+  const bakhshOptions = uniq(records.filter((r) => (!fProvince || r.province === fProvince) && (!fCounty || r.county === fCounty)).map((r) => r.bakhsh));
+  const schoolOptions = uniq(records.filter((r) => (!fProvince || r.province === fProvince) && (!fCounty || r.county === fCounty) && (!fBakhsh || r.bakhsh === fBakhsh)).map((r) => r.schoolName + "  —  کد " + r.schoolCode));
+
   const countBy = (keyFn) => {
     const m = {};
-    for (const r of records) {
+    for (const r of recs) {
       const k = keyFn(r) || "نامشخص";
       m[k] = (m[k] || 0) + 1;
     }
@@ -15634,7 +15669,7 @@ function SystemAdminRegistrationStats({ onBack }) {
   };
 
   const active = dimensions[dim];
-  const total = records.length;
+  const total = recs.length;
 
   return (
     <div dir="rtl" className="prs-root">
@@ -15674,6 +15709,13 @@ function SystemAdminRegistrationStats({ onBack }) {
             <div className="prs-total-box">
               <div className="prs-total-num">{total.toLocaleString("fa-IR")}</div>
               <div className="prs-total-label">مجموع دانش‌آموزان ثبت‌نام‌شده در سامانه</div>
+            </div>
+
+            <div style={{ display: "flex", flexWrap: "wrap", gap: 10, marginBottom: 14 }}>
+              <PalSelect value={fProvince} onChange={(v) => { setFProvince(v); setFCounty(""); setFBakhsh(""); setFSchool(""); }} options={provinces} placeholder="همه‌ی استان‌ها" />
+              <PalSelect value={fCounty} onChange={(v) => { setFCounty(v); setFBakhsh(""); setFSchool(""); }} options={countyMap[fProvince] || []} placeholder={fProvince ? "همه‌ی شهرستان‌ها" : "ابتدا استان"} disabled={!fProvince} />
+              <PalSelect value={fBakhsh} onChange={(v) => { setFBakhsh(v); setFSchool(""); }} options={bakhshOptions} placeholder="همه‌ی بخش‌ها" disabled={!fCounty} />
+              <PalSelect value={fSchool} onChange={setFSchool} options={schoolOptions} placeholder="همه‌ی مدرسه‌ها" />
             </div>
 
             <div className="prs-tabs">

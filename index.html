@@ -22390,6 +22390,59 @@ const VLAB_LEVELS = ["ابتدایی", "متوسطه اول", "متوسطه دو
 const VLAB_SUBJECTS = ["فیزیک", "شیمی", "زیست‌شناسی", "برق و الکترونیک"];
 
 /* ============================================================
+   ققنوس — آمپرمتر و ولت‌مترِ عقربه‌ایِ دقیق (با برد خودکار، مثل مولتی‌متر)
+   ============================================================ */
+function VlabMeter({ x, y, value, ranges, unit, label, size, decimals }) {
+  const v = Math.max(0, Number(value) || 0);
+  const max = ranges.find((r) => v <= r) || ranges[ranges.length - 1];
+  const frac = vlabClamp(v / max, 0, 1);
+  const k = size || 1.5;
+  const R = 22, START = -135, SWEEP = 270, MAJ = 5, MIN = 50;
+  const d = decimals == null ? (max < 1 ? 3 : max <= 10 ? 2 : 1) : decimals;
+  const fa = (t) => String(t).replace(/\d/g, (q) => "۰۱۲۳۴۵۶۷۸۹"[q]).replace(".", ".");
+  const fmt = (t) => fa(Math.abs(t - Math.round(t)) < 1e-9 ? String(Math.round(t)) : t.toFixed(max < 1 ? 2 : 1));
+  const ang = START + frac * SWEEP;
+  return (
+    <g transform={`translate(${x},${y}) scale(${k})`}>
+      {label && <text x="0" y={-R - 9} fontSize="8" fontWeight="700" fill="#cfd6ea" textAnchor="middle">{label}</text>}
+      <circle cx="0" cy="0" r={R + 6} fill="#1a2140" stroke="#8fa0c8" strokeWidth="2" />
+      <circle cx="0" cy="0" r={R + 3} fill="#faf6ea" stroke="#3a4468" strokeWidth="0.8" />
+      {Array.from({ length: MIN + 1 }).map((_, i) => {
+        const a = ((START + (SWEEP / MIN) * i) * Math.PI) / 180;
+        const major = i % (MIN / MAJ) === 0, mid = i % (MIN / MAJ / 2) === 0;
+        const r2 = R - (major ? 4.4 : mid ? 3 : 1.9);
+        return <line key={"mt" + i} x1={Math.sin(a) * R} y1={-Math.cos(a) * R} x2={Math.sin(a) * r2} y2={-Math.cos(a) * r2} stroke={major ? "#1c2540" : "#6b7399"} strokeWidth={major ? 1.1 : 0.4} />;
+      })}
+      {Array.from({ length: MAJ + 1 }).map((_, i) => {
+        const a = ((START + (SWEEP / MAJ) * i) * Math.PI) / 180;
+        return <text key={"mn" + i} x={Math.sin(a) * (R - 9.5)} y={-Math.cos(a) * (R - 9.5) + 1.9} fontSize="5.4" fontWeight="700" fill="#1c2540" textAnchor="middle">{fmt((max / MAJ) * i)}</text>;
+      })}
+      <text x="0" y="-7" fontSize="11" fontWeight="800" fill="#c0392b" textAnchor="middle" style={{ direction: "ltr", unicodeBidi: "isolate" }}>{unit}</text>
+      <g style={{ transformOrigin: "0px 0px", transform: `rotate(${ang}deg)`, transition: "transform 0.5s cubic-bezier(.3,.7,.4,1)" }}>
+        <line x1="0" y1="5" x2="0" y2={-(R - 1.5)} stroke="#d1333f" strokeWidth="1.2" strokeLinecap="round" />
+        <circle cx="0" cy="5" r="1.4" fill="#d1333f" />
+      </g>
+      <circle cx="0" cy="0" r="2.3" fill="#1c2540" /><circle cx="0" cy="0" r="0.9" fill="#cfd6ea" />
+      <rect x="-21" y={R + 9} width="42" height="12" rx="3" fill="#050a1c" stroke="#2f6fe2" strokeWidth="0.8" />
+      <text x="0" y={R + 17.8} fontSize="8" fontWeight="800" fill="#7be0a4" textAnchor="middle" style={{ direction: "ltr", unicodeBidi: "isolate" }}>{fa(v.toFixed(d)) + " " + unit}</text>
+      <text x="0" y={R + 29} fontSize="6" fill="#9fb0e0" textAnchor="middle">{"برد: ۰ تا " + fa(max) + " " + unit}</text>
+    </g>
+  );
+}
+function VlabMeterRow({ meters, height }) {
+  const n = meters.length;
+  const W = 320, H = height || 150;
+  const k = n >= 4 ? 1.2 : n === 3 ? 1.4 : 1.6;
+  return (
+    <svg viewBox={`0 0 ${W} ${H}`} className="vlab-svg" style={{ background: "#0b1330", maxWidth: 520, marginTop: 8 }}>
+      {meters.map((m, i) => (
+        <VlabMeter key={i} x={(W / n) * (i + 0.5)} y={H / 2 - 8} size={k} {...m} />
+      ))}
+    </svg>
+  );
+}
+
+/* ============================================================
    ققنوس — لغزنده + کادر عددی (دانش‌آموز می‌تواند عدد دقیق را تایپ کند؛ تصویر و فرمول همان عدد را نشان می‌دهند)
    ============================================================ */
 function VlabRange({ min, max, step, value, onChange, style, ...rest }) {
@@ -22737,54 +22790,47 @@ function vlabClamp(v, min, max) {
 // کامل شد: صفحه‌ی گرد با خط‌های درجه‌ی اصلی/فرعی، و یک عقربه‌ی قرمز که با CSS transform:rotate (همان
 // تکنیکِ اثبات‌شده‌ی چرخشِ چرخ‌های قرقره) واقعاً و نرم می‌چرخد تا مقدار را نشان دهد؛ عددِ دقیقِ دیجیتال
 // هم زیرِ صفحه باقی ماند، تا هم زیبا و متحرک باشد و هم دقیق.
-function VlabSpringScale({ x, y, force, maxForce, label, unit, textColor, labelColor }) {
+function VlabSpringScale({ x, y, force, maxForce, label, unit, textColor, labelColor, size }) {
+  // نیروسنجِ عقربه‌ایِ بزرگ و دقیق: ۵۰ خطِ ریز، ۶ عددِ اصلی، عقربه‌ی بلند با پشت‌بندِ وزنه‌دار و نمایشگرِ عددی
   const max = maxForce || 1;
   const frac = vlabClamp(force / max, 0, 1);
+  const k = size || 1.7;
   const R = 19;
-  const START = -120;
-  const SWEEP = 240;
+  const START = -135;
+  const SWEEP = 270;
   const needleAngle = START + frac * SWEEP;
   const dialCY = R + 16;
-  const majorCount = 5;
+  const MAJ = 5;      // ۵ بازه → ۶ عدد
+  const MIN = 50;     // ۵۰ بازه‌ی ریز
+  const fmt = (v) => (Math.abs(v - Math.round(v)) < 1e-9 ? String(Math.round(v)) : v.toFixed(1)).replace(/\d/g, (d) => "۰۱۲۳۴۵۶۷۸۹"[d]).replace(".", "٫");
   return (
-    <g transform={`translate(${x},${y})`}>
-      {label && <text x="0" y="-4" fontSize="8.5" fill={labelColor || "#6b7399"} textAnchor="middle">{label}</text>}
+    <g transform={`translate(${x},${y}) scale(${k})`}>
+      {label && <text x="0" y="-4" fontSize="7.5" fill={labelColor || "#6b7399"} textAnchor="middle">{label}</text>}
       <line x1="0" y1="2" x2="0" y2={dialCY - R - 4} stroke="#5b4636" strokeWidth="2.2" />
       <circle cx="0" cy={dialCY} r={R + 5} fill="#efe6d0" stroke="#5b4636" strokeWidth="2.4" />
-      <circle cx="0" cy={dialCY} r={R + 1.5} fill="#faf6ea" stroke="#c8a35a" strokeWidth="1" />
-      {Array.from({ length: majorCount }).map((_, i) => {
-        const ang = START + (SWEEP / (majorCount - 1)) * i;
+      <circle cx="0" cy={dialCY} r={R + 1.5} fill="#faf6ea" stroke="#c8a35a" strokeWidth="0.8" />
+      {Array.from({ length: MIN + 1 }).map((_, i) => {
+        const ang = START + (SWEEP / MIN) * i;
         const rad = (ang * Math.PI) / 180;
-        const ox = Math.sin(rad);
-        const oy = -Math.cos(rad);
-        const val = Math.round((max / (majorCount - 1)) * i);
-        return (
-          <g key={i}>
-            <line x1={ox * (R - 4)} y1={dialCY + oy * (R - 4)} x2={ox * R} y2={dialCY + oy * R} stroke="#5b4636" strokeWidth="1.5" />
-            <text x={ox * (R - 10.5)} y={dialCY + oy * (R - 10.5) + 2} fontSize="5.2" fill="#5b4636" textAnchor="middle">{val}</text>
-          </g>
-        );
+        const major = i % (MIN / MAJ) === 0;
+        const mid = i % (MIN / MAJ / 2) === 0;
+        const r1 = R, r2 = R - (major ? 4.2 : mid ? 2.8 : 1.8);
+        return <line key={"gt" + i} x1={Math.sin(rad) * r1} y1={dialCY - Math.cos(rad) * r1} x2={Math.sin(rad) * r2} y2={dialCY - Math.cos(rad) * r2} stroke={major ? "#3a2f22" : "#8a7244"} strokeWidth={major ? 1.1 : 0.45} />;
       })}
-      {Array.from({ length: (majorCount - 1) * 2 - 1 }).map((_, i) => {
-        if (i % 2 === 1) return null;
-        const ang = START + (SWEEP / ((majorCount - 1) * 2)) * (i + 1);
+      {Array.from({ length: MAJ + 1 }).map((_, i) => {
+        const ang = START + (SWEEP / MAJ) * i;
         const rad = (ang * Math.PI) / 180;
-        const ox = Math.sin(rad);
-        const oy = -Math.cos(rad);
-        return <line key={`m${i}`} x1={ox * (R - 2.5)} y1={dialCY + oy * (R - 2.5)} x2={ox * R} y2={dialCY + oy * R} stroke="#8a7244" strokeWidth="1" />;
+        return <text key={"gn" + i} x={Math.sin(rad) * (R - 8.6)} y={dialCY - Math.cos(rad) * (R - 8.6) + 1.8} fontSize="5.2" fontWeight="700" fill="#3a2f22" textAnchor="middle">{fmt((max / MAJ) * i)}</text>;
       })}
-      <line
-        x1="0"
-        y1={dialCY}
-        x2="0"
-        y2={dialCY - (R - 3)}
-        stroke="#d1333f"
-        strokeWidth="1.8"
-        strokeLinecap="round"
-        style={{ transformOrigin: `0px ${dialCY}px`, transform: `rotate(${needleAngle}deg)`, transition: "transform 0.6s cubic-bezier(.3,.7,.4,1)" }}
-      />
+      <text x="0" y={dialCY + 9} fontSize="4.6" fill="#6b5a3a" textAnchor="middle" style={{ direction: "ltr", unicodeBidi: "isolate" }}>{unit}</text>
+      <g style={{ transformOrigin: `0px ${dialCY}px`, transform: `rotate(${needleAngle}deg)`, transition: "transform 0.6s cubic-bezier(.3,.7,.4,1)" }}>
+        <line x1="0" y1={dialCY + 5} x2="0" y2={dialCY - (R - 1.5)} stroke="#d1333f" strokeWidth="1.3" strokeLinecap="round" />
+        <circle cx="0" cy={dialCY + 5} r="1.6" fill="#d1333f" />
+      </g>
       <circle cx="0" cy={dialCY} r="2.4" fill="#3a2f22" />
-      <text x="0" y={dialCY + R + 16} fontSize="9.5" fill={textColor || "#1c2540"} textAnchor="middle" fontWeight="700" style={{ direction: "ltr", unicodeBidi: "isolate" }}>{`${force.toFixed(1)} ${unit || "N"}`}</text>
+      <circle cx="0" cy={dialCY} r="0.9" fill="#d9c9a0" />
+      <rect x="-17" y={dialCY + R + 7} width="34" height="11" rx="3" fill="#0b1330" stroke="#2f6fe2" strokeWidth="0.8" />
+      <text x="0" y={dialCY + R + 15.2} fontSize="7.6" fill="#7be0a4" textAnchor="middle" fontWeight="800" style={{ direction: "ltr", unicodeBidi: "isolate" }}>{(Number(force) || 0).toFixed(max <= 20 ? 1 : 0) + " " + unit}</text>
     </g>
   );
 }
@@ -22802,31 +22848,32 @@ function VlabStopwatchIcon({ x, y, readout, scale, seconds, maxSeconds, extra })
       <rect x="-3" y="-17" width="6" height="5" rx="1.5" fill="#5b4636" />
       <circle cx="0" cy="0" r="17" fill="#efe6d0" stroke="#5b4636" strokeWidth="2.6" />
       <circle cx="0" cy="0" r="14.5" fill="#faf6ea" stroke="#c8a35a" strokeWidth="1" />
-      {Array.from({ length: 12 }).map((_, i) => {
-        const ang = (i * 30 * Math.PI) / 180;
-        const major = i % 3 === 0;
-        const rOuter = 14.5;
-        const rInner = major ? 11 : 12.6;
-        return (
-          <line
-            key={i}
-            x1={Math.sin(ang) * rInner}
-            y1={-Math.cos(ang) * rInner}
-            x2={Math.sin(ang) * rOuter}
-            y2={-Math.cos(ang) * rOuter}
-            stroke="#5b4636"
-            strokeWidth={major ? 1.3 : 0.8}
-          />
-        );
-      })}
+      {/* صفحه‌ی دقیق: ۶۰ (یا ۱۰۰) خط، عددهای اصلی برای دایره‌های ۶۰ثانیه‌ای */}
+      {(() => {
+        const N = (maxSeconds || 60) >= 10 ? 60 : 100;
+        const out = [];
+        for (let k = 0; k < N; k++) {
+          const ang = (k / N) * 2 * Math.PI;
+          const major = k % (N / 12) === 0, mid = k % (N / 60 * 5) === 0;
+          const r2 = major ? 10.6 : 12.8;
+          out.push(<line key={"st" + k} x1={Math.sin(ang) * 14.5} y1={-Math.cos(ang) * 14.5} x2={Math.sin(ang) * r2} y2={-Math.cos(ang) * r2} stroke="#3a2f22" strokeWidth={major ? 1.1 : 0.4} />);
+        }
+        if ((maxSeconds || 60) >= 10) {
+          for (let k = 0; k < 12; k++) {
+            const ang = (k / 12) * 2 * Math.PI;
+            out.push(<text key={"sn" + k} x={Math.sin(ang) * 7.6} y={-Math.cos(ang) * 7.6 + 1.5} fontSize="3.8" fontWeight="700" fill="#3a2f22" textAnchor="middle">{String(k * 5).replace(/\d/g, (d) => "۰۱۲۳۴۵۶۷۸۹"[d])}</text>);
+          }
+        }
+        return out;
+      })()}
       {secAngle != null ? (
         <line
           x1="0"
           y1="0"
           x2="0"
-          y2="-11"
-          stroke="#e2622f"
-          strokeWidth="1.6"
+          y2="-13.2"
+          stroke="#d3392b"
+          strokeWidth="1"
           strokeLinecap="round"
           style={{ transformOrigin: "0px 0px", transform: `rotate(${secAngle}deg)`, transition: seconds < 0.1 ? "none" : "transform 0.12s linear" }}
         />
@@ -23470,6 +23517,7 @@ function VlabOhmExperiment({ onReading }) {
           <line x1="246" y1="82" x2="253" y2="89" />
         </g>
       </svg>
+      <VlabMeterRow meters={[{ label: "آمپرمتر — جریان مدار", unit: "A", value: current, ranges: [0.1, 0.2, 0.5, 1, 2, 5, 10] }, { label: "ولت‌متر — ولتاژ باتری", unit: "V", value: voltage, ranges: [5, 10, 15] }]} />
       <div className="vlab-controls">
         <div className="vlab-ctrl-col" style={{ flex: 1 }}>
           <label className="vlab-ctrl-label">ولتاژ باتری (ولت): {voltage}</label>
@@ -23623,6 +23671,7 @@ function VlabSeriesParallelExperiment({ onReading }) {
         <VlabMiniBulb cx={bulb1Cx} baseTopY={baseTopY} t={t1} />
         <VlabMiniBulb cx={bulb2Cx} baseTopY={baseTopY} t={t2} />
       </svg>
+      <VlabMeterRow meters={[{ label: "آمپرمتر — جریان کل", unit: "A", value: iTotal, ranges: [0.1, 0.2, 0.5, 1, 2, 5] }, { label: "جریان لامپ ۱", unit: "A", value: i1, ranges: [0.1, 0.2, 0.5, 1, 2, 5] }, { label: "جریان لامپ ۲", unit: "A", value: i2, ranges: [0.1, 0.2, 0.5, 1, 2, 5] }]} />
       <div className="vlab-controls">
         <div className="vlab-ctrl-col">
           <div className="vlab-toggle-row">
@@ -25117,7 +25166,7 @@ function VlabPulleyExperiment({ onReading }) {
               {forceArrows(180, 130, 40, 30)}
             </g>
             {ruler(195)}
-            <VlabSpringScale x={140} y={100} force={forceNeeded} maxForce={10} unit="kgf" label="نیروسنج" textColor="#eaf0fb" labelColor="#9fb0d6" />
+            <VlabSpringScale x={112} y={84} size={1.3} force={forceNeeded} maxForce={10} unit="kgf" label="نیروسنج" textColor="#eaf0fb" labelColor="#9fb0d6" />
           </>
         ) : pulleyType === "متحرک" ? (
           <>
@@ -25151,7 +25200,7 @@ function VlabPulleyExperiment({ onReading }) {
               style={{ transition: "d 1.2s cubic-bezier(.3,.6,.4,1)" }}
             />
             {ruler(200)}
-            <VlabSpringScale x={106} y={100} force={forceNeeded} maxForce={10} unit="kgf" label="نیروسنج" textColor="#eaf0fb" labelColor="#9fb0d6" />
+            <VlabSpringScale x={84} y={84} size={1.3} force={forceNeeded} maxForce={10} unit="kgf" label="نیروسنج" textColor="#eaf0fb" labelColor="#9fb0d6" />
           </>
         ) : (
           <>
@@ -25192,7 +25241,7 @@ function VlabPulleyExperiment({ onReading }) {
               style={{ transition: "d 1.2s cubic-bezier(.3,.6,.4,1)" }}
             />
             {ruler(200)}
-            <VlabSpringScale x={200} y={95} force={forceNeeded} maxForce={10} unit="kgf" label="نیروسنج" textColor="#eaf0fb" labelColor="#9fb0d6" />
+            <VlabSpringScale x={44} y={96} size={1.15} force={forceNeeded} maxForce={10} unit="kgf" label="نیروسنج" textColor="#eaf0fb" labelColor="#9fb0d6" />
           </>
         )}
       </svg>
@@ -25331,7 +25380,7 @@ function VlabFrictionExperiment({ onReading }) {
           <line x1={blockX} y1="110" x2={blockX} y2="140" stroke="#5b4636" strokeWidth="1.2" strokeDasharray="2 2" opacity="0.8" />
         </g>
 
-        <VlabSpringScale x={255} y={6} force={frictionForce} maxForce={100} unit="N" label="نیروسنج" />
+        <VlabSpringScale x={262} y={14} size={1.3} force={frictionForce} maxForce={100} unit="N" label="نیروسنج" />
 
         {/* خط‌کش درجه‌بندی‌شده زیر سطح، برای نشان دادن فاصله‌ی جابجایی */}
         <rect x="0" y="132" width="320" height="16" fill="#f2e3b8" stroke="#c8a35a" strokeWidth="1" />
@@ -25519,7 +25568,7 @@ function VlabNewtonSecondLawExperiment({ onReading }) {
       <svg viewBox="0 0 400 230" className="vlab-svg" style={{ background: "#0b1330", borderRadius: "10px" }}>
         <line x1="0" y1="150" x2="400" y2="150" stroke="#5b4636" strokeWidth="3" />
         {/* نیروسنجِ عقربه‌ای، نزدیکِ نقطه‌ی شروع، همان‌طور که دست یک نفر گاری را می‌کشد */}
-        <VlabSpringScale x={40} y={30} force={force} maxForce={50} unit="N" label="نیروسنج" textColor="#eaf0fb" labelColor="#9fb0d6" />
+        <VlabSpringScale x={56} y={6} size={1.15} force={force} maxForce={50} unit="N" label="نیروسنج" textColor="#eaf0fb" labelColor="#9fb0d6" />
         <VlabStopwatchIcon
           x={320}
           y={50}
@@ -25636,57 +25685,87 @@ function VlabNewtonThirdLawExperiment({ onReading }) {
     // eslint-disable-next-line
   }, [mass1, mass2, pushed]);
 
+  const faN = (n) => String(n).replace(/\d/g, (d) => "۰۱۲۳۴۵۶۷۸۹"[d]).replace(/\./g, "٫");
+  const K = 0.85; // هر «واحد» جابجایی = ۰٫۸۵ پیکسل
+  const X0 = 207; // نقطه‌ی صفر (مرکز) روی خط‌کش
+  const GROUND = 192;
   const cartWheel = (cx, cy, r, spin) => (
     <g style={{ transform: `rotate(${spin}deg)`, transformOrigin: `${cx}px ${cy}px`, transition: "transform 1.3s cubic-bezier(.3,.6,.4,1)" }}>
-      <circle cx={cx} cy={cy} r={r} fill="#1c2540" stroke="#4a4f60" strokeWidth="1.6" />
-      {[0, 45, 90, 135].map((ang) => (
-        <line
-          key={ang}
-          x1={cx - (r - 2) * Math.cos((ang * Math.PI) / 180)}
-          y1={cy - (r - 2) * Math.sin((ang * Math.PI) / 180)}
-          x2={cx + (r - 2) * Math.cos((ang * Math.PI) / 180)}
-          y2={cy + (r - 2) * Math.sin((ang * Math.PI) / 180)}
-          stroke="#6b7399"
-          strokeWidth="1.1"
-        />
+      <circle cx={cx} cy={cy} r={r} fill="#1a2140" stroke="#8fa0c8" strokeWidth="1.6" />
+      {[0, 60, 120].map((ang) => (
+        <line key={ang} x1={cx - (r - 2) * Math.cos((ang * Math.PI) / 180)} y1={cy - (r - 2) * Math.sin((ang * Math.PI) / 180)} x2={cx + (r - 2) * Math.cos((ang * Math.PI) / 180)} y2={cy + (r - 2) * Math.sin((ang * Math.PI) / 180)} stroke="#6b7399" strokeWidth="1.1" />
       ))}
-      <circle cx={cx + (r - 2.5)} cy={cy} r="1.8" fill="#e2404f" />
+      <circle cx={cx + (r - 2.5)} cy={cy} r="1.6" fill="#ff5c7a" />
+      <circle cx={cx} cy={cy} r="1.8" fill="#cfd6ea" />
     </g>
   );
-
-  const cart = (baseX, spin, color) => (
-    <>
-      {cartWheel(baseX + 14, 156, 9, spin)}
-      {cartWheel(baseX + 43, 156, 9, spin)}
-      <rect x={baseX} y="118" width="57" height="30" rx="5" fill={color} stroke="#8a6d3b" strokeWidth="1.4" />
-    </>
+  // گاری: بدنه‌ی فلزی، چرخ‌ها و وزنه‌های روی آن (هر کیلوگرم یک وزنه)
+  const cart = (x0, spin, light, dark, id, mass) => (
+    <g>
+      <defs>
+        <linearGradient id={id} x1="0" y1="0" x2="0" y2="1"><stop offset="0%" stopColor={light} /><stop offset="100%" stopColor={dark} /></linearGradient>
+      </defs>
+      {cartWheel(x0 + 13, GROUND - 9, 8, spin)}
+      {cartWheel(x0 + 43, GROUND - 9, 8, spin)}
+      <rect x={x0} y={GROUND - 42} width="56" height="26" rx="5" fill={`url(#${id})`} stroke="rgba(0,0,0,0.45)" strokeWidth="1" />
+      <rect x={x0 + 3} y={GROUND - 40} width="50" height="2.5" rx="1.2" fill="rgba(255,255,255,0.35)" />
+      {Array.from({ length: mass }).map((_, k) => (
+        <rect key={"w" + k} x={x0 + 8} y={GROUND - 42 - (k + 1) * 4.2} width="40" height="3.6" rx="1.2" fill="#cfd6ea" stroke="rgba(0,0,0,0.4)" strokeWidth="0.5" />
+      ))}
+      <text x={x0 + 28} y={GROUND - 24} fontSize="10" fontWeight="800" fill="#fff" textAnchor="middle" style={{ direction: "ltr", unicodeBidi: "isolate" }}>{mass + " kg"}</text>
+    </g>
   );
+  const blueX = 144, orangeX = 214;
+  const springLen = pushed ? 34 : 12;
+  const spring = (xs, y, len) => {
+    const n = 7, pts = [`${xs},${y}`];
+    for (let k = 0; k < n; k++) pts.push(`${xs + (len * (k + 0.5)) / n},${y + (k % 2 === 0 ? -6 : 6)}`);
+    pts.push(`${xs + len},${y}`);
+    return <polyline points={pts.join(" ")} fill="none" stroke="#f2c572" strokeWidth="2" strokeLinejoin="round" />;
+  };
+  const ticks = [];
+  for (let m = -150; m <= 150; m += 10) {
+    const major = m % 50 === 0;
+    ticks.push(<line key={"nt" + m} x1={X0 + m * K} y1={GROUND + 5} x2={X0 + m * K} y2={GROUND + (major ? 14 : 10)} stroke="#f2c572" strokeWidth={major ? 1.4 : 0.8} />);
+    if (major) ticks.push(<text key={"nl" + m} x={X0 + m * K} y={GROUND + 25} fontSize="9" fill="#cfd6ea" textAnchor="middle">{faN(Math.abs(m))}</text>);
+  }
 
   return (
     <div className="vlab-exp">
-      <svg viewBox="0 0 400 230" className="vlab-svg" style={{ background: "#0b1330", borderRadius: "10px" }}>
-        <line x1="0" y1="150" x2="400" y2="150" stroke="#5b4636" strokeWidth="3" />
-        <g style={{ opacity: pushed ? 0 : 1, transition: "opacity 0.3s" }}>
-          {Array.from({ length: 5 }).map((_, i) => (
-            <line key={i} x1={190 + i * 4} y1={126 + (i % 2 === 0 ? -4 : 4)} x2={194 + i * 4} y2={126 + (i % 2 === 0 ? 4 : -4)} stroke="#9fb0d6" strokeWidth="2" />
-          ))}
+      <svg viewBox="0 0 420 270" className="vlab-svg" style={{ background: "#0b1330", maxWidth: 520 }}>
+        <defs>
+          <linearGradient id="n3rail" x1="0" y1="0" x2="0" y2="1"><stop offset="0%" stopColor="#aab4d0" /><stop offset="100%" stopColor="#4a5478" /></linearGradient>
+        </defs>
+        <text x="210" y="22" fontSize="12" fontWeight="700" fill="#ffd98a" textAnchor="middle" style={{ direction: "ltr", unicodeBidi: "isolate" }}>{"F₁ = − F₂   (" + (pushed ? "F = 12 N" : "قبل از رها شدن فنر") + ")"}</text>
+        {/* ریل و خط‌کش */}
+        <rect x="10" y={GROUND} width="400" height="5" rx="2" fill="url(#n3rail)" />
+        <line x1={X0} y1={GROUND - 60} x2={X0} y2={GROUND + 8} stroke="#5a6a9c" strokeDasharray="3 3" strokeWidth="0.8" />
+        {ticks}
+        <text x="210" y={GROUND + 42} fontSize="9" fill="#9fb0e0" textAnchor="middle">فاصله از مرکز (سانتی‌متر)</text>
+        {/* گاری آبی (چپ) */}
+        <g style={{ transform: `translateX(${pushed ? -d1 * K : 0}px)`, transition: `transform ${PUSH_T}s cubic-bezier(.2,.7,.3,1)` }}>
+          {cart(blueX, wheelSpin1, "#6aa8ff", "#1d4f9e", "n3gb", mass1)}
+          <g style={{ opacity: pushed ? 1 : 0, transition: "opacity 0.3s" }}>
+            <line x1={blueX + 28} y1="96" x2={blueX - 10} y2="96" stroke="#4da3ff" strokeWidth="4.5" strokeLinecap="round" />
+            <polygon points={`${blueX - 8},89 ${blueX - 8},103 ${blueX - 22},96`} fill="#4da3ff" />
+            <text x={blueX + 6} y="86" fontSize="11" fill="#4da3ff" fontWeight="700" textAnchor="middle" style={{ direction: "ltr", unicodeBidi: "isolate" }}>F₁</text>
+          </g>
         </g>
-        <g style={{ transform: `translateX(${pushed ? -d1 : 0}px)`, transition: `transform ${PUSH_T}s cubic-bezier(.2,.7,.3,1)` }}>
-          {cart(143, wheelSpin1, "#2f6fe2")}
-          <line x1="200" y1="124" x2="174" y2="124" stroke="#2f6fe2" strokeWidth="4" style={{ opacity: pushed ? 1 : 0, transition: "opacity 0.3s" }} />
-          <polygon points="174,118 174,130 164,124" fill="#2f6fe2" style={{ opacity: pushed ? 1 : 0, transition: "opacity 0.3s" }} />
-          <text x="187" y="110" fontSize="11" fill="#2f6fe2" textAnchor="middle" fontWeight="700" style={{ opacity: pushed ? 1 : 0, transition: "opacity 0.3s" }}>
-            F۱
+        {/* گاری نارنجی (راست) و فنر متصل به آن */}
+        <g style={{ transform: `translateX(${pushed ? d2 * K : 0}px)`, transition: `transform ${PUSH_T}s cubic-bezier(.2,.7,.3,1)` }}>
+          {cart(orangeX, wheelSpin2, "#ffa25a", "#a8470f", "n3go", mass2)}
+          {spring(orangeX - springLen, GROUND - 29, springLen)}
+          <g style={{ opacity: pushed ? 1 : 0, transition: "opacity 0.3s" }}>
+            <line x1={orangeX + 28} y1="96" x2={orangeX + 66} y2="96" stroke="#ff8a4c" strokeWidth="4.5" strokeLinecap="round" />
+            <polygon points={`${orangeX + 64},89 ${orangeX + 64},103 ${orangeX + 78},96`} fill="#ff8a4c" />
+            <text x={orangeX + 50} y="86" fontSize="11" fill="#ff8a4c" fontWeight="700" textAnchor="middle" style={{ direction: "ltr", unicodeBidi: "isolate" }}>F₂</text>
+          </g>
+        </g>
+        {pushed && (
+          <text x="210" y="62" fontSize="10.5" fill="#cfd6ea" textAnchor="middle" style={{ direction: "ltr", unicodeBidi: "isolate" }}>
+            {"m₁·d₁ = " + mass1 + "×" + d1.toFixed(0) + " = " + (mass1 * d1).toFixed(0) + "   |   m₂·d₂ = " + mass2 + "×" + d2.toFixed(0) + " = " + (mass2 * d2).toFixed(0)}
           </text>
-        </g>
-        <g style={{ transform: `translateX(${pushed ? d2 : 0}px)`, transition: `transform ${PUSH_T}s cubic-bezier(.2,.7,.3,1)` }}>
-          {cart(200, wheelSpin2, "#e2622f")}
-          <line x1="200" y1="124" x2="226" y2="124" stroke="#e2622f" strokeWidth="4" style={{ opacity: pushed ? 1 : 0, transition: "opacity 0.3s" }} />
-          <polygon points="226,118 226,130 236,124" fill="#e2622f" style={{ opacity: pushed ? 1 : 0, transition: "opacity 0.3s" }} />
-          <text x="213" y="110" fontSize="11" fill="#e2622f" textAnchor="middle" fontWeight="700" style={{ opacity: pushed ? 1 : 0, transition: "opacity 0.3s" }}>
-            F۲
-          </text>
-        </g>
+        )}
       </svg>
       <div className="vlab-controls">
         <div className="vlab-ctrl-col" style={{ flex: 1 }}>
@@ -25718,6 +25797,7 @@ function VlabLedVoltageExperiment({ onReading }) {
   const threshold = 2;
   const isOn = voltage >= threshold;
   const brightness = isOn ? vlabClamp(((voltage - threshold) / (9 - threshold)) * 100, 8, 100) : 0;
+  const ledMA = Math.max(0, (voltage - threshold) / 330) * 1000;
 
   useEffect(() => {
     if (onReading) onReading(`ولتاژ: ${voltage} ولت | آستانه‌ی روشن‌شدن LED: ${threshold} ولت | وضعیت: ${isOn ? "روشن، روشنایی " + brightness.toFixed(0) + "٪" : "خاموش"}`);
@@ -25726,26 +25806,68 @@ function VlabLedVoltageExperiment({ onReading }) {
 
   return (
     <div className="vlab-exp">
-      {/* «مقاومت محافظ» در فهرست وسایل بود ولی هیچ‌وقت کشیده نمی‌شد؛ نماد زیگزاگی واقعی مقاومت بین باتری و
-          LED اضافه شد، همراه با زمینه‌ی تیره‌ی هم‌خانواده با بقیه‌ی مدارهای این آزمایشگاه. */}
-      <svg viewBox="0 0 320 170" className="vlab-svg" style={{ background: "#0b1330", borderRadius: "10px" }}>
-        {/* باتری: عکسِ واقعیِ باتریِ نوستالژیکِ «قوه پارس» — دکمه‌ی فلزیِ بالا = +، ته‌ی تخت = − */}
-        <VlabBatteryPhoto x={14} y={53} width={36} />
-        {/* سیم طلایی (+): از دکمه‌ی بالاییِ باتری → مقاومت محافظ */}
-        <path d="M32,53 L32,35 L70,35 L70,75" fill="none" stroke="#f2c572" strokeWidth="2.6" />
-        <path d="M70,75 L75,67 L82,83 L89,67 L96,83 L103,67 L108,75" fill="none" stroke="#f2c572" strokeWidth="2.6" />
-        <text x="89" y="56" fontSize="7.5" fill="#9aa3c0" textAnchor="middle">مقاومت محافظ ۳۳۰ Ω</text>
-        <line x1="108" y1="75" x2="130" y2="75" stroke="#f2c572" strokeWidth="2.6" />
-        {/* سیم آبی (−): ته‌ی تختِ باتری → ریل برگشت */}
-        <path d="M32,126 L32,140 L280,140" fill="none" stroke="#3a9bd5" strokeWidth="2.6" />
-        <line x1="190" y1="75" x2="280" y2="75" stroke="#f2c572" strokeWidth="2.6" />
-        <line x1="280" y1="75" x2="280" y2="140" stroke="#3a9bd5" strokeWidth="2.6" />
-        <circle cx="145" cy="75" r={15 + (brightness / 100) * 10} fill="#ff5c7a" opacity={isOn ? 0.08 + (brightness / 100) * 0.3 : 0} />
-        <polygon points="130,65 130,85 160,75" fill={isOn ? `rgba(255,92,122,${0.4 + (brightness / 100) * 0.6})` : "#2c2f3a"} stroke="#cfd8e8" strokeWidth="1.4" />
-        <line x1="160" y1="75" x2="190" y2="75" stroke="#f2c572" strokeWidth="2.6" />
-        {isOn && Array.from({ length: 4 }).map((_, i) => (
-          <line key={i} x1={145 + i * 3} y1={55 - i * 2} x2={150 + i * 3} y2={45 - i * 2} stroke="#ff8fa3" strokeWidth="2" opacity={brightness / 100} />
-        ))}
+      <svg viewBox="0 0 420 330" className="vlab-svg" style={{ background: "#0b1330", maxWidth: 520 }}>
+        <defs>
+          <radialGradient id="ledDome" cx="38%" cy="32%" r="75%">
+            <stop offset="0%" stopColor={isOn ? "#ffd1d9" : "#7a3a44"} />
+            <stop offset="45%" stopColor={isOn ? "#ff3d5e" : "#5a1f2a"} />
+            <stop offset="100%" stopColor={isOn ? "#a3112b" : "#2a0d14"} />
+          </radialGradient>
+          <linearGradient id="resBody" x1="0" y1="0" x2="0" y2="1"><stop offset="0%" stopColor="#f1dcae" /><stop offset="100%" stopColor="#b79a5f" /></linearGradient>
+          <style>{`@keyframes ledFlow { to { stroke-dashoffset: -24; } }`}</style>
+        </defs>
+        <VlabBatteryPhoto x={20} y={66} width={40} />
+        {/* سیم مثبت و جریان */}
+        <path d="M40,66 L40,58 L106,58" fill="none" stroke="#f2c572" strokeWidth="2.8" />
+        <path d="M172,58 L222,58" fill="none" stroke="#f2c572" strokeWidth="2.8" />
+        {/* مقاومت واقعی با نوارهای رنگی: نارنجی-نارنجی-قهوه‌ای-طلایی = ۳۳۰ اهم */}
+        <rect x="106" y="49" width="66" height="18" rx="8" fill="url(#resBody)" stroke="#6e5a2e" strokeWidth="1" />
+        {[["#ff7a1a", 120], ["#ff7a1a", 132], ["#7a4a1a", 144], ["#d9b44a", 158]].map(([c, x], k) => <rect key={"rb" + k} x={x} y="49" width="5" height="18" fill={c} />)}
+        <text x="139" y="40" fontSize="9" fill="#9aa3c0" textAnchor="middle">مقاومت محافظ ۳۳۰ Ω</text>
+        {/* پایه‌های LED: بلندتر = آند (+)، کوتاه‌تر = کاتد (−) */}
+        <line x1="222" y1="58" x2="256" y2="58" stroke="#cfd6ea" strokeWidth="2.4" />
+        <line x1="236" y1="82" x2="256" y2="82" stroke="#cfd6ea" strokeWidth="2.4" />
+        <text x="240" y="52" fontSize="9" fill="#f2c572" textAnchor="middle">آند +</text>
+        <text x="246" y="98" fontSize="9" fill="#6fb8ee" textAnchor="middle">کاتد −</text>
+        {/* سیم منفی */}
+        <path d="M236,82 L206,82 L206,160 L40,160 L40,147" fill="none" stroke="#3a9bd5" strokeWidth="2.8" />
+        {/* جریانِ عبوری: خطوط متحرک با سرعت متناسب با جریان */}
+        {isOn && (
+          <>
+            <path d="M40,66 L40,58 L106,58 M172,58 L222,58" fill="none" stroke="#fff3c4" strokeWidth="2" strokeDasharray="3 21" style={{ animation: `ledFlow ${Math.max(0.5, 2.6 - ledMA / 9).toFixed(2)}s linear infinite` }} />
+            <path d="M236,82 L206,82 L206,160 L40,160 L40,147" fill="none" stroke="#bfe6ff" strokeWidth="2" strokeDasharray="3 21" style={{ animation: `ledFlow ${Math.max(0.5, 2.6 - ledMA / 9).toFixed(2)}s linear infinite` }} />
+          </>
+        )}
+        {/* بدنه‌ی LED */}
+        {isOn && <circle cx="292" cy="70" r={26 + (brightness / 100) * 30} fill="#ff4d6d" opacity={0.06 + (brightness / 100) * 0.22} />}
+        <path d="M256,46 H284 A24,24 0 0 1 284,94 H256 Z" fill="url(#ledDome)" stroke="#e8c0c8" strokeWidth="1" opacity="0.98" />
+        <rect x="252" y="42" width="6" height="56" rx="2" fill="#c98f98" stroke="#8a5a62" strokeWidth="0.8" />
+        <line x1="262" y1="58" x2="278" y2="58" stroke="#d9d0d0" strokeWidth="1.4" opacity="0.8" />
+        <polygon points="266,58 278,58 272,70" fill="#d9d0d0" opacity="0.65" />
+        {isOn && Array.from({ length: 5 }).map((_, i) => {
+          const ang = (-50 + i * 25) * Math.PI / 180;
+          return <line key={"lr" + i} x1={292 + 34 * Math.cos(ang)} y1={70 + 34 * Math.sin(ang)} x2={292 + (40 + brightness * 0.22) * Math.cos(ang)} y2={70 + (40 + brightness * 0.22) * Math.sin(ang)} stroke="#ff8fa3" strokeWidth="2.2" strokeLinecap="round" opacity={0.35 + brightness / 160} />;
+        })}
+        {/* نمودار جریان–ولتاژ */}
+        <rect x="14" y="178" width="236" height="140" rx="8" fill="#0e1736" stroke="#2a3a73" />
+        <text x="132" y="195" fontSize="10" fontWeight="700" fill="#cfd6ea" textAnchor="middle">نمودار جریان LED بر حسب ولتاژ</text>
+        <line x1="42" y1="300" x2="238" y2="300" stroke="#8fa0c8" strokeWidth="1.2" />
+        <line x1="42" y1="300" x2="42" y2="205" stroke="#8fa0c8" strokeWidth="1.2" />
+        {[0, 2, 4, 6, 8].map((v) => (<g key={"gv" + v}><line x1={42 + v * 21} y1="300" x2={42 + v * 21} y2="304" stroke="#8fa0c8" /><text x={42 + v * 21} y="313" fontSize="8.5" fill="#cfd6ea" textAnchor="middle">{String(v).replace(/\d/g, (d) => "۰۱۲۳۴۵۶۷۸۹"[d])}</text></g>))}
+        {[0, 10, 20].map((m) => (<g key={"gi" + m}><line x1="38" y1={300 - m * 4} x2="42" y2={300 - m * 4} stroke="#8fa0c8" /><text x="35" y={303 - m * 4} fontSize="8.5" fill="#cfd6ea" textAnchor="end">{String(m).replace(/\d/g, (d) => "۰۱۲۳۴۵۶۷۸۹"[d])}</text></g>))}
+        <text x="240" y="296" fontSize="8" fill="#9fb0e0" textAnchor="end">ولت</text>
+        <text x="46" y="203" fontSize="8" fill="#9fb0e0">mA</text>
+        <line x1={42 + threshold * 21} y1="300" x2={42 + threshold * 21} y2="208" stroke="#e2622f" strokeDasharray="3 3" strokeWidth="0.9" />
+        <text x={42 + threshold * 21 + 6} y="232" fontSize="8.5" fill="#ff8a4c">آستانه ۲ ولت</text>
+        <polyline points={`42,300 ${42 + threshold * 21},300 ${42 + 9 * 21},${300 - ((9 - threshold) / 330) * 1000 * 4}`} fill="none" stroke="#7be0a4" strokeWidth="2" />
+        <circle cx={42 + voltage * 21} cy={300 - ledMA * 4} r="5" fill="#ffd98a" stroke="#1c2540" strokeWidth="1" />
+        {/* نمایشگرها */}
+        <rect x="266" y="178" width="140" height="140" rx="8" fill="#050a1c" stroke="#2a3a73" />
+        <text x="336" y="204" fontSize="10" fill="#9fb0e0" textAnchor="middle">ولتاژ باتری</text>
+        <text x="336" y="228" fontSize="22" fontWeight="800" fill="#ffd98a" textAnchor="middle" style={{ direction: "ltr", unicodeBidi: "isolate" }}>{voltage.toFixed(1) + " V"}</text>
+        <text x="336" y="254" fontSize="10" fill="#9fb0e0" textAnchor="middle">جریان LED</text>
+        <text x="336" y="278" fontSize="22" fontWeight="800" fill={isOn ? "#7be0a4" : "#8a94b4"} textAnchor="middle" style={{ direction: "ltr", unicodeBidi: "isolate" }}>{ledMA.toFixed(1) + " mA"}</text>
+        <text x="336" y="304" fontSize="11" fontWeight="700" fill={isOn ? "#7be0a4" : "#ffb199"} textAnchor="middle">{isOn ? "LED روشن (" + brightness.toFixed(0).replace(/\d/g, (d) => "۰۱۲۳۴۵۶۷۸۹"[d]) + "٪)" : "LED خاموش"}</text>
       </svg>
       <div className="vlab-controls">
         <div className="vlab-ctrl-col" style={{ flex: 1 }}>
@@ -25857,6 +25979,7 @@ function VlabElectromagnetExperiment({ onReading }) {
           </g>
         ))}
       </svg>
+      <VlabMeterRow meters={[{ label: "آمپرمتر — جریان سیم‌پیچ", unit: "A", value: current, ranges: [0.5, 1, 2, 5, 10] }]} height={165} />
       <div className="vlab-controls">
         <div className="vlab-ctrl-col" style={{ flex: 1 }}>
           <label className="vlab-ctrl-label">تعداد دور سیم‌پیچ: {turns}</label>
@@ -25982,24 +26105,9 @@ function VlabCapacitorExperiment({ onReading }) {
         <line x1="200" y1="140" x2="44" y2="140" stroke="#3a9bd5" strokeWidth="2.4" />
         {/* سیمِ − از ریلِ بازگشت به ته‌ی تختِ باتری (قطب منفیِ واقعی) */}
         <path d="M44,140 L44,130 L32,130 L32,126" fill="none" stroke="#3a9bd5" strokeWidth="2.4" />
-        {/* ولت‌متر — صفحه‌ی گرد با عقربه‌ای که با درصد شارژ می‌چرخد */}
-        <g transform="translate(265,70)">
-          <circle cx="0" cy="0" r="26" fill="#1a2140" stroke="#cfd8e8" strokeWidth="2" />
-          <text x="0" y="-8" fontSize="7" fill="#9aa3c0" textAnchor="middle">ولت‌متر</text>
-          <line
-            x1="0"
-            y1="0"
-            x2={Math.cos((Math.PI * (180 - chargePercent * 1.8)) / 180) * 18}
-            y2={-Math.sin((Math.PI * (180 - chargePercent * 1.8)) / 180) * 18}
-            stroke="#ff5c7a"
-            strokeWidth="2"
-            strokeLinecap="round"
-            style={{ transition: "x2 0.1s linear, y2 0.1s linear" }}
-          />
-          <circle cx="0" cy="0" r="2" fill="#cfd8e8" />
-          <text x="0" y="16" fontSize="9" fill="#fff" textAnchor="middle" fontWeight="700">{chargePercent.toFixed(0)}٪</text>
-        </g>
       </svg>
+      <VlabMeterRow meters={[{ label: "ولت‌متر — ولتاژ خازن", unit: "V", value: (9 * chargePercent) / 100, ranges: [10] }, { label: "آمپرمتر — جریان مدار", unit: "mA", value: mode === "charging" ? (9 * (1 - chargePercent / 100)) / resistance : mode === "discharging" ? (9 * (chargePercent / 100)) / resistance : 0, ranges: [0.1, 0.2, 0.5, 1, 2, 5, 10, 20] }]} />
+      <div style={{ color: "#6b7399", fontSize: 11.5, textAlign: "center", margin: "4px 0" }}>باتری ۹ ولت — R بر حسب کیلواهم است، پس جریان بر حسب میلی‌آمپر می‌شود.</div>
       <div className="vlab-controls">
         <div className="vlab-ctrl-col" style={{ flex: 1 }}>
           <label className="vlab-ctrl-label">ظرفیت خازن (میکروفاراد): {capacitance}</label>
@@ -26333,9 +26441,9 @@ function VlabReactionRateExperiment({ onReading }) {
         <VlabDropperMini x={100} y={55} rotate={-20} color="#2f6fe2" />
         <VlabDropperMini x={222} y={55} rotate={20} color="#e2622f" />
         <text x="88" y="30" fontSize="7" fill="#9aa3c0" textAnchor="middle">واکنش‌گر ۱</text>
-        <text x="232" y="30" fontSize="7" fill="#9aa3c0" textAnchor="middle">واکنش‌گر ۲</text>
-        <VlabThermometerMini x={255} y={85} temp={temp} minT={0} maxT={80} h={46} />
-        <VlabStopwatchIcon x={270} y={25} readout={`${reactionTime.toFixed(0)}s`} />
+        <text x="212" y="30" fontSize="7" fill="#9aa3c0" textAnchor="middle">واکنش‌گر ۲</text>
+        <VlabThermometerMini x={262} y={88} temp={temp} minT={0} maxT={80} h={38} />
+        <VlabStopwatchIcon x={268} y={34} scale={1.4} readout={`${reactionTime.toFixed(0)}s`} />
       </svg>
       <div className="vlab-controls">
         <div className="vlab-ctrl-col" style={{ flex: 1 }}>
@@ -26899,7 +27007,7 @@ function VlabDiffusionExperiment({ onReading }) {
         {/* کرونومترِ عقربه‌ایِ واقعی: چون حالا زمان به‌طورِ خودکار و پیوسته جلو می‌رود (نه با نوارِ
             لغزنده)، عقربه مثلِ یک کرونومترِ واقعی هر ۶۰ ثانیه یک دور کامل می‌زند و عددِ کلِ زمانِ
             سپری‌شده زیرش نوشته می‌شود */}
-        <VlabStopwatchIcon x={44} y={26} scale={0.95} seconds={elapsed % 60} maxSeconds={60} readout={`${elapsed.toFixed(0)}s`} />
+        <VlabStopwatchIcon x={50} y={36} scale={1.6} seconds={elapsed % 60} maxSeconds={60} readout={`${elapsed.toFixed(0)}s`} />
       </svg>
       <div className="vlab-controls">
         <div className="vlab-ctrl-col" style={{ flex: 1 }}>

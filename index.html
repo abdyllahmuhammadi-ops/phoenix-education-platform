@@ -26662,7 +26662,7 @@ function VlabReactionRateExperiment({ onReading }) {
   }, [concentration, temp, finished]);
 
   // با تغییر غلظت یا دما، آزمایش از اول
-  useEffect(() => { setSimT(0); setRunning(false); }, [concentration, temp]);
+  useEffect(() => { setSimT(0); setRunning(false); dripRef.current = null; }, [concentration, temp]);
 
   // زمان‌سنج واقعی واکنش (با شتاب ×۱۰)
   useEffect(() => {
@@ -26685,6 +26685,7 @@ function VlabReactionRateExperiment({ onReading }) {
   }, [running, reactionTime]);
 
   // مدل مولکولی: تعداد مولکول‌های واکنش‌گر ۱ با غلظت، سرعت با دما؛ برخوردها فلاش می‌زنند
+  const dripRef = React.useRef(null);
   const molRef = React.useRef({ A: [], B: [], flashes: [] });
   const BX = 212, BY = 26, BW = 100, BH = 72;
   useEffect(() => {
@@ -26726,7 +26727,10 @@ function VlabReactionRateExperiment({ onReading }) {
   const fizzCount = running ? Math.round(vlabClamp(14 - reactionTime / 10, 3, 12)) : 0;
   const fizzDur = vlabClamp(reactionTime / 40, 0.6, 2.4);
   const tReal = simT / SPEEDUP; // ثانیه‌ی واقعی از شروع
-  const dropT = running || (simT > 0 && tReal < 0.7) ? vlabClamp(tReal / 0.6, 0, 1) : null;
+  // چکاندنِ واقعیِ دو واکنش‌گر: بعد از «شروع»، ۲٫۴ ثانیه‌ی واقعی از هر قطره‌چکان چند قطره می‌چکد
+  const dripNow = dripRef.current ? (performance.now() - dripRef.current) / 1000 : null;
+  const dripping = dripNow !== null && dripNow < 2.4;
+  const dripFrac = dripNow === null ? 0 : vlabClamp(dripNow / 2.4, 0, 1);
   const M = molRef.current;
 
   return (
@@ -26765,14 +26769,20 @@ function VlabReactionRateExperiment({ onReading }) {
           <g key={"dr" + k} transform="translate(0,22)">
             <path d={`M${d.x - 4},20 Q${d.x - 4},6 ${d.x},6 Q${d.x + 4},6 ${d.x + 4},20 Z`} fill={d.bulb} stroke="#4a5a7a" strokeWidth="1" />
             <rect x={d.x - 3.5} y="20" width="7" height="30" fill="#dce8f5" fillOpacity="0.85" stroke="#8fa3c4" strokeWidth="1" />
-            <rect x={d.x - 2} y="26" width="4" height="20" fill={d.liq} opacity="0.75" />
+            <rect x={d.x - 2} y={26 + 20 * dripFrac} width="4" height={20 * (1 - dripFrac)} fill={d.liq} opacity="0.75" />
             <path d={`M${d.x - 3.5},50 L${d.x + 3.5},50 L${d.x + 1},60 L${d.x - 1},60 Z`} fill="#dce8f5" fillOpacity="0.9" stroke="#8fa3c4" strokeWidth="0.8" />
             <text x={d.lx} y="18" fontSize="7.5" fill="#9aa3c0" textAnchor="middle">{d.lab}</text>
           </g>
         ))}
-        {dropT !== null && [90, 110].map((x, k) => (
-          <ellipse key={"fd" + k} cx={x} cy={82 + (118 - 82) * dropT * dropT} rx="1.8" ry="2.8" fill={k === 0 ? "#4ab0ff" : "#ff7a52"} />
-        ))}
+        {dripping && [90, 110].map((x, k) => {
+          const ph = ((dripNow + k * 0.3) % 0.6) / 0.6;
+          return (
+            <g key={"fd" + k}>
+              <ellipse cx={x} cy={82 + (118 - 82) * ph * ph} rx="2" ry="3.2" fill={k === 0 ? "#4ab0ff" : "#ff7a52"} />
+              {ph < 0.12 && <circle cx={x} cy="82" r={2.4 - ph * 10} fill={k === 0 ? "#4ab0ff" : "#ff7a52"} opacity="0.8" />}
+            </g>
+          );
+        })}
 
         <VlabThermometerMini x={186} y={96} temp={temp} minT={0} maxT={80} h={58} />
 
@@ -26794,8 +26804,8 @@ function VlabReactionRateExperiment({ onReading }) {
           <VlabRange min="0" max="80" value={temp} onChange={(e) => setTemp(+e.target.value)} />
         </div>
         <div className="vlab-ctrl-col">
-          <button type="button" className="pqb-submit-btn" onClick={() => { if (finished) setSimT(0); setRunning((r) => !r); }}>{running ? "⏸ توقف" : finished ? "↺ دوباره" : "▶ شروع واکنش"}</button>
-          <button type="button" className="vlab-toggle-btn" onClick={() => { setRunning(false); setSimT(0); }}>⟲ از اول</button>
+          <button type="button" className="pqb-submit-btn" onClick={() => { if (!running && (simT === 0 || finished)) dripRef.current = performance.now(); if (finished) setSimT(0); setRunning((r) => !r); }}>{running ? "⏸ توقف" : finished ? "↺ دوباره" : "▶ شروع واکنش"}</button>
+          <button type="button" className="vlab-toggle-btn" onClick={() => { setRunning(false); setSimT(0); dripRef.current = null; }}>⟲ از اول</button>
         </div>
       </div>
       {(() => {

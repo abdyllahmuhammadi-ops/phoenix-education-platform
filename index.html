@@ -29202,7 +29202,7 @@ function VlabPunnettExperiment({ onReading }) {
           <div className="vlab-num-row" style={{ marginBottom: 6 }}>{GENS.map((g, k) => (<button key={"p2" + g} type="button" className={"vlab-num-btn" + (p2 === k ? " active" : "")} onClick={() => setP2(k)}>{g}</button>))}</div>
         </div>
       </div>
-      <div className="vlab-readout">هر والد یکی از دو دگره‌ی خود را به گامت می‌دهد. خانه‌های جدول ترکیب‌های ممکن فرزندان‌اند. نسبت ژنوتیپی: <b>{cnt("TT")} TT : {cnt("Tt")} Tt : {cnt("tt")} tt</b></div>
+      <div className="vlab-readout">هر والد یکی از دو دگره‌ی خود را به گامت می‌دهد و خانه‌های جدول، ترکیب‌های ممکن فرزندان‌اند.<br />نسبت ژنوتیپی: <b style={{ direction: "ltr", unicodeBidi: "isolate", display: "inline-block" }}>{cnt("TT")} TT : {cnt("Tt")} Tt : {cnt("tt")} tt</b><br />نسبت ظاهری (فنوتیپ): <b>{tall} بلند : {4 - tall} کوتاه</b><br />{a === b ? (a === "TT" ? <>هر دو والد «خالص بلند» هستند و فقط دگره‌ی T می‌دهند؛ پس همه‌ی فرزندان <b>TT</b> و بلندند (۱۰۰٪).</> : a === "tt" ? <>هر دو والد «خالص کوتاه» هستند و فقط t می‌دهند؛ پس همه‌ی فرزندان <b>tt</b> و کوتاهند (۱۰۰٪).</> : <>والدین ناخالص‌اند: ۱ TT : ۲ Tt : ۱ tt ؛ یعنی ۳ بلند به ۱ کوتاه.</>) : null}</div>
       <VlabFormulaCheck title="احتمال فرزند بلند" fa="احتمال = تعداد خانه‌های دارای حالت مورد نظر ÷ کل خانه‌ها × ۱۰۰" en="P = favorable / total × 100" legend="هر خانه‌ای که حرف T دارد، گیاه بلند است" subst={`P(بلند) = ${tall} ÷ 4 × 100 = ?`} label="P:" answer={tall * 25} unit="٪" decimals={0} />
     </div>
   );

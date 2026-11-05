@@ -19,6 +19,13 @@
 <script src="https://cdnjs.cloudflare.com/ajax/libs/babel-standalone/7.23.5/babel.min.js"></script>
 <style>
 html, body { margin: 0; padding: 0; }
+/* حفاظت از محتوا: انتخاب/کپی/کشیدن غیرفعال؛ فقط فیلدهای ورودی و سؤالات آزمون (نمونه و کنکور) مستثنی‌اند */
+#root, #root * { -webkit-user-select: none; user-select: none; -webkit-touch-callout: none; }
+#root input, #root textarea, #root select, #root [contenteditable="true"], [data-allow-copy], [data-allow-copy] *,
+.pqb-question-list, .pqb-question-list *, #pqb-exam-printable-block, #pqb-exam-printable-block *, #pqb-printable-questions, #pqb-printable-questions *, .pqb-mcq-option, .pqb-mcq-option * { -webkit-user-select: text !important; user-select: text !important; -webkit-touch-callout: default; }
+#root img, #root svg, #root video, #root canvas { -webkit-user-drag: none; user-drag: none; }
+html.pqb-hide #root { filter: blur(22px); }
+@media print { html.pqb-hide #root { filter: none; } }
 </style>
 <script>
 /* ثبت Service Worker — فقط اگر فایل‌های مربوطه (manifest.json, sw.js, icon-*.png) کنار همین index.html
@@ -35406,6 +35413,40 @@ function PalThemeFab() {
 
 const root = ReactDOM.createRoot(document.getElementById("root"));
 root.render(<><PhoenixApp /><PalThemeFab /><PalRoleSwitch /></>);
+</script>
+<script>
+/* حفاظت از محتوا (بازدارنده‌ی عملی؛ نه قفل مطلق — اسکرین‌شاتِ سیستم‌عامل را مرورگر نمی‌تواند کاملاً ببندد) */
+(function pqbProtect() {
+  var ALLOW = 'input,textarea,select,[contenteditable="true"],[data-allow-copy],.pqb-question-list,#pqb-exam-printable-block,#pqb-printable-questions,.pqb-mcq-option';
+  function allowed(t) { try { return !!(t && t.closest && t.closest(ALLOW)); } catch (e) { return false; } }
+  function stop(e) { if (!allowed(e.target)) { e.preventDefault(); } }
+  ['contextmenu', 'copy', 'cut', 'dragstart'].forEach(function (n) { document.addEventListener(n, stop, true); });
+  document.addEventListener('keydown', function (e) {
+    var k = (e.key || '').toLowerCase();
+    if ((e.ctrlKey || e.metaKey) && (k === 's' || k === 'u') && !allowed(e.target)) e.preventDefault();
+  }, true);
+  var root = document.documentElement, hideTimer = null;
+  function hide() { root.classList.add('pqb-hide'); }
+  function show() { if (!document.hidden) root.classList.remove('pqb-hide'); }
+  window.addEventListener('blur', hide);
+  window.addEventListener('focus', show);
+  document.addEventListener('visibilitychange', function () { if (document.hidden) hide(); else show(); });
+  document.addEventListener('keyup', function (e) {
+    if (e.key === 'PrintScreen' || e.code === 'PrintScreen') {
+      try { navigator.clipboard.writeText(''); } catch (x) {}
+      hide(); clearTimeout(hideTimer); hideTimer = setTimeout(show, 1500);
+    }
+  }, true);
+  document.addEventListener('keydown', function (e) { if (e.key === 'PrintScreen') hide(); }, true);
+  window.addEventListener('beforeprint', function () { root.classList.remove('pqb-hide'); });
+  new MutationObserver(function (ms) {
+    ms.forEach(function (m) { m.addedNodes.forEach(function (n) {
+      if (n.nodeType !== 1) return;
+      var vs = n.tagName === 'VIDEO' ? [n] : (n.querySelectorAll ? n.querySelectorAll('video') : []);
+      for (var i = 0; i < vs.length; i++) { vs[i].setAttribute('controlsList', 'nodownload noplaybackrate'); vs[i].setAttribute('disablePictureInPicture', ''); }
+    }); });
+  }).observe(document.documentElement, { childList: true, subtree: true });
+})();
 </script>
 <script>
   (function boot() {

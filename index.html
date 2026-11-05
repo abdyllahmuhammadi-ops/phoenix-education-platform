@@ -22815,9 +22815,9 @@ const VLAB_EXPERIMENTS = [
     id: "convex-lens",
     subject: "فیزیک",
     level: "متوسطه دوم",
-    title: "عدسی محدب و تشکیل تصویر",
+    title: "عدسی محدب و مقعر (تشکیل تصویر)",
     icon: "🔍",
-    intro: "جسم را جلوی عدسی محدب جابه‌جا کن و با سه پرتوی اصلی ببین تصویر کجا و چگونه (حقیقی یا مجازی، بزرگ یا کوچک) تشکیل می‌شود. معادله‌ی عدسی: 1/f = 1/dₒ + 1/dᵢ.",
+    intro: "جسم را جلوی عدسی محدب (همگرا) یا مقعر (واگرا) جابه‌جا کن و با سه پرتوی اصلی ببین تصویر کجا و چگونه (حقیقی یا مجازی، بزرگ یا کوچک) تشکیل می‌شود. معادله‌ی عدسی: 1/f = 1/dₒ + 1/dᵢ.",
     tools: ["عدسی محدب", "جسم (پیکان)", "نیمکت اپتیک با خط‌کش", "پرده"],
   },
   {
@@ -22999,6 +22999,15 @@ const VLAB_EXPERIMENTS = [
     icon: "🫁",
     intro: "تعداد تنفس و حجم هوای جاری را تغییر بده، حرکت ریه و دیافراگم را ببین و تهویه‌ی دقیقه‌ای را حساب کن.",
     tools: ["مدل ریه", "دیافراگم", "اسپیرومتر"],
+  },
+  {
+    id: "spherical-mirror",
+    subject: "فیزیک",
+    level: "متوسطه دوم",
+    title: "آینه‌های کروی (مقعر و محدب)",
+    icon: "🪞",
+    intro: "جسم را جلوی آینه‌ی مقعر یا محدب جابه‌جا کن و با سه پرتوی اصلی ببین تصویر کجا و چگونه (حقیقی یا مجازی، بزرگ یا کوچک) تشکیل می‌شود. معادله‌ی آینه: 1/f = 1/dₒ + 1/dᵢ.",
+    tools: ["آینه‌ی مقعر", "آینه‌ی محدب", "جسم (پیکان)", "نیمکت اپتیک"],
   },
 ];
 
@@ -28188,24 +28197,26 @@ function VlabRefractionExperiment({ onReading }) {
 function VlabConvexLensExperiment({ onReading }) {
   const [f, setF] = useState(10);
   const [dO, setDO] = useState(30);
+  const [concave, setConcave] = useState(false);
+  const fs = concave ? -f : f; // علامت‌دار: محدب مثبت، مقعر منفی
   const K = 2.2, LX = 160, AY = 100, HO = 10; // مقیاس px بر cm ، مرکز عدسی ، محور اصلی ، ارتفاع جسم (cm)
-  const nearF = Math.abs(dO - f) < 0.5;
-  const dI = nearF ? null : (dO * f) / (dO - f);
+  const nearF = !concave && Math.abs(dO - f) < 0.5;
+  const dI = nearF ? null : (dO * fs) / (dO - fs);
   const m = dI === null ? null : -dI / dO;
   const real = dI !== null && dI > 0;
   useEffect(() => {
-    if (onReading) onReading(`فاصله‌ی کانونی: ${f} cm | فاصله‌ی جسم: ${dO} cm | ${dI === null ? "تصویر تشکیل نمی‌شود" : "فاصله‌ی تصویر: " + dI.toFixed(1) + " cm، بزرگ‌نمایی: " + m.toFixed(2)}`);
+    if (onReading) onReading(`${concave ? "عدسی مقعر" : "عدسی محدب"} | فاصله‌ی کانونی: ${f} cm | فاصله‌ی جسم: ${dO} cm | ${dI === null ? "تصویر تشکیل نمی‌شود" : "فاصله‌ی تصویر: " + dI.toFixed(1) + " cm، بزرگ‌نمایی: " + m.toFixed(2)}`);
     // eslint-disable-next-line
-  }, [f, dO]);
+  }, [f, dO, concave]);
   const xo = LX - K * dO, yo = AY - K * HO;
   const xi = dI === null ? null : LX + K * dI;
   const yi = m === null ? null : AY - K * HO * m;
   const xF1 = LX - K * f, xF2 = LX + K * f;
   const lineTo = (x0, y0, x1, y1, xEnd) => { const t = (xEnd - x0) / (x1 - x0); return { x: xEnd, y: y0 + (y1 - y0) * t }; };
   // پرتو ۱: موازی محور ← از کانون دوم ؛ پرتو ۲: از مرکز ؛ پرتو ۳: از کانون اول ← موازی
-  const r1End = lineTo(LX, yo, xF2, AY, 300);
+  const r1End = concave ? lineTo(xF1, AY, LX, yo, 300) : lineTo(LX, yo, xF2, AY, 300);
   const r2End = lineTo(xo, yo, LX, AY, 300);
-  const y3 = yo + (AY - yo) * ((LX - xo) / (xF1 - xo));
+  const y3 = yo + (AY - yo) * ((LX - xo) / ((concave ? xF2 : xF1) - xo));
   const ray = (x1, y1, x2, y2, c, dash, w) => <line x1={x1} y1={y1} x2={x2} y2={y2} stroke={c} strokeWidth={w || 1.5} strokeDasharray={dash ? "4 3" : null} />;
   const rulerTicks = [];
   for (let d = -60; d <= 60; d += 10) {
@@ -28220,7 +28231,7 @@ function VlabConvexLensExperiment({ onReading }) {
           <linearGradient id="lensGrad" x1="0" x2="1"><stop offset="0" stopColor="#bfe6ff" stopOpacity="0.55" /><stop offset="0.5" stopColor="#e9f6ff" stopOpacity="0.35" /><stop offset="1" stopColor="#8fc9f0" stopOpacity="0.55" /></linearGradient>
         </defs>
         <line x1="6" y1={AY} x2="314" y2={AY} stroke="#5b6a96" strokeWidth="1" strokeDasharray="5 4" />
-        <path d={`M${LX},34 Q${LX + 15},${AY} ${LX},166 Q${LX - 15},${AY} ${LX},34 Z`} fill="url(#lensGrad)" stroke="#cfe6ff" strokeWidth="1.6" />
+        {concave ? <path d={`M${LX - 9},34 L${LX + 9},34 Q${LX + 1},${AY} ${LX + 9},166 L${LX - 9},166 Q${LX - 1},${AY} ${LX - 9},34 Z`} fill="url(#lensGrad)" stroke="#cfe6ff" strokeWidth="1.6" /> : <path d={`M${LX},34 Q${LX + 15},${AY} ${LX},166 Q${LX - 15},${AY} ${LX},34 Z`} fill="url(#lensGrad)" stroke="#cfe6ff" strokeWidth="1.6" />}
         {[[xF1, "F"], [xF2, "F'"], [LX - 2 * K * f, "2F"], [LX + 2 * K * f, "2F'"]].map(([x, t], k) => (x > 10 && x < 310 ? (<g key={"fp" + k}><circle cx={x} cy={AY} r="2.6" fill="#ffd98a" /><text x={x} y={AY + 13} fontSize="8" fill="#ffd98a" textAnchor="middle" style={{ direction: "ltr", unicodeBidi: "isolate" }}>{t}</text></g>) : null))}
         <g clipPath="url(#lensClip)">
           {dI !== null && (
@@ -28265,15 +28276,19 @@ function VlabConvexLensExperiment({ onReading }) {
       <VlabMeterRow height={160} meters={[{ label: "فاصله‌ی تصویر", unit: "cm", value: dI === null ? 0 : Math.abs(dI), ranges: [30, 100, 300, 1000], maj: 5, decimals: 1 }, { label: "بزرگ‌نمایی |m|", unit: "×", value: m === null ? 0 : Math.abs(m), ranges: [1, 3, 10, 50, 200], maj: 5, decimals: 2 }]} />
       <div className="vlab-controls">
         <div className="vlab-ctrl-col" style={{ flex: 1 }}>
+          <div className="vlab-num-row" style={{ marginBottom: 6 }}>
+            <button type="button" className={"vlab-num-btn" + (!concave ? " active" : "")} onClick={() => setConcave(false)}>عدسی محدب (همگرا)</button>
+            <button type="button" className={"vlab-num-btn" + (concave ? " active" : "")} onClick={() => setConcave(true)}>عدسی مقعر (واگرا)</button>
+          </div>
           <label className="vlab-ctrl-label">فاصله‌ی کانونی f (cm): {f}</label>
           <VlabRange min="5" max="20" step="1" value={f} onChange={(e) => setF(+e.target.value)} />
           <label className="vlab-ctrl-label">فاصله‌ی جسم تا عدسی (cm): {dO}</label>
           <VlabRange min="4" max="60" step="1" value={dO} onChange={(e) => setDO(+e.target.value)} />
         </div>
       </div>
-      <div className="vlab-readout">{desc}<br />پرتو قرمز موازی محور، پرتو سبز از مرکز عدسی و پرتو آبی از کانون می‌گذرد؛ جای برخوردشان تصویر است.</div>
+      <div className="vlab-readout">{desc}<br />{concave ? "عدسی مقعر همیشه تصویر مجازی، مستقیم و کوچک‌تر می‌سازد؛ پرتوها پراکنده می‌شوند و امتدادشان (خط‌چین) تصویر را می‌سازد." : "پرتو قرمز موازی محور، پرتو سبز از مرکز عدسی و پرتو آبی از کانون می‌گذرد؛ جای برخوردشان تصویر است."}</div>
       {dI !== null && (
-        <VlabFormulaCheck title="معادله‌ی عدسی" fa="یک بر فاصله‌ی کانونی = یک بر فاصله‌ی جسم + یک بر فاصله‌ی تصویر" en="1/f = 1/dₒ + 1/dᵢ" legend="اگر جواب منفی شد یعنی تصویر مجازی است (هم‌طرف جسم)" subst={`1/${f} = 1/${dO} + 1/dᵢ ⇒ dᵢ = (${dO} × ${f}) ÷ (${dO} − ${f}) = ?`} label="dᵢ:" answer={dI} unit="cm" decimals={1} />
+        <VlabFormulaCheck title="معادله‌ی عدسی" fa="یک بر فاصله‌ی کانونی = یک بر فاصله‌ی جسم + یک بر فاصله‌ی تصویر" en="1/f = 1/dₒ + 1/dᵢ" legend={concave ? "برای عدسی مقعر f را منفی بگذار (f = −" + f + ")؛ جواب منفی یعنی تصویر مجازی و هم‌طرف جسم است" : "اگر جواب منفی شد یعنی تصویر مجازی است (هم‌طرف جسم)"} subst={concave ? `1/(−${f}) = 1/${dO} + 1/dᵢ ⇒ dᵢ = (${dO} × (−${f})) ÷ (${dO} − (−${f})) = ?` : `1/${f} = 1/${dO} + 1/dᵢ ⇒ dᵢ = (${dO} × ${f}) ÷ (${dO} − ${f}) = ?`} label="dᵢ:" answer={dI} unit="cm" decimals={1} />
       )}
     </div>
   );
@@ -29453,6 +29468,96 @@ function VlabLungExperiment({ onReading }) {
   );
 }
 
+function VlabSphericalMirrorExperiment({ onReading }) {
+  const [f, setF] = useState(10);
+  const [dO, setDO] = useState(30);
+  const [concave, setConcave] = useState(true);
+  const fs = concave ? f : -f;
+  const K = 2.2, LX = 236, AY = 100, HO = 10;
+  const nearF = concave && Math.abs(dO - f) < 0.5;
+  const dI = nearF ? null : (dO * fs) / (dO - fs);
+  const m = dI === null ? null : -dI / dO;
+  const real = dI !== null && dI > 0;
+  useEffect(() => {
+    if (onReading) onReading(`${concave ? "آینه‌ی مقعر" : "آینه‌ی محدب"} | f: ${f} cm | فاصله‌ی جسم: ${dO} cm | ${dI === null ? "تصویر تشکیل نمی‌شود" : "فاصله‌ی تصویر: " + dI.toFixed(1) + " cm، بزرگ‌نمایی: " + m.toFixed(2)}`);
+    // eslint-disable-next-line
+  }, [f, dO, concave]);
+  const xo = LX - K * dO, yo = AY - K * HO;
+  const xi = dI === null ? null : LX - K * dI;
+  const yi = m === null ? null : AY - K * HO * m;
+  const xFp = concave ? LX - K * f : LX + K * f;
+  const ray = (x1, y1, x2, y2, c, dash, w) => <line x1={x1} y1={y1} x2={x2} y2={y2} stroke={c} strokeWidth={w || 1.5} strokeDasharray={dash ? "4 3" : null} />;
+  // پرتوی بازتابیده: از نقطه‌ی برخورد (hx,hy) به‌سمت چپ، در امتداد خط گذرنده از تصویر
+  const reflected = (hx, hy, c) => {
+    if (dI === null) return null;
+    let dx = xi - hx, dy = yi - hy;
+    if (!real) { dx = -dx; dy = -dy; }
+    const t = (8 - hx) / dx; const ex = 8, ey = hy + dy * t;
+    return (<g>{ray(hx, hy, ex, ey, c)}{!real && ray(hx, hy, xi, yi, c, true, 1.2)}</g>);
+  };
+  const y3 = yo + (AY - yo) * ((LX - xo) / (xFp - xo));
+  const desc = dI === null ? "جسم در کانون است: پرتوهای بازتابیده موازی‌اند و تصویری تشکیل نمی‌شود." : `تصویر ${real ? "حقیقی" : "مجازی"}، ${m < 0 ? "وارونه" : "مستقیم"} و ${Math.abs(m) > 1.02 ? "بزرگ‌تر" : Math.abs(m) < 0.98 ? "کوچک‌تر" : "هم‌اندازه"} از جسم`;
+  const ticks = [];
+  for (let d = -20; d <= 60; d += 10) ticks.push(<g key={"mt" + d}><line x1={LX - K * d} y1="168" x2={LX - K * d} y2="174" stroke="#8fa3c8" /><text x={LX - K * d} y="186" fontSize="7.5" fill="#cfd6ea" textAnchor="middle" style={{ direction: "ltr", unicodeBidi: "isolate" }}>{d < 0 ? "−" + Math.abs(d) : d}</text></g>);
+  return (
+    <div className="vlab-exp">
+      <svg viewBox="0 0 320 196" className="vlab-svg" style={{ background: "#03060f", borderRadius: "10px" }}>
+        <defs>
+          <clipPath id="mirClip"><rect x="4" y="20" width="312" height="146" /></clipPath>
+          <linearGradient id="mirGrad" x1="0" x2="1"><stop offset="0" stopColor="#e9f3ff" /><stop offset="1" stopColor="#8fa8c4" /></linearGradient>
+        </defs>
+        <line x1="6" y1={AY} x2="314" y2={AY} stroke="#5b6a96" strokeWidth="1" strokeDasharray="5 4" />
+        {concave
+          ? <g><path d={`M${LX - 9},34 Q${LX + 12},${AY} ${LX - 9},166`} fill="none" stroke="url(#mirGrad)" strokeWidth="3.4" />{Array.from({ length: 12 }).map((_, k) => { const yy = 40 + k * 11; const dx = 12 * (1 - Math.pow((yy - AY) / 66, 2)) - 9 + 4; return <line key={"mh" + k} x1={LX + dx + 3} y1={yy} x2={LX + dx + 9} y2={yy + 5} stroke="#6b7390" strokeWidth="1" />; })}</g>
+          : <g><path d={`M${LX + 9},34 Q${LX - 12},${AY} ${LX + 9},166`} fill="none" stroke="url(#mirGrad)" strokeWidth="3.4" />{Array.from({ length: 12 }).map((_, k) => { const yy = 40 + k * 11; const dx = -12 * (1 - Math.pow((yy - AY) / 66, 2)) + 9 + 4; return <line key={"mh" + k} x1={LX + dx + 3} y1={yy} x2={LX + dx + 9} y2={yy + 5} stroke="#6b7390" strokeWidth="1" />; })}</g>}
+        {[[concave ? LX - K * f : LX + K * f, "F"], [concave ? LX - 2 * K * f : LX + 2 * K * f, "C"]].map(([x, t], k) => (x > 8 && x < 312 ? (<g key={"mf" + k}><circle cx={x} cy={AY} r="2.6" fill="#ffd98a" /><text x={x} y={AY + 13} fontSize="8" fill="#ffd98a" textAnchor="middle" style={{ direction: "ltr", unicodeBidi: "isolate" }}>{t}</text></g>) : null))}
+        <g clipPath="url(#mirClip)">
+          {dI !== null && (
+            <g>
+              {ray(xo, yo, LX, yo, "#ff6a5a")}
+              {reflected(LX, yo, "#ff6a5a")}
+              {ray(xo, yo, LX, AY, "#7be0a4")}
+              {reflected(LX, AY, "#7be0a4")}
+              {ray(xo, yo, LX, y3, "#7fb4ff")}
+              {!real ? <g>{ray(LX, y3, 8, y3, "#7fb4ff")}{ray(LX, y3, xi, yi, "#7fb4ff", true, 1.2)}</g> : ray(LX, y3, 8, y3, "#7fb4ff")}
+            </g>
+          )}
+          {dI === null && (<g>{ray(xo, yo, LX, yo, "#ff6a5a")}{ray(LX, yo, 8, AY + (AY - yo) * ((LX - 8) / (xFp - LX)) * -1 * -1 + 0, "#ff6a5a")}</g>)}
+          <line x1={xo} y1={AY} x2={xo} y2={yo} stroke="#ffd98a" strokeWidth="3" /><polygon points={`${xo - 5},${yo + 7} ${xo + 5},${yo + 7} ${xo},${yo - 1}`} fill="#ffd98a" />
+          {dI !== null && xi > 6 && xi < 314 && Math.abs(yi - AY) < 140 && (
+            <g opacity={real ? 1 : 0.7}>
+              <line x1={xi} y1={AY} x2={xi} y2={yi} stroke="#7be0a4" strokeWidth="3" strokeDasharray={real ? null : "4 3"} />
+              <polygon points={m < 0 ? `${xi - 5},${yi - 7} ${xi + 5},${yi - 7} ${xi},${yi + 1}` : `${xi - 5},${yi + 7} ${xi + 5},${yi + 7} ${xi},${yi - 1}`} fill="#7be0a4" />
+            </g>
+          )}
+        </g>
+        {dI !== null && (xi <= 6 || xi >= 314) && <text x="160" y="30" fontSize="9" fill="#ffb347" textAnchor="middle">تصویر خیلی دور است (خارج از صفحه)</text>}
+        <line x1="6" y1="170" x2="314" y2="170" stroke="#8fa3c8" strokeWidth="1.2" />
+        {ticks}
+        <text x="30" y="30" fontSize="8" fill="#ffd98a" textAnchor="middle">▮ جسم</text>
+        <text x="30" y="42" fontSize="8" fill="#7be0a4" textAnchor="middle">▮ تصویر</text>
+      </svg>
+      <VlabMeterRow height={160} meters={[{ label: "فاصله‌ی تصویر", unit: "cm", value: dI === null ? 0 : Math.abs(dI), ranges: [30, 100, 300, 1000], maj: 5, decimals: 1 }, { label: "بزرگ‌نمایی |m|", unit: "×", value: m === null ? 0 : Math.abs(m), ranges: [1, 3, 10, 50, 200], maj: 5, decimals: 2 }]} />
+      <div className="vlab-controls">
+        <div className="vlab-ctrl-col" style={{ flex: 1 }}>
+          <div className="vlab-num-row" style={{ marginBottom: 6 }}>
+            <button type="button" className={"vlab-num-btn" + (concave ? " active" : "")} onClick={() => setConcave(true)}>آینه‌ی مقعر</button>
+            <button type="button" className={"vlab-num-btn" + (!concave ? " active" : "")} onClick={() => setConcave(false)}>آینه‌ی محدب</button>
+          </div>
+          <label className="vlab-ctrl-label">فاصله‌ی کانونی f (cm): {f}</label>
+          <VlabRange min="5" max="20" step="1" value={f} onChange={(e) => setF(+e.target.value)} />
+          <label className="vlab-ctrl-label">فاصله‌ی جسم تا آینه (cm): {dO}</label>
+          <VlabRange min="4" max="60" step="1" value={dO} onChange={(e) => setDO(+e.target.value)} />
+        </div>
+      </div>
+      <div className="vlab-readout">{desc}<br />{concave ? "آینه‌ی مقعر پرتوها را جمع می‌کند: جسم دور تصویر حقیقی و وارونه می‌دهد و جسم نزدیک‌تر از کانون تصویر مجازی و بزرگ." : "آینه‌ی محدب پرتوها را پراکنده می‌کند و همیشه تصویر مجازی، مستقیم و کوچک‌تر می‌سازد (مثل آینه‌ی بغل خودرو)."}</div>
+      {dI !== null && (
+        <VlabFormulaCheck title="معادله‌ی آینه‌های کروی" fa="یک بر فاصله‌ی کانونی = یک بر فاصله‌ی جسم + یک بر فاصله‌ی تصویر" en="1/f = 1/dₒ + 1/dᵢ" legend={concave ? "برای آینه‌ی مقعر f مثبت است؛ جواب منفی یعنی تصویر مجازی (پشت آینه)" : "برای آینه‌ی محدب f را منفی بگذار (f = −" + f + ")؛ تصویر همیشه مجازی (پشت آینه) است"} subst={concave ? `dᵢ = (${dO} × ${f}) ÷ (${dO} − ${f}) = ?` : `dᵢ = (${dO} × (−${f})) ÷ (${dO} − (−${f})) = ?`} label="dᵢ:" answer={dI} unit="cm" decimals={1} />
+      )}
+    </div>
+  );
+}
+
 const VLAB_COMPONENTS = {
   lever: VlabLeverExperiment,
   pendulum: VlabPendulumExperiment,
@@ -29504,6 +29609,7 @@ const VLAB_COMPONENTS = {
   "plane-mirror": VlabPlaneMirrorExperiment,
   "bar-magnet-field": VlabBarMagnetExperiment,
   "lung-breathing": VlabLungExperiment,
+  "spherical-mirror": VlabSphericalMirrorExperiment,
 };
 
 function StudentVirtualLabView({ onBack, grade, studentCode, schoolCode }) {

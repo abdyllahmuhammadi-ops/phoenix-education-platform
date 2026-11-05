@@ -25,7 +25,7 @@ html, body { margin: 0; padding: 0; }
 .pqb-question-list, .pqb-question-list *, #pqb-exam-printable-block, #pqb-exam-printable-block *, #pqb-printable-questions, #pqb-printable-questions *, .pqb-mcq-option, .pqb-mcq-option * { -webkit-user-select: text !important; user-select: text !important; -webkit-touch-callout: default; }
 #root img, #root svg, #root video, #root canvas { -webkit-user-drag: none; user-drag: none; }
 html.pqb-hide #root { filter: blur(22px); }
-@media print { html.pqb-hide #root { filter: none; } }
+@media print { html.pqb-hide #root { filter: none; } html:not(.pqb-print-ok) #root { display: none !important; } }
 </style>
 <script>
 /* ثبت Service Worker — فقط اگر فایل‌های مربوطه (manifest.json, sw.js, icon-*.png) کنار همین index.html
@@ -35439,6 +35439,15 @@ root.render(<><PhoenixApp /><PalThemeFab /><PalRoleSwitch /></>);
   }, true);
   document.addEventListener('keydown', function (e) { if (e.key === 'PrintScreen') hide(); }, true);
   window.addEventListener('beforeprint', function () { root.classList.remove('pqb-hide'); });
+  /* چاپ فقط از دکمه‌های خودِ سامانه (برگه‌ی امتحان، کارنامه، گزارش) مجاز است؛ چاپ از منوی مرورگر/Ctrl+P صفحه‌ی خالی می‌دهد */
+  var origPrint = window.print.bind(window);
+  window.print = function () {
+    root.classList.add('pqb-print-ok');
+    var done = function () { root.classList.remove('pqb-print-ok'); window.removeEventListener('afterprint', done); };
+    window.addEventListener('afterprint', done);
+    origPrint();
+    setTimeout(function () { root.classList.remove('pqb-print-ok'); }, 60000);
+  };
   new MutationObserver(function (ms) {
     ms.forEach(function (m) { m.addedNodes.forEach(function (n) {
       if (n.nodeType !== 1) return;

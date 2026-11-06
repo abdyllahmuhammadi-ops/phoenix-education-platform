@@ -23061,6 +23061,51 @@ const VLAB_EXPERIMENTS = [
     intro: "نقطه‌ی بالای سطح شیب‌دار را بکش و ببین نیروی هل دادن بار چقدر کم یا زیاد می‌شود. سود مکانیکی و کار را حساب کن.",
     tools: ["سطح شیب‌دار", "بار", "نیروسنج"],
   },
+  {
+    id: "bicycle-gears",
+    subject: "فیزیک",
+    level: "متوسطه اول",
+    title: "چرخ‌دنده‌ها و دنده‌ی دوچرخه",
+    icon: "⚙️",
+    intro: "چرخ‌دنده‌ی پدال را با انگشت بچرخان، تعداد دندانه‌ها را عوض کن و ببین چرا در سربالایی دنده‌ی سبک می‌گذارند.",
+    tools: ["چرخ‌دنده‌ی جلو", "چرخ‌دنده‌ی عقب", "زنجیر"],
+  },
+  {
+    id: "static-electricity",
+    subject: "فیزیک",
+    level: "متوسطه اول",
+    title: "الکتریسیته‌ی ساکن و قانون کولن",
+    icon: "🎈",
+    intro: "بادکنک را روی ژاکت بمال تا بار بگیرد، بعد به تکه‌های کاغذ نزدیک کن و ببین نیرو با فاصله چطور کم می‌شود.",
+    tools: ["بادکنک", "ژاکت پشمی", "تکه‌های کاغذ"],
+  },
+  {
+    id: "wire-resistance",
+    subject: "فیزیک",
+    level: "متوسطه دوم",
+    title: "مقاومت سیم و سیم‌سیار",
+    icon: "🔌",
+    intro: "طول، ضخامت و جنس سیم را عوض کن و ببین مقاومت، افت ولتاژ و گرمای سیم چطور تغییر می‌کند.",
+    tools: ["سیم", "بخاری", "مقاومت‌سنج"],
+  },
+  {
+    id: "light-colors",
+    subject: "فیزیک",
+    level: "متوسطه اول",
+    title: "ترکیب رنگ نور",
+    icon: "🌈",
+    intro: "سه نور قرمز، سبز و آبی را روی هم بینداز و رنگ هر نقطه را با کاوشگر اندازه بگیر؛ ببین تلویزیون چطور همه‌ی رنگ‌ها را می‌سازد.",
+    tools: ["سه نورافکن", "کاوشگر رنگ"],
+  },
+  {
+    id: "specific-heat",
+    subject: "فیزیک",
+    level: "متوسطه دوم",
+    title: "گرمای ویژه و نسیم دریا",
+    icon: "🔥",
+    intro: "دو ماده‌ی هم‌جرم را با یک شعله گرم کن و ببین چرا ماسه زودتر از آب داغ می‌شود.",
+    tools: ["دو نمونه", "شعله", "دماسنج"],
+  },
 ];
 
 function vlabClamp(v, min, max) {
@@ -29969,6 +30014,332 @@ function VlabInclinedPlaneExperiment({ onReading }) {
   );
 }
 
+function vlabGearPath(r, n, tooth) {
+  const ro = r + tooth, ri = r - tooth, w = (2 * Math.PI) / n; let d = "";
+  const pt = (rad, a) => (rad * Math.cos(a)).toFixed(1) + "," + (rad * Math.sin(a)).toFixed(1);
+  for (let i = 0; i < n; i++) { const a0 = i * w; d += (i ? "L" : "M") + pt(ri, a0) + "L" + pt(ro, a0 + 0.16 * w) + "L" + pt(ro, a0 + 0.44 * w) + "L" + pt(ri, a0 + 0.6 * w); }
+  return d + "Z";
+}
+function VlabGearExperiment({ onReading }) {
+  const [n1, setN1] = useState(44);
+  const [n2, setN2] = useState(16);
+  const [rpm, setRpm] = useState(60);
+  const [run, setRun] = useState(true);
+  const [ang, setAng] = useState(0);
+  const angRef = React.useRef(0), prev = React.useRef(null), dragging = React.useRef(false);
+  const PITCH = 6, C1 = { x: 98, y: 104 }, C2 = { x: 238, y: 104 };
+  const r1 = (n1 * PITCH) / (2 * Math.PI), r2 = (n2 * PITCH) / (2 * Math.PI);
+  const { svgRef, startDrag } = useVlabDrag((id, p) => {
+    dragging.current = true;
+    const a = (Math.atan2(p.y - C1.y, p.x - C1.x) * 180) / Math.PI;
+    if (prev.current !== null) { let d = a - prev.current; if (d > 180) d -= 360; if (d < -180) d += 360; angRef.current += d; setAng(angRef.current); }
+    prev.current = a;
+  }, () => { prev.current = null; dragging.current = false; });
+  useEffect(() => {
+    let raf, last = null;
+    const step = (t) => {
+      if (last !== null && run && !dragging.current) { angRef.current += Math.min(0.05, (t - last) / 1000) * (rpmRef.current * 6); setAng(angRef.current); }
+      last = t; raf = requestAnimationFrame(step);
+    };
+    raf = requestAnimationFrame(step);
+    return () => cancelAnimationFrame(raf);
+  }, [run]);
+  const rpmRef = React.useRef(rpm); rpmRef.current = rpm;
+  const ratio = n1 / n2, rearRpm = rpm * ratio, speed = (rearRpm * Math.PI * 0.67 * 60) / 1000;
+  useEffect(() => {
+    if (onReading) onReading(`دندانه‌ی جلو: ${n1} | دندانه‌ی عقب: ${n2} | نسبت: ${ratio.toFixed(2)} | سرعت: ${speed.toFixed(1)} km/h`);
+    // eslint-disable-next-line
+  }, [n1, n2, rpm]);
+  const angRear = ang * ratio;
+  const phi = Math.asin((r1 - r2) / (C2.x - C1.x)), sp = Math.sin(phi), cp = Math.cos(phi);
+  const up = [[C1.x + r1 * sp, C1.y - r1 * cp], [C2.x + r2 * sp, C2.y - r2 * cp]], dn = [[C1.x + r1 * sp, C1.y + r1 * cp], [C2.x + r2 * sp, C2.y + r2 * cp]];
+  const off = (ang / 360) * n1 * PITCH;
+  const spokes = [0, 1, 2, 3, 4, 5, 6, 7];
+  const hint = ratio < 2 ? "نسبت کوچک است: پدال زدن سبک است و مناسب سربالایی؛ اما سرعت کم می‌شود." : ratio > 3.2 ? "نسبت بزرگ است: پدال سنگین‌تر است ولی با هر دور، چرخ عقب دورهای بیشتری می‌زند و سرعت بالا می‌رود." : "نسبت متوسط: مناسب جاده‌ی صاف.";
+  return (
+    <div className="vlab-exp">
+      <svg ref={svgRef} viewBox="0 0 320 224" className="vlab-svg" style={{ background: "#03060f", borderRadius: "10px" }}>
+        <g transform={`rotate(${angRear} ${C2.x} ${C2.y})`} stroke="#7d8aa8" strokeWidth="1.2" opacity="0.8">
+          {spokes.map((i) => <line key={i} x1={C2.x} y1={C2.y} x2={C2.x + 72 * Math.cos((i * Math.PI) / 4)} y2={C2.y + 72 * Math.sin((i * Math.PI) / 4)} />)}
+        </g>
+        <circle cx={C2.x} cy={C2.y} r="72" fill="none" stroke="#3b4666" strokeWidth="7" />
+        <path d={`M${up[0][0]},${up[0][1]}L${up[1][0]},${up[1][1]}M${dn[0][0]},${dn[0][1]}L${dn[1][0]},${dn[1][1]}`} stroke="#9aa6c8" strokeWidth="3" strokeDasharray="4 3" strokeDashoffset={-off} fill="none" />
+        <g transform={`translate(${C2.x},${C2.y}) rotate(${angRear})`}><path d={vlabGearPath(r2, n2, 3)} fill="#27324f" stroke="#ffd98a" strokeWidth="1.5" /><circle cx={r2 * 0.55} cy="0" r="2.4" fill="#ff6b6b" /></g>
+        <g transform={`translate(${C1.x},${C1.y}) rotate(${ang})`}><path d={vlabGearPath(r1, n1, 4)} fill="#27324f" stroke="#7be0a4" strokeWidth="1.5" /><circle cx={r1 * 0.7} cy="0" r="3.2" fill="#ff6b6b" /><circle cx="0" cy="0" r="4" fill="#9fb0e0" /></g>
+        <circle cx={C1.x} cy={C1.y} r={r1 + 8} fill="transparent" onPointerDown={startDrag("pedal")} style={{ cursor: "grab", touchAction: "none" }} />
+        <text x={C1.x} y="190" fontSize="9" fill="#7be0a4" textAnchor="middle">{"چرخ‌دنده‌ی جلو (پدال)"}</text>
+        <text x={C2.x} y="190" fontSize="9" fill="#ffd98a" textAnchor="middle">{"چرخ‌دنده‌ی عقب"}</text>
+        <text x={C1.x} y="203" fontSize="9" fill="#7be0a4" textAnchor="middle" style={{ direction: "ltr", unicodeBidi: "isolate" }}>{n1 + " T"}</text>
+        <text x={C2.x} y="203" fontSize="9" fill="#ffd98a" textAnchor="middle" style={{ direction: "ltr", unicodeBidi: "isolate" }}>{n2 + " T"}</text>
+        <text x="160" y="217" fontSize="8" fill="#9fb0e0" textAnchor="middle">چرخ‌دنده‌ی جلو را با انگشت بچرخان؛ نقطه‌ی قرمز دورها را نشان می‌دهد</text>
+      </svg>
+      <VlabMeterRow height={150} meters={[{ label: "نسبت چرخ‌دنده", unit: "×", value: ratio, ranges: [3, 6], maj: 5, decimals: 2 }, { label: "دور چرخ عقب", unit: "rpm", value: rearRpm, ranges: [150, 300, 600], maj: 5, decimals: 0 }, { label: "سرعت دوچرخه", unit: "km/h", value: speed, ranges: [20, 40, 80], maj: 5, decimals: 1 }]} />
+      <div className="vlab-controls">
+        <div className="vlab-ctrl-col" style={{ flex: 1 }}>
+          <label className="vlab-ctrl-label">دندانه‌ی جلو: {n1}</label><VlabRange min="22" max="52" step="1" value={n1} onChange={(e) => setN1(+e.target.value)} />
+          <label className="vlab-ctrl-label">دندانه‌ی عقب: {n2}</label><VlabRange min="11" max="28" step="1" value={n2} onChange={(e) => setN2(+e.target.value)} />
+          <label className="vlab-ctrl-label">دور پدال در دقیقه: {rpm}</label><VlabRange min="20" max="120" step="5" value={rpm} onChange={(e) => setRpm(+e.target.value)} />
+          <button className="vlab-btn" onClick={() => setRun(!run)}>{run ? "⏸ ایست پدال" : "▶ پدال بزن"}</button>
+        </div>
+      </div>
+      <div className="vlab-readout">با هر دور پدال، چرخ عقب <b style={{ direction: "ltr", unicodeBidi: "isolate", display: "inline-block" }}>{ratio.toFixed(2)}</b> دور می‌چرخد. {hint}</div>
+      <VlabFormulaCheck title="نسبت چرخ‌دنده" fa="نسبت = تعداد دندانه‌ی جلو ÷ تعداد دندانه‌ی عقب" en="i = N1 / N2" legend="دور چرخ عقب = دور پدال × نسبت" subst={`i = ${n1} ÷ ${n2} = ?`} label="i:" answer={ratio} unit="×" decimals={2} />
+      <VlabFormulaCheck title="سرعت دوچرخه" fa="سرعت = دور چرخ عقب × محیط چرخ ؛ قطر چرخ ۰٫۶۷ متر" en="v = rpm × π D × 60 / 1000" legend="خروجی بر حسب کیلومتر بر ساعت" subst={`v = ${rpm} × (${n1}÷${n2}) × 3.14 × 0.67 × 60 ÷ 1000 = ?`} label="v:" answer={(rpm * (n1 / n2) * 3.14 * 0.67 * 60) / 1000} unit="km/h" decimals={1} />
+      <VlabEverydayCard title="دنده‌ی دوچرخه در سربالایی" text="در سربالایی چرخ‌دنده‌ی جلو را کوچک و عقب را بزرگ می‌گذارند تا نسبت کم شود و پدال سبک بچرخد. در جاده‌ی صاف و سرازیری برعکس می‌کنند تا سرعت بیشتر شود. ساعت و گیربکس ماشین هم همین اصل را دارند.">
+        <circle cx="30" cy="56" r="20" fill="none" stroke="#333" strokeWidth="3" /><circle cx="92" cy="56" r="20" fill="none" stroke="#333" strokeWidth="3" />
+        <path d="M30,56 L52,56 L68,34 L92,56 M52,56 L46,36 M68,34 L64,28" stroke="#b5502a" strokeWidth="3" fill="none" />
+        <circle cx="52" cy="56" r="7" fill="none" stroke="#2a7a44" strokeWidth="2" /><circle cx="30" cy="56" r="3.5" fill="none" stroke="#a87a10" strokeWidth="2" />
+        <line x1="4" y1="78" x2="116" y2="60" stroke="#999" strokeWidth="1" strokeDasharray="3 3" />
+      </VlabEverydayCard>
+    </div>
+  );
+}
+
+function VlabStaticElectricityExperiment({ onReading }) {
+  const [q, setQ] = useState(0);
+  const [pos, setPos] = useState({ x: 170, y: 80 });
+  const lastP = React.useRef(null), qRef = React.useRef(0), posRef = React.useRef({ x: 170, y: 80 });
+  const Q2 = 10, PX = 0.0025, WEIGHT = 49;
+  const bits = [138, 158, 180, 202, 224, 246, 268, 290];
+  const { svgRef, startDrag } = useVlabDrag((id, p) => {
+    const np = { x: Math.max(18, Math.min(304, p.x)), y: Math.max(22, Math.min(176, p.y)) };
+    if (lastP.current) {
+      const mv = Math.hypot(np.x - lastP.current.x, np.y - lastP.current.y);
+      if (np.x - 16 < 100 && np.y > 38 && np.y < 152) { qRef.current = Math.min(40, qRef.current + mv * 0.07); setQ(qRef.current); }
+    }
+    lastP.current = np; posRef.current = np; setPos(np);
+  }, () => { lastP.current = null; });
+  const dOf = (bx) => Math.max(20, Math.hypot(bx - pos.x, 186 - pos.y));
+  const Fof = (d) => (0.009 * q * Q2) / Math.pow(d * PX, 2);
+  const dmin = Math.min.apply(null, bits.map(dOf));
+  const F = Fof(dmin);
+  useEffect(() => {
+    if (onReading) onReading(`بار بادکنک: ${q.toFixed(1)} nC | فاصله تا نزدیک‌ترین کاغذ: ${(dmin * 0.25).toFixed(0)} cm | نیرو: ${F.toFixed(0)} µN`);
+    // eslint-disable-next-line
+  }, [Math.round(q), Math.round(dmin / 4)]);
+  const negs = Math.min(10, Math.round(q / 4));
+  const qd = Math.round(q * 10) / 10, rd = Math.round(dmin * PX * 1000) / 1000;
+  const ans = (0.009 * qd * Q2) / (rd * rd);
+  const lifted = bits.map((bx) => Fof(dOf(bx)) > WEIGHT && q > 0.5);
+  return (
+    <div className="vlab-exp">
+      <svg ref={svgRef} viewBox="0 0 320 224" className="vlab-svg" style={{ background: "#03060f", borderRadius: "10px" }}>
+        <rect x="6" y="38" width="94" height="116" rx="8" fill="#6a3a8c" stroke="#a97ad1" />
+        {[0, 1, 2, 3, 4, 5].map((i) => <path key={i} d={`M10,${52 + i * 18} q10,-8 20,0 t20,0 t20,0 t20,0`} stroke="#8b5cb3" strokeWidth="1.2" fill="none" />)}
+        <text x="53" y="170" fontSize="9" fill="#cdb0e8" textAnchor="middle">{"ژاکت پشمی (+)"}</text>
+        {[0, 1, 2, 3, 4, 5, 6, 7].map((i) => (i < 8 - Math.round(q / 5) ? <text key={i} x={22 + (i % 4) * 22} y={64 + Math.floor(i / 4) * 40} fontSize="13" fill="#ff8a8a" textAnchor="middle">+</text> : null))}
+        <rect x="120" y="186" width="190" height="6" fill="#4a3a28" />
+        {bits.map((bx, i) => {
+          const L = lifted[i]; let tx = 0, ty = 0;
+          if (L) { const dx = pos.x - bx, dy = pos.y - 186, dd = Math.hypot(dx, dy) || 1, k = (i - 3.5) * 0.28; tx = dx - (dx / dd) * 22 * Math.cos(k) + Math.cos(k + 1.57) * 0 ; ty = dy - (dy / dd) * 22 ; tx += (i - 3.5) * 2.4; }
+          return <rect key={i} x={bx - 5} y="181" width="10" height="5" fill="#f6f1d6" stroke="#bdb68f" style={{ transform: `translate(${tx}px,${ty}px)`, transition: "transform .22s ease-out" }} />;
+        })}
+        <g>
+          <line x1={pos.x} y1={pos.y + 19} x2={pos.x + 4} y2={pos.y + 32} stroke="#ddd" strokeWidth="1" />
+          <ellipse cx={pos.x} cy={pos.y} rx="15" ry="19" fill="#4a8bff" opacity="0.92" stroke="#bcd3ff" />
+          {Array.from({ length: negs }).map((_, i) => <text key={i} x={pos.x + Math.cos(i * 0.9) * (4 + (i % 3) * 3)} y={pos.y + Math.sin(i * 1.7) * (8 + (i % 2) * 4) + 3} fontSize="10" fill="#fff" textAnchor="middle">−</text>)}
+          <ellipse cx={pos.x} cy={pos.y} rx="26" ry="30" fill="transparent" onPointerDown={startDrag("balloon")} style={{ cursor: "grab", touchAction: "none" }} />
+        </g>
+        <text x="215" y="206" fontSize="8" fill="#9fb0e0" textAnchor="middle">{"تکه‌های کاغذ"}</text>
+        <text x="160" y="217" fontSize="8" fill="#9fb0e0" textAnchor="middle">بادکنک را روی ژاکت بمال، بعد به کاغذها نزدیک کن</text>
+      </svg>
+      <VlabMeterRow height={150} meters={[{ label: "بار بادکنک", unit: "nC", value: q, ranges: [10, 20, 40], maj: 5, decimals: 1 }, { label: "فاصله تا کاغذ", unit: "cm", value: dmin * 0.25, ranges: [20, 40, 80], maj: 5, decimals: 0 }, { label: "نیروی جاذبه", unit: "µN", value: F, ranges: [100, 500, 2000], maj: 5, decimals: 0 }]} />
+      <div className="vlab-controls">
+        <div className="vlab-ctrl-col" style={{ flex: 1 }}>
+          <button className="vlab-btn" onClick={() => { qRef.current = 0; setQ(0); }}>✋ بار را تخلیه کن (دست بزن)</button>
+        </div>
+      </div>
+      <div className="vlab-readout">{q < 1 ? "هنوز بادکنک بار ندارد. آن را روی ژاکت جلو و عقب بکش تا الکترون بگیرد." : "بادکنک الکترون گرفته و منفی شده است. نیرو با «مجذور فاصله» کم می‌شود؛ هر چه نزدیک‌تر، نیرو چند برابر بیشتر. کاغذ وقتی بلند می‌شود که نیرو از وزنش (حدود " + WEIGHT + " میکرونیوتن) بیشتر باشد."}</div>
+      <VlabFormulaCheck title="قانون کولن" fa="نیرو = ثابت کولن × بار اول × بار دوم ÷ مجذور فاصله" en="F = k q1 q2 / r²" legend="k = ۹ × ۱۰⁹ ؛ بار القایی کاغذ ۱۰ نانوکولن؛ فاصله به متر؛ جواب به میکرونیوتن" subst={`F = 9×10⁹ × ${qd}×10⁻⁹ × 10×10⁻⁹ ÷ ${rd}² × 10⁶ = ?`} label="F:" answer={ans} unit="µN" decimals={0} />
+      <VlabEverydayCard title="شانه‌ی پلاستیکی، لباس چسبان و آذرخش" text="شانه‌ای که به مو بمالی کاغذ را بلند می‌کند. لباس خشک در خشک‌کن به هم می‌چسبد. ابرها هم با اصطکاک بار می‌گیرند و وقتی بار زیاد شود، جرقه‌ی بزرگی به نام آذرخش می‌زنند.">
+        <path d="M10,34 h60 v10 h-60z" fill="#4a8bff" stroke="#235" /><g stroke="#235">{[0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11].map((i) => <line key={i} x1={12 + i * 5} y1="44" x2={12 + i * 5} y2="52" />)}</g>
+        {[0, 1, 2, 3].map((i) => <rect key={i} x={20 + i * 12} y={58 - (i % 2) * 8} width="8" height="4" fill="#f6f1d6" stroke="#bdb68f" />)}
+        <path d="M100,8 l-8,16 h8 l-6,16" stroke="#e6b800" strokeWidth="3" fill="none" /><ellipse cx="96" cy="8" rx="16" ry="7" fill="#aab" />
+      </VlabEverydayCard>
+    </div>
+  );
+}
+
+function VlabWireResistanceExperiment({ onReading }) {
+  const MATS = [{ n: "مس", rho: 0.017, col: "#c97a4a" }, { n: "آلومینیوم", rho: 0.028, col: "#b8c0cc" }, { n: "آهن", rho: 0.1, col: "#7d8696" }, { n: "نیکروم", rho: 1.1, col: "#8d8a7a" }];
+  const [mi, setMi] = useState(0);
+  const [L, setL] = useState(20);
+  const [d, setD] = useState(1.4);
+  const X0 = 40, K = 2.2;
+  const { svgRef, startDrag } = useVlabDrag((id, p) => { setL(Math.max(1, Math.min(100, Math.round((p.x - X0 - 20) / K)))); });
+  const m = MATS[mi], A = (Math.PI * d * d) / 4, R = (m.rho * 2 * L) / A, RL = 24.2, I = 220 / (RL + R), drop = I * R, Pw = I * I * R, xe = X0 + 20 + L * K;
+  const Ar = Math.round(A * 100) / 100, Rr = Math.round(R * 1e4) / 1e4;
+  useEffect(() => {
+    if (onReading) onReading(`${m.n} | طول: ${L} m | قطر: ${d} mm | مقاومت سیم: ${R.toFixed(3)} Ω | گرمای سیم: ${Pw.toFixed(1)} W`);
+    // eslint-disable-next-line
+  }, [mi, L, d]);
+  const h = 4 + d * 5;
+  return (
+    <div className="vlab-exp">
+      <svg ref={svgRef} viewBox="0 0 320 224" className="vlab-svg" style={{ background: "#03060f", borderRadius: "10px" }}>
+        <rect x="8" y="78" width="22" height="44" rx="5" fill="#e8e8f0" stroke="#99a" /><circle cx="19" cy="92" r="2.5" fill="#333" /><circle cx="19" cy="108" r="2.5" fill="#333" />
+        <text x="19" y="136" fontSize="8" fill="#9fb0e0" textAnchor="middle">پریز</text>
+        <rect x={X0} y={100 - h / 2} width={20 + L * K} height={h} rx={Math.min(5, h / 2)} fill={m.col} stroke="#222" />
+        <rect x={X0} y={100 - h / 2} width={20 + L * K} height={h} rx={Math.min(5, h / 2)} fill="#ff6a2a" opacity={Math.min(0.55, Pw / 90)} />
+        <g transform={`translate(${xe + 3},78)`}><rect width="26" height="44" rx="4" fill="#3a2a2a" stroke="#ff9a5a" />{[0, 1, 2].map((i) => <path key={i} d={`M4,${10 + i * 12} h18`} stroke="#ff7a3a" strokeWidth="3" />)}</g>
+        <text x={xe + 16} y="136" fontSize="8" fill="#ffb78a" textAnchor="middle">بخاری</text>
+        <circle cx={xe} cy="100" r="14" fill="transparent" onPointerDown={startDrag("end")} style={{ cursor: "ew-resize", touchAction: "none" }} />
+        <circle cx={xe} cy="100" r="5" fill="#ffd98a" stroke="#fff" pointerEvents="none" />
+        <circle cx="270" cy="38" r={d * 5} fill={m.col} stroke="#fff" /><text x="270" y="64" fontSize="8" fill="#9fb0e0" textAnchor="middle">{"برش سیم"}</text>
+        <text x={X0 + (xe - X0) / 2} y="164" fontSize="9" fill="#ffd98a" textAnchor="middle" style={{ direction: "ltr", unicodeBidi: "isolate" }}>{"L = " + L + " m"}</text>
+        <line x1={X0} y1="154" x2={xe} y2="154" stroke="#ffd98a" strokeWidth="1" />
+        <text x="160" y="217" fontSize="8" fill="#9fb0e0" textAnchor="middle">نقطه‌ی زرد را بکش تا طول سیم عوض شود</text>
+      </svg>
+      <VlabMeterRow height={150} meters={[{ label: "مقاومت سیم", unit: "Ω", value: R, ranges: [0.1, 1, 10, 100, 1000, 10000], maj: 5, decimals: 3 }, { label: "افت ولتاژ", unit: "V", value: drop, ranges: [5, 20, 60, 220], maj: 5, decimals: 1 }, { label: "گرمای سیم", unit: "W", value: Pw, ranges: [5, 20, 100, 500], maj: 5, decimals: 1 }]} />
+      <div className="vlab-controls">
+        <div className="vlab-ctrl-col" style={{ flex: 1 }}>
+          <div style={{ display: "flex", gap: "6px", flexWrap: "wrap", marginBottom: "6px" }}>{MATS.map((x, i) => <button key={i} className="vlab-btn" style={{ background: i === mi ? "#ffd98a" : undefined, color: i === mi ? "#222" : undefined }} onClick={() => setMi(i)}>{x.n}</button>)}</div>
+          <label className="vlab-ctrl-label">طول سیم (m): {L}</label><VlabRange min="1" max="100" step="1" value={L} onChange={(e) => setL(+e.target.value)} />
+          <label className="vlab-ctrl-label">قطر سیم (mm): {d}</label><VlabRange min="0.5" max="4" step="0.1" value={d} onChange={(e) => setD(+e.target.value)} />
+        </div>
+      </div>
+      <div className="vlab-readout">برق بخاری ۲۰۰۰ واتی (مقاومت ۲۴٫۲ اهم) از دو سیم رفت و برگشت می‌گذرد. سیم بلندتر یا نازک‌تر مقاومت بیشتر دارد و بیشتر داغ می‌شود: جریان {I.toFixed(2)} آمپر است و {Pw.toFixed(1)} وات در خودِ سیم تلف می‌شود.</div>
+      <VlabFormulaCheck title="مقاومت سیم رابط (رفت و برگشت)" fa="مقاومت = مقاومت ویژه × دو برابر طول ÷ سطح مقطع" en="R = ρ · 2L / A" legend={`ρ ${m.n} = ${m.rho} اهم‌میلی‌متر مربع بر متر ؛ سطح مقطع A = π d² / 4 = ${Ar} mm²`} subst={`R = ${m.rho} × 2 × ${L} ÷ ${Ar} = ?`} label="R:" answer={(m.rho * 2 * L) / Ar} unit="Ω" decimals={3} />
+      <VlabFormulaCheck title="توان تلف‌شده در سیم" fa="توان = مجذور جریان × مقاومت سیم" en="P = I² R" legend={`جریان = ۲۲۰ ÷ (۲۴٫۲ + مقاومت سیم) = ${I.toFixed(3)} آمپر`} subst={`P = ${I.toFixed(3)}² × ${Rr} = ?`} label="P:" answer={Math.pow(Math.round(I * 1000) / 1000, 2) * Rr} unit="W" decimals={2} />
+      <VlabEverydayCard title="سیم‌ سیار (چندراهی) و سیم‌ بخاری" text="سیم‌سیارِ بلند و نازک گرم می‌شود و حتی آتش می‌گیرد؛ برای وسیله‌ی پرمصرف باید سیم کوتاه و ضخیم بخری. در بخاری و سشوار عمداً از سیم نیکروم با مقاومت زیاد استفاده می‌کنند تا داغ شود.">
+        <rect x="6" y="40" width="70" height="8" rx="4" fill="#c97a4a" stroke="#533" /><rect x="76" y="30" width="30" height="28" rx="5" fill="#eee" stroke="#889" /><circle cx="86" cy="40" r="2" fill="#333" /><circle cx="96" cy="40" r="2" fill="#333" /><circle cx="86" cy="50" r="2" fill="#333" /><circle cx="96" cy="50" r="2" fill="#333" />
+        <path d="M20,70 q6,-8 12,0 t12,0 t12,0 t12,0" stroke="#d1401a" strokeWidth="3" fill="none" /><text x="60" y="20" fontSize="9" fill="#b3402a" textAnchor="middle">!</text>
+      </VlabEverydayCard>
+    </div>
+  );
+}
+
+function vlabColorName(r, g, b) {
+  const mx = Math.max(r, g, b), mn = Math.min(r, g, b);
+  if (mx < 25) return "سیاه (بدون نور)";
+  const s = (mx - mn) / mx;
+  if (s < 0.18) return mx > 215 ? "سفید" : "خاکستری";
+  let h; const dl = mx - mn;
+  if (mx === r) h = ((g - b) / dl + 6) % 6; else if (mx === g) h = (b - r) / dl + 2; else h = (r - g) / dl + 4;
+  h *= 60;
+  if (h < 20 || h >= 340) return "قرمز";
+  if (h < 45) return "نارنجی"; if (h < 70) return "زرد"; if (h < 150) return "سبز"; if (h < 200) return "فیروزه‌ای (سیان)"; if (h < 265) return "آبی"; if (h < 295) return "بنفش"; return "سرخابی (ماژنتا)";
+}
+function VlabLightColorsExperiment({ onReading }) {
+  const [I, setI] = useState({ r: 255, g: 255, b: 255 });
+  const [P, setP] = useState({ r: { x: 125, y: 86 }, g: { x: 195, y: 86 }, b: { x: 160, y: 140 }, probe: { x: 160, y: 104 } });
+  const RAD = 100, PLAT = 0.4;
+  const { svgRef, startDrag } = useVlabDrag((id, p) => { setP((o) => ({ ...o, [id]: { x: Math.max(20, Math.min(300, p.x)), y: Math.max(26, Math.min(190, p.y)) } })); });
+  const ch = (k) => Math.round(I[k] * Math.min(1, Math.max(0, (1 - Math.hypot(P.probe.x - P[k].x, P.probe.y - P[k].y) / RAD) / (1 - PLAT))));
+  const R = ch("r"), G = ch("g"), B = ch("b");
+  const hex = "#" + [R, G, B].map((v) => v.toString(16).padStart(2, "0")).join("").toUpperCase();
+  const name = vlabColorName(R, G, B);
+  const Y = 0.299 * R + 0.587 * G + 0.114 * B;
+  useEffect(() => {
+    if (onReading) onReading(`کاوشگر: R=${R} G=${G} B=${B} | رنگ: ${name}`);
+    // eslint-disable-next-line
+  }, [R, G, B]);
+  const cols = { r: "255,0,0", g: "0,255,0", b: "0,0,255" };
+  const lamp = (k, lab) => (
+    <g key={k}>
+      <circle cx={P[k].x} cy={P[k].y} r={RAD} fill={`url(#lg-${k})`} style={{ mixBlendMode: "screen" }} pointerEvents="none" />
+      <circle cx={P[k].x} cy={P[k].y} r="7" fill={`rgb(${cols[k]})`} stroke="#fff" pointerEvents="none" />
+      <circle cx={P[k].x} cy={P[k].y} r="18" fill="transparent" onPointerDown={startDrag(k)} style={{ cursor: "grab", touchAction: "none" }} />
+    </g>
+  );
+  const sl = (k, lab, colr) => (<React.Fragment key={k}><label className="vlab-ctrl-label" style={{ color: colr }}>{lab}: {I[k]}</label><VlabRange min="0" max="255" step="5" value={I[k]} onChange={(e) => setI({ ...I, [k]: +e.target.value })} /></React.Fragment>);
+  return (
+    <div className="vlab-exp">
+      <svg ref={svgRef} viewBox="0 0 320 224" className="vlab-svg" style={{ background: "#03060f", borderRadius: "10px" }}>
+        <defs>{["r", "g", "b"].map((k) => <radialGradient key={k} id={`lg-${k}`}><stop offset="0%" stopColor={`rgb(${[k === "r" ? I.r : 0, k === "g" ? I.g : 0, k === "b" ? I.b : 0].join(",")})`} stopOpacity="1" /><stop offset="40%" stopColor={`rgb(${[k === "r" ? I.r : 0, k === "g" ? I.g : 0, k === "b" ? I.b : 0].join(",")})`} stopOpacity="1" /><stop offset="100%" stopColor={`rgb(${[k === "r" ? I.r : 0, k === "g" ? I.g : 0, k === "b" ? I.b : 0].join(",")})`} stopOpacity="0" /></radialGradient>)}</defs>
+        <rect x="6" y="10" width="308" height="196" rx="8" fill="#000" stroke="#1b2438" />
+        {lamp("r")}{lamp("g")}{lamp("b")}
+        <circle cx={P.probe.x} cy={P.probe.y} r="9" fill="none" stroke="#fff" strokeWidth="2" strokeDasharray="3 2" pointerEvents="none" />
+        <circle cx={P.probe.x} cy={P.probe.y} r="16" fill="transparent" onPointerDown={startDrag("probe")} style={{ cursor: "grab", touchAction: "none" }} />
+        <text x="160" y="217" fontSize="8" fill="#9fb0e0" textAnchor="middle">نورها را بکش و روی هم بینداز؛ حلقه‌ی سفید رنگ آن نقطه را اندازه می‌گیرد</text>
+      </svg>
+      <VlabMeterRow height={150} meters={[{ label: "کانال قرمز", unit: "", value: R, ranges: [255], maj: 5, decimals: 0 }, { label: "کانال سبز", unit: "", value: G, ranges: [255], maj: 5, decimals: 0 }, { label: "کانال آبی", unit: "", value: B, ranges: [255], maj: 5, decimals: 0 }]} />
+      <div className="vlab-controls"><div className="vlab-ctrl-col" style={{ flex: 1 }}>
+        {sl("r", "شدت نور قرمز", "#ff7a7a")}{sl("g", "شدت نور سبز", "#7be0a4")}{sl("b", "شدت نور آبی", "#7aa8ff")}
+        <div style={{ display: "flex", gap: "6px", flexWrap: "wrap", marginTop: "6px" }}>
+          <button className="vlab-btn" onClick={() => setI({ r: 255, g: 255, b: 255 })}>همه روشن</button>
+          <button className="vlab-btn" onClick={() => { setI({ r: 255, g: 255, b: 255 }); setP({ r: { x: 125, y: 86 }, g: { x: 195, y: 86 }, b: { x: 160, y: 140 }, probe: { x: 160, y: 104 } }); }}>بازنشانی</button>
+        </div>
+      </div></div>
+      <div className="vlab-readout" style={{ display: "flex", alignItems: "center", gap: "10px", flexWrap: "wrap" }}><span style={{ width: "34px", height: "34px", borderRadius: "8px", background: hex, border: "2px solid #888", display: "inline-block" }} /><span>رنگ در نقطه‌ی کاوشگر: <b>{name}</b> <span style={{ direction: "ltr", unicodeBidi: "isolate", display: "inline-block" }}>{hex}</span> — نور رنگی با هم «جمع» می‌شود؛ برخلاف رنگ نقاشی که «کم» می‌کند.</span></div>
+      <VlabFormulaCheck title="روشنایی دیده‌شده" fa="چشم به نور سبز حساس‌تر است: روشنایی = ۰٫۲۹۹ قرمز + ۰٫۵۸۷ سبز + ۰٫۱۱۴ آبی" en="Y = 0.299 R + 0.587 G + 0.114 B" legend="مقادیر کانال‌ها را از شمارنده‌ها بخوان" subst={`Y = 0.299 × ${R} + 0.587 × ${G} + 0.114 × ${B} = ?`} label="Y:" answer={Y} unit="" decimals={0} />
+      <VlabEverydayCard title="صفحه‌ی تلویزیون و گوشی" text="صفحه‌ی نمایش از نقطه‌های ریز قرمز، سبز و آبی ساخته شده. از دور چشم این سه نور را جمع می‌کند و همه‌ی رنگ‌ها، حتی زرد و سفید، را می‌بیند. سه نور با شدت کامل سفید می‌دهند.">
+        <rect x="14" y="10" width="92" height="52" rx="6" fill="#111" stroke="#667" />
+        {[0, 1, 2, 3, 4, 5, 6, 7].map((i) => <g key={i}><rect x={22 + i * 10} y="20" width="3" height="12" fill="#f33" /><rect x={25 + i * 10} y="20" width="3" height="12" fill="#3d3" /><rect x={28 + i * 10} y="20" width="3" height="12" fill="#35f" /></g>)}
+        <rect x="22" y="40" width="76" height="10" fill="#fff2a8" opacity="0.9" /><rect x="46" y="64" width="28" height="5" fill="#667" />
+      </VlabEverydayCard>
+    </div>
+  );
+}
+
+function VlabSpecificHeatExperiment({ onReading }) {
+  const MATS = [{ n: "آب", c: 4186, col: "#4da3ff" }, { n: "روغن", c: 2000, col: "#e8c14a" }, { n: "ماسه", c: 830, col: "#d9b77a" }, { n: "آلومینیوم", c: 900, col: "#b8c0cc" }, { n: "آهن", c: 450, col: "#7d8696" }, { n: "مس", c: 385, col: "#c97a4a" }];
+  const [ia, setIa] = useState(0), [ib, setIb] = useState(2), [m, setM] = useState(1), [pw, setPw] = useState(300), [t, setT] = useState(120), [run, setRun] = useState(false);
+  const a = MATS[ia], b = MATS[ib];
+  const tmax = Math.max(5, Math.min(600, Math.floor((80 * m * Math.min(a.c, b.c)) / pw)));
+  const tt = Math.min(t, tmax);
+  const Q = pw * tt, dA = Q / (m * a.c), dB = Q / (m * b.c), TA = 20 + dA, TB = 20 + dB;
+  const tRef = React.useRef(0); tRef.current = tt;
+  const { svgRef, startDrag } = useVlabDrag((id, p) => { setRun(false); setT(Math.max(0, Math.min(tmax, Math.round(((p.x - 40) / 240) * tmax)))); });
+  useEffect(() => {
+    if (!run) return;
+    let raf, last = null;
+    const step = (ts) => {
+      if (last !== null) { const nt = Math.min(tmax, tRef.current + ((ts - last) / 1000) * (tmax / 6)); setT(nt); tRef.current = nt; if (nt >= tmax) { setRun(false); return; } }
+      last = ts; raf = requestAnimationFrame(step);
+    };
+    raf = requestAnimationFrame(step);
+    return () => cancelAnimationFrame(raf);
+  }, [run, tmax]);
+  useEffect(() => {
+    if (onReading) onReading(`${a.n}: ${TA.toFixed(1)}°C | ${b.n}: ${TB.toFixed(1)}°C | انرژی: ${(Q / 1000).toFixed(1)} kJ`);
+    // eslint-disable-next-line
+  }, [ia, ib, m, pw, Math.round(tt)]);
+  const block = (x, mt, T) => {
+    const hot = Math.min(0.6, ((T - 20) / 80) * 0.6), mh = 6 + ((Math.min(T, 100) - 20) / 80) * 58;
+    return (
+      <g>
+        <rect x={x} y="86" width="80" height="80" rx="6" fill={mt.col} stroke="#fff" opacity="0.95" />
+        <rect x={x} y="86" width="80" height="80" rx="6" fill="#ff3b1a" opacity={hot} />
+        <text x={x + 40} y="132" fontSize="11" fill="#0a1020" textAnchor="middle" fontWeight="bold">{mt.n}</text>
+        <rect x={x + 88} y="96" width="8" height="64" rx="4" fill="#1b2438" stroke="#9fb0e0" />
+        <rect x={x + 89.5} y={158 - mh} width="5" height={mh} rx="2.5" fill="#ff4d4d" />
+        <text x={x + 40} y="182" fontSize="9" fill="#ffb78a" textAnchor="middle" style={{ direction: "ltr", unicodeBidi: "isolate" }}>{T.toFixed(1) + " °C"}</text>
+        {tt > 0 || run ? <path d={`M${x + 20},170 q4,-${6 + pw / 40} 8,0 q4,-${8 + pw / 35} 8,0 q4,-${6 + pw / 40} 8,0 q4,-${8 + pw / 35} 8,0`} stroke="#ff9a3a" strokeWidth="3" fill="none" /> : null}
+      </g>
+    );
+  };
+  const tx = 40 + (tt / tmax) * 240;
+  const sel = (val, set) => <select value={val} onChange={(e) => set(+e.target.value)} style={{ padding: "4px 8px", borderRadius: "8px", fontSize: "14px" }}>{MATS.map((x, i) => <option key={i} value={i}>{x.n}</option>)}</select>;
+  return (
+    <div className="vlab-exp">
+      <svg ref={svgRef} viewBox="0 0 320 224" className="vlab-svg" style={{ background: "#03060f", borderRadius: "10px" }}>
+        <text x="90" y="28" fontSize="10" fill="#9fb0e0" textAnchor="middle">نمونه‌ی ۱</text><text x="230" y="28" fontSize="10" fill="#9fb0e0" textAnchor="middle">نمونه‌ی ۲</text>
+        <text x="160" y="50" fontSize="9" fill="#ffd98a" textAnchor="middle" style={{ direction: "ltr", unicodeBidi: "isolate" }}>{"m = " + m + " kg   P = " + pw + " W   t = " + Math.round(tt) + " s"}</text>
+        {block(46, a, TA)}{block(186, b, TB)}
+        <rect x="40" y="198" width="240" height="4" rx="2" fill="#27324f" /><rect x="40" y="198" width={tx - 40} height="4" rx="2" fill="#ffd98a" />
+        <circle cx={tx} cy="200" r="7" fill="#ffd98a" stroke="#fff" pointerEvents="none" /><circle cx={tx} cy="200" r="16" fill="transparent" onPointerDown={startDrag("t")} style={{ cursor: "ew-resize", touchAction: "none" }} />
+        <text x="160" y="216" fontSize="8" fill="#9fb0e0" textAnchor="middle">دکمه‌ی زرد = زمان گرم‌کردن (بکش یا «شروع» را بزن)</text>
+      </svg>
+      <VlabMeterRow height={150} meters={[{ label: "دمای نمونه‌ی ۱", unit: "°C", value: TA, ranges: [50, 100], maj: 5, decimals: 1 }, { label: "دمای نمونه‌ی ۲", unit: "°C", value: TB, ranges: [50, 100], maj: 5, decimals: 1 }, { label: "انرژی داده‌شده", unit: "kJ", value: Q / 1000, ranges: [10, 50, 100, 300], maj: 5, decimals: 1 }]} />
+      <div className="vlab-controls"><div className="vlab-ctrl-col" style={{ flex: 1 }}>
+        <div style={{ display: "flex", gap: "10px", alignItems: "center", flexWrap: "wrap" }}><span>نمونه‌ی ۱:</span>{sel(ia, setIa)}<span>نمونه‌ی ۲:</span>{sel(ib, setIb)}</div>
+        <label className="vlab-ctrl-label">جرم هر نمونه (kg): {m}</label><VlabRange min="0.5" max="2" step="0.1" value={m} onChange={(e) => setM(+e.target.value)} />
+        <label className="vlab-ctrl-label">توان شعله (W): {pw}</label><VlabRange min="100" max="500" step="50" value={pw} onChange={(e) => setPw(+e.target.value)} />
+        <label className="vlab-ctrl-label">زمان (s): {Math.round(tt)}</label><VlabRange min="0" max={tmax} step="1" value={Math.round(tt)} onChange={(e) => { setRun(false); setT(+e.target.value); }} />
+        <div style={{ display: "flex", gap: "6px", marginTop: "6px" }}><button className="vlab-btn" onClick={() => { if (tt >= tmax) { setT(0); tRef.current = 0; } setRun(!run); }}>{run ? "⏸ ایست" : "▶ شروع گرم‌کردن"}</button><button className="vlab-btn" onClick={() => { setRun(false); setT(0); }}>↺ از اول</button></div>
+      </div></div>
+      <div className="vlab-readout">هر دو نمونه جرم و انرژی برابر می‌گیرند، اما {TA > TB ? a.n : TB > TA ? b.n : "هیچ‌کدام"} {TA === TB ? "" : "زودتر داغ می‌شود"}. هر چه گرمای ویژه کمتر باشد، دما سریع‌تر بالا می‌رود: آب {MATS[0].c} و ماسه {MATS[2].c} ژول بر کیلوگرم کلوین.</div>
+      <VlabFormulaCheck title="انرژی گرمایی داده‌شده" fa="انرژی = توان شعله × زمان" en="Q = P t" legend="جواب به ژول" subst={`Q = ${pw} × ${Math.round(tt)} = ?`} label="Q:" answer={pw * Math.round(tt)} unit="J" decimals={0} />
+      <VlabFormulaCheck title={`افزایش دمای ${a.n} (نمونه‌ی ۱)`} fa="افزایش دما = انرژی ÷ (جرم × گرمای ویژه)" en="ΔT = Q / (m c)" legend={`گرمای ویژه ${a.n} = ${a.c} ژول بر کیلوگرم کلوین`} subst={`ΔT = ${pw * Math.round(tt)} ÷ (${m} × ${a.c}) = ?`} label="ΔT:" answer={(pw * Math.round(tt)) / (m * a.c)} unit="°C" decimals={1} />
+      <VlabEverydayCard title="نسیم دریا و ماسه‌ی داغ ساحل" text="روز، ماسه زود داغ می‌شود و هوای بالای آن بالا می‌رود؛ هوای خنک‌تر دریا به‌سوی ساحل می‌وزد. شب ماسه زود سرد می‌شود و جهت باد برعکس است. آب گرمای ویژه‌ی بزرگی دارد، پس دمایش آهسته عوض می‌شود.">
+        <circle cx="100" cy="14" r="8" fill="#ffc83a" /><rect x="0" y="52" width="48" height="26" fill="#e6c88a" /><rect x="48" y="52" width="72" height="26" fill="#7fb8f0" />
+        <path d="M84,46 H30" stroke="#2a7a44" strokeWidth="2" /><polygon points="26,46 34,41 34,51" fill="#2a7a44" /><path d="M22,48 v-18" stroke="#c34" strokeWidth="2" /><polygon points="22,26 17,34 27,34" fill="#c34" />
+      </VlabEverydayCard>
+    </div>
+  );
+}
+
 const VLAB_COMPONENTS = {
   lever: VlabLeverExperiment,
   pendulum: VlabPendulumExperiment,
@@ -30026,6 +30397,11 @@ const VLAB_COMPONENTS = {
   "orbits-kepler": VlabOrbitExperiment,
   "centripetal-force": VlabCentripetalExperiment,
   "inclined-plane": VlabInclinedPlaneExperiment,
+  "bicycle-gears": VlabGearExperiment,
+  "static-electricity": VlabStaticElectricityExperiment,
+  "wire-resistance": VlabWireResistanceExperiment,
+  "light-colors": VlabLightColorsExperiment,
+  "specific-heat": VlabSpecificHeatExperiment,
 };
 
 function StudentVirtualLabView({ onBack, grade, studentCode, schoolCode }) {

@@ -23016,6 +23016,51 @@ const VLAB_EXPERIMENTS = [
     intro: "جسم را جلوی آینه‌ی مقعر یا محدب جابه‌جا کن و با سه پرتوی اصلی ببین تصویر کجا و چگونه (حقیقی یا مجازی، بزرگ یا کوچک) تشکیل می‌شود. معادله‌ی آینه: 1/f = 1/dₒ + 1/dᵢ.",
     tools: ["آینه‌ی مقعر", "آینه‌ی محدب", "جسم (پیکان)", "نیمکت اپتیک"],
   },
+  {
+    id: "energy-skate-park",
+    subject: "فیزیک",
+    level: "متوسطه دوم",
+    title: "اسکیت انرژی",
+    icon: "🛹",
+    intro: "اسکیت‌باز را روی مسیر بگیر و بکش و رها کن. ببین انرژی پتانسیل، جنبشی و گرما چطور به هم تبدیل می‌شوند و مجموع‌شان ثابت می‌ماند.",
+    tools: ["مسیر منحنی", "اسکیت‌باز", "نوار انرژی"],
+  },
+  {
+    id: "collisions",
+    subject: "فیزیک",
+    level: "متوسطه دوم",
+    title: "برخورد و پایستگی تکانه",
+    icon: "💥",
+    intro: "دو واگن با جرم و سرعت دلخواه را به هم برخورد بده؛ برخورد کشسان یا ناکشسان را انتخاب کن و پایستگی تکانه را ببین.",
+    tools: ["دو واگن", "ریل", "تکانه‌سنج"],
+  },
+  {
+    id: "orbits-kepler",
+    subject: "فیزیک",
+    level: "متوسطه دوم",
+    title: "مدار سیارات و قانون کپلر",
+    icon: "🪐",
+    intro: "سیاره را با انگشت از خورشید دور یا نزدیک کن و ببین دوره‌ی گردش و سرعتش چطور عوض می‌شود (T² = a³).",
+    tools: ["خورشید", "سیاره", "مدار"],
+  },
+  {
+    id: "centripetal-force",
+    subject: "فیزیک",
+    level: "متوسطه دوم",
+    title: "نیروی مرکزگرا",
+    icon: "🌀",
+    intro: "توپی را با نخ بچرخان، شعاع و سرعت را تغییر بده و نیروی کشش نخ را بسنج. نخ را ببر و مسیر مماسی توپ را ببین.",
+    tools: ["توپ و نخ", "نیروسنج", "دست"],
+  },
+  {
+    id: "inclined-plane",
+    subject: "فیزیک",
+    level: "متوسطه اول",
+    title: "سطح شیب‌دار",
+    icon: "📐",
+    intro: "نقطه‌ی بالای سطح شیب‌دار را بکش و ببین نیروی هل دادن بار چقدر کم یا زیاد می‌شود. سود مکانیکی و کار را حساب کن.",
+    tools: ["سطح شیب‌دار", "بار", "نیروسنج"],
+  },
 ];
 
 function vlabClamp(v, min, max) {
@@ -29565,6 +29610,365 @@ function VlabSphericalMirrorExperiment({ onReading }) {
   );
 }
 
+function vlabSvgPoint(svg, e) { const pt = svg.createSVGPoint(); pt.x = e.clientX; pt.y = e.clientY; const m = svg.getScreenCTM(); return m ? pt.matrixTransform(m.inverse()) : { x: 0, y: 0 }; }
+function useVlabDrag(onMove, onEnd) {
+  const svgRef = React.useRef(null);
+  const cb = React.useRef({}); cb.current = { onMove, onEnd };
+  const startDrag = React.useCallback((id) => (e) => {
+    e.preventDefault(); e.stopPropagation();
+    const mv = (ev) => { if (svgRef.current) cb.current.onMove(id, vlabSvgPoint(svgRef.current, ev)); };
+    const up = () => { window.removeEventListener("pointermove", mv); window.removeEventListener("pointerup", up); window.removeEventListener("pointercancel", up); if (cb.current.onEnd) cb.current.onEnd(id); };
+    window.addEventListener("pointermove", mv); window.addEventListener("pointerup", up); window.addEventListener("pointercancel", up);
+    mv(e);
+  }, []);
+  return { svgRef, startDrag };
+}
+function VlabEverydayCard({ title, text, children }) {
+  return (
+    <div style={{ margin: "12px 0", padding: "12px", border: "1px solid #e6cf8f", borderRadius: "14px", background: "linear-gradient(135deg,#fff9e8,#fbefcf)", display: "flex", gap: "12px", alignItems: "center", flexWrap: "wrap" }}>
+      <svg viewBox="0 0 120 84" width="120" height="84" style={{ flex: "0 0 120px", background: "#fffdf6", borderRadius: "10px", border: "1px solid #ecd9a4" }}>{children}</svg>
+      <div style={{ flex: "1 1 160px", fontSize: "13px", lineHeight: 1.9, color: "#4a3a12" }}><b>🏠 کاربرد روزمره: {title}</b><br />{text}</div>
+    </div>
+  );
+}
+
+function VlabSkateParkExperiment({ onReading }) {
+  const [mass, setMass] = useState(50);
+  const [fric, setFric] = useState(0);
+  const [, tick] = useState(0);
+  const G = 9.8, A = 0.35, SX = 34, SY = 17, CX = 160, GY = 196;
+  const hOf = (x) => A * x * x;
+  const st = React.useRef({ x: -3.2, vx: 0, dragging: false, h0: hOf(-3.2) });
+  const fr = React.useRef(fric); fr.current = fric;
+  const { svgRef, startDrag } = useVlabDrag(
+    (id, p) => { const s = st.current; s.dragging = true; s.x = Math.max(-4.3, Math.min(4.3, (p.x - CX) / SX)); s.vx = 0; s.h0 = hOf(s.x); tick((t) => t + 1); },
+    () => { st.current.dragging = false; }
+  );
+  useEffect(() => {
+    let raf, last = performance.now();
+    const step = (now) => {
+      const dt = Math.min(now - last, 33) / 1000; last = now;
+      const s = st.current;
+      if (!s.dragging) {
+        const n = 2, h = dt / n, mu = fr.current;
+        const acc = (X, V) => { const q = 2 * A * X, c2 = 1 / (1 + q * q); let a = -(G * q + q * 2 * A * V * V) * c2; if (Math.abs(V) > 1e-3) a -= Math.sign(V) * mu * G * c2; return a; };
+        for (let i = 0; i < n; i++) {
+          const q0 = 2 * A * s.x, c20 = 1 / (1 + q0 * q0);
+          if (Math.abs(s.vx) <= 1e-3 && Math.abs(G * q0 * c20) <= mu * G * c20) { s.vx = 0; continue; }
+          const k1x = s.vx, k1v = acc(s.x, s.vx);
+          const k2x = s.vx + h / 2 * k1v, k2v = acc(s.x + h / 2 * k1x, s.vx + h / 2 * k1v);
+          const k3x = s.vx + h / 2 * k2v, k3v = acc(s.x + h / 2 * k2x, s.vx + h / 2 * k2v);
+          const k4x = s.vx + h * k3v, k4v = acc(s.x + h * k3x, s.vx + h * k3v);
+          const oldv = s.vx;
+          s.x += h / 6 * (k1x + 2 * k2x + 2 * k3x + k4x); s.vx += h / 6 * (k1v + 2 * k2v + 2 * k3v + k4v);
+          if (mu > 0 && oldv * s.vx < 0) s.vx = 0;
+          if (s.x > 4.4) { s.x = 4.4; s.vx = -Math.abs(s.vx) * 0.2; } if (s.x < -4.4) { s.x = -4.4; s.vx = Math.abs(s.vx) * 0.2; }
+        }
+      }
+      tick((t) => (t + 1) % 1e6);
+      raf = requestAnimationFrame(step);
+    };
+    raf = requestAnimationFrame(step);
+    return () => cancelAnimationFrame(raf);
+  }, []);
+  const s = st.current;
+  const sl = 2 * A * s.x, hh = hOf(s.x), v = Math.abs(s.vx) * Math.sqrt(1 + sl * sl);
+  const KE = 0.5 * mass * v * v, PE = mass * G * hh, E0 = mass * G * s.h0;
+  const TH = Math.max(0, E0 - KE - PE);
+  useEffect(() => {
+    if (onReading) onReading(`جرم: ${mass} kg | اصطکاک: ${fric} | ارتفاع رهاسازی: ${s.h0.toFixed(2)} m`);
+    // eslint-disable-next-line
+  }, [mass, fric]);
+  const px = CX + s.x * SX, py = GY - hh * SY;
+  const ang = (Math.atan2(-SY * sl, SX) * 180) / Math.PI;
+  const pts = []; for (let x = -4.5; x <= 4.51; x += 0.25) pts.push(`${CX + x * SX},${GY - hOf(x) * SY}`);
+  const Ew = 200, seg = (e) => (E0 > 1 ? Math.max(0, Math.min(1, e / E0)) * Ew : 0);
+  return (
+    <div className="vlab-exp">
+      <svg ref={svgRef} viewBox="0 0 320 232" className="vlab-svg" style={{ background: "#03060f", borderRadius: "10px" }}>
+        <rect x="0" y={GY} width="320" height="36" fill="#1b2438" />
+        <polyline points={pts.join(" ")} fill="none" stroke="#8fa0c8" strokeWidth="5" strokeLinecap="round" />
+        <polyline points={pts.join(" ")} fill="none" stroke="#3a4670" strokeWidth="2" strokeLinecap="round" />
+        {[0, 2, 4, 6].map((m) => (<g key={"sh" + m}><line x1="14" y1={GY - m * SY} x2="22" y2={GY - m * SY} stroke="#8fa3c8" /><text x="26" y={GY - m * SY + 3} fontSize="7" fill="#8fa3c8">{m} m</text></g>))}
+        <rect x="60" y="14" width={Ew} height="12" rx="3" fill="#10182e" stroke="#3a4670" />
+        <rect x="60" y="14" width={seg(PE)} height="12" fill="#4a8bff" /><rect x={60 + seg(PE)} y="14" width={seg(KE)} height="12" fill="#ff5a5a" /><rect x={60 + seg(PE) + seg(KE)} y="14" width={seg(TH)} height="12" fill="#ffa63d" />
+        <text x="60" y="40" fontSize="7.5" fill="#4a8bff">■ پتانسیل</text><text x="130" y="40" fontSize="7.5" fill="#ff7a7a">■ جنبشی</text><text x="196" y="40" fontSize="7.5" fill="#ffa63d">■ گرما</text>
+        <g transform={`translate(${px},${py}) rotate(${ang})`} onPointerDown={startDrag("sk")} style={{ cursor: "grab", touchAction: "none" }}>
+          <circle cx="0" cy="-16" r="18" fill="transparent" />
+          <rect x="-12" y="-4" width="24" height="3.4" rx="1.6" fill="#e0925a" /><circle cx="-8" cy="0" r="2.2" fill="#ddd" /><circle cx="8" cy="0" r="2.2" fill="#ddd" />
+          <rect x="-3" y="-17" width="6" height="12" rx="2.5" fill="#4a8bff" /><circle cx="0" cy="-21" r="4" fill="#f5cfa5" />
+        </g>
+        <text x="160" y="226" fontSize="8" fill="#9fb0e0" textAnchor="middle">اسکیت‌باز را بگیر و بکش، رها کن!</text>
+      </svg>
+      <VlabMeterRow height={160} meters={[{ label: "سرعت", unit: "m/s", value: v, ranges: [5, 10, 15], maj: 5, decimals: 2 }, { label: "ارتفاع", unit: "m", value: hh, ranges: [4, 8], maj: 4, decimals: 2 }, { label: "انرژی جنبشی", unit: "J", value: KE, ranges: [500, 1500, 4000], maj: 5, decimals: 0 }]} />
+      <div className="vlab-controls">
+        <div className="vlab-ctrl-col" style={{ flex: 1 }}>
+          <label className="vlab-ctrl-label">جرم اسکیت‌باز (kg): {mass}</label>
+          <VlabRange min="20" max="80" step="5" value={mass} onChange={(e) => setMass(+e.target.value)} />
+          <label className="vlab-ctrl-label">ضریب اصطکاک: {fric}</label>
+          <VlabRange min="0" max="0.3" step="0.02" value={fric} onChange={(e) => setFric(+e.target.value)} />
+        </div>
+        <div className="vlab-ctrl-col"><button type="button" className="vlab-toggle-btn" onClick={() => { st.current.x = -3.2; st.current.vx = 0; st.current.h0 = hOf(-3.2); }}>⟲ برگرد بالا</button></div>
+      </div>
+      <div className="vlab-readout">در قله همه‌ی انرژی «پتانسیل» (آبی) است؛ پایین که می‌آید به «جنبشی» (قرمز) تبدیل می‌شود. اگر اصطکاک باشد، بخشی به «گرما» (نارنجی) می‌رود و اسکیت‌باز کم‌کم می‌ایستد. مجموع همیشه ثابت است.</div>
+      <VlabFormulaCheck title="سرعت در پایین‌ترین نقطه (بدون اصطکاک)" fa="سرعت = ریشه‌ی (۲ × g × ارتفاع رهاسازی)" en="v = √(2 g h)" legend="g = ۹٫۸ ؛ ارتفاعی که اسکیت‌باز را از آن رها کردی" subst={`v = √(2 × 9.8 × ${s.h0.toFixed(2)}) = ?`} label="v:" answer={Math.sqrt(2 * G * s.h0)} unit="m/s" decimals={2} />
+      <VlabFormulaCheck title="انرژی پتانسیل در نقطه‌ی رهاسازی" fa="انرژی پتانسیل = جرم × g × ارتفاع" en="PE = m g h" legend="" subst={`PE = ${mass} × 9.8 × ${s.h0.toFixed(2)} = ?`} label="PE:" answer={mass * G * s.h0} unit="J" decimals={0} />
+      <VlabEverydayCard title="ترن هوایی و پارک اسکیت" text="در بالاترین نقطه‌ی ترن هوایی سرعت کم و انرژی پتانسیل زیاد است؛ در پایین‌ترین نقطه سرعت بیشینه است. به همین دلیل اولین تپه‌ی ترن همیشه بلندترین است.">
+        <path d="M6,60 L22,16 Q34,6 44,22 L58,66 Q64,74 72,66 L86,30 Q94,20 102,32 L114,64" fill="none" stroke="#8a5a2b" strokeWidth="3" />
+        <rect x="16" y="9" width="12" height="7" rx="2" fill="#e24b4b" /><circle cx="19" cy="17" r="1.6" fill="#333" /><circle cx="25" cy="17" r="1.6" fill="#333" />
+        <text x="60" y="80" fontSize="7" fill="#7a5a1e" textAnchor="middle">پایین = سریع‌ترین</text>
+      </VlabEverydayCard>
+    </div>
+  );
+}
+
+function VlabCollisionExperiment({ onReading }) {
+  const [m1, setM1] = useState(2), [m2, setM2] = useState(3), [v1, setV1] = useState(4), [v2, setV2] = useState(0);
+  const [elastic, setElastic] = useState(true);
+  const [, tick] = useState(0);
+  const sim = React.useRef({ x1: 50, x2: 240, u1: 0, u2: 0, phase: "idle", hit: false, t: 0 });
+  const par = React.useRef({}); par.current = { m1, m2, elastic };
+  const PX = 26;
+  const reset = () => { sim.current = { x1: 50, x2: 240, u1: 0, u2: 0, phase: "idle", hit: false, t: 0 }; tick((t) => t + 1); };
+  useEffect(() => { reset(); }, [m1, m2, v1, v2, elastic]);
+  const go = () => { sim.current = { x1: 50, x2: 240, u1: v1, u2: v2, phase: "run", hit: false, t: 0 }; };
+  useEffect(() => {
+    let raf, last = performance.now();
+    const step = (now) => {
+      const dt = Math.min(now - last, 33) / 1000; last = now;
+      const s = sim.current, p = par.current;
+      if (s.phase === "run") {
+        s.t += dt;
+        s.x1 += s.u1 * PX * dt; s.x2 += s.u2 * PX * dt;
+        const w1 = 22 + p.m1 * 5, w2 = 22 + p.m2 * 5;
+        if (!s.hit && s.x1 + w1 / 2 >= s.x2 - w2 / 2 && s.u1 > s.u2) {
+          const a = s.u1, b = s.u2;
+          if (p.elastic) { s.u1 = ((p.m1 - p.m2) * a + 2 * p.m2 * b) / (p.m1 + p.m2); s.u2 = ((p.m2 - p.m1) * b + 2 * p.m1 * a) / (p.m1 + p.m2); }
+          else { const u = (p.m1 * a + p.m2 * b) / (p.m1 + p.m2); s.u1 = u; s.u2 = u; }
+          s.hit = true;
+        }
+        if (s.x1 < 16 || s.x2 > 304 || s.t > 9) s.phase = "done";
+      }
+      tick((t) => (t + 1) % 1e6);
+      raf = requestAnimationFrame(step);
+    };
+    raf = requestAnimationFrame(step);
+    return () => cancelAnimationFrame(raf);
+  }, []);
+  const s = sim.current;
+  const u1 = s.phase === "idle" ? v1 : s.u1, u2 = s.phase === "idle" ? v2 : s.u2;
+  const P = m1 * u1 + m2 * u2, KE = 0.5 * (m1 * u1 * u1 + m2 * u2 * u2);
+  const W1 = 22 + m1 * 5, W2 = 22 + m2 * 5;
+  const vEl1 = ((m1 - m2) * v1 + 2 * m2 * v2) / (m1 + m2), vIn = (m1 * v1 + m2 * v2) / (m1 + m2);
+  const canHit = v1 > v2;
+  useEffect(() => {
+    if (onReading) onReading(`m₁=${m1} kg، m₂=${m2} kg | v₁=${v1}، v₂=${v2} m/s | ${elastic ? "کشسان" : "ناکشسان (چسبنده)"} | تکانه‌ی کل: ${(m1 * v1 + m2 * v2).toFixed(1)}`);
+    // eslint-disable-next-line
+  }, [m1, m2, v1, v2, elastic]);
+  const cart = (x, w, col, u, k) => (
+    <g key={k}>
+      <rect x={x - w / 2} y={128 - w * 0.5 - 8} width={w} height={w * 0.5} rx="4" fill={col} stroke="#0b1020" /><circle cx={x - w / 3} cy="124" r="5" fill="#222" stroke="#aaa" /><circle cx={x + w / 3} cy="124" r="5" fill="#222" stroke="#aaa" />
+      {Math.abs(u) > 0.05 && <g><line x1={x} y1={128 - w * 0.5 - 16} x2={x + u * 9} y2={128 - w * 0.5 - 16} stroke="#7be0a4" strokeWidth="2" /><polygon points={`${x + u * 9},${128 - w * 0.5 - 16} ${x + u * 9 - Math.sign(u) * 6},${128 - w * 0.5 - 20} ${x + u * 9 - Math.sign(u) * 6},${128 - w * 0.5 - 12}`} fill="#7be0a4" /></g>}
+      <text x={x} y={128 - w * 0.25 - 5} fontSize="8" fill="#0b1020" textAnchor="middle" fontWeight="700" style={{ direction: "ltr", unicodeBidi: "isolate" }}>{(k === "c1" ? m1 : m2) + " kg"}</text>
+    </g>
+  );
+  return (
+    <div className="vlab-exp">
+      <svg viewBox="0 0 320 176" className="vlab-svg" style={{ background: "#03060f", borderRadius: "10px" }}>
+        <rect x="0" y="130" width="320" height="6" fill="#4a5470" /><rect x="0" y="136" width="320" height="40" fill="#10182e" />
+        {cart(s.x1, W1, "#4a8bff", u1, "c1")}{cart(s.x2, W2, "#ffa63d", u2, "c2")}
+        <text x="160" y="24" fontSize="9" fill="#cfd6ea" textAnchor="middle">{s.phase === "idle" ? (canHit ? "آماده — دکمه‌ی «برخورد» را بزن" : "برای برخورد باید v₁ از v₂ بیشتر باشد") : s.phase === "run" ? "در حال حرکت…" : "پایان"}</text>
+        {s.hit && <text x="160" y="42" fontSize="9" fill="#ffd98a" textAnchor="middle">{elastic ? "برخورد کشسان: انرژی جنبشی حفظ شد" : "برخورد ناکشسان: دو جسم چسبیدند"}</text>}
+      </svg>
+      <VlabMeterRow height={160} meters={[{ label: "تکانه‌ی کل", unit: "kg·m/s", value: Math.abs(P), ranges: [10, 20, 40], maj: 5, decimals: 1 }, { label: "انرژی جنبشی کل", unit: "J", value: KE, ranges: [20, 50, 100, 200], maj: 5, decimals: 1 }]} />
+      <div className="vlab-controls">
+        <div className="vlab-ctrl-col" style={{ flex: 1 }}>
+          <div className="vlab-num-row" style={{ marginBottom: 6 }}>
+            <button type="button" className={"vlab-num-btn" + (elastic ? " active" : "")} onClick={() => setElastic(true)}>برخورد کشسان</button>
+            <button type="button" className={"vlab-num-btn" + (!elastic ? " active" : "")} onClick={() => setElastic(false)}>برخورد ناکشسان</button>
+          </div>
+          <label className="vlab-ctrl-label">جرم آبی (kg): {m1}</label><VlabRange min="1" max="5" step="0.5" value={m1} onChange={(e) => setM1(+e.target.value)} />
+          <label className="vlab-ctrl-label">جرم نارنجی (kg): {m2}</label><VlabRange min="1" max="5" step="0.5" value={m2} onChange={(e) => setM2(+e.target.value)} />
+          <label className="vlab-ctrl-label">سرعت آبی (m/s): {v1}</label><VlabRange min="0" max="6" step="0.5" value={v1} onChange={(e) => setV1(+e.target.value)} />
+          <label className="vlab-ctrl-label">سرعت نارنجی (m/s): {v2}</label><VlabRange min="-4" max="3" step="0.5" value={v2} onChange={(e) => setV2(+e.target.value)} />
+        </div>
+        <div className="vlab-ctrl-col">
+          <button type="button" className="pqb-submit-btn" disabled={!canHit} onClick={go}>💥 برخورد</button>
+          <button type="button" className="vlab-toggle-btn" onClick={reset}>⟲ از اول</button>
+        </div>
+      </div>
+      <div className="vlab-readout">در هر برخوردی «تکانه‌ی کل» ثابت می‌ماند (عقربه‌ی تکانه تغییر نمی‌کند). در برخورد کشسان انرژی جنبشی هم ثابت است، ولی در ناکشسان بخشی از آن به گرما و تغییر شکل می‌رود.</div>
+      {canHit && (elastic
+        ? <VlabFormulaCheck title="سرعت آبی پس از برخورد کشسان" fa="سرعت جدید = (اختلاف جرم‌ها × سرعت آبی + دو برابر جرم نارنجی × سرعت نارنجی) ÷ مجموع جرم‌ها" en="v₁′ = ((m₁−m₂)v₁ + 2m₂v₂)/(m₁+m₂)" legend="علامت منفی یعنی به عقب برمی‌گردد" subst={`v₁′ = ((${m1} − ${m2}) × ${v1} + 2 × ${m2} × ${v2}) ÷ (${m1} + ${m2}) = ?`} label="v₁′:" answer={vEl1} unit="m/s" decimals={2} />
+        : <VlabFormulaCheck title="سرعت مشترک پس از چسبیدن" fa="سرعت مشترک = مجموع تکانه‌ها ÷ مجموع جرم‌ها" en="v = (m₁v₁ + m₂v₂)/(m₁+m₂)" legend="پایستگی تکانه" subst={`v = (${m1} × ${v1} + ${m2} × ${v2}) ÷ (${m1} + ${m2}) = ?`} label="v:" answer={vIn} unit="m/s" decimals={2} />)}
+      <VlabEverydayCard title={elastic ? "توپ‌های بیلیارد" : "تصادف ماشین‌ها"} text={elastic ? "توپ سفید به توپ ساکن می‌خورد، تقریباً همه‌ی حرکتش را به آن می‌دهد و خودش می‌ایستد؛ برخوردی نزدیک به کشسان." : "در تصادف، ماشین‌ها مچاله می‌شوند و انرژی جنبشی صرف تغییر شکل می‌شود؛ همین مچاله شدن ضربه را به سرنشین کم می‌کند."}>
+        {elastic
+          ? <g><rect x="6" y="14" width="108" height="56" rx="6" fill="#2f8f4e" stroke="#7a4a1c" strokeWidth="3" /><circle cx="36" cy="42" r="7" fill="#fff" stroke="#bbb" /><circle cx="70" cy="42" r="7" fill="#e24b4b" /><circle cx="86" cy="42" r="7" fill="#ffd34d" /><line x1="8" y1="42" x2="27" y2="42" stroke="#fff" strokeWidth="2" strokeDasharray="3 2" /></g>
+          : <g><rect x="8" y="42" width="40" height="16" rx="6" fill="#4a8bff" /><rect x="70" y="42" width="40" height="16" rx="6" fill="#e24b4b" /><circle cx="18" cy="60" r="4" fill="#333" /><circle cx="40" cy="60" r="4" fill="#333" /><circle cx="80" cy="60" r="4" fill="#333" /><circle cx="102" cy="60" r="4" fill="#333" /><path d="M54,38 l5,-8 l5,8 l5,-8" fill="none" stroke="#ffa63d" strokeWidth="2" /></g>}
+      </VlabEverydayCard>
+    </div>
+  );
+}
+
+function VlabOrbitExperiment({ onReading }) {
+  const PL = [{ n: "تیر", a: 0.39 }, { n: "ناهید", a: 0.72 }, { n: "زمین", a: 1 }, { n: "مریخ", a: 1.52 }, { n: "مشتری", a: 5.2 }];
+  const [a, setA] = useState(1);
+  const [ph, setPh] = useState(0);
+  const ar = React.useRef(a); ar.current = a;
+  const CX = 160, CY = 118, SC = 48, rpx = (aa) => SC * Math.sqrt(aa);
+  const { svgRef, startDrag } = useVlabDrag((id, p) => { const r = Math.hypot(p.x - CX, p.y - CY) / SC; setA(Math.max(0.4, Math.min(5.5, Math.round(r * r * 20) / 20))); });
+  useEffect(() => {
+    let raf, last = performance.now();
+    const step = (now) => { const dt = Math.min(now - last, 40) / 1000; last = now; const T = Math.pow(ar.current, 1.5); setPh((p) => (p + (2 * Math.PI * dt) / (6 * T)) % (2 * Math.PI * 1000)); raf = requestAnimationFrame(step); };
+    raf = requestAnimationFrame(step);
+    return () => cancelAnimationFrame(raf);
+  }, []);
+  const T = Math.pow(a, 1.5), vk = 29.78 / Math.sqrt(a);
+  useEffect(() => {
+    if (onReading) onReading(`فاصله از خورشید: ${a} AU | دوره: ${T.toFixed(2)} سال | سرعت مداری: ${vk.toFixed(1)} km/s`);
+    // eslint-disable-next-line
+  }, [a]);
+  const px = CX + rpx(a) * Math.cos(ph), py = CY + rpx(a) * Math.sin(ph);
+  return (
+    <div className="vlab-exp">
+      <svg ref={svgRef} viewBox="0 0 320 236" className="vlab-svg" style={{ background: "#02040c", borderRadius: "10px" }}>
+        {Array.from({ length: 26 }).map((_, k) => (<circle key={"st" + k} cx={(k * 97) % 320} cy={(k * 53) % 236} r={k % 4 === 0 ? 1.2 : 0.7} fill="#fff" opacity="0.5" />))}
+        <circle cx={CX} cy={CY} r={rpx(1)} fill="none" stroke="#2f3b66" strokeDasharray="3 4" /><text x={CX} y={CY - rpx(1) - 3} fontSize="6.5" fill="#5b6a96" textAnchor="middle">مدار زمین</text>
+        <circle cx={CX} cy={CY} r={rpx(a)} fill="none" stroke="#5b7fd0" strokeWidth="1.2" />
+        <circle cx={CX} cy={CY} r="10" fill="#ffcc33" /><circle cx={CX} cy={CY} r="16" fill="#ffcc33" opacity="0.18" />
+        <circle cx={px} cy={py} r="14" fill="transparent" onPointerDown={startDrag("pl")} style={{ cursor: "grab", touchAction: "none" }} />
+        <circle cx={px} cy={py} r="5" fill="#4aa3ff" stroke="#bfe0ff" pointerEvents="none" />
+        <text x="160" y="228" fontSize="8" fill="#9fb0e0" textAnchor="middle">سیاره را بگیر و از خورشید دور یا نزدیک کن</text>
+      </svg>
+      <VlabMeterRow height={160} meters={[{ label: "دوره‌ی گردش", unit: "سال", value: T, ranges: [2, 5, 15], maj: 5, decimals: 2 }, { label: "سرعت مداری", unit: "km/s", value: vk, ranges: [50, 100], maj: 5, decimals: 1 }]} />
+      <div className="vlab-controls">
+        <div className="vlab-ctrl-col" style={{ flex: 1 }}>
+          <div className="vlab-num-row" style={{ marginBottom: 6, flexWrap: "wrap" }}>{PL.map((p) => (<button key={p.n} type="button" className={"vlab-num-btn" + (a === p.a ? " active" : "")} onClick={() => setA(p.a)}>{p.n}</button>))}</div>
+          <label className="vlab-ctrl-label">فاصله از خورشید (AU، ۱ = فاصله‌ی زمین): {a}</label>
+          <VlabRange min="0.4" max="5.5" step="0.05" value={a} onChange={(e) => setA(+e.target.value)} />
+        </div>
+      </div>
+      <div className="vlab-readout">هرچه سیاره از خورشید دورتر باشد، مسیرش درازتر و سرعتش کمتر است، پس سال‌اش طولانی‌تر می‌شود. (نمایش: هر سالِ زمین ≈ ۶ ثانیه)</div>
+      <VlabFormulaCheck title="قانون سوم کپلر" fa="مجذور دوره (سال) = مکعب فاصله (AU)" en="T² = a³" legend="فاصله به AU و دوره به سال" subst={`T = √(${a}³) = ?`} label="T:" answer={T} unit="سال" decimals={2} />
+      <VlabFormulaCheck title="سرعت مداری تقریبی" fa="سرعت = ۲۹٫۷۸ ÷ ریشه‌ی فاصله" en="v ≈ 29.78 / √a" legend="۲۹٫۷۸ km/s سرعت زمین است" subst={`v = 29.78 ÷ √${a} = ?`} label="v:" answer={vk} unit="km/s" decimals={1} />
+      <VlabEverydayCard title="ماهواره‌ها و جی‌پی‌اس" text="ماهواره‌ی نزدیک زمین سریع و ماهواره‌ی دور کند می‌چرخد. ماهواره‌ی ثابت (مثل بشقاب تلویزیون) را آن‌قدر بالا می‌برند که یک دور آن دقیقاً ۲۴ ساعت شود.">
+        <circle cx="52" cy="46" r="20" fill="#3a86d9" /><path d="M40,40 q8,-8 14,0 q4,8 -4,12 q-8,2 -10,-12z" fill="#5fbf6a" />
+        <ellipse cx="52" cy="46" rx="42" ry="30" fill="none" stroke="#999" strokeDasharray="3 3" /><g transform="translate(86,24)"><rect x="-6" y="-3" width="12" height="6" fill="#999" /><rect x="-16" y="-2" width="8" height="4" fill="#4a8bff" /><rect x="8" y="-2" width="8" height="4" fill="#4a8bff" /></g>
+        <path d="M100,60 l8,-10 M100,60 l10,-4" stroke="#444" strokeWidth="2" />
+      </VlabEverydayCard>
+    </div>
+  );
+}
+
+function VlabCentripetalExperiment({ onReading }) {
+  const [m, setM] = useState(0.5);
+  const [v, setV] = useState(4);
+  const [r, setR] = useState(0.8);
+  const [ph, setPh] = useState(0);
+  const [cut, setCut] = useState(null);
+  const pr = React.useRef({ v, r, cut }); pr.current = { v, r, cut };
+  const CX = 160, CY = 112, PXM = 70;
+  const { svgRef, startDrag } = useVlabDrag((id, p) => { if (pr.current.cut) return; setR(Math.max(0.3, Math.min(1.4, Math.round((Math.hypot(p.x - CX, p.y - CY) / PXM) * 20) / 20))); });
+  useEffect(() => {
+    let raf, last = performance.now();
+    const step = (now) => {
+      const dt = Math.min(now - last, 40) / 1000; last = now;
+      const q = pr.current;
+      if (q.cut) { setCut((c) => (c ? { ...c, x: c.x + c.vx * dt * 18, y: c.y + c.vy * dt * 18 } : c)); }
+      else setPh((p) => (p + (q.v / q.r) * 0.18 * dt) % (2 * Math.PI * 1000));
+      raf = requestAnimationFrame(step);
+    };
+    raf = requestAnimationFrame(step);
+    return () => cancelAnimationFrame(raf);
+  }, []);
+  const F = (m * v * v) / r, w = v / r;
+  useEffect(() => {
+    if (onReading) onReading(`جرم: ${m} kg | سرعت: ${v} m/s | شعاع: ${r} m | نیروی مرکزگرا: ${F.toFixed(1)} N`);
+    // eslint-disable-next-line
+  }, [m, v, r]);
+  const bx = cut ? cut.x : CX + r * PXM * Math.cos(ph), by = cut ? cut.y : CY + r * PXM * Math.sin(ph);
+  const doCut = () => { if (cut) { setCut(null); return; } setCut({ x: bx, y: by, vx: -Math.sin(ph) * v, vy: Math.cos(ph) * v }); };
+  const out = cut && (cut.x < -10 || cut.x > 330 || cut.y < -10 || cut.y > 240);
+  useEffect(() => { if (out) setCut(null); }, [out]);
+  return (
+    <div className="vlab-exp">
+      <svg ref={svgRef} viewBox="0 0 320 232" className="vlab-svg" style={{ background: "#03060f", borderRadius: "10px" }}>
+        <circle cx={CX} cy={CY} r={r * PXM} fill="none" stroke="#2f3b66" strokeDasharray="3 4" />
+        {!cut && <line x1={CX} y1={CY} x2={bx} y2={by} stroke="#cfd6ea" strokeWidth="1.6" />}
+        <circle cx={CX} cy={CY} r="6" fill="#6b7280" stroke="#cfd6ea" /><text x={CX} y={CY + 18} fontSize="7" fill="#9fb0e0" textAnchor="middle">دست</text>
+        {!cut && <g><line x1={bx} y1={by} x2={bx + (CX - bx) * 0.3} y2={by + (CY - by) * 0.3} stroke="#ff6a5a" strokeWidth="2.4" /><polygon points={`${bx + (CX - bx) * 0.3},${by + (CY - by) * 0.3} ${bx + (CX - bx) * 0.22 - (CY - by) * 0.05},${by + (CY - by) * 0.22 + (CX - bx) * 0.05} ${bx + (CX - bx) * 0.22 + (CY - by) * 0.05},${by + (CY - by) * 0.22 - (CX - bx) * 0.05}`} fill="#ff6a5a" /></g>}
+        <circle cx={bx} cy={by} r={9 + m * 4} fill="transparent" onPointerDown={startDrag("ball")} style={{ cursor: "grab", touchAction: "none" }} />
+        <circle cx={bx} cy={by} r={5 + m * 4} fill="#4a8bff" stroke="#bfe0ff" pointerEvents="none" />
+        <text x="160" y="224" fontSize="8" fill="#9fb0e0" textAnchor="middle">{cut ? "نخ بریده شد: توپ مماس بر مسیر پرتاب می‌شود" : "توپ را بکش تا شعاع عوض شود | نمایش ۱۰ برابر آهسته‌تر"}</text>
+      </svg>
+      <VlabMeterRow height={160} meters={[{ label: "نیروی مرکزگرا (کشش نخ)", unit: "N", value: F, ranges: [10, 30, 100, 300], maj: 5, decimals: 1 }, { label: "سرعت زاویه‌ای", unit: "rad/s", value: w, ranges: [10, 30], maj: 5, decimals: 1 }]} />
+      <div className="vlab-controls">
+        <div className="vlab-ctrl-col" style={{ flex: 1 }}>
+          <label className="vlab-ctrl-label">جرم توپ (kg): {m}</label><VlabRange min="0.1" max="1" step="0.1" value={m} onChange={(e) => setM(+e.target.value)} />
+          <label className="vlab-ctrl-label">سرعت (m/s): {v}</label><VlabRange min="1" max="8" step="0.5" value={v} onChange={(e) => setV(+e.target.value)} />
+          <label className="vlab-ctrl-label">شعاع (m): {r}</label><VlabRange min="0.3" max="1.4" step="0.05" value={r} onChange={(e) => setR(+e.target.value)} />
+        </div>
+        <div className="vlab-ctrl-col"><button type="button" className="pqb-submit-btn" onClick={doCut}>{cut ? "⟲ نخ را وصل کن" : "✂ نخ را ببر"}</button></div>
+      </div>
+      <div className="vlab-readout">برای چرخاندن جسم روی دایره، نیرویی رو به مرکز لازم است (کشش نخ). سرعت دو برابر شود، نیرو چهار برابر می‌شود. بدون این نیرو، جسم در خط راست می‌رود.</div>
+      <VlabFormulaCheck title="نیروی مرکزگرا" fa="نیرو = جرم × مجذور سرعت ÷ شعاع" en="F = m v² / r" legend="" subst={`F = ${m} × ${v}² ÷ ${r} = ?`} label="F:" answer={F} unit="N" decimals={1} />
+      <VlabEverydayCard title="پیچ جاده و خشک‌کن لباسشویی" text="ماشین در پیچ، نیروی مرکزگرا را از اصطکاک لاستیک می‌گیرد؛ با سرعت بالا یا پیچ تنگ، نیرو زیاد می‌شود و ماشین سر می‌خورد. در لباسشویی هم آب از سوراخ‌های سبد مماسی بیرون می‌پرد.">
+        <path d="M10,70 Q10,14 70,14 L110,14" fill="none" stroke="#666" strokeWidth="14" /><path d="M10,70 Q10,14 70,14 L110,14" fill="none" stroke="#fff" strokeWidth="1" strokeDasharray="5 4" />
+        <rect x="28" y="30" width="16" height="9" rx="3" fill="#e24b4b" transform="rotate(-40 36 34)" /><line x1="36" y1="34" x2="52" y2="52" stroke="#2f6fe0" strokeWidth="2" /><polygon points="52,52 44,50 49,45" fill="#2f6fe0" />
+      </VlabEverydayCard>
+    </div>
+  );
+}
+
+function VlabInclinedPlaneExperiment({ onReading }) {
+  const [mass, setMass] = useState(40);
+  const [mu, setMu] = useState(0.1);
+  const [h, setH] = useState(0.9);
+  const L = 3, G = 9.8, BX0 = 24, GY = 192, S = 62;
+  const { svgRef, startDrag } = useVlabDrag((id, p) => { const hh = (GY - p.y) / S; setH(Math.max(0.2, Math.min(1.5, Math.round(hh * 20) / 20))); });
+  const sinT = h / L, cosT = Math.sqrt(1 - sinT * sinT), bx = L * cosT;
+  const F = mass * G * (sinT + mu * cosT), Fi = mass * G * sinT, Wk = F * L, Wlift = mass * G * h, MA = L / h;
+  useEffect(() => {
+    if (onReading) onReading(`جرم: ${mass} kg | ارتفاع: ${h} m | اصطکاک: ${mu} | نیروی لازم: ${F.toFixed(0)} N | سود مکانیکی آرمانی: ${MA.toFixed(1)}`);
+    // eslint-disable-next-line
+  }, [mass, mu, h]);
+  const tx = BX0 + bx * S, ty = GY - h * S;
+  const t = 0.45, ox = BX0 + (tx - BX0) * t, oy = GY + (ty - GY) * t;
+  const angDeg = (Math.atan2(ty - GY, tx - BX0) * 180) / Math.PI;
+  return (
+    <div className="vlab-exp">
+      <svg ref={svgRef} viewBox="0 0 320 224" className="vlab-svg" style={{ background: "#03060f", borderRadius: "10px" }}>
+        <rect x="0" y={GY} width="320" height="32" fill="#1b2438" />
+        <polygon points={`${BX0},${GY} ${tx},${GY} ${tx},${ty}`} fill="#3a4670" opacity="0.55" />
+        <line x1={BX0} y1={GY} x2={tx} y2={ty} stroke="#cfd6ea" strokeWidth="3" />
+        <rect x={tx} y={ty} width={Math.max(10, 300 - tx)} height={GY - ty} fill="#27324f" stroke="#5b6a96" />
+        <text x={tx + 6} y={ty + 14} fontSize="8" fill="#9fb0e0">سکو</text>
+        <line x1={tx + 14} y1={GY} x2={tx + 14} y2={ty} stroke="#ffd98a" strokeWidth="1" strokeDasharray="3 3" /><text x={tx + 18} y={(GY + ty) / 2 + 3} fontSize="8" fill="#ffd98a" style={{ direction: "ltr", unicodeBidi: "isolate" }}>{"h=" + h + " m"}</text>
+        <g transform={`translate(${ox},${oy}) rotate(${angDeg})`}><rect x="-12" y="-20" width="24" height="20" fill="#e0925a" stroke="#6b3d1a" /><text x="0" y="-7" fontSize="7" fill="#2a1507" textAnchor="middle" style={{ direction: "ltr", unicodeBidi: "isolate" }}>{mass}kg</text>
+          <line x1="12" y1="-10" x2="40" y2="-10" stroke="#7be0a4" strokeWidth="2.4" /><polygon points="40,-10 33,-14 33,-6" fill="#7be0a4" /></g>
+        <circle cx={tx} cy={ty} r="13" fill="transparent" onPointerDown={startDrag("top")} style={{ cursor: "ns-resize", touchAction: "none" }} />
+        <circle cx={tx} cy={ty} r="6" fill="#ffd98a" stroke="#fff" pointerEvents="none" />
+        <text x="160" y="214" fontSize="8" fill="#9fb0e0" textAnchor="middle">نقطه‌ی زرد را بالا و پایین بکش تا شیب عوض شود</text>
+      </svg>
+      <VlabMeterRow height={160} meters={[{ label: "نیروی هل‌دادن", unit: "N", value: F, ranges: [100, 200, 400, 800], maj: 5, decimals: 0 }, { label: "سود مکانیکی", unit: "×", value: MA, ranges: [5, 15], maj: 5, decimals: 1 }]} />
+      <div className="vlab-controls">
+        <div className="vlab-ctrl-col" style={{ flex: 1 }}>
+          <label className="vlab-ctrl-label">جرم بار (kg): {mass}</label><VlabRange min="10" max="100" step="5" value={mass} onChange={(e) => setMass(+e.target.value)} />
+          <label className="vlab-ctrl-label">ارتفاع سکو (m): {h}</label><VlabRange min="0.2" max="1.5" step="0.05" value={h} onChange={(e) => setH(+e.target.value)} />
+          <label className="vlab-ctrl-label">ضریب اصطکاک: {mu}</label><VlabRange min="0" max="0.4" step="0.05" value={mu} onChange={(e) => setMu(+e.target.value)} />
+        </div>
+      </div>
+      <div className="vlab-readout">شیب ملایم‌تر یعنی نیروی کمتر ولی مسیر درازتر. کار لازم (نیرو × مسیر) حتی بدون اصطکاک کمتر از بلند کردن مستقیم نمی‌شود: {Wk.toFixed(0)} ژول در برابر {Wlift.toFixed(0)} ژول.</div>
+      <VlabFormulaCheck title="نیروی لازم روی سطح شیب‌دار (بدون اصطکاک)" fa="نیرو = وزن × ارتفاع ÷ طول سطح" en="F = m g · h / L" legend="L = ۳ متر ثابت است ؛ g = ۹٫۸" subst={`F = ${mass} × 9.8 × ${h} ÷ 3 = ?`} label="F:" answer={Fi} unit="N" decimals={0} />
+      <VlabFormulaCheck title="سود مکانیکی آرمانی" fa="سود مکانیکی = طول سطح ÷ ارتفاع" en="MA = L / h" legend="" subst={`MA = 3 ÷ ${h} = ?`} label="MA:" answer={MA} unit="×" decimals={1} />
+      <VlabEverydayCard title="رمپ ویلچر و بار زدن به کامیون" text="بار سنگین را از رمپ بلند و کم‌شیب بالا می‌برند تا نیروی کمتری لازم باشد. پیچ و گوه و جاده‌های پیچ‌دار کوهستان هم همین‌گونه کار می‌کنند.">
+        <polygon points="6,70 74,70 74,32" fill="#c8d4e8" stroke="#667" /><rect x="74" y="32" width="38" height="38" fill="#e8d9a8" stroke="#8a7a45" />
+        <circle cx="42" cy="46" r="5" fill="#4a8bff" /><rect x="39" y="50" width="6" height="10" fill="#4a8bff" transform="rotate(-25 42 55)" /><circle cx="48" cy="60" r="5" fill="none" stroke="#333" strokeWidth="1.5" />
+      </VlabEverydayCard>
+    </div>
+  );
+}
+
 const VLAB_COMPONENTS = {
   lever: VlabLeverExperiment,
   pendulum: VlabPendulumExperiment,
@@ -29617,6 +30021,11 @@ const VLAB_COMPONENTS = {
   "bar-magnet-field": VlabBarMagnetExperiment,
   "lung-breathing": VlabLungExperiment,
   "spherical-mirror": VlabSphericalMirrorExperiment,
+  "energy-skate-park": VlabSkateParkExperiment,
+  "collisions": VlabCollisionExperiment,
+  "orbits-kepler": VlabOrbitExperiment,
+  "centripetal-force": VlabCentripetalExperiment,
+  "inclined-plane": VlabInclinedPlaneExperiment,
 };
 
 function StudentVirtualLabView({ onBack, grade, studentCode, schoolCode }) {

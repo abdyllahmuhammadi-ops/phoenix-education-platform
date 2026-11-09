@@ -25727,12 +25727,34 @@ function VlabPulleyExperiment({ onReading }) {
   // بزرگ‌تر و مستقلِ خودش (RULER_H) رسم می‌شود؛ عددهای رویش هنوز همان سانتی‌مترهای واقعی‌اند.
   const RULER_H = 155;
   const loadLift = pulled ? LIFT : 0;
+  // انیمیشن پیوسته‌ی کشیدن (۰ تا ۱): همه‌ی اجزا (دست‌ها، طناب، چرخ‌ها، بار، خط‌کش) از همین عدد ساخته می‌شوند تا کاملاً هم‌زمان و هماهنگ حرکت کنند
+  const [prog, setProg] = useState(0);
+  const progRef = React.useRef(0), tgtRef = React.useRef(0);
+  tgtRef.current = pulled ? 1 : 0;
+  useEffect(() => {
+    let raf, last = null;
+    const step = (t) => {
+      if (last !== null) {
+        const dt = Math.min(0.05, (t - last) / 1000), a0 = progRef.current, b0 = tgtRef.current;
+        if (a0 !== b0) { const n0 = a0 < b0 ? Math.min(b0, a0 + dt / 1.5) : Math.max(b0, a0 - dt / 1.5); progRef.current = n0; setProg(n0); }
+      }
+      last = t; raf = requestAnimationFrame(step);
+    };
+    raf = requestAnimationFrame(step);
+    return () => cancelAnimationFrame(raf);
+  }, []);
+  const q = prog * prog * (3 - 2 * prog);
+  const VS = 0.42, Lv = LIFT * VS * q, hv = ma * LIFT * VS * q, liftNow = LIFT * q;
+  const RP = 20;
+  const spinDeg = (Lv / RP) * 57.3;
   const ropePulled = pulled ? LIFT * ma : 0; // طناب باید به اندازه‌ی مزیت مکانیکی بیشتر کشیده شود
   const wheelSpinDeg = pulled ? 560 : 0;
   const arrowLen = vlabClamp(load * 3.2, 14, 42);
 
   useEffect(() => {
     setPulled(false);
+    progRef.current = 0;
+    setProg(0);
   }, [load, pulleyType]);
 
   const loadLiftM = (loadLift / 100).toFixed(2);
@@ -25827,16 +25849,59 @@ function VlabPulleyExperiment({ onReading }) {
       {/* کاربر خواست میزان جابجایی روی خط‌کش «دقیق» نشان داده شود — به‌جای اینکه فقط از روی خط‌درجه‌ها
           حدس زده شود، یک برچسبِ عددیِ دقیق درست کنار نشانگر چسبانده شد که همیشه مقدار واقعی (با سه
           رقم اعشار) را نشان می‌دهد. */}
-      <g style={{ transform: `translateY(${pulled ? -RULER_H : 0}px)`, transition: "transform 1.4s cubic-bezier(.3,.6,.4,1)" }}>
-        <line x1="254" y1={bottomY} x2="284" y2={bottomY} stroke="#2f6fe2" strokeWidth="9" strokeLinecap="round" />
+      <g style={{ transform: `translateY(${-RULER_H * q}px)` }}>
+        <line x1="284" y1={bottomY} x2="296" y2={bottomY} stroke="#2f6fe2" strokeWidth="9" strokeLinecap="round" />
         <polygon points={`284,${bottomY - 12} 284,${bottomY + 12} 298,${bottomY}`} fill="#2f6fe2" />
-        <rect x="190" y={bottomY - 13} width="62" height="26" rx="6" fill="#0b1330" stroke="#2f6fe2" strokeWidth="1.6" />
-        <text x="221" y={bottomY + 6} fontSize="13" fill="#eaf0fb" textAnchor="middle" fontWeight="700" style={{ direction: "ltr", unicodeBidi: "isolate" }}>
-          {`${(loadLift / 100).toFixed(3)} m`}
+        <rect x="222" y={bottomY - 13} width="62" height="26" rx="6" fill="#0b1330" stroke="#2f6fe2" strokeWidth="1.6" />
+        <text x="253" y={bottomY + 6} fontSize="13" fill="#eaf0fb" textAnchor="middle" fontWeight="700" style={{ direction: "ltr", unicodeBidi: "isolate" }}>
+          {`${(liftNow / 100).toFixed(3)} m`}
         </text>
       </g>
     </g>
   );
+
+  // ---- صحنه‌ی جدید: قرقره‌های بزرگ‌تر، دو دستِ کشنده و مسیر زنده‌ی طناب (به‌خواست کاربر) ----
+  const pw = (cx, cy, r, spin) => (
+    <g transform={`rotate(${spin} ${cx} ${cy})`}>
+      <circle cx={cx} cy={cy} r={r} fill="#efe6d0" stroke="#5b4636" strokeWidth="3.4" />
+      <circle cx={cx} cy={cy} r={r - 5.5} fill="none" stroke="#c8a35a" strokeWidth="1.2" />
+      {[0, 60, 120].map((a) => (
+        <line key={a} x1={cx - (r - 3) * Math.cos((a * Math.PI) / 180)} y1={cy - (r - 3) * Math.sin((a * Math.PI) / 180)} x2={cx + (r - 3) * Math.cos((a * Math.PI) / 180)} y2={cy + (r - 3) * Math.sin((a * Math.PI) / 180)} stroke="#c8b98a" strokeWidth="1.5" />
+      ))}
+      <circle cx={cx} cy={cy} r="3.8" fill="#3a2f22" />
+      <circle cx={cx + (r - 5.5)} cy={cy} r="3" fill="#e2404f" stroke="#7a1620" strokeWidth="0.8" />
+    </g>
+  );
+  const fist = (x, y) => (
+    <g>
+      <rect x={x - 14} y={y - 12} width="28" height="24" rx="9" fill="#f0b48a" stroke="#a0643a" strokeWidth="1.6" />
+      {[-6, 0, 6].map((d) => <line key={d} x1={x - 13} y1={y + d} x2={x + 3} y2={y + d} stroke="#c98a5a" strokeWidth="1.3" />)}
+      <ellipse cx={x + 10} cy={y - 6} rx="5" ry="9" fill="#f0b48a" stroke="#a0643a" strokeWidth="1.4" transform={`rotate(-12 ${x + 10} ${y - 6})`} />
+    </g>
+  );
+  const hands = (x, y) => (
+    <g>
+      <rect x={x - 11} y={y + 36} width="22" height="90" rx="8" fill="#3a7ad8" stroke="#1a3a78" strokeWidth="1.6" />
+      <rect x={x - 12} y={y + 34} width="24" height="8" rx="3" fill="#f2f2f2" stroke="#9aa" />
+      {fist(x, y + 24)}{fist(x, y - 6)}
+    </g>
+  );
+  const arrowUp = (x, y) => <polygon points={`${x - 5},${y + 4} ${x + 5},${y + 4} ${x},${y - 6}`} fill="#fff2b0" stroke="#a88a2a" strokeWidth="0.8" />;
+  const arrowDn = (x, y) => <polygon points={`${x - 5},${y - 4} ${x + 5},${y - 4} ${x},${y + 6}`} fill="#fff2b0" stroke="#a88a2a" strokeWidth="0.8" />;
+  const rope = (d) => (
+    <g>
+      <path d={d} fill="none" stroke="#c8a35a" strokeWidth="3.6" strokeLinecap="round" strokeLinejoin="round" />
+      <path d={d} fill="none" stroke="#fff6c8" strokeWidth="2.2" strokeLinecap="round" strokeDasharray="3 13" style={{ animation: "vlabRopeFlow 0.9s linear infinite", animationPlayState: pulled ? "running" : "paused", opacity: pulled ? 1 : 0.3 }} />
+    </g>
+  );
+  const beam = (x0, w) => (
+    <g>
+      <rect x={x0} y="4" width={w} height="10" fill="#5b4636" />
+      {Array.from({ length: Math.floor(w / 9) }).map((_, k) => <line key={k} x1={x0 + 6 + k * 9} y1="4" x2={x0 + k * 9} y2="14" stroke="#2c2314" strokeWidth="1" />)}
+    </g>
+  );
+  const bracket = (x, y) => <line x1={x} y1="14" x2={x} y2={y} stroke="#8a6d3b" strokeWidth="3.4" />;
+  const knot = (x) => <g><line x1={x} y1="14" x2={x} y2="22" stroke="#2c2314" strokeWidth="2.4" /><circle cx={x} cy="22" r="4" fill="none" stroke="#2c2314" strokeWidth="2.2" /></g>;
 
   return (
     <div className="vlab-exp">
@@ -25850,118 +25915,58 @@ function VlabPulleyExperiment({ onReading }) {
           را واقعاً نشان می‌دهد. دور بعد (به‌خواست کاربر): چرخ‌ها واقعاً می‌چرخند، نیروی مقاوم (وزن بار) و
           نیروی کشش هر دو همراه بار جابجا می‌شوند، یک خط‌کش میزان بالارفتن بار را اندازه می‌گیرد و
           پس‌زمینه‌ی تیره + سایه‌ی بار برای زیبایی بیشتر اضافه شد. */}
-      <svg viewBox="0 0 400 210" className="vlab-svg" style={{ background: "#0b1330", borderRadius: "10px" }}>
+      <svg viewBox="0 0 440 270" className="vlab-svg" style={{ background: "#0b1330", borderRadius: "10px" }}>
+        <style>{"@keyframes vlabRopeFlow{to{stroke-dashoffset:-16}}"}</style>
         {pulleyType === "ثابت" ? (
           <>
-            <rect x="110" y="6" width="100" height="10" fill="#5b4636" />
-            {Array.from({ length: 10 }).map((_, i) => (
-              <line key={i} x1={116 + i * 9} y1="6" x2={110 + i * 9} y2="16" stroke="#2c2314" strokeWidth="1" />
-            ))}
-            <rect x="152" y="14" width="16" height="10" fill="#1c2540" />
-            {pulleyWheel(160, 45, 16, wheelSpinDeg)}
-            <path d="M140,165 L140,51.5 A20,20 0 0 1 180,51.5" fill="none" stroke="#c8a35a" strokeWidth="2.4" strokeLinecap="round" />
-            {/* کاربر گفت موقع بالا کشیدن، طناب «پاره می‌شود» — علت: مرورگر تغییرِ x1/y1/x2/y2 روی
-                <line> را با CSS transition میان‌یابی نمی‌کند (برخلاف x/y روی rect یا cx/cy روی circle)،
-                پس این خط فوراً به طول نهایی می‌پرید در حالی‌که بار (که با transform جابجا می‌شود) هنوز
-                آرام‌آرام بالا می‌آمد — طناب از بار جدا به‌نظر می‌رسید. راه‌حل: این بخشِ طناب هم با همان
-                مکانیزم transform (این‌بار scaleY، با لنگرِ ثابت درست روی قرقره) جابجا می‌شود، دقیقاً
-                هم‌زمان و هم‌روش با جابجاییِ بار، پس هرگز از هم جدا نمی‌افتند. */}
-            <line
-              x1="180"
-              y1="51.5"
-              x2="180"
-              y2="130"
-              stroke="#c8a35a"
-              strokeWidth="2.4"
-              strokeLinecap="round"
-              style={{
-                transformOrigin: "180px 51.5px",
-                transform: `scaleY(${1 - loadLift / 78.5})`,
-                transition: "transform 1.2s cubic-bezier(.3,.6,.4,1)",
-              }}
-            />
-            <g style={{ transform: `translateY(${-loadLift}px)`, transition: "transform 1.2s cubic-bezier(.3,.6,.4,1)" }}>
-              <ellipse cx="180" cy="168" rx="16" ry="4" fill="#000" opacity="0.22" />
-              {crate(180, 130, 40, 30)}
-              {forceArrows(180, 130, 40, 30)}
-            </g>
-            {ruler(195)}
-            <VlabSpringScale x={112} y={84} size={1.3} force={forceNeeded} maxForce={10} unit="kgf" label="نیروسنج" textColor="#eaf0fb" labelColor="#9fb0d6" />
+            {beam(70, 150)}
+            {bracket(146, 52)}
+            {rope(`M126,${140 + hv + 30} L126,52 A20,20 0 0 1 166,52 L166,${150 - Lv}`)}
+            {pw(146, 52, 20, -spinDeg)}
+            <ellipse cx="166" cy="200" rx="24" ry="5" fill="#000" opacity="0.25" />
+            {crate(166, 150 - Lv, 44, 34)}
+            {forceArrows(166, 150 - Lv, 44, 34)}
+            {arrowDn(126, 100 + hv / 2)}{arrowUp(166, 100 - Lv / 2)}
+            {hands(126, 140 + hv)}
+            <VlabSpringScale x={46} y={96} size={1.25} force={forceNeeded} maxForce={10} unit="kgf" label="نیروسنج" textColor="#eaf0fb" labelColor="#9fb0d6" />
+            <g transform="translate(30,0)">{ruler(200)}</g>
           </>
         ) : pulleyType === "متحرک" ? (
           <>
-            <rect x="70" y="6" width="160" height="10" fill="#5b4636" />
-            {Array.from({ length: 16 }).map((_, i) => (
-              <line key={i} x1={76 + i * 9} y1="6" x2={70 + i * 9} y2="16" stroke="#2c2314" strokeWidth="1" />
-            ))}
-            {/* قرقره‌ی ثابت (سمت چپ، وصل به سقف) */}
-            <rect x="112" y="14" width="16" height="10" fill="#1c2540" />
-            {pulleyWheel(120, 45, 15, wheelSpinDeg)}
-            {/* گره‌ی ثابتِ انتهای طناب (سمت راست سقف) */}
-            <circle cx="205" cy="20" r="4" fill="none" stroke="#2c2314" strokeWidth="2.2" />
-            <line x1="205" y1="16" x2="205" y2="6" stroke="#2c2314" strokeWidth="2.2" />
-            {/* قرقره‌ی متحرک: به بار وصل است، پس همراه آن بالا می‌رود و هم‌زمان دور خودش می‌چرخد */}
-            <g style={{ transform: `translateY(${-loadLift}px)`, transition: "transform 1.2s cubic-bezier(.3,.6,.4,1)" }}>
-              {pulleyWheel(165, 120, 13, wheelSpinDeg)}
-              <line x1="165" y1="133" x2="165" y2="140" stroke="#8a6d3b" strokeWidth="2.4" />
-              <ellipse cx="165" cy="176" rx="16" ry="4" fill="#000" opacity="0.22" />
-              {crate(165, 140, 40, 28)}
-              {forceArrows(165, 140, 40, 28)}
-            </g>
-            {/* طناب: گره‌ی سقف → زیرِ قرقره‌ی متحرک (که بالا رفته) → روی قرقره‌ی ثابت → نیروسنج —
-                قسمتِ سمتِ قرقره‌ی متحرک با بالا رفتنِ بار کوتاه‌تر می‌شود (طناب داخل سیستم کشیده می‌شود) */}
-            <path
-              d={`M205,20 L178,${117 - loadLift} A14,14 0 0 1 152,${117 - loadLift} L134,51.5 A15,15 0 0 1 106,51.5 L106,150`}
-              fill="none"
-              stroke="#c8a35a"
-              strokeWidth="2.4"
-              strokeLinecap="round"
-              style={{ transition: "d 1.2s cubic-bezier(.3,.6,.4,1)" }}
-            />
-            {ruler(200)}
-            <VlabSpringScale x={84} y={84} size={1.3} force={forceNeeded} maxForce={10} unit="kgf" label="نیروسنج" textColor="#eaf0fb" labelColor="#9fb0d6" />
+            {beam(70, 150)}
+            {bracket(186, 52)}{knot(126)}
+            <line x1="146" y1={130 - Lv} x2="146" y2={164 - Lv} stroke="#8a6d3b" strokeWidth="3.4" />
+            {pw(186, 52, 20, spinDeg)}
+            {pw(146, 130 - Lv, 20, -spinDeg)}
+            {rope(`M206,${150 + hv + 30} L206,52 A20,20 0 0 0 166,52 L166,${130 - Lv} A20,20 0 0 1 126,${130 - Lv} L126,24`)}
+            <ellipse cx="146" cy="206" rx="24" ry="5" fill="#000" opacity="0.25" />
+            {crate(146, 164 - Lv, 44, 34)}
+            {forceArrows(146, 164 - Lv, 44, 34)}
+            {arrowDn(206, 106 + hv / 2)}{arrowUp(166, 90 - Lv / 2)}{arrowUp(126, 76 - Lv / 2)}
+            {hands(206, 150 + hv)}
+            <VlabSpringScale x={46} y={96} size={1.25} force={forceNeeded} maxForce={10} unit="kgf" label="نیروسنج" textColor="#eaf0fb" labelColor="#9fb0d6" />
+            <g transform="translate(30,0)">{ruler(200)}</g>
           </>
         ) : (
           <>
-            {/* قرقره‌ی مرکب: دو قرقره‌ی ثابت کنار هم روی سقف + یک قرقره‌ی متحرکِ دوشیاره روی بار —
-                طناب از سقف شروع می‌شود، دو بار دور قرقره‌ی متحرک و هر دو قرقره‌ی ثابت می‌پیچد، پس سه
-                رشته‌ی طناب وزنِ بار را تحمل می‌کنند (مزیت مکانیکی = ۳). */}
-            <rect x="60" y="6" width="150" height="10" fill="#5b4636" />
-            {Array.from({ length: 15 }).map((_, i) => (
-              <line key={i} x1={66 + i * 9} y1="6" x2={60 + i * 9} y2="16" stroke="#2c2314" strokeWidth="1" />
-            ))}
-            {/* دو قرقره‌ی ثابت کنار هم */}
-            <rect x="92" y="14" width="14" height="10" fill="#1c2540" />
-            <rect x="152" y="14" width="14" height="10" fill="#1c2540" />
-            {pulleyWheel(99, 44, 13, wheelSpinDeg)}
-            {pulleyWheel(159, 44, 13, wheelSpinDeg)}
-            {/* گره‌ی ثابتِ ابتدای طناب، کنارِ قرقره‌ی ثابتِ اول */}
-            <circle cx="78" cy="20" r="4" fill="none" stroke="#2c2314" strokeWidth="2" />
-            <line x1="78" y1="16" x2="78" y2="6" stroke="#2c2314" strokeWidth="2" />
-            {/* قرقره‌ی متحرکِ دوشیاره (دو چرخ کنار هم روی یک یوغ)، همراه بار بالا می‌رود */}
-            <g style={{ transform: `translateY(${-loadLift}px)`, transition: "transform 1.2s cubic-bezier(.3,.6,.4,1)" }}>
-              <rect x="86" y="108" width="86" height="7" rx="3" fill="#3a2f22" />
-              {pulleyWheel(99, 100, 11, wheelSpinDeg)}
-              {pulleyWheel(159, 100, 11, wheelSpinDeg)}
-              <line x1="129" y1="115" x2="129" y2="140" stroke="#8a6d3b" strokeWidth="2.4" />
-              <ellipse cx="129" cy="176" rx="16" ry="4" fill="#000" opacity="0.22" />
-              {crate(129, 140, 40, 28)}
-              {forceArrows(129, 140, 40, 28)}
-            </g>
-            {/* طناب: گره‌ی سقف → زیرِ قرقره‌ی متحرکِ چپ → رویِ قرقره‌ی ثابتِ چپ → زیرِ قرقره‌ی متحرکِ
-                راست → رویِ قرقره‌ی ثابتِ راست → نیروسنج. */}
-            <path
-              d={`M78,20 L112,${100 - loadLift} A11,11 0 0 1 86,${100 - loadLift} L86,44 A13,13 0 0 1 112,44 L146,${100 - loadLift} A11,11 0 0 1 172,${100 - loadLift} L172,44 A13,13 0 0 1 146,44 L220,80`}
-              fill="none"
-              stroke="#c8a35a"
-              strokeWidth="2.2"
-              strokeLinecap="round"
-              style={{ transition: "d 1.2s cubic-bezier(.3,.6,.4,1)" }}
-            />
-            {ruler(200)}
-            <VlabSpringScale x={44} y={96} size={1.15} force={forceNeeded} maxForce={10} unit="kgf" label="نیروسنج" textColor="#eaf0fb" labelColor="#9fb0d6" />
+            {beam(60, 160)}
+            {bracket(110, 52)}{bracket(182, 52)}
+            <rect x="86" y={125 - Lv - 28} width="84" height="6" rx="3" fill="#3a2f22" />
+            <line x1="146" y1={125 - Lv - 22} x2="146" y2={161 - Lv} stroke="#8a6d3b" strokeWidth="3.4" />
+            {pw(110, 52, 18, spinDeg)}
+            {pw(182, 52, 18, spinDeg)}
+            {pw(146, 125 - Lv, 18, -spinDeg)}
+            {rope(`M200,${140 + hv + 30} L200,52 A18,18 0 0 0 164,52 L164,${125 - Lv} A18,18 0 0 1 128,${125 - Lv} L128,52 A18,18 0 0 0 92,52 L92,${125 - Lv - 28}`)}
+            <ellipse cx="146" cy="206" rx="24" ry="5" fill="#000" opacity="0.25" />
+            {crate(146, 161 - Lv, 44, 34)}
+            {forceArrows(146, 161 - Lv, 44, 34)}
+            {arrowDn(200, 100 + hv / 2)}{arrowUp(164, 90 - Lv / 2)}{arrowUp(128, 90 - Lv / 2)}{arrowUp(92, 84 - Lv / 2)}
+            {hands(200, 140 + hv)}
+            <VlabSpringScale x={46} y={96} size={1.25} force={forceNeeded} maxForce={10} unit="kgf" label="نیروسنج" textColor="#eaf0fb" labelColor="#9fb0d6" />
+            <g transform="translate(30,0)">{ruler(200)}</g>
           </>
         )}
+        <text x="220" y="264" fontSize="8.5" fill="#ffd98a" textAnchor="middle">نوار زرد متحرک و فلش‌ها: مسیر انتقال نیروی کشش از دست‌ها تا بار</text>
       </svg>
       <div className="vlab-controls">
         <div className="vlab-ctrl-col" style={{ flex: 1 }}>

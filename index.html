@@ -23773,6 +23773,20 @@ function VlabLeverExperiment({ onReading }) {
       ) : (
         <VlabFormulaCheck title="کمترین نیروی لازم" fa="نیرو × فاصله‌ی نیرو = (جرم بار × g) × فاصله‌ی بار" en="F · d_F = (m · g) · d_L" legend="g = ۱۰ نیوتن بر کیلوگرم — d: فاصله از تکیه‌گاه" subst={`F × ${effortDist} = (${loadMass} × 10) × ${loadDist}  →  F = ?`} label="کمترین نیرو:" answer={minForce} unit="نیوتن" decimals={2} />
       )}
+      {leverType === "یک" ? (
+        <VlabEverydayCard title="الاکلنگ و قیچی" text="در الاکلنگ تکیه‌گاه وسط است (اهرم نوع اول): بچه‌ی سنگین‌تر باید نزدیک‌تر به تکیه‌گاه بنشیند تا تعادل برقرار شود. قیچی و میله‌ی دم‌دست هم همین‌طورند.">
+          <polygon points="60,53 48,80 72,80" fill="#8a6a3a" stroke="#4a3a1a" strokeWidth="2" /><line x1="14" y1="44" x2="106" y2="62" stroke="#c98a3a" strokeWidth="5" strokeLinecap="round" /><circle cx="24" cy="32" r="6" fill="#f0b48a" stroke="#7a4a2a" /><rect x="19" y="38" width="10" height="8" rx="2" fill="#3a7ad8" /><circle cx="98" cy="48" r="5" fill="#f0b48a" stroke="#7a4a2a" /><rect x="94" y="53" width="8" height="8" rx="2" fill="#d8503a" />
+        </VlabEverydayCard>
+      ) : leverType === "دو" ? (
+        <VlabEverydayCard title="فرغون و گاری دستی" text="در فرغون، چرخ تکیه‌گاه است و بار بین چرخ و دسته‌هاست (اهرم نوع دوم). چون دسته‌ها از بار دورترند، با نیروی کمی می‌توانی بار سنگین را بالا بیاوری. فندق‌شکن و بطری‌بازکن هم همین‌طورند.">
+          <circle cx="30" cy="62" r="11" fill="#333" stroke="#111" strokeWidth="2" /><circle cx="30" cy="62" r="3" fill="#aaa" /><path d="M36,34 L74,34 L66,56 L42,56 Z" fill="#d86a2a" stroke="#7a3a10" strokeWidth="2" /><line x1="66" y1="50" x2="108" y2="38" stroke="#7a4a1a" strokeWidth="4" strokeLinecap="round" /><line x1="42" y1="50" x2="30" y2="62" stroke="#7a4a1a" strokeWidth="3" /><path d="M44,34 q6,-12 16,-6 q6,-8 12,6z" fill="#8a6a3a" stroke="#4a3a1a" />
+          <path d="M108,26 v10 m-4,-4 l4,5 l4,-5" fill="none" stroke="#2a6ab8" strokeWidth="2" /><text x="60" y="78" fontSize="7" fill="#2a6ab8" textAnchor="middle">تکیه‌گاه: چرخ</text>
+        </VlabEverydayCard>
+      ) : (
+        <VlabEverydayCard title="انبر و قلاب ماهیگیری" text="در انبر و پنس، نیرو بین تکیه‌گاه و بار است (اهرم نوع سوم). نیرویی که می‌دهی از نیرویی که به بار می‌رسد بیشتر است، اما حرکت دقیق و سریع‌تری به‌دست می‌آوری. نوک انگشتِ پنس بیشتر از دست تو حرکت می‌کند.">
+          <line x1="20" y1="64" x2="62" y2="40" stroke="#8a8a9a" strokeWidth="5" strokeLinecap="round" /><line x1="20" y1="64" x2="62" y2="56" stroke="#8a8a9a" strokeWidth="5" strokeLinecap="round" /><circle cx="20" cy="64" r="4" fill="#444" /><line x1="62" y1="40" x2="100" y2="48" stroke="#8a8a9a" strokeWidth="3" /><line x1="62" y1="56" x2="100" y2="50" stroke="#8a8a9a" strokeWidth="3" /><circle cx="104" cy="49" r="5" fill="#e8c46a" stroke="#7a5a10" /><path d="M46,32 v10 m-3,-3 l3,4 l3,-4" fill="none" stroke="#2a6ab8" strokeWidth="2" />
+        </VlabEverydayCard>
+      )}
     </div>
   );
 }

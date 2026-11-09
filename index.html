@@ -23287,6 +23287,24 @@ const VLAB_EXPERIMENTS = [
     intro: "وقتی خط‌کش افتاد روی صفحه بزن و ببین سرعت واکنش تو چند میلی‌ثانیه است؛ روی ماه و مریخ هم امتحان کن.",
     tools: ["خط‌کش", "انگشتان", "گرانش زمین/ماه/مریخ"],
   },
+  {
+    id: "alpha-scattering",
+    subject: "شیمی",
+    level: "متوسطه دوم",
+    title: "پراکندگی آلفا (آزمایش رادرفورد)",
+    icon: "☢️",
+    intro: "ذره‌ی آلفا را به هسته‌ی طلا نشانه بگیر و ببین چطور منحرف می‌شود؛ بعد ده‌هزار ذره را به ورقه‌ی طلا شلیک کن و ببین چرا چند ذره به عقب برمی‌گردند.",
+    tools: ["ذره‌ی آلفا", "ورقه‌ی طلا", "پرده‌ی نمایش", "شمارنده"],
+  },
+  {
+    id: "atomic-models",
+    subject: "شیمی",
+    level: "متوسطه دوم",
+    title: "مدل‌های اتمی (دالتون تا ابر الکترونی)",
+    icon: "⚛️",
+    intro: "یک عنصر را انتخاب کن و آن را در پنج مدل اتمی ببین: توپ دالتون، کیک کشمشی، هسته‌دار رادرفورد، لایه‌ای بور و ابر الکترونی؛ با دیدن نقطه‌ضعف هر مدل بفهم چرا مدل بعدی ساخته شد.",
+    tools: ["پنج مدل", "هفت عنصر", "جهش الکترون"],
+  },
 ];
 
 function vlabClamp(v, min, max) {
@@ -32081,6 +32099,307 @@ const VLAB_EVERYDAY = {
   "spherical-mirror": { title: "آینه‌ی ماشین و دندان‌پزشک", text: "آینه‌ی کاو (مقعر) تصویر را بزرگ می‌کند و در آینه‌ی دندان‌پزشک و آرایش به کار می‌رود. آینه‌ی کوژ (محدب) میدان دید بزرگ می‌دهد و در آینه‌ی بغل ماشین است؛ برای همین روی آن نوشته‌اند «اجسام از آنچه می‌نمایند نزدیک‌ترند».", art: <g><path d="M10,12 Q34,42 10,72" fill="none" stroke="#6a7a90" strokeWidth="5" strokeLinecap="round" /><path d="M110,12 Q86,42 110,72" fill="none" stroke="#6a7a90" strokeWidth="5" strokeLinecap="round" /><path d="M30,26 h16 M30,42 h16 M30,58 h16 M90,26 h-16 M90,42 h-16 M90,58 h-16" stroke="#ffb800" strokeWidth="2" /></g> },
 };
 
+/* ===== ۱) پراکندگی ذره‌ی آلفا (آزمایش رادرفورد) ===== */
+function vlabAlphaPath(d, b) {
+  let x = -220, y = b, vx = 1, vy = 0, t = 0;
+  const pts = [{ x, y, t }];
+  const acc = (px, py) => { const r2 = px * px + py * py, r = Math.sqrt(r2); const a = d / (2 * r2); return [(a * px) / r, (a * py) / r]; };
+  let [ax, ay] = acc(x, y);
+  for (let i = 0; i < 6000; i++) {
+    const r = Math.sqrt(x * x + y * y), sp = Math.sqrt(vx * vx + vy * vy);
+    const dt = Math.min(0.5, (0.02 * r) / Math.max(sp, 0.15));
+    vx += (ax * dt) / 2; vy += (ay * dt) / 2;
+    x += vx * dt; y += vy * dt; t += dt;
+    [ax, ay] = acc(x, y);
+    vx += (ax * dt) / 2; vy += (ay * dt) / 2;
+    if (i % 3 === 0) pts.push({ x, y, t });
+    if (i > 50 && r > 240 && x * vx + y * vy > 0) break;
+  }
+  pts.push({ x, y, t });
+  return pts;
+}
+
+function VlabAlphaScatteringExperiment({ onReading }) {
+  const [model, setModel] = useState("rutherford");
+  const [E, setE] = useState(5);
+  const [b, setB] = useState(20);
+  const [layers, setLayers] = useState(4000);
+  const [stat, setStat] = useState(null);
+  const [prog, setProg] = useState(-1);
+  const raf = React.useRef(0);
+  useEffect(() => () => cancelAnimationFrame(raf.current), []);
+  const Z1 = 2, Z2 = 79, RA = 144000;
+  const isR = model === "rutherford";
+  const d = (Z1 * Z2 * 1.44) / E;
+  const u = b / 100;
+  const theta = isR ? (b === 0 ? 180 : (2 * Math.atan(d / (2 * b)) * 180) / Math.PI) : ((d / RA) * u * Math.sqrt(Math.max(0, 1 - u * u)) * 180) / Math.PI;
+  const rmin = (d / 2) * (1 + Math.sqrt(1 + Math.pow((2 * b) / d, 2)));
+  const pts = isR ? vlabAlphaPath(d, b) : null;
+  const fmtN = (n) => vlabFaN(Number(n).toLocaleString("en-US")).replace(/,/g, "٬");
+  const chModel = (m) => { setModel(m); setStat(null); setProg(-1); setB(m === "rutherford" ? 20 : 50); };
+  const chE = (v) => { setE(v); setStat(null); };
+  const chL = (v) => { setLayers(v); setStat(null); };
+  const launch = () => {
+    cancelAnimationFrame(raf.current);
+    const t0 = performance.now(), dur = 2400;
+    const loop = (now) => {
+      const p = Math.min(1, (now - t0) / dur);
+      setProg(p);
+      if (p < 1) raf.current = requestAnimationFrame(loop);
+    };
+    raf.current = requestAnimationFrame(loop);
+  };
+  const fire = () => {
+    const n = 10000, bins = [0, 0, 0, 0], dots = [];
+    for (let i = 0; i < n; i++) {
+      let th;
+      if (isR) { const bb = RA * Math.sqrt(-Math.log(1 - Math.random()) / layers); th = ((2 * Math.atan(d / (2 * Math.max(bb, 1e-9)))) * 180) / Math.PI; }
+      else { const g = (Math.random() + Math.random() + Math.random() - 1.5) * 2; th = (Math.abs(g) * Math.sqrt(layers) * (d / (2 * RA)) * 0.5 * 180) / Math.PI; }
+      const k = th < 5 ? 0 : th < 45 ? 1 : th < 90 ? 2 : 3;
+      bins[k]++;
+      if (k >= 2) dots.push({ th, s: Math.random() < 0.5 ? 1 : -1 });
+    }
+    setStat((p) => {
+      const base = p || { n: 0, bins: [0, 0, 0, 0], dots: [] };
+      return { n: base.n + n, bins: base.bins.map((c, i) => c + bins[i]), dots: base.dots.concat(dots).slice(-14) };
+    });
+  };
+  const aimY = 100 - u * 80;
+  let dot = null;
+  if (prog >= 0) {
+    if (isR) { const T = pts[pts.length - 1].t * prog; let i = 0; while (i < pts.length - 1 && pts[i].t < T) i++; dot = { x: 160 + pts[i].x, y: 100 - pts[i].y }; }
+    else dot = { x: -10 + prog * 340, y: aimY };
+  }
+  const back = stat ? stat.bins[3] : 0;
+  useEffect(() => { if (onReading) onReading(`مدل: ${isR ? "هسته‌دار" : "کیک کشمشی"} | انرژی ${E} MeV | زاویه‌ی انحراف یک ذره: ${theta < 1 ? theta.toFixed(4) : theta.toFixed(1)}°` + (stat ? ` | از ${stat.n} ذره، ${stat.bins[3]} ذره برگشت` : "")); /* eslint-disable-next-line */ }, [model, E, b, stat]);
+  // ----- نمودار ورقه
+  const FX = 123, CY = 70, AR = 56, tot = stat ? stat.n : 0;
+  const BC = ["#4a90e2", "#7be0a4", "#ffb347", "#ff5c5c"], BL = ["کمتر از ۵ درجه", "۵ تا ۴۵ درجه", "۴۵ تا ۹۰ درجه", "بیش از ۹۰ درجه"];
+  const seedPlus = Array.from({ length: 24 }).map((_, i) => { const a = i * 2.4, r = 68 * Math.sqrt((i + 0.5) / 24); return [160 + r * Math.cos(a), 100 + r * Math.sin(a)]; });
+  const seedEl = Array.from({ length: 10 }).map((_, i) => { const a = i * 2.4 + 1, r = 62 * Math.sqrt((i + 0.5) / 10); return [160 + r * Math.cos(a), 100 + r * Math.sin(a)]; });
+  return (
+    <div className="vlab-exp">
+      <svg viewBox="0 0 320 200" className="vlab-svg" style={{ background: "#03060f", borderRadius: "10px" }}>
+        <text x="160" y="14" fontSize="10" fontWeight="bold" fill="#ffd98a" textAnchor="middle">{isR ? "نمای نزدیکِ هسته‌ی اتم طلا" : "اتم طلا در مدل کیک کشمشی"}</text>
+        {isR ? (
+          <g>
+            <line x1="0" x2="320" y1={100 - b} y2={100 - b} stroke="#5a6aa0" strokeDasharray="2 4" strokeWidth="0.7" />
+            <line x1="0" x2="320" y1="100" y2="100" stroke="#2a3560" strokeWidth="0.5" />
+            <circle cx="160" cy="100" r={Math.max(7, 7)} fill="#e0463a" stroke="#ffb199" strokeWidth="1.2" />
+            <text x="160" y="103.5" fontSize="10" fontWeight="bold" fill="#fff" textAnchor="middle">+</text>
+            <text x="160" y="124" fontSize="8" fill="#ffb199" textAnchor="middle">هسته‌ی طلا</text>
+            <polyline points={pts.map((p) => `${(160 + p.x).toFixed(1)},${(100 - p.y).toFixed(1)}`).join(" ")} fill="none" stroke="#ffd23a" strokeWidth="1.6" strokeLinejoin="round" opacity={prog >= 0 ? 0.55 : 0.9} />
+            <line x1="12" x2="62" y1="186" y2="186" stroke="#9fb0e0" strokeWidth="1.4" /><text x="37" y="181" fontSize="8" fill="#9fb0e0" textAnchor="middle" style={VLAB_LTR}>{vlabFaN(50) + " fm"}</text>
+            <text x="205" y="190" fontSize="7.5" fill="#6f7fa8" textAnchor="middle">قطر کل اتم حدود ۹۰۰ برابر عرض این کادر است</text>
+          </g>
+        ) : (
+          <g>
+            <circle cx="160" cy="100" r="80" fill="#ff6a6a" opacity="0.28" stroke="#ff9a9a" strokeWidth="1.2" />
+            {seedPlus.map((p, i) => <text key={"p" + i} x={p[0]} y={p[1] + 3} fontSize="9" fill="#ffb3b3" textAnchor="middle">+</text>)}
+            {seedEl.map((p, i) => <g key={"e" + i}><circle cx={p[0]} cy={p[1]} r="3.6" fill="#4a90e2" stroke="#bcd8ff" /><text x={p[0]} y={p[1] + 2.4} fontSize="6" fill="#fff" textAnchor="middle">−</text></g>)}
+            <line x1="0" x2="320" y1={aimY} y2={aimY} stroke="#ffd23a" strokeWidth="1.6" opacity="0.8" />
+            <text x="205" y="194" fontSize="7.5" fill="#6f7fa8" textAnchor="middle">بار مثبت در کل اتم پخش است؛ ذره تقریباً مستقیم می‌گذرد</text>
+          </g>
+        )}
+        {dot ? <g><circle cx={dot.x} cy={dot.y} r="6" fill="#ffd23a" opacity="0.25" /><circle cx={dot.x} cy={dot.y} r="3.6" fill="#ffd23a" stroke="#fff" strokeWidth="0.8" /><text x={dot.x} y={dot.y + 2.2} fontSize="5" fontWeight="bold" fill="#5a3a00" textAnchor="middle" style={VLAB_LTR}>α</text></g> : null}
+      </svg>
+      <VlabMeterRow height={150} meters={isR
+        ? [{ label: "زاویه‌ی انحراف", unit: "°", value: theta, ranges: [10, 45, 90, 180], maj: 5, decimals: 1 }, { label: "نزدیک‌ترین فاصله به هسته", unit: "fm", value: rmin, ranges: [50, 100, 200, 400], maj: 5, decimals: 1 }]
+        : [{ label: "زاویه‌ی انحراف", unit: "°", value: theta, ranges: [0.01], maj: 5, decimals: 4 }]} />
+      <div className="vlab-controls"><div className="vlab-ctrl-col" style={{ flex: 1 }}>
+        <div style={{ display: "flex", gap: "6px", flexWrap: "wrap" }}>
+          <button className="vlab-btn" style={!isR ? { outline: "2px solid #e0a83e" } : null} onClick={() => chModel("thomson")}>کیک کشمشی (تامسون)</button>
+          <button className="vlab-btn" style={isR ? { outline: "2px solid #e0a83e" } : null} onClick={() => chModel("rutherford")}>اتم هسته‌دار (رادرفورد)</button>
+          <button className="vlab-btn" onClick={launch}>▶ پرتاب این ذره</button>
+        </div>
+        <label className="vlab-ctrl-label">انرژی ذره‌ی آلفا (مگاالکترون‌ولت): {vlabFaN(E)}</label>
+        <VlabRange min="2" max="10" step="0.5" value={E} onChange={(e) => chE(+e.target.value)} />
+        <label className="vlab-ctrl-label">{isR ? "فاصله‌ی نشانه‌گیری از هسته (فِمتومتر): " + vlabFaN(b) : "فاصله‌ی نشانه‌گیری از مرکز اتم (درصد شعاع): " + vlabFaN(b)}</label>
+        <VlabRange min="0" max={isR ? 90 : 99} step="1" value={b} onChange={(e) => { setB(+e.target.value); setProg(-1); }} />
+      </div></div>
+      <div className="vlab-readout">
+        {isR
+          ? `ذره‌ی آلفا با فاصله‌ی ${vlabFaN(b)} فِمتومتر از هسته نشانه‌گیری شده است و ${theta < 5 ? "تقریباً مستقیم رد می‌شود" : theta > 90 ? "به عقب برمی‌گردد" : "منحرف می‌شود"}. هرچه نشانه‌گیری به هسته نزدیک‌تر باشد، دافعه‌ی بار مثبتِ هسته قوی‌تر و انحراف بیشتر است؛ رویارو (فاصله ۰) ذره دقیقاً برمی‌گردد.`
+          : "در مدل کیک کشمشی بار مثبت در کل اتم پخش شده و نیروی دافعه همه‌جا ضعیف است؛ پس حتی نزدیک مرکز هم انحراف بسیار ناچیز است (کمتر از یک‌صدم درجه)."}
+      </div>
+      <div style={{ margin: "14px 0 4px", fontWeight: "bold", color: "#1c2540", fontSize: 14 }}>🔬 ورقه‌ی نازک طلا: ده‌هزار ذره را یک‌جا بشمار</div>
+      <svg viewBox="0 0 320 246" className="vlab-svg" style={{ background: "#03060f", borderRadius: "10px" }}>
+        <rect x="8" y={CY - 14} width="30" height="28" rx="4" fill="#3a4468" stroke="#8fa0c8" />
+        <text x="23" y={CY + 4} fontSize="12" fontWeight="bold" fill="#ffd23a" textAnchor="middle" style={VLAB_LTR}>α</text>
+        <text x="23" y={CY + 28} fontSize="8" fill="#9fb0e0" textAnchor="middle">منبع آلفا</text>
+        <line x1="38" x2={FX} y1={CY} y2={CY} stroke="#ffd23a" strokeWidth="2" strokeDasharray="5 4" />
+        <rect x={FX - 3} y={CY - 36} width="6" height="72" fill="#d4a82a" stroke="#fff3b0" strokeWidth="0.6" />
+        <text x={FX} y={CY + 47} fontSize="8" fill="#ffd98a" textAnchor="middle">ورقه‌ی طلا</text>
+        <circle cx={FX} cy={CY} r={AR} fill="none" stroke="#4a7aff" strokeWidth="1.2" strokeDasharray="3 4" />
+        <text x="252" y="48" fontSize="8" fill="#7fa0ff" textAnchor="middle">پرده‌ی نمایش</text>
+        <text x="252" y="60" fontSize="8" fill="#7fa0ff" textAnchor="middle">(جرقه‌ی هر ذره)</text>
+        <line x1={FX} x2={FX + AR} y1={CY} y2={CY} stroke="#ffd23a" strokeWidth="2" opacity={stat ? 1 : 0.4} />
+        {stat && stat.bins[1] > 0 ? <g><line x1={FX} x2={FX + AR * Math.cos(0.12)} y1={CY} y2={CY - AR * Math.sin(0.12)} stroke="#7be0a4" strokeWidth="0.8" /><line x1={FX} x2={FX + AR * Math.cos(0.12)} y1={CY} y2={CY + AR * Math.sin(0.12)} stroke="#7be0a4" strokeWidth="0.8" /></g> : null}
+        {stat ? stat.dots.map((q, i) => { const a = (q.th * Math.PI) / 180; const px = FX + AR * Math.cos(a), py = CY - q.s * AR * Math.sin(a); return <g key={"d" + i}><circle cx={px} cy={py} r="6" fill="#ffd23a" opacity="0.25" /><circle cx={px} cy={py} r="2.6" fill="#fff6c0" /></g>; }) : null}
+        <text x="160" y="140" fontSize="9.5" fill="#cfd6ea" textAnchor="middle">{tot ? "تعداد ذره‌های شلیک‌شده: " + fmtN(tot) : "هنوز ذره‌ای شلیک نشده؛ دکمه‌ی «شلیک ۱۰٬۰۰۰ ذره» را بزن"}</text>
+        {[0, 1, 2, 3].map((i) => {
+          const c = stat ? stat.bins[i] : 0, h = c > 0 ? 3 + (50 * Math.log10(c + 1)) / Math.log10(tot + 1) : 0, x = 18 + i * 74;
+          return <g key={"b" + i}><rect x={x} y={214 - h} width="52" height={h} rx="3" fill={BC[i]} /><line x1={x - 4} x2={x + 56} y1="214" y2="214" stroke="#3a4468" />
+            <text x={x + 26} y={209 - h} fontSize="9.5" fontWeight="bold" fill={BC[i]} textAnchor="middle">{fmtN(c)}</text>
+            <text x={x + 26} y="227" fontSize="7.8" fill="#cfd6ea" textAnchor="middle">{BL[i]}</text></g>;
+        })}
+        <text x="160" y="241" fontSize="7.5" fill="#6f7fa8" textAnchor="middle">ارتفاع ستون‌ها لگاریتمی است: هر پله ۱۰ برابر</text>
+      </svg>
+      <div className="vlab-controls"><div className="vlab-ctrl-col" style={{ flex: 1 }}>
+        <label className="vlab-ctrl-label">ضخامت ورقه (تعداد لایه‌های اتم روی هم): {fmtN(layers)}</label>
+        <VlabRange min="500" max="8000" step="500" value={layers} onChange={(e) => chL(+e.target.value)} />
+        <div style={{ display: "flex", gap: "6px", flexWrap: "wrap" }}>
+          <button className="vlab-btn" onClick={fire}>☢ شلیک ۱۰٬۰۰۰ ذره</button>
+          <button className="vlab-btn" onClick={() => setStat(null)}>پاک‌کردن شمارش</button>
+        </div>
+      </div></div>
+      <div className="vlab-readout">
+        {!stat ? "ورقه‌ی طلا خیلی نازک است ولی چند هزار لایه اتم دارد. شلیک کن و ببین ذره‌ها کجا می‌رسند. چند بار شلیک کن تا اتفاق‌های نادر هم دیده شود."
+          : !isR ? `از ${fmtN(stat.n)} ذره، ${fmtN(back)} ذره برگشت. در مدل کیک کشمشی هیچ ذره‌ای برنمی‌گردد؛ اما رادرفورد دید از هر حدود ۸٬۰۰۰ ذره یکی برمی‌گردد. مدل را روی «اتم هسته‌دار» بگذار.`
+          : back > 0 ? `از ${fmtN(stat.n)} ذره، ${fmtN(back)} ذره برگشت و بیشترشان (${fmtN(stat.bins[0])}) تقریباً مستقیم رفتند. برگشتن نشان می‌دهد بار مثبت و جرم اتم در یک هسته‌ی بسیار کوچک جمع شده و بیشتر اتم فضای خالی است.`
+          : `از ${fmtN(stat.n)} ذره، بیشترشان (${fmtN(stat.bins[0])}) تقریباً مستقیم رفتند. هنوز ذره‌ی برگشتی دیده نشده؛ چون برخورد با هسته نادر است. چند بار دیگر شلیک کن یا ورقه را ضخیم‌تر کن.`}
+      </div>
+      {isR ? <VlabFormulaCheck title="نزدیک‌ترین فاصله‌ی رویارو" fa="فاصله = (عدد اتمی آلفا × عدد اتمی طلا × ۱٫۴۴) ÷ انرژی" en="d = Z₁ · Z₂ · 1.44 / E" legend="عدد اتمی آلفا ۲ و طلا ۷۹ است؛ انرژی را به مگاالکترون‌ولت بگذار؛ جواب بر حسب فِمتومتر (fm) است." subst={`d = 2 × 79 × 1.44 ÷ ${E}`} answer={d} unit="fm" decimals={1} /> : null}
+      {isR && b > 0 ? <VlabFormulaCheck title="زاویه‌ی انحراف" fa="زاویه = ۲ × آرک‌تانژانت (فاصله‌ی رویارو ÷ (۲ × فاصله‌ی نشانه‌گیری))" en="θ = 2 · arctan( d / (2b) )" legend="d همان جواب بالاست و b فاصله‌ی نشانه‌گیری از هسته؛ ماشین‌حساب را روی درجه (Deg) بگذار." subst={`θ = 2 × arctan(${d.toFixed(1)} ÷ (2 × ${b}))`} answer={theta} unit="درجه" decimals={1} /> : null}
+      <VlabEverydayCard title="آشکارساز دود خانه" text="در حسگر دود، مقدار کمی ماده‌ی پرتوزا ذره‌های آلفا می‌فرستد و هوای کوچک داخل حسگر را رسانا می‌کند. وقتی دود وارد شود، ذره‌ها را می‌گیرد و جریان کم می‌شود و زنگ به صدا درمی‌آید. آلفا از یک ورقه‌ی کاغذ هم نمی‌گذرد، پس برای ساکنان خطری ندارد.">
+        <rect x="0" y="6" width="120" height="4" fill="#bbb" />
+        <ellipse cx="62" cy="22" rx="30" ry="11" fill="#f4f4f4" stroke="#888" strokeWidth="1.5" />
+        <path d="M44,22 h36 M48,26 h28 M48,18 h28" stroke="#999" strokeWidth="1" />
+        <circle cx="62" cy="22" r="3" fill="#d83a3a" />
+        <path d="M24,44 q8,-8 0,-16 q-8,-8 0,-16" fill="none" stroke="#999" strokeWidth="2" opacity="0.7" transform="translate(12,34)" />
+        <path d="M26,70 q8,-8 0,-14 q-8,-6 0,-14" fill="none" stroke="#aaa" strokeWidth="2" opacity="0.7" />
+        <path d="M92,40 q6,6 0,12 M100,36 q10,10 0,20" fill="none" stroke="#d83a3a" strokeWidth="2" />
+        <text x="96" y="70" fontSize="11" fontWeight="bold" fill="#d83a3a" textAnchor="middle">بیپ</text>
+      </VlabEverydayCard>
+    </div>
+  );
+}
+
+/* ===== ۲) مقایسه‌ی مدل‌های اتمی ===== */
+const VLAB_AM_EL = [
+  { s: "H", n: "هیدروژن", z: 1, a: 1, c: "#ff6b8a" }, { s: "He", n: "هلیم", z: 2, a: 4, c: "#ffe27a" }, { s: "Li", n: "لیتیم", z: 3, a: 7, c: "#ff4a5a" },
+  { s: "C", n: "کربن", z: 6, a: 12, c: "#9fd0ff" }, { s: "O", n: "اکسیژن", z: 8, a: 16, c: "#8ff0c0" }, { s: "Ne", n: "نئون", z: 10, a: 20, c: "#ff7a3a" }, { s: "Na", n: "سدیم", z: 11, a: 23, c: "#ffd23a" },
+];
+const VLAB_AM_MODELS = [
+  { k: "dalton", t: "دالتون", y: "۱۸۰۳", who: "جان دالتون", idea: "هر عنصر از اتم‌های کوچک و سفت و تقسیم‌ناپذیر ساخته شده، مثل توپ‌های کوچک. اتم‌های یک عنصر همه مثل هم‌اند.", ok: "چرا مواد با نسبت‌های ثابت ترکیب می‌شوند و چرا در واکنش، اتم‌ها فقط جابه‌جا می‌شوند.", no: "نمی‌تواند توضیح دهد چرا مواد برق می‌گیرند و باردار می‌شوند. بعدها الکترون کشف شد و معلوم شد اتم قطعه‌های درونی دارد." },
+  { k: "thomson", t: "تامسون", y: "۱۹۰۴", who: "جی‌.جی. تامسون", idea: "اتم کره‌ی بار مثبتی است و الکترون‌ها مثل کشمش‌های کیک در آن فرورفته‌اند. به این مدل «کیک کشمشی» می‌گویند.", ok: "اتم خنثی است (مثبت و منفی برابرند) و الکترون‌ها می‌توانند از اتم جدا شوند.", no: "آزمایش ورقه‌ی طلا (رادرفورد) را توضیح نمی‌دهد: در آن چند ذره‌ی آلفا به عقب برگشتند و در این مدل برگشتن ممکن نیست." },
+  { k: "rutherford", t: "رادرفورد", y: "۱۹۱۱", who: "ارنست رادرفورد", idea: "همه‌ی بار مثبت و تقریباً همه‌ی جرم اتم در هسته‌ای بسیار کوچک و سنگین در مرکز است. الکترون‌ها دور آن در فضای تقریباً خالی می‌گردند.", ok: "برگشتن بعضی ذره‌های آلفا و عبور بیشترشان از ورقه‌ی طلا.", no: "طبق فیزیک آن زمان الکترونِ در حال چرخش باید انرژی از دست بدهد و در هسته بیفتد. همچنین رنگ‌های مشخصِ نور اتم‌ها را توضیح نمی‌دهد." },
+  { k: "bohr", t: "بور", y: "۱۹۱۳", who: "نیلز بور", idea: "الکترون‌ها فقط در لایه‌های مشخص و با انرژی معین می‌گردند. الکترون با گرفتن انرژی به لایه‌ی بالاتر می‌پرد و در برگشت نور می‌دهد.", ok: "خطوط رنگیِ نور اتم هیدروژن و رنگ شعله و چراغ نئون.", no: "برای اتم‌های چندالکترونی دقیق نیست و الکترون در واقع مسیر مشخصی مثل ماهواره ندارد." },
+  { k: "cloud", t: "ابر الکترونی", y: "حدود ۱۹۲۶", who: "شرودینگر و دیگران (مدل کوانتومی)", idea: "نمی‌شود مسیر الکترون را گفت؛ فقط می‌شود احتمال حضورش را در اطراف هسته گفت. جاهای پرنقطه یعنی احتمال حضور بیشتر.", ok: "رفتار همه‌ی اتم‌ها و ترتیب لایه‌ها و زیرلایه‌ها را بهتر توضیح می‌دهد و مدل امروزی است.", no: "از نظر ریاضی سخت‌تر است و تصویر ساده‌ای مثل ماهواره‌ها ندارد." },
+];
+const vlabAmShells = (z) => { const cap = [2, 8, 8, 18], r = []; let left = z; for (const c of cap) { if (left <= 0) break; const k = Math.min(c, left); r.push(k); left -= k; } return r; };
+const vlabAmRng = (seed) => () => { seed = (seed * 16807) % 2147483647; return (seed - 1) / 2147483646; };
+
+function VlabAtomicModelsExperiment({ onReading }) {
+  const [mk, setMk] = useState("rutherford");
+  const [ei, setEi] = useState(0);
+  const [tt, setTt] = useState(0);
+  const [ex, setEx] = useState(null);
+  const ttRef = React.useRef(0); ttRef.current = tt;
+  const el = VLAB_AM_EL[ei], M = VLAB_AM_MODELS.find((m) => m.k === mk);
+  const Z = el.z, A = el.a, N = A - Z;
+  const shells = vlabAmShells(Z);
+  useEffect(() => {
+    if (mk !== "bohr") return undefined;
+    let raf = 0; const t0 = performance.now();
+    const loop = (now) => { setTt((now - t0) / 1000); raf = requestAnimationFrame(loop); };
+    raf = requestAnimationFrame(loop);
+    return () => cancelAnimationFrame(raf);
+  }, [mk]);
+  useEffect(() => { if (ex !== null && tt - ex > 3) setEx(null); }, [tt, ex]);
+  useEffect(() => { if (onReading) onReading(`مدل ${M.t} (${M.y}) | ${el.n}: ${Z} پروتون، ${Z} الکترون، ${N} نوترون`); /* eslint-disable-next-line */ }, [mk, ei]);
+  const CX = 160, CY = 105;
+  const nucleus = (scale, tiny) => {
+    if (tiny) return <g><circle cx={CX} cy={CY} r="3" fill="#e0463a" stroke="#ffb199" strokeWidth="0.8" /><text x={CX} y={CY + 16} fontSize="8" fill="#ffb199" textAnchor="middle">هسته</text></g>;
+    const rng = vlabAmRng(7 + Z * 13), rn = Math.min(16, 3.2 * Math.sqrt(A) * scale);
+    const kinds = Array.from({ length: A }).map((_, i) => i < Z);
+    for (let i = A - 1; i > 0; i--) { const j = Math.floor(rng() * (i + 1)); const t = kinds[i]; kinds[i] = kinds[j]; kinds[j] = t; }
+    return <g>{kinds.map((isP, i) => { const a = i * 2.4, r = rn * Math.sqrt((i + 0.5) / A); return <circle key={"n" + i} cx={CX + r * Math.cos(a)} cy={CY + r * Math.sin(a)} r={Math.max(2.2, 3.2 * scale)} fill={isP ? "#e0463a" : "#aab2c8"} stroke="#222" strokeWidth="0.4" />; })}</g>;
+  };
+  let body = null;
+  if (mk === "dalton") {
+    body = <g><defs><radialGradient id="amDal" cx="35%" cy="30%"><stop offset="0%" stopColor="#fff" stopOpacity="0.9" /><stop offset="45%" stopColor={el.c} /><stop offset="100%" stopColor="#1c2540" /></radialGradient></defs>
+      <circle cx={CX} cy={CY} r="70" fill="url(#amDal)" stroke="#fff" strokeWidth="0.8" />
+      <text x={CX} y={CY + 14} fontSize="40" fontWeight="bold" fill="#101830" textAnchor="middle" style={VLAB_LTR}>{el.s}</text></g>;
+  } else if (mk === "thomson") {
+    const plus = Array.from({ length: 26 }).map((_, i) => { const a = i * 2.4, r = 74 * Math.sqrt((i + 0.5) / 26); return [CX + r * Math.cos(a), CY + r * Math.sin(a)]; });
+    const els = Array.from({ length: Z }).map((_, i) => { const a = i * 2.4 + 1, r = 60 * Math.sqrt((i + 0.5) / Z); return [CX + r * Math.cos(a), CY + r * Math.sin(a)]; });
+    body = <g><circle cx={CX} cy={CY} r="82" fill="#ff6a6a" opacity="0.3" stroke="#ff9a9a" strokeWidth="1.2" />
+      {plus.map((p, i) => <text key={"p" + i} x={p[0]} y={p[1] + 3} fontSize="9" fill="#ffb3b3" textAnchor="middle">+</text>)}
+      {els.map((p, i) => <g key={"e" + i}><circle cx={p[0]} cy={p[1]} r="4.6" fill="#4a90e2" stroke="#bcd8ff" /><text x={p[0]} y={p[1] + 2.6} fontSize="7" fill="#fff" textAnchor="middle">−</text></g>)}</g>;
+  } else if (mk === "rutherford") {
+    const rng = vlabAmRng(31 + Z), els = Array.from({ length: Z }).map(() => { const a = rng() * 6.283, r = 40 + rng() * 48; return [CX + r * Math.cos(a), CY + r * Math.sin(a)]; });
+    body = <g><circle cx={CX} cy={CY} r="86" fill="none" stroke="#4a5a90" strokeDasharray="3 4" />
+      <text x={CX} y="11" fontSize="7.5" fill="#6f7fa8" textAnchor="middle">مرز اتم؛ بین هسته و الکترون‌ها فضای خالی است</text>
+      {nucleus(1, true)}
+      {els.map((p, i) => <circle key={"e" + i} cx={p[0]} cy={p[1]} r="3.6" fill="#4a90e2" stroke="#bcd8ff" />)}</g>;
+  } else if (mk === "bohr") {
+    const R = [26, 48, 70, 92], OM = [2.4, 1.5, 1.0, 0.7];
+    const last = shells.length - 1, nOut = shells[last];
+    const p = ex === null ? -1 : tt - ex;
+    const out = [];
+    shells.forEach((k, i) => {
+      out.push(<circle key={"o" + i} cx={CX} cy={CY} r={R[i]} fill="none" stroke="#3a4a85" strokeWidth="0.9" />);
+      for (let j = 0; j < k; j++) {
+        let r = R[i]; const a = tt * OM[i] + (j * 2 * Math.PI) / k;
+        const jumper = i === last && j === nOut - 1 && p >= 0 && i < 3;
+        if (jumper) { const r1 = R[i + 1]; r = p < 0.4 ? R[i] + ((r1 - R[i]) * p) / 0.4 : p < 1.6 ? r1 : p < 2.0 ? r1 - ((r1 - R[i]) * (p - 1.6)) / 0.4 : R[i]; }
+        out.push(<circle key={`e${i}_${j}`} cx={CX + r * Math.cos(a)} cy={CY + r * Math.sin(a)} r="4" fill={jumper && p >= 0.4 && p < 1.6 ? "#ffd23a" : "#4a90e2"} stroke="#bcd8ff" />);
+      }
+    });
+    if (p >= 0.3 && p < 1.7 && last < 3) out.push(<circle key="exo" cx={CX} cy={CY} r={R[last + 1]} fill="none" stroke="#ffd23a" strokeWidth="0.7" strokeDasharray="2 4" opacity="0.7" />);
+    let photon = null;
+    if (p >= 1.8 && p < 2.8) {
+      const a = tt * OM[last] + ((nOut - 1) * 2 * Math.PI) / nOut, q = (p - 1.8) / 1.0, r0 = R[last] + 8 + q * 120;
+      const pts2 = Array.from({ length: 9 }).map((_, i) => { const rr = r0 - i * 3.2, w = 3.2 * Math.sin(i * 1.7); return `${(CX + rr * Math.cos(a) - w * Math.sin(a)).toFixed(1)},${(CY + rr * Math.sin(a) + w * Math.cos(a)).toFixed(1)}`; }).join(" ");
+      photon = <polyline points={pts2} fill="none" stroke={el.c} strokeWidth="2.4" strokeLinecap="round" />;
+    }
+    body = <g>{out}{nucleus(0.8, false)}{photon}</g>;
+  } else {
+    const rng = vlabAmRng(101 + Z * 7), dots = [], RHO = [20, 46, 74, 90];
+    shells.forEach((k, i) => { const nd = k * 46; for (let q = 0; q < nd; q++) { const rr = -(RHO[i] / 2) * Math.log(Math.max(1e-6, rng() * rng() * rng())), a = rng() * 6.283; if (rr > 88) continue; dots.push([CX + rr * Math.cos(a), CY + rr * Math.sin(a)]); } });
+    body = <g>{dots.map((p, i) => <circle key={"c" + i} cx={p[0]} cy={p[1]} r="1.5" fill="#6fb2ff" opacity="0.55" />)}{nucleus(0.7, false)}</g>;
+  }
+  const exBtn = mk === "bohr";
+  return (
+    <div className="vlab-exp">
+      <svg viewBox="0 0 320 210" className="vlab-svg" style={{ background: "#03060f", borderRadius: "10px" }}>
+        {body}
+        <text x="160" y="204" fontSize="9" fill="#9fb0e0" textAnchor="middle">{"مدل " + M.t + " ، " + el.n}</text>
+      </svg>
+      <div className="vlab-controls"><div className="vlab-ctrl-col" style={{ flex: 1 }}>
+        <label className="vlab-ctrl-label">مدل اتمی (به ترتیب تاریخ):</label>
+        <div style={{ display: "flex", gap: "6px", flexWrap: "wrap" }}>
+          {VLAB_AM_MODELS.map((m) => <button key={m.k} className="vlab-btn" style={mk === m.k ? { outline: "2px solid #e0a83e" } : null} onClick={() => { setMk(m.k); setEx(null); }}>{m.t + " " + m.y}</button>)}
+        </div>
+        <label className="vlab-ctrl-label">عنصر:</label>
+        <div style={{ display: "flex", gap: "6px", flexWrap: "wrap" }}>
+          {VLAB_AM_EL.map((q, i) => <button key={q.s} className="vlab-btn" style={ei === i ? { outline: "2px solid #e0a83e" } : null} onClick={() => { setEi(i); setEx(null); }}>{q.n}</button>)}
+          {exBtn ? <button className="vlab-btn" onClick={() => setEx(ttRef.current)}>⚡ انرژی بده</button> : null}
+        </div>
+      </div></div>
+      <div className="vlab-readout">
+        <b>{"مدل " + M.t + " (" + M.y + ") — " + M.who}</b><br />
+        <b>ایده:</b> {M.idea}<br />
+        <b>چه چیزی را توضیح داد:</b> {M.ok}<br />
+        <b>چرا مدل بعدی لازم شد:</b> {M.no}
+        {mk === "rutherford" ? <div style={{ marginTop: 6 }}>اگر اتم به بزرگی یک استادیوم بود، هسته فقط به اندازه‌ی یک نخود وسط آن بود.</div> : null}
+        {mk === "bohr" ? <div style={{ marginTop: 6 }}>دکمه‌ی «انرژی بده» را بزن: الکترون بیرونی به لایه‌ی بالاتر می‌پرد و در برگشت نور می‌دهد. رنگ نور نمونه است؛ هر عنصر رنگ خودش را دارد.</div> : null}
+        {mk === "cloud" ? <div style={{ marginTop: 6 }}>هر نقطه یک «احتمال» است، نه جای واقعی الکترون. جاهای پرنقطه یعنی احتمال بیشتر.</div> : null}
+      </div>
+      <div className="vlab-readout" style={{ marginTop: 8 }}>
+        {`${el.n}: ${vlabFaN(Z)} پروتون، ${vlabFaN(Z)} الکترون و ${vlabFaN(N)} نوترون (عدد جرمی ${vlabFaN(A)}).`}
+      </div>
+      <VlabFormulaCheck title="تعداد نوترون‌ها" fa="تعداد نوترون = عدد جرمی − عدد اتمی (تعداد پروتون)" en="N = A − Z" legend={`${el.n}: عدد جرمی ${vlabFaN(A)} و عدد اتمی ${vlabFaN(Z)}`} subst={`N = ${A} − ${Z}`} answer={N} unit="نوترون" decimals={0} label="تعداد نوترون:" />
+      <VlabEverydayCard title="آتش‌بازی و چراغ نئون" text="وقتی الکترون‌ها انرژی می‌گیرند به لایه‌ی بالاتر می‌پرند و در برگشت نور می‌دهند. هر عنصر رنگ مخصوص خودش را دارد: نئون قرمز-نارنجی، سدیم زرد. به همین دلیل چراغ‌های تبلیغاتی و رنگ آتش‌بازی عنصرهای مختلف دارند.">
+        <rect x="0" y="0" width="120" height="84" fill="#0b1330" />
+        {[[60, 40, "#ff7a3a"], [28, 24, "#ffd23a"], [96, 26, "#4aa8ff"]].map((q, i) => <g key={i}>{Array.from({ length: 10 }).map((_, k) => <line key={k} x1={q[0]} y1={q[1]} x2={q[0] + 16 * Math.cos((k * Math.PI) / 5)} y2={q[1] + 16 * Math.sin((k * Math.PI) / 5)} stroke={q[2]} strokeWidth="1.6" strokeLinecap="round" />)}<circle cx={q[0]} cy={q[1]} r="2" fill="#fff" /></g>)}
+        <rect x="14" y="62" width="92" height="14" rx="7" fill="none" stroke="#ff7a3a" strokeWidth="3" /><rect x="14" y="62" width="92" height="14" rx="7" fill="none" stroke="#ffd0a0" strokeWidth="0.8" />
+      </VlabEverydayCard>
+    </div>
+  );
+}
+
 const VLAB_COMPONENTS = {
   lever: VlabLeverExperiment,
   pendulum: VlabPendulumExperiment,
@@ -32163,6 +32482,8 @@ const VLAB_COMPONENTS = {
   "flower-pollination": VlabFlowerPollinationExperiment,
   "dna-translation": VlabDnaTranslationExperiment,
   "reaction-time": VlabReactionTimeExperiment,
+  "alpha-scattering": VlabAlphaScatteringExperiment,
+  "atomic-models": VlabAtomicModelsExperiment,
 };
 
 function StudentVirtualLabView({ onBack, grade, studentCode, schoolCode }) {

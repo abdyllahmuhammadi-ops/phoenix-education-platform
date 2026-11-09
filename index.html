@@ -23196,6 +23196,51 @@ const VLAB_EXPERIMENTS = [
     intro: "دو فلز را در دو لیوان بینداز، ولتاژ پیل را بخوان و جریان الکترون‌ها از آند به کاتد را تماشا کن.",
     tools: ["دو لیوان", "پل نمکی", "ولت‌سنج"],
   },
+  {
+    id: "cell-organelles",
+    subject: "زیست‌شناسی",
+    level: "متوسطه اول",
+    title: "ساختار سلول (کارخانه‌ی کوچک)",
+    icon: "🔬",
+    intro: "اسم بخش‌های سلول را با انگشت روی جای درستش در سلول جانوری یا گیاهی بینداز و ببین هر بخش مثل کدام قسمت کارخانه است.",
+    tools: ["سلول جانوری", "سلول گیاهی", "برچسب‌ها"],
+  },
+  {
+    id: "blood-typing",
+    subject: "زیست‌شناسی",
+    level: "متوسطه دوم",
+    title: "گروه خونی و تزریق خون",
+    icon: "🩸",
+    intro: "کیسه‌ی خون هر گروه را به بیمار بده و ببین کدام سازگار است و کدام گلبول‌ها را به هم می‌چسباند.",
+    tools: ["هشت گروه خونی", "نمای میکروسکوپی", "جدول سازگاری"],
+  },
+  {
+    id: "mitosis",
+    subject: "زیست‌شناسی",
+    level: "متوسطه دوم",
+    title: "مراحل میتوز (تقسیم سلولی)",
+    icon: "🧬",
+    intro: "دکمه‌ی زمان را بکش و ببین کروموزوم‌ها چطور فشرده می‌شوند، ردیف می‌شوند، از هم جدا می‌شوند و سلول به دو سلول تقسیم می‌شود.",
+    tools: ["خط زمان", "کروموزوم‌ها", "دوک تقسیم"],
+  },
+  {
+    id: "blood-pressure",
+    subject: "زیست‌شناسی",
+    level: "متوسطه دوم",
+    title: "فشار خون و تنگی سرخرگ",
+    icon: "🫀",
+    intro: "قطر سرخرگ را با انگشت تنگ و گشاد کن و ضربان قلب را عوض کن؛ فشار بالا و پایین و سرعت خون را ببین.",
+    tools: ["سرخرگ", "فشارسنج", "گلبول‌های قرمز"],
+  },
+  {
+    id: "eye-vision",
+    subject: "زیست‌شناسی",
+    level: "متوسطه دوم",
+    title: "چشم، نزدیک‌بینی و عینک",
+    icon: "👁️",
+    intro: "درخت را دور و نزدیک کن، طول چشم را عوض کن و ببین نزدیک‌بینی و دوربینی چطور با عینک اصلاح می‌شود.",
+    tools: ["کره‌ی چشم", "عدسی", "عینک"],
+  },
 ];
 
 function vlabClamp(v, min, max) {
@@ -31130,6 +31175,360 @@ function VlabGalvanicCellExperiment({ onReading }) {
   );
 }
 
+const VLAB_CELL_SETS = {
+  animal: [
+    { id: "nuc", n: "هسته", x: 140, y: 86, r: 28, sz: 6, fn: "ژن‌ها (DNA) را نگه می‌دارد و کارهای سلول را فرمان می‌دهد", an: "اتاق مدیرعامل" },
+    { id: "mito", n: "میتوکندری", x: 236, y: 112, r: 24, sz: 2, fn: "با سوزاندن قند و اکسیژن، انرژی (ATP) می‌سازد", an: "نیروگاه" },
+    { id: "er", n: "شبکه‌ی آندوپلاسمی", x: 196, y: 70, r: 22, sz: 0.5, fn: "پروتئین و چربی می‌سازد و در سلول جابه‌جا می‌کند", an: "خط تولید و راهروها" },
+    { id: "golgi", n: "دستگاه گلژی", x: 92, y: 118, r: 22, sz: 1.5, fn: "محصولات سلول را بسته‌بندی و ارسال می‌کند", an: "واحد بسته‌بندی و پست" },
+    { id: "lyso", n: "لیزوزوم", x: 100, y: 56, r: 16, sz: 0.5, fn: "مواد کهنه و میکروب‌ها را هضم می‌کند", an: "واحد بازیافت" },
+    { id: "mem", n: "غشای سلول", x: 44, y: 86, r: 22, sz: 0.01, fn: "ورود و خروج مواد را کنترل می‌کند", an: "نگهبان و درِ ورودی" },
+  ],
+  plant: [
+    { id: "nuc", n: "هسته", x: 86, y: 86, r: 24, sz: 6, fn: "ژن‌ها (DNA) را نگه می‌دارد و کارهای سلول را فرمان می‌دهد", an: "اتاق مدیرعامل" },
+    { id: "vac", n: "کریچه‌ی مرکزی", x: 170, y: 86, r: 34, sz: 30, fn: "آب و مواد را ذخیره می‌کند و سلول را سفت نگه می‌دارد", an: "انبار آب" },
+    { id: "chl", n: "کلروپلاست", x: 236, y: 64, r: 18, sz: 5, fn: "با نور خورشید، قند می‌سازد (فتوسنتز)", an: "پنل خورشیدی" },
+    { id: "mito", n: "میتوکندری", x: 236, y: 122, r: 18, sz: 2, fn: "با سوزاندن قند، انرژی (ATP) می‌سازد", an: "نیروگاه" },
+    { id: "wall", n: "دیواره‌ی سلولی", x: 44, y: 112, r: 18, sz: 0.5, fn: "از جنس سلولز؛ به سلول گیاهی شکل و استحکام می‌دهد", an: "دیوار بتنی کارخانه" },
+    { id: "mem", n: "غشای سلول", x: 160, y: 140, r: 16, sz: 0.01, fn: "ورود و خروج مواد را کنترل می‌کند", an: "نگهبان و درِ ورودی" },
+  ],
+};
+function VlabCellOrganellesExperiment({ onReading }) {
+  const [kind, setKind] = useState("animal"), [placed, setPlaced] = useState({}), [att, setAtt] = useState(0), [ok, setOk] = useState(0);
+  const [msg, setMsg] = useState(null), [ghost, setGhost] = useState(null), [last, setLast] = useState(null);
+  const gRef = React.useRef(null);
+  const set = VLAB_CELL_SETS[kind];
+  const order = [3, 0, 5, 2, 4, 1];
+  const chips = order.map((i) => set[i]);
+  const { svgRef, startDrag } = useVlabDrag((id, p) => { gRef.current = { c: +id.slice(1), x: p.x, y: p.y }; setGhost({ ...gRef.current }); }, () => {
+    const g = gRef.current; gRef.current = null; setGhost(null);
+    if (!g || g.y > 156) return;
+    const it = chips[g.c]; if (placed[it.id]) return;
+    setAtt((a) => a + 1);
+    if (Math.hypot(g.x - it.x, g.y - it.y) <= it.r + 8) { setPlaced((o) => ({ ...o, [it.id]: true })); setOk((o) => o + 1); setMsg({ ok: true, it }); setLast(it); }
+    else { const other = set.find((s) => !placed[s.id] && s.id !== it.id && Math.hypot(g.x - s.x, g.y - s.y) <= s.r + 8); setMsg({ ok: false, it, other }); }
+  });
+  const reset = (k) => { setPlaced({}); setAtt(0); setOk(0); setMsg(null); setLast(null); if (k) setKind(k); };
+  useEffect(() => {
+    if (onReading) onReading(`درست: ${ok} از ${set.length} | تلاش‌ها: ${att}`);
+    // eslint-disable-next-line
+  }, [ok, att]);
+  const sz = last ? last.sz : 6, img = Math.round(sz * 2 * 1000) / 1000;
+  const acc = att ? Math.round((ok / att) * 100) : 0;
+  const done = ok === set.length;
+  const pl = (id) => !!placed[id];
+  const A = kind === "animal";
+  return (
+    <div className="vlab-exp">
+      <svg ref={svgRef} viewBox="0 0 320 240" className="vlab-svg" style={{ background: "#03060f", borderRadius: "10px", touchAction: "none" }}>
+        {A ? <ellipse cx="160" cy="86" rx="118" ry="66" fill="#3a2038" stroke="#e88ab0" strokeWidth="3" /> : <g><rect x="38" y="22" width="244" height="128" rx="10" fill="#1f3a2a" stroke="#6fbf5a" strokeWidth="7" /><rect x="45" y="29" width="230" height="114" rx="6" fill="none" stroke="#e88ab0" strokeWidth="1.6" /></g>}
+        {A ? <g>
+          <circle cx="140" cy="86" r="24" fill="#6a4a9c" stroke="#b79cf0" strokeWidth="2" /><circle cx="140" cy="86" r="7" fill="#3a2a66" />
+          <path d="M180,46 q14,-6 18,6 t-4,14 q-10,6 -4,16 t6,14 q-14,6 -18,-6 t4,-14 q10,-6 4,-16z" fill="#c47a9a" opacity="0.8" stroke="#ffb3d0" />{[0, 1, 2, 3].map((i) => <circle key={i} cx={186 + (i % 2) * 8} cy={58 + i * 12} r="1.8" fill="#fff" />)}
+          <ellipse cx="236" cy="112" rx="22" ry="11" fill="#e0643c" stroke="#ffb39a" strokeWidth="1.5" /><path d="M222,112 q4,-6 8,0 t8,0 t8,0" stroke="#7a2a12" fill="none" />
+          {[0, 1, 2, 3].map((i) => <path key={i} d={`M${78 + i * 3},${108 + i * 6} q14,-8 28,0`} fill="none" stroke="#6ad0a0" strokeWidth="3" />)}
+          <circle cx="100" cy="56" r="10" fill="#c0e050" stroke="#eaffa0" />
+        </g> : <g>
+          <circle cx="86" cy="86" r="20" fill="#6a4a9c" stroke="#b79cf0" strokeWidth="2" /><circle cx="86" cy="86" r="6" fill="#3a2a66" />
+          <ellipse cx="170" cy="86" rx="46" ry="30" fill="#4a7ac4" opacity="0.7" stroke="#9fc4ff" />
+          <ellipse cx="238" cy="66" rx="18" ry="10" fill="#3fa66a" stroke="#9fffc4" /><ellipse cx="236" cy="104" rx="14" ry="7" fill="#3fa66a" stroke="#9fffc4" />
+          <ellipse cx="238" cy="124" rx="16" ry="8" fill="#e0643c" stroke="#ffb39a" />
+        </g>}
+        {set.map((s) => (pl(s.id) ? <g key={s.id}><circle cx={s.x} cy={s.y} r={s.r + 4} fill="none" stroke="#7be0a4" strokeWidth="2" /><text x={s.x} y={s.y - s.r - 5} fontSize="8.5" fill="#7be0a4" textAnchor="middle" stroke="#03060f" strokeWidth="3" paintOrder="stroke">{s.n}</text></g> : <g key={s.id}><circle cx={s.x} cy={s.y} r={s.r} fill="none" stroke="#ffd98a" strokeWidth="1.4" strokeDasharray="3 3" opacity="0.9" /><text x={s.x} y={s.y + 4} fontSize="12" fill="#ffd98a" textAnchor="middle">؟</text></g>))}
+        <rect x="6" y="158" width="308" height="78" rx="10" fill="#0d1428" stroke="#27324f" />
+        {chips.map((c, i) => { const x = 14 + (i % 3) * 102, y = 166 + Math.floor(i / 3) * 34, done1 = pl(c.id); return (
+          <g key={c.id} opacity={done1 ? 0.25 : 1}>
+            <rect x={x} y={y} width="96" height="28" rx="14" fill="#27324f" stroke="#ffd98a" strokeWidth="1.2" /><text x={x + 48} y={y + 18} fontSize="9" fill="#ffd98a" textAnchor="middle" pointerEvents="none">{c.n}</text>
+            {!done1 ? <rect x={x} y={y} width="96" height="28" fill="transparent" onPointerDown={startDrag("c" + i)} style={{ cursor: "grab", touchAction: "none" }} /> : null}
+          </g>); })}
+        {ghost ? <g pointerEvents="none"><rect x={ghost.x - 46} y={ghost.y - 28} width="92" height="26" rx="13" fill="#ffd98a" opacity="0.95" /><text x={ghost.x} y={ghost.y - 11} fontSize="9" fill="#222" textAnchor="middle">{chips[ghost.c].n}</text></g> : null}
+      </svg>
+      <VlabMeterRow height={150} meters={[{ label: "درست چیده‌شده", unit: "", value: ok, ranges: [6], maj: 6, decimals: 0 }, { label: "تعداد تلاش", unit: "", value: att, ranges: [10, 25], maj: 5, decimals: 0 }, { label: "دقت", unit: "%", value: acc, ranges: [100], maj: 5, decimals: 0 }]} />
+      <div className="vlab-controls"><div className="vlab-ctrl-col" style={{ flex: 1 }}>
+        <div style={{ display: "flex", gap: "6px", flexWrap: "wrap" }}>
+          <button className="vlab-btn" style={{ background: A ? "#ffd98a" : undefined, color: A ? "#222" : undefined }} onClick={() => reset("animal")}>🐾 سلول جانوری</button>
+          <button className="vlab-btn" style={{ background: !A ? "#ffd98a" : undefined, color: !A ? "#222" : undefined }} onClick={() => reset("plant")}>🌿 سلول گیاهی</button>
+          <button className="vlab-btn" onClick={() => reset()}>↺ از اول</button>
+        </div>
+      </div></div>
+      <div className="vlab-readout">{done ? "🎉 همه را درست چیدی! سلول مثل یک کارخانه‌ی کوچک است که هر بخشش کار مخصوصی دارد." : msg ? (msg.ok ? <span><b>{msg.it.n}</b>: {msg.it.fn}. مثل <b>{msg.it.an}</b> در کارخانه.</span> : <span>نه؛ «{msg.it.n}» اینجا نیست.{msg.other ? ` این بخش ${msg.other.n} است.` : ""} شکل و جایش را دقیق‌تر نگاه کن.</span>) : "اسم هر بخش را از پایین بگیر و روی نشانه‌ی «؟» همان بخش در سلول رها کن."}</div>
+      <VlabFormulaCheck title="اندازه‌ی تصویر در میکروسکوپ" fa="اندازه‌ی تصویر = اندازه‌ی واقعی × بزرگ‌نمایی" en="I = s × M" legend={`${last ? last.n : "هسته"}: اندازه‌ی واقعی ${sz} میکرومتر؛ بزرگ‌نمایی ۲۰۰۰ برابر؛ جواب به میلی‌متر (هر ۱۰۰۰ میکرومتر = ۱ میلی‌متر)`} subst={`I = ${sz} × 2000 ÷ 1000 = ?`} label="I:" answer={(sz * 2000) / 1000} unit="mm" decimals={2} />
+      <VlabFormulaCheck title="اندازه‌ی واقعی از روی تصویر" fa="اندازه‌ی واقعی = اندازه‌ی تصویر ÷ بزرگ‌نمایی" en="s = I / M" legend="جواب به میکرومتر؛ هر میلی‌متر ۱۰۰۰ میکرومتر است" subst={`s = ${img} × 1000 ÷ 2000 = ?`} label="s:" answer={(img * 1000) / 2000} unit="µm" decimals={2} />
+      <VlabEverydayCard title="سلول، کارخانه‌ی کوچک بدن" text="هسته مثل مدیرعامل دستور می‌دهد، میتوکندری مثل نیروگاه برق می‌سازد، گلژی مثل واحد بسته‌بندی کالا می‌فرستد و لیزوزوم زباله‌ها را بازیافت می‌کند. وقتی میتوکندری‌ها خراب شوند، سلول و بدن بی‌حال می‌شود.">
+        <rect x="10" y="40" width="46" height="34" fill="#c8d4e8" stroke="#667" /><rect x="20" y="22" width="8" height="18" fill="#99a" /><rect x="36" y="28" width="8" height="12" fill="#99a" /><path d="M24,22 q4,-8 8,-3" stroke="#aaa" fill="none" />
+        <path d="M66,46 q10,-20 24,-4 q14,16 18,-6 q4,26 -20,38 q-26,0 -22,-28z" fill="#e8b0c8" stroke="#a45" /><circle cx="88" cy="58" r="7" fill="#7a5ab0" />
+      </VlabEverydayCard>
+    </div>
+  );
+}
+
+const VLAB_BLOOD = [{ n: "A+", A: 1, B: 0, D: 1 }, { n: "A−", A: 1, B: 0, D: 0 }, { n: "B+", A: 0, B: 1, D: 1 }, { n: "B−", A: 0, B: 1, D: 0 }, { n: "AB+", A: 1, B: 1, D: 1 }, { n: "AB−", A: 1, B: 1, D: 0 }, { n: "O+", A: 0, B: 0, D: 1 }, { n: "O−", A: 0, B: 0, D: 0 }];
+function vlabBloodConf(d, r) { const c = []; if (d.A && !r.A) c.push("A"); if (d.B && !r.B) c.push("B"); if (d.D && !r.D) c.push("D"); return c; }
+function VlabBloodTypingExperiment({ onReading }) {
+  const [pt, setPt] = useState(0), [test, setTest] = useState(null), [kg, setKg] = useState(70), [ghost, setGhost] = useState(null);
+  const [hist, setHist] = useState({});
+  const gRef = React.useRef(null), ptRef = React.useRef(0); ptRef.current = pt;
+  const AC = { A: "#ffd84a", B: "#3ed6ff", D: "#7bff8a" };
+  const { svgRef, startDrag } = useVlabDrag((id, p) => { gRef.current = { d: +id.slice(1), x: p.x, y: p.y }; setGhost({ ...gRef.current }); }, () => {
+    const g = gRef.current; gRef.current = null; setGhost(null);
+    if (g && g.x < 150 && g.y > 24 && g.y < 160) { setTest({ d: g.d, r: ptRef.current }); setHist((h) => ({ ...h, [g.d + "-" + ptRef.current]: vlabBloodConf(VLAB_BLOOD[g.d], VLAB_BLOOD[ptRef.current]).length === 0 })); }
+  });
+  const R = VLAB_BLOOD[pt], T = test && test.r === pt ? test : null, conf = T ? vlabBloodConf(VLAB_BLOOD[T.d], R) : [], bad = T && conf.length > 0, D = T ? VLAB_BLOOD[T.d] : null;
+  const keys = Object.keys(hist), nOk = keys.filter((k) => hist[k]).length, nBad = keys.length - nOk;
+  useEffect(() => {
+    if (onReading && T) onReading(`اهداکننده ${D.n} → گیرنده ${R.n}: ${bad ? "ناسازگار (لخته)" : "سازگار"}`);
+    // eslint-disable-next-line
+  }, [test, pt]);
+  const V = kg * 70, frac = Math.round(((450 / V) * 100) * 10) / 10;
+  const cells = Array.from({ length: 14 }).map((_, i) => ({ x: 205 + ((i * 41) % 60) - 6 + (i % 3) * 8, y: 62 + ((i * 29) % 56), cl: [[225, 82], [248, 100], [228, 108]][i % 3] }));
+  const anti = [R.A ? null : "A", R.B ? null : "B", R.D ? null : "D"].filter(Boolean);
+  return (
+    <div className="vlab-exp">
+      <svg ref={svgRef} viewBox="0 0 320 246" className="vlab-svg" style={{ background: "#03060f", borderRadius: "10px", touchAction: "none" }}>
+        <circle cx="62" cy="50" r="18" fill="#e8b58a" stroke="#a87a4a" /><rect x="38" y="68" width="48" height="66" rx="14" fill="#4a7ac4" stroke="#9fc4ff" /><rect x="84" y="78" width="46" height="12" rx="6" fill="#e8b58a" stroke="#a87a4a" />
+        <text x="62" y="108" fontSize="14" fontWeight="bold" fill="#fff" textAnchor="middle" style={{ direction: "ltr", unicodeBidi: "isolate" }}>{R.n}</text>
+        <text x="62" y="150" fontSize="8.5" fill="#9fb0e0" textAnchor="middle">بیمار (گیرنده)</text>
+        <rect x="126" y="80" width="14" height="8" rx="2" fill="#ff8a8a" opacity={T ? 1 : 0.3} />
+        <circle cx="235" cy="88" r="56" fill="#2a0f14" stroke="#9fb0e0" strokeWidth="2.5" />
+        {cells.map((c, i) => { const px = bad ? c.cl[0] + ((i * 7) % 18) - 9 : c.x, py = bad ? c.cl[1] + ((i * 11) % 18) - 9 : c.y; return (
+          <g key={i} style={{ transform: `translate(${px}px,${py}px)`, transition: "transform .9s ease-in-out" }}>
+            <circle r="7.5" fill="#e03a3a" stroke="#ff9a9a" />{D ? ["A", "B", "D"].filter((k) => D[k]).map((k, j) => <circle key={k} cx={Math.cos(j * 2.1) * 7.5} cy={Math.sin(j * 2.1) * 7.5} r="2.3" fill={AC[k]} />) : null}
+          </g>); })}
+        {anti.map((k, i) => <g key={k} transform={`translate(${212 + i * 26},${112 + (i % 2) * 6}) scale(1.7)`} opacity={0.95}><path d="M0,0 V6 M0,6 L-4,-2 M0,6 L4,-2" stroke={AC[k]} strokeWidth="1.6" fill="none" /></g>)}
+        {bad ? <text x="235" y="154" fontSize="10" fill="#ff9a9a" textAnchor="middle">لخته شدن گلبول‌ها (خطرناک!)</text> : T ? <text x="235" y="154" fontSize="10" fill="#7be0a4" textAnchor="middle">گلبول‌ها پراکنده می‌مانند: سازگار</text> : <text x="235" y="154" fontSize="9" fill="#9fb0e0" textAnchor="middle">نمای میکروسکوپ خون بیمار</text>}
+        <text x="235" y="22" fontSize="8" fill="#9fb0e0" textAnchor="middle">Y = پادتن‌های بیمار در پلاسما</text>
+        <rect x="6" y="162" width="308" height="80" rx="10" fill="#0d1428" stroke="#27324f" />
+        <text x="160" y="176" fontSize="8" fill="#9fb0e0" textAnchor="middle">کیسه‌ی خون اهداکننده را بگیر و روی بازوی بیمار رها کن</text>
+        {VLAB_BLOOD.map((b, i) => (
+          <g key={i}><path d={`M${22 + i * 37},186 h20 v24 q0,8 -10,8 q-10,0 -10,-8z`} fill="#d83a4a" stroke="#ff9aa6" /><text x={32 + i * 37} y="206" fontSize="8.5" fontWeight="bold" fill="#fff" textAnchor="middle" pointerEvents="none" style={{ direction: "ltr", unicodeBidi: "isolate" }}>{b.n}</text>
+            <rect x={16 + i * 37} y="182" width="32" height="40" fill="transparent" onPointerDown={startDrag("b" + i)} style={{ cursor: "grab", touchAction: "none" }} /></g>
+        ))}
+        {ghost ? <g pointerEvents="none"><path d={`M${ghost.x - 12},${ghost.y - 16} h24 v28 q0,9 -12,9 q-12,0 -12,-9z`} fill="#ff5a6a" stroke="#fff" opacity="0.95" /><text x={ghost.x} y={ghost.y + 4} fontSize="10" fontWeight="bold" fill="#fff" textAnchor="middle" style={{ direction: "ltr", unicodeBidi: "isolate" }}>{VLAB_BLOOD[ghost.d].n}</text></g> : null}
+      </svg>
+      <VlabMeterRow height={150} meters={[{ label: "آزمایش‌ها", unit: "", value: keys.length, ranges: [10, 30, 64], maj: 5, decimals: 0 }, { label: "سازگار", unit: "", value: nOk, ranges: [10, 30, 64], maj: 5, decimals: 0 }, { label: "ناسازگار", unit: "", value: nBad, ranges: [10, 30, 64], maj: 5, decimals: 0 }]} />
+      <div className="vlab-controls"><div className="vlab-ctrl-col" style={{ flex: 1 }}>
+        <div style={{ fontWeight: "bold" }}>گروه خونی بیمار:</div>
+        <div style={{ display: "flex", gap: "6px", flexWrap: "wrap", margin: "4px 0" }}>{VLAB_BLOOD.map((b, i) => <button key={i} className="vlab-btn" style={{ background: i === pt ? "#ffd98a" : undefined, color: i === pt ? "#222" : undefined, direction: "ltr" }} onClick={() => { setPt(i); setTest(null); }}>{b.n}</button>)}</div>
+        <label className="vlab-ctrl-label">وزن بیمار (kg): {kg}</label><VlabRange min="30" max="110" step="1" value={kg} onChange={(e) => setKg(+e.target.value)} />
+        <button className="vlab-btn" onClick={() => { setHist({}); setTest(null); }}>↺ پاک‌کردن جدول</button>
+      </div></div>
+      <div className="vlab-readout">{T ? (bad ? <span>خون <b style={{ direction: "ltr", unicodeBidi: "isolate", display: "inline-block" }}>{D.n}</b> به بیمار <b style={{ direction: "ltr", unicodeBidi: "isolate", display: "inline-block" }}>{R.n}</b> سازگار نیست: بیمار پادتن ضد {conf.join("، ")} دارد، اما گلبول‌های اهداکننده این نشانگر را دارند و پادتن‌ها آنها را به هم می‌چسبانند.</span> : <span>خون <b style={{ direction: "ltr", unicodeBidi: "isolate", display: "inline-block" }}>{D.n}</b> برای بیمار <b style={{ direction: "ltr", unicodeBidi: "isolate", display: "inline-block" }}>{R.n}</b> سازگار است؛ هیچ پادتنی به گلبول‌های اهداکننده نمی‌چسبد.</span>) : "یک کیسه‌ی خون روی بیمار رها کن. بعد گروه خونی بیمار را عوض کن و همه‌ی ۶۴ حالت را بسنج. جدول زیر نتیجه‌ها را نشان می‌دهد."}</div>
+      <div style={{ overflowX: "auto", margin: "8px 0" }}>
+        <table style={{ borderCollapse: "collapse", fontSize: "11px", direction: "ltr", margin: "0 auto" }}>
+          <thead><tr><th style={{ padding: "2px 4px" }}>اهدا↓ / گیرنده→</th>{VLAB_BLOOD.map((b, i) => <th key={i} style={{ padding: "2px 4px" }}>{b.n}</th>)}</tr></thead>
+          <tbody>{VLAB_BLOOD.map((d, di) => <tr key={di}><th style={{ padding: "2px 4px" }}>{d.n}</th>{VLAB_BLOOD.map((r, ri) => { const v = hist[di + "-" + ri]; return <td key={ri} style={{ textAlign: "center", border: "1px solid #ccc", padding: "2px 4px", background: v === undefined ? "#f4f1ea" : v ? "#c8f2d6" : "#ffd0d0" }}>{v === undefined ? "·" : v ? "✓" : "✗"}</td>; })}</tr>)}</tbody>
+        </table>
+      </div>
+      <VlabFormulaCheck title="حجم خون بدن بیمار" fa="حجم خون = وزن × ۷۰ میلی‌لیتر بر کیلوگرم" en="V = 70 × m" legend="در بزرگسالان تقریباً هفت درصد وزن بدن خون است" subst={`V = ${kg} × 70 = ?`} label="V:" answer={kg * 70} unit="mL" decimals={0} />
+      <VlabFormulaCheck title="سهم یک کیسه‌ی اهدا از خون بدن" fa="درصد = حجم کیسه (۴۵۰ میلی‌لیتر) ÷ حجم خون بدن × ۱۰۰" en="% = 450 / V × 100" legend="با یک رقم اعشار" subst={`% = 450 ÷ ${V} × 100 = ?`} label="%:" answer={(450 / V) * 100} unit="%" decimals={1} />
+      <VlabEverydayCard title="اهدای خون و اورژانس" text="در اورژانس که گروه خونی مجروح معلوم نیست، خون O منفی می‌دهند چون هیچ نشانگری برای پادتن‌ها ندارد. گیرنده‌ی همگانی AB مثبت است. هر اهداکننده تنها حدود ۷٪ خون بدنش را می‌دهد و بدن ظرف چند هفته جبران می‌کند.">
+        <path d="M44,16 h30 v38 q0,18 -15,18 q-15,0 -15,-18z" fill="#d83a4a" stroke="#802" strokeWidth="2" /><text x="59" y="48" fontSize="14" fontWeight="bold" fill="#fff" textAnchor="middle" style={{ direction: "ltr", unicodeBidi: "isolate" }}>O−</text><path d="M59,72 V80" stroke="#333" strokeWidth="2" />
+      </VlabEverydayCard>
+    </div>
+  );
+}
+
+const VLAB_MIT = { ps: [0, 0.12, 0.3, 0.42, 0.5, 0.72, 0.88, 1] };
+function vlabMitFrame(i, k, p) {
+  const B = [[130, 82], [190, 76], [136, 124], [188, 122]], b = B[i], s = k ? 1 : -1, ps = VLAB_MIT.ps;
+  const F = [
+    { x: b[0] + s * 2, y: b[1], a: 20 + i * 35, c: 0 }, { x: b[0] + s * 2, y: b[1], a: 20 + i * 35, c: 0 }, { x: b[0] + s * 2, y: b[1], a: 20 + i * 35 + s * 18, c: 1 },
+    { x: 160 + s * 3, y: 62 + 26 * i, a: 90 + s * 18, c: 1 }, { x: 160 + s * 3, y: 62 + 26 * i, a: 90 + s * 18, c: 1 },
+    { x: 160 + s * 60, y: 62 + 26 * i, a: -s * 20, c: 1 }, { x: 160 + s * 60, y: 100 + (62 + 26 * i - 100) * 0.55, a: -s * 10, c: 0.5 }, { x: 160 + s * 60, y: 100 + (62 + 26 * i - 100) * 0.55, a: -s * 10, c: 0.2 },
+  ];
+  let j = 0; while (j < ps.length - 2 && p > ps[j + 1]) j++;
+  const f = Math.max(0, Math.min(1, (p - ps[j]) / (ps[j + 1] - ps[j]))), a = F[j], c = F[j + 1], L = (u, v) => u + (v - u) * f;
+  return { x: L(a.x, c.x), y: L(a.y, c.y), a: L(a.a, c.a), c: L(a.c, c.c) };
+}
+function VlabMitosisExperiment({ onReading }) {
+  const [p, setP] = useState(0.05), [run, setRun] = useState(false), [n, setN] = useState(3);
+  const pRef = React.useRef(0.05); pRef.current = p;
+  const X0 = 30, X1 = 290;
+  const { svgRef, startDrag } = useVlabDrag((id, pt) => { setRun(false); setP(Math.max(0, Math.min(1, Math.round(((pt.x - X0) / (X1 - X0)) * 200) / 200))); });
+  useEffect(() => {
+    if (!run) return;
+    let raf, last = null;
+    const step = (t) => { if (last !== null) { const np = Math.min(1, pRef.current + ((t - last) / 1000) * 0.09); setP(np); pRef.current = np; if (np >= 1) { setRun(false); return; } } last = t; raf = requestAnimationFrame(step); };
+    raf = requestAnimationFrame(step);
+    return () => cancelAnimationFrame(raf);
+  }, [run]);
+  const ST = [{ e: 0.12, n: "اینترفاز", d: "DNA دو برابر می‌شود و سلول رشد می‌کند. کروموزوم‌ها هنوز کلاف‌های نازک‌اند." }, { e: 0.3, n: "پروفاز", d: "کروموزوم‌ها فشرده و X شکل می‌شوند؛ پوشش هسته از بین می‌رود." }, { e: 0.5, n: "متافاز", d: "کروموزوم‌ها در خط استوا ردیف می‌شوند و رشته‌های دوک آنها را نگه می‌دارند." }, { e: 0.72, n: "آنافاز", d: "کروماتیدهای خواهری از هم جدا می‌شوند و به دو قطب سلول می‌روند." }, { e: 1.01, n: "تلوفاز و سیتوکینز", d: "دو هسته‌ی تازه ساخته می‌شود و سلول وسط تنگ شده و به دو سلول تقسیم می‌شود." }];
+  const stage = ST.find((s) => p < s.e), q = Math.max(0, Math.min(1, (p - 0.88) / 0.12));
+  const chroms = p < 0.5 ? 4 : 8, dna = p < 0.12 ? 2 : p < 0.5 ? 4 : p < 0.72 ? 4 : q > 0.9 ? 2 : 4;
+  useEffect(() => {
+    if (onReading) onReading(`مرحله: ${stage.n} | پیشرفت: ${Math.round(p * 100)}٪`);
+    // eslint-disable-next-line
+  }, [stage.n]);
+  const colors = ["#ff6b6b", "#ffa55a", "#6aa8ff", "#8a8aff"];
+  const spind = Math.max(0, Math.min(1, (p - 0.3) / 0.12)) * Math.max(0, Math.min(1, (0.8 - p) / 0.08));
+  const oldN = Math.max(0, Math.min(1, (0.3 - p) / 0.18)), newN = Math.max(0, Math.min(1, (p - 0.8) / 0.15));
+  const items = [];
+  for (let i = 0; i < 4; i++) for (let k = 0; k < 2; k++) { const fr = vlabMitFrame(i, k, p); items.push({ i, k, ...fr }); }
+  const cellShape = q <= 0 ? <ellipse cx="160" cy="100" rx="100" ry="72" fill="#2a2038" stroke="#e88ab0" strokeWidth="3" /> : <g><ellipse cx={160 - q * 50} cy="100" rx={100 - q * 50} ry={72 - q * 8} fill="#2a2038" stroke="#e88ab0" strokeWidth="3" /><ellipse cx={160 + q * 50} cy="100" rx={100 - q * 50} ry={72 - q * 8} fill="#2a2038" stroke="#e88ab0" strokeWidth="3" /></g>;
+  const dbl = Math.pow(2, n);
+  return (
+    <div className="vlab-exp">
+      <svg ref={svgRef} viewBox="0 0 320 244" className="vlab-svg" style={{ background: "#03060f", borderRadius: "10px", touchAction: "none" }}>
+        {cellShape}
+        <circle cx="160" cy="100" r="52" fill="#5a4a9c" opacity={0.55 * oldN} stroke="#b79cf0" strokeWidth="2" />
+        {[-1, 1].map((s) => <circle key={s} cx={160 + s * (60 + q * 0)} cy="100" r="28" fill="#5a4a9c" opacity={0.5 * newN} stroke="#b79cf0" strokeWidth="1.6" />)}
+        {[[60, 100], [260, 100]].map((c, j) => items.filter((it) => it.k === j).map((it) => <line key={j + "-" + it.i} x1={c[0] + (j ? -6 : 6)} y1="100" x2={it.x} y2={it.y} stroke="#9fb0e0" strokeWidth="0.9" opacity={0.7 * spind} />))}
+        {q === 0 ? [[58, 100], [262, 100]].map((c, j) => <circle key={j} cx={c[0]} cy={c[1]} r="3" fill="#ffd98a" opacity={spind} />) : null}
+        {items.map((it) => (
+          <g key={it.i + "-" + it.k}>
+            <path d={`M${it.x - 11},${it.y} q3,-6 5.5,0 t5.5,0 t5.5,0 t5.5,0`} stroke={colors[it.i]} strokeWidth="1.5" fill="none" opacity={Math.max(0, 1 - it.c * 2)} transform={`rotate(${it.a} ${it.x} ${it.y})`} />
+            <rect x={it.x - 2.4} y={it.y - 12} width="4.8" height="24" rx="2.4" fill={colors[it.i]} stroke="#fff" strokeWidth="0.5" opacity={Math.min(1, it.c * 1.6)} transform={`rotate(${it.a} ${it.x} ${it.y})`} />
+          </g>
+        ))}
+        <rect x={X0} y="214" width={X1 - X0} height="8" rx="4" fill="#27324f" />
+        {[0, 0.12, 0.3, 0.5, 0.72].map((v, i) => <rect key={i} x={X0 + v * (X1 - X0)} y="214" width={(ST[i].e > 1 ? 1 : ST[i].e) * (X1 - X0) - v * (X1 - X0)} height="8" fill={["#6aa8ff", "#ffa55a", "#ffd98a", "#7be0a4", "#e88ab0"][i]} opacity="0.55" />)}
+        <circle cx={X0 + p * (X1 - X0)} cy="218" r="8" fill="#fff" stroke="#ffd98a" strokeWidth="2" pointerEvents="none" /><circle cx={X0 + p * (X1 - X0)} cy="218" r="20" fill="transparent" onPointerDown={startDrag("t")} style={{ cursor: "ew-resize", touchAction: "none" }} />
+        <text x="160" y="240" fontSize="8.5" fill="#9fb0e0" textAnchor="middle">دکمه‌ی سفید را بکش یا پخش را بزن</text>
+        <text x="160" y="22" fontSize="13" fontWeight="bold" fill="#ffd98a" textAnchor="middle">{stage.n}</text>
+      </svg>
+      <VlabMeterRow height={150} meters={[{ label: "پیشرفت تقسیم", unit: "%", value: p * 100, ranges: [100], maj: 5, decimals: 0 }, { label: "کروموزوم در سلول", unit: "", value: chroms, ranges: [8], maj: 8, decimals: 0 }, { label: "DNA نسبی هر سلول", unit: "", value: dna, ranges: [4], maj: 4, decimals: 0 }]} />
+      <div className="vlab-controls"><div className="vlab-ctrl-col" style={{ flex: 1 }}>
+        <label className="vlab-ctrl-label">پیشرفت (٪): {Math.round(p * 100)}</label><VlabRange min="0" max="100" step="1" value={Math.round(p * 100)} onChange={(e) => { setRun(false); setP(+e.target.value / 100); }} />
+        <div style={{ display: "flex", gap: "6px", flexWrap: "wrap", marginTop: "6px" }}><button className="vlab-btn" onClick={() => { if (p >= 1) { setP(0); pRef.current = 0; } setRun(!run); }}>{run ? "⏸ ایست" : "▶ پخش"}</button>{ST.slice(0, 5).map((s, i) => <button key={i} className="vlab-btn" onClick={() => { setRun(false); setP([0.05, 0.2, 0.44, 0.62, 0.97][i]); }}>{s.n.split(" ")[0]}</button>)}</div>
+        <label className="vlab-ctrl-label">تعداد تقسیم متوالی (n): {n}</label><VlabRange min="1" max="10" step="1" value={n} onChange={(e) => setN(+e.target.value)} />
+      </div></div>
+      <div className="vlab-readout"><b>{stage.n}:</b> {stage.d} در پایان، دو سلول دختر با همان تعداد کروموزوم سلول مادر پدید می‌آید.</div>
+      <VlabFormulaCheck title="تعداد سلول پس از n تقسیم" fa="تعداد سلول = دو به توان تعداد تقسیم‌ها" en="N = 2ⁿ" legend="از یک سلول آغاز می‌کنیم" subst={`N = 2^${n} = ?`} label="N:" answer={dbl} unit="" decimals={0} />
+      <VlabFormulaCheck title="زمان لازم" fa="زمان = تعداد تقسیم × مدت هر تقسیم (۲۴ ساعت برای یک سلول پوست کشت‌شده)" en="t = n × T" legend="جواب به ساعت" subst={`t = ${n} × 24 = ?`} label="t:" answer={n * 24} unit="h" decimals={0} />
+      <VlabEverydayCard title="ترمیم زخم و رشد قد" text="وقتی پوستت زخم می‌شود، سلول‌های اطراف با میتوز زیاد می‌شوند و جای زخم را پر می‌کنند. رشد کودک هم با تقسیم سلول‌ها انجام می‌شود. سرطان یعنی تقسیم سلول بی‌کنترل.">
+        <rect x="10" y="26" width="100" height="30" rx="6" fill="#e8b58a" /><path d="M10,40 H110" stroke="#c46a6a" strokeWidth="5" strokeDasharray="6 3" />
+        <rect x="42" y="22" width="36" height="38" rx="4" fill="#f4e6c8" stroke="#c9a96a" /><circle cx="60" cy="41" r="4" fill="#e88ab0" />
+      </VlabEverydayCard>
+    </div>
+  );
+}
+
+function VlabBloodPressureExperiment({ onReading }) {
+  const [hr, setHr] = useState(72), [sv, setSv] = useState(70), [r, setR] = useState(1);
+  const [ph, setPh] = useState(0);
+  const parts = React.useRef(Array.from({ length: 22 }).map((_, i) => ({ x: (i * 14) % 280 + 20, o: ((i * 37) % 100) / 50 - 1 })));
+  const hrRef = React.useRef(hr), cRef = React.useRef({ CO: 5, r: 1 });
+  const CO = (hr * sv) / 1000, TPR = 16 + 2 / Math.pow(r, 4), MAP = CO * TPR, C = 1.8 * r, PP = sv / C;
+  const SBP = MAP + (PP * 2) / 3, DBP = MAP - PP / 3, vel = (30 * (CO / 5)) / (r * r);
+  hrRef.current = hr; cRef.current = { CO, r };
+  const { svgRef, startDrag } = useVlabDrag((id, p) => { setR(Math.max(0.55, Math.min(1.2, Math.round(((100 - p.y) / 34) * 20) / 20))); });
+  const [, tick] = useState(0);
+  useEffect(() => {
+    let raf, last = null;
+    const step = (t) => {
+      if (last !== null) {
+        const dt = Math.min(0.05, (t - last) / 1000); setPh((x) => (x + dt * (hrRef.current / 60)) % 1);
+        parts.current.forEach((pt) => { const Rx = 34 + (34 * cRef.current.r - 34) * Math.exp(-Math.pow((pt.x - 170) / 45, 2)); pt.x += 55 * (cRef.current.CO / 5) * Math.pow(34 / Rx, 2) * dt; if (pt.x > 306) pt.x = 14; });
+        tick((v) => (v + 1) % 1e6);
+      }
+      last = t; raf = requestAnimationFrame(step);
+    };
+    raf = requestAnimationFrame(step);
+    return () => cancelAnimationFrame(raf);
+  }, []);
+  useEffect(() => {
+    if (onReading) onReading(`فشار خون: ${SBP.toFixed(0)}/${DBP.toFixed(0)} mmHg | قطر رگ: ${Math.round(r * 100)}٪ | ضربان: ${hr}`);
+    // eslint-disable-next-line
+  }, [hr, sv, r]);
+  const pulse = 1 + Math.min(0.1, PP / 700) * Math.sin(ph * 2 * Math.PI);
+  const Rat = (x) => 34 * r * pulse * 0 + (34 + (34 * r - 34) * Math.exp(-Math.pow((x - 170) / 45, 2))) * pulse;
+  const xs = Array.from({ length: 29 }).map((_, i) => 20 + i * 10);
+  const top = xs.map((x) => `${x},${100 - Rat(x)}`).join(" "), bot = xs.slice().reverse().map((x) => `${x},${100 + Rat(x)}`).join(" ");
+  const pl = r < 1 ? xs.map((x) => `${x},${100 - 34 * pulse}`).join(" ") + " " + xs.slice().reverse().map((x) => `${x},${100 - Rat(x)}`).join(" ") : "";
+  const pl2 = r < 1 ? xs.map((x) => `${x},${100 + Rat(x)}`).join(" ") + " " + xs.slice().reverse().map((x) => `${x},${100 + 34 * pulse}`).join(" ") : "";
+  const cls = SBP >= 140 || DBP >= 90 ? "فشار خون بالا" : SBP >= 120 || DBP >= 80 ? "کمی بالاتر از نرمال" : SBP < 90 || DBP < 60 ? "فشار خون پایین" : "نرمال";
+  const colr = cls === "نرمال" ? "#7be0a4" : cls === "فشار خون بالا" ? "#ff6b6b" : "#ffd98a";
+  return (
+    <div className="vlab-exp">
+      <svg ref={svgRef} viewBox="0 0 320 214" className="vlab-svg" style={{ background: "#03060f", borderRadius: "10px", touchAction: "none" }}>
+        <rect x="14" y="44" width="296" height="112" rx="48" fill="#6a2a34" stroke="#b84a5a" strokeWidth="3" />
+        {pl ? <polygon points={pl} fill="#f0d46a" stroke="#fff0a0" strokeWidth="0.6" opacity="0.95" /> : null}{pl2 ? <polygon points={pl2} fill="#f0d46a" stroke="#fff0a0" strokeWidth="0.6" opacity="0.95" /> : null}
+        <polygon points={`${top} ${bot}`} fill="#8a1a24" opacity="0.95" />
+        {parts.current.map((pt, i) => { const Rx = Rat(pt.x); return <circle key={i} cx={pt.x} cy={100 + pt.o * Rx * 0.78} r="3.4" fill="#ff5a5a" stroke="#ffb0b0" strokeWidth="0.6" />; })}
+        <circle cx="170" cy={100 - Rat(170) - 2} r="7" fill="#ffd98a" stroke="#fff" pointerEvents="none" /><circle cx="170" cy={100 - Rat(170) - 2} r="20" fill="transparent" onPointerDown={startDrag("wall")} style={{ cursor: "ns-resize", touchAction: "none" }} />
+        <text x="160" y="22" fontSize="20" fontWeight="bold" fill={colr} textAnchor="middle" style={{ direction: "ltr", unicodeBidi: "isolate" }}>{SBP.toFixed(0) + " / " + DBP.toFixed(0)}</text><text x="160" y="36" fontSize="8.5" fill={colr} textAnchor="middle">{"mmHg — " + cls}</text>
+        <text x="160" y="176" fontSize="9" fill="#cfd6ea" textAnchor="middle">سرخرگ؛ نقطه‌ی زرد را بالا و پایین بکش تا رگ تنگ یا گشاد شود</text>
+        <text x="160" y="196" fontSize="8.5" fill="#9fb0e0" textAnchor="middle"><tspan>قطر رگ </tspan><tspan style={{ direction: "ltr", unicodeBidi: "isolate" }}>{Math.round(r * 100) + "%"}</tspan><tspan>  |  سرعت </tspan><tspan style={{ direction: "ltr", unicodeBidi: "isolate" }}>{vel.toFixed(0) + " cm/s"}</tspan></text>
+      </svg>
+      <VlabMeterRow height={150} meters={[{ label: "فشار بالا (سیستول)", unit: "mmHg", value: SBP, ranges: [150, 250, 350], maj: 5, decimals: 0 }, { label: "فشار پایین (دیاستول)", unit: "mmHg", value: DBP, ranges: [100, 200, 300], maj: 5, decimals: 0 }, { label: "سرعت خون", unit: "cm/s", value: vel, ranges: [50, 100, 200], maj: 5, decimals: 0 }]} />
+      <div className="vlab-controls"><div className="vlab-ctrl-col" style={{ flex: 1 }}>
+        <label className="vlab-ctrl-label">ضربان قلب (bpm): {hr}</label><VlabRange min="40" max="160" step="2" value={hr} onChange={(e) => setHr(+e.target.value)} />
+        <label className="vlab-ctrl-label">حجم هر ضربه (mL): {sv}</label><VlabRange min="40" max="100" step="2" value={sv} onChange={(e) => setSv(+e.target.value)} />
+        <label className="vlab-ctrl-label">قطر سرخرگ (٪ حالت نرمال): {Math.round(r * 100)}</label><VlabRange min="0.55" max="1.2" step="0.05" value={r} onChange={(e) => setR(+e.target.value)} />
+        <div style={{ display: "flex", gap: "6px", marginTop: "6px" }}><button className="vlab-btn" onClick={() => { setHr(72); setSv(70); setR(1); }}>حالت نرمال</button><button className="vlab-btn" onClick={() => setR(0.65)}>رگ‌گرفته (چربی)</button></div>
+      </div></div>
+      <div className="vlab-readout">وقتی رگ تنگ شود، قلب باید سخت‌تر پمپ کند و فشار بالا می‌رود. خون در تنگی تندتر عبور می‌کند، مثل آب در نازل شیلنگ. مقاومت رگ با «توان چهارم» شعاع عوض می‌شود: نصف شدن شعاع، مقاومت را ۱۶ برابر می‌کند.</div>
+      <VlabFormulaCheck title="برون‌ده قلب" fa="برون‌ده = ضربان × حجم هر ضربه ÷ ۱۰۰۰" en="CO = HR × SV / 1000" legend="جواب به لیتر در دقیقه" subst={`CO = ${hr} × ${sv} ÷ 1000 = ?`} label="CO:" answer={CO} unit="L/min" decimals={2} />
+      <VlabFormulaCheck title="فشار متوسط شریانی" fa="فشار متوسط = برون‌ده × مقاومت کل رگ‌ها" en="MAP = CO × TPR" legend={`مقاومت کل در این قطر رگ = ${TPR.toFixed(2)} (در حالت نرمال ۱۸ است)`} subst={`MAP = ${CO.toFixed(2)} × ${TPR.toFixed(2)} = ?`} label="MAP:" answer={Math.round(CO * 100) / 100 * Math.round(TPR * 100) / 100} unit="mmHg" decimals={0} />
+      <VlabEverydayCard title="شیلنگ باغچه و فشارسنج پزشک" text="اگر سر شیلنگ را با انگشت تنگ کنی آب تندتر می‌پاشد؛ در رگ هم همین است. چربی و نمک زیاد رگ را تنگ و سفت می‌کند و فشار خون را بالا می‌برد. پزشک با کاف فشارسنج دو عدد (بالا و پایین) را می‌خواند.">
+        <path d="M10,60 H64 L82,50 V70 L64,60" fill="#3ea85a" stroke="#1e6a32" strokeWidth="2" /><path d="M84,52 L112,40 M84,60 L114,60 M84,68 L112,80" stroke="#6ab8ff" strokeWidth="2" />
+      </VlabEverydayCard>
+    </div>
+  );
+}
+
+function VlabEyeVisionExperiment({ onReading }) {
+  const [u, setU] = useState(0.5), [Lo, setLo] = useState(0), [Pc, setPc] = useState(0);
+  const LX = 190, SC = 6, XO = (v) => 20 + ((v - 0.1) / 4.9) * 130;
+  const { svgRef, startDrag } = useVlabDrag((id, p) => {
+    if (id === "obj") setU(Math.max(0.1, Math.min(5, Math.round((0.1 + ((p.x - 20) / 130) * 4.9) * 20) / 20)));
+    else setLo(Math.max(-1.5, Math.min(1.5, Math.round(((p.x - (LX + 16.7 * SC)) / SC) * 10) / 10)));
+  });
+  const L = 16.7 + Lo, Lm = L / 1000;
+  const need = 1 / Lm + u - Pc, Pe = Math.max(60, Math.min(64, need)), Pt = Pe + Pc;
+  const den = Pt - u, di = den > 0.5 ? 1000 / den : 2000, b = 4 * Math.abs(di - L) / di;
+  const sharp = 100 / (1 + Math.pow(b / 0.012, 2));
+  const doM = 1 / u;
+  const farD = 60 - 1 / Lm, far = farD > 0.05 ? 1 / farD : Infinity;
+  useEffect(() => {
+    if (onReading) onReading(`فاصله‌ی شی: ${doM.toFixed(2)} m | وضوح: ${sharp.toFixed(0)}٪ | طول چشم: ${L.toFixed(1)} mm | عینک: ${Pc} D`);
+    // eslint-disable-next-line
+  }, [u, Lo, Pc]);
+  const xo = XO(u), xr = LX + L * SC, xi = LX + Math.min(di, 60) * SC, tip = 84, yi = 114;
+  const rayEnd = (py) => { const f = (xr - LX) / Math.max(1, xi - LX); return py + (yi - py) * f; };
+  const blurS = Math.min(9, b * 34);
+  const myo = Lo > 0.3, hyp = Lo < -0.3;
+  const Pcorr = far < 20 ? -1 / far : 0;
+  return (
+    <div className="vlab-exp">
+      <svg ref={svgRef} viewBox="0 0 320 240" className="vlab-svg" style={{ background: "#03060f", borderRadius: "10px", touchAction: "none" }}>
+        <defs><filter id="eyeblur" x="-30%" y="-30%" width="160%" height="160%"><feGaussianBlur stdDeviation={blurS} /></filter></defs>
+        <line x1="10" y1="100" x2={xr + 20} y2="100" stroke="#27324f" strokeDasharray="4 4" />
+        <ellipse cx={(178 + xr + 8) / 2} cy="100" rx={(xr + 8 - 178) / 2} ry="50" fill="#0f1a30" stroke="#9fb0e0" strokeWidth="2" />
+        <path d={`M${xr},${100 - 38} Q${xr + 12},100 ${xr},${100 + 38}`} fill="none" stroke="#ff6a5a" strokeWidth="3" />
+        <path d="M176,86 Q170,100 176,114" fill="#bfe8ff" stroke="#fff" opacity="0.6" />
+        <ellipse cx={LX} cy="100" rx={3 + ((Pe - 60) / 10) * 3} ry="21" fill="#9fd0ff" opacity="0.85" stroke="#fff" />
+        {Pc !== 0 ? <path d={Pc > 0 ? `M166,76 Q${172 + Pc * 1.2},100 166,124 Q${160 - Pc * 1.2},100 166,76z` : `M${162 - 0},76 Q${166 + Pc * 0.9},100 162,124 H170 Q${166 - Pc * 0.9},100 170,76z`} fill="#cfe6ff" opacity="0.55" stroke="#fff" /> : null}
+        <g><rect x={xo - 3} y="100" width="6" height="14" fill="#7a5a2a" /><circle cx={xo} cy="90" r="13" fill="#3fa66a" /><line x1={xo} y1="76" x2={xo} y2="100" stroke="#fff" strokeWidth="0" /></g>
+        <circle cx={xo} cy="90" r="22" fill="transparent" onPointerDown={startDrag("obj")} style={{ cursor: "ew-resize", touchAction: "none" }} />
+        {[89, 111].map((py, k) => <g key={k}><line x1={xo} y1="78" x2={LX} y2={py} stroke="#ffd98a" strokeWidth="0.9" opacity="0.8" /><line x1={LX} y1={py} x2={xr} y2={rayEnd(py)} stroke="#ffd98a" strokeWidth="1.1" /></g>)}
+        <circle cx={xr} cy={rayEnd(100)} r={Math.max(1.5, b * SC * 1.1)} fill="#ffd98a" opacity="0.7" />
+        <circle cx={xr + 2} cy="100" r="9" fill="transparent" /><rect x={xr - 6} y="62" width="22" height="76" fill="transparent" onPointerDown={startDrag("ret")} style={{ cursor: "ew-resize", touchAction: "none" }} />
+        <rect x="8" y="6" width="74" height="40" rx="6" fill="#f6f3ea" /><text x="45" y="33" fontSize="17" fontWeight="bold" fill="#222" textAnchor="middle" filter="url(#eyeblur)">ققنوس</text>
+        <text x="45" y="58" fontSize="8" fill="#9fb0e0" textAnchor="middle">آنچه بیمار می‌بیند</text>
+        <text x="90" y="132" fontSize="8.5" fill="#9fb0e0" textAnchor="middle">درخت را بکش (دور/نزدیک)</text>
+        <text x="90" y="144" fontSize="8" fill="#6f7fa8" textAnchor="middle" style={{ direction: "ltr", unicodeBidi: "isolate" }}>{doM >= 10 ? "≥ 10 m" : doM.toFixed(2) + " m"}</text>
+        <text x={LX + 10} y="168" fontSize="8.5" fill="#9fb0e0" textAnchor="middle">برای نزدیک‌بینی/دوربینی، پشت چشم را بکش</text>
+        <text x="160" y="190" fontSize="10" fill={sharp > 80 ? "#7be0a4" : sharp > 40 ? "#ffd98a" : "#ff9a9a"} textAnchor="middle">{myo ? "چشم بلندتر: نزدیک‌بین" : hyp ? "چشم کوتاه‌تر: دوربین" : "چشم نرمال"}</text>
+        <text x="160" y="206" fontSize="8.5" fill="#6f7fa8" textAnchor="middle">پرتوهای زرد باید دقیقاً روی شبکیه‌ی قرمز به یک نقطه برسند</text>
+      </svg>
+      <VlabMeterRow height={150} meters={[{ label: "وضوح تصویر", unit: "%", value: sharp, ranges: [100], maj: 5, decimals: 0 }, { label: "توان عدسی چشم", unit: "D", value: Pe, ranges: [65], maj: 5, decimals: 1 }, { label: "فاصله‌ی شی", unit: "m", value: Math.min(doM, 10), ranges: [2, 10], maj: 5, decimals: 2 }]} />
+      <div className="vlab-controls"><div className="vlab-ctrl-col" style={{ flex: 1 }}>
+        <label className="vlab-ctrl-label">طول کره‌ی چشم نسبت به نرمال (mm): {Lo}</label><VlabRange min="-1.5" max="1.5" step="0.1" value={Lo} onChange={(e) => setLo(+e.target.value)} />
+        <label className="vlab-ctrl-label">توان عینک (دیوپتر): {Pc}</label><VlabRange min="-6" max="6" step="0.25" value={Pc} onChange={(e) => setPc(+e.target.value)} />
+        <div style={{ display: "flex", gap: "6px", flexWrap: "wrap", marginTop: "6px" }}><button className="vlab-btn" onClick={() => { setLo(0); setPc(0); }}>چشم نرمال</button><button className="vlab-btn" onClick={() => { setLo(1); setPc(0); setU(0.1); }}>نزدیک‌بین</button><button className="vlab-btn" onClick={() => { setLo(-1); setPc(0); setU(2.5); }}>دوربین (نزدیک)</button></div>
+      </div></div>
+      <div className="vlab-readout">عدسی چشم با تغییر ضخامت‌اش خودکار نزدیک و دور را فوکوس می‌کند (تطابق تا حدود ۴ دیوپتر در چشم بزرگسال)، ولی اگر کره‌ی چشم بلند یا کوتاه باشد تصویر جلوتر یا عقب‌تر از شبکیه می‌افتد و تار می‌شود. عینک مقعر (منفی) نزدیک‌بینی و عینک محدب (مثبت) دوربینی را اصلاح می‌کند.</div>
+      <VlabFormulaCheck title="توان لازم برای فوکوس روی شبکیه" fa="توان = یک ÷ فاصله‌ی شی + یک ÷ فاصله‌ی شبکیه از عدسی (هر دو به متر)" en="P = 1/d₀ + 1/dᵢ" legend="جواب به دیوپتر (D)؛ توان کل چشم و عینک را نشان می‌دهد" subst={`P = 1/${doM.toFixed(2)} + 1/${Lm.toFixed(4)} = ?`} label="P:" answer={1 / Math.round(doM * 100) * 100 + 1 / Math.round(Lm * 10000) * 10000} unit="D" decimals={1} />
+      <VlabFormulaCheck title="توان عینک نزدیک‌بین" fa="توان عینک = منهای یک ÷ نقطه‌ی دور چشم (به متر)" en="P = −1 / far" legend={far < 20 ? `نقطه‌ی دور این چشم ${far.toFixed(2)} متر است (دورتر از آن تار می‌بیند)` : "این چشم دور را هم واضح می‌بیند؛ نقطه‌ی دورش بی‌نهایت است"} subst={far < 20 ? `P = −1 ÷ ${far.toFixed(2)} = ?` : "P = −1 ÷ ∞ = ?"} label="P:" answer={far < 20 ? -1 / Math.round(far * 100) * 100 : 0} unit="D" decimals={1} />
+      <VlabEverydayCard title="عینک، دوربین عکاسی و نزدیک‌بینی" text="در نزدیک‌بینی چشم کمی بلند است و عینک مقعر نور را پخش می‌کند تا روی شبکیه بیفتد. موبایل و کتاب را زیاد از نزدیک دیدن و کم‌دیدن بیرون از خانه، با نزدیک‌بینی کودکان ارتباط دارد؛ پس تنفس در هوای آزاد و نگاه به دور مهم است.">
+        <circle cx="34" cy="46" r="20" fill="none" stroke="#333" strokeWidth="3" /><circle cx="86" cy="46" r="20" fill="none" stroke="#333" strokeWidth="3" /><path d="M54,44 H66" stroke="#333" strokeWidth="3" /><path d="M14,40 L4,30 M106,40 L116,30" stroke="#333" strokeWidth="3" />
+        <path d="M26,46 H42 M78,46 H94" stroke="#6ab8ff" strokeWidth="1.5" />
+      </VlabEverydayCard>
+    </div>
+  );
+}
+
 const VLAB_COMPONENTS = {
   lever: VlabLeverExperiment,
   pendulum: VlabPendulumExperiment,
@@ -31202,6 +31601,11 @@ const VLAB_COMPONENTS = {
   "rusting-iron": VlabRustingExperiment,
   "paper-chromatography": VlabChromatographyExperiment,
   "galvanic-cell": VlabGalvanicCellExperiment,
+  "cell-organelles": VlabCellOrganellesExperiment,
+  "blood-typing": VlabBloodTypingExperiment,
+  "mitosis": VlabMitosisExperiment,
+  "blood-pressure": VlabBloodPressureExperiment,
+  "eye-vision": VlabEyeVisionExperiment,
 };
 
 function StudentVirtualLabView({ onBack, grade, studentCode, schoolCode }) {

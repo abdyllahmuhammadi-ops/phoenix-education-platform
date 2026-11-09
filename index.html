@@ -25904,7 +25904,7 @@ function VlabPulleyExperiment({ onReading }) {
   const rope = (d) => (
     <g>
       <path d={d} fill="none" stroke="#c8a35a" strokeWidth="3.6" strokeLinecap="round" strokeLinejoin="round" />
-      <path d={d} fill="none" stroke="#fff6c8" strokeWidth="2.2" strokeLinecap="round" strokeDasharray="3 13" style={{ animation: "vlabRopeFlow 0.9s linear infinite", animationPlayState: pulled ? "running" : "paused", opacity: pulled ? 1 : 0.3 }} />
+      <path d={d} fill="none" stroke="#fff6c8" strokeWidth="2.2" strokeLinecap="round" strokeDasharray="3 13" />
     </g>
   );
   const beam = (x0, w) => (
@@ -25929,7 +25929,6 @@ function VlabPulleyExperiment({ onReading }) {
           نیروی کشش هر دو همراه بار جابجا می‌شوند، یک خط‌کش میزان بالارفتن بار را اندازه می‌گیرد و
           پس‌زمینه‌ی تیره + سایه‌ی بار برای زیبایی بیشتر اضافه شد. */}
       <svg viewBox="0 0 440 270" className="vlab-svg" style={{ background: "#0b1330", borderRadius: "10px" }}>
-        <style>{"@keyframes vlabRopeFlow{to{stroke-dashoffset:-16}}"}</style>
         <defs><linearGradient id="vlabSkin" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stopColor="#f8d2b0" /><stop offset="1" stopColor="#dd9d76" /></linearGradient></defs>
         {pulleyType === "ثابت" ? (
           <>

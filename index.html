@@ -23350,6 +23350,33 @@ const VLAB_EXPERIMENTS = [
     intro: "سکه و تاس را هزاران بار بینداز و ببین فراوانی نسبی چطور به احتمال نظری نزدیک می‌شود.",
     tools: ["سکه", "تاس", "مجموع دو تاس"],
   },
+  {
+    id: "function-machine",
+    subject: "ریاضی",
+    level: "متوسطه دوم",
+    title: "ماشین تابع (دامنه، برد، ترکیب)",
+    icon: "⚙️",
+    intro: "عددی را به ماشین بده و خروجی را ببین؛ دو ماشین را پشت هم بگذار تا ترکیب توابع را بفهمی و ببین کدام ورودی‌ها از دامنه بیرون می‌افتند.",
+    tools: ["شش قاعده", "ماشین دوم", "جدول ورودی و خروجی"],
+  },
+  {
+    id: "perm-combo",
+    subject: "ریاضی",
+    level: "متوسطه دوم",
+    title: "جایگشت و ترکیب",
+    icon: "🎨",
+    intro: "از چند مهره‌ی رنگی چند تا انتخاب کن و همه‌ی حالت‌ها را ببین؛ تفاوت ترتیب‌مهم و ترتیب‌نامهم را با چشم خودت بشمار.",
+    tools: ["مهره‌های رنگی", "جایگشت", "ترکیب"],
+  },
+  {
+    id: "data-stats",
+    subject: "ریاضی",
+    level: "متوسطه دوم",
+    title: "نمودار داده‌ها (میانگین، میانه، واریانس)",
+    icon: "📊",
+    intro: "نمره‌ی هفت دانش‌آموز را تغییر بده و ببین میانگین، میانه و پراکندگی چطور حرکت می‌کنند؛ با داده‌ی پرت تفاوت میانگین و میانه را ببین.",
+    tools: ["هفت داده", "میانگین و میانه", "واریانس"],
+  },
 ];
 
 function vlabClamp(v, min, max) {
@@ -32610,7 +32637,7 @@ function VlabTangentSlopeExperiment({ onReading }) {
       <div className="vlab-controls"><div className="vlab-ctrl-col" style={{ flex: 1 }}>
         <label className="vlab-ctrl-label">تابع:</label>
         <div className="vlab-btn-row">
-          {Object.keys(VLAB_TS_FUNCS).map((k) => (<button key={k} className="vlab-btn" style={fk === k ? { outline: "2px solid #e0a83e" } : null} onClick={() => { setFk(k); setA(k === "exp" ? 0.5 : 1); setH(1.5); }}>{VLAB_TS_FUNCS[k].name}</button>))}
+          {Object.keys(VLAB_TS_FUNCS).map((k) => (<button key={k} className="vlab-btn" style={{ direction: "ltr", ...(fk === k ? { outline: "2px solid #e0a83e" } : {}) }} onClick={() => { setFk(k); setA(k === "exp" ? 0.5 : 1); setH(1.5); }}>{VLAB_TS_FUNCS[k].name}</button>))}
         </div>
         <label className="vlab-ctrl-label">نقطه‌ی تماس x = {aS}</label>
         <VlabRange min={F.x0 + 0.3} max={F.x1 - 0.3} step="0.1" value={aa} onChange={(e) => setA(+e.target.value)} />
@@ -32672,7 +32699,7 @@ function VlabFunctionTransformExperiment({ onReading }) {
       <div className="vlab-readout" style={{ direction: "ltr", textAlign: "center" }}>g(x) = {expr}</div>
       <div className="vlab-controls"><div className="vlab-ctrl-col" style={{ flex: 1 }}>
         <div className="vlab-btn-row">
-          {Object.keys(VLAB_FT_FUNCS).map((k) => (<button key={k} className="vlab-btn" style={fk === k ? { outline: "2px solid #e0a83e" } : null} onClick={() => setFk(k)}>{VLAB_FT_FUNCS[k].name}</button>))}
+          {Object.keys(VLAB_FT_FUNCS).map((k) => (<button key={k} className="vlab-btn" style={{ direction: "ltr", ...(fk === k ? { outline: "2px solid #e0a83e" } : {}) }} onClick={() => setFk(k)}>{VLAB_FT_FUNCS[k].name}</button>))}
           <button className="vlab-btn" onClick={() => { setA(1); setHh(0); setK(0); }}>↺ از نو</button>
         </div>
         <label className="vlab-ctrl-label">انتقال افقی (h): {fa(Hh)} — به راست یا چپ</label>
@@ -32743,7 +32770,7 @@ function VlabLimitApproachExperiment({ onReading }) {
       </table>
       <div className="vlab-controls"><div className="vlab-ctrl-col" style={{ flex: 1 }}>
         <div className="vlab-btn-row">
-          {Object.keys(VLAB_LM_FUNCS).map((k) => (<button key={k} className="vlab-btn" style={fk === k ? { outline: "2px solid #e0a83e" } : null} onClick={() => { cancelAnimationFrame(raf.current); setFk(k); setD(1); }}>{VLAB_LM_FUNCS[k].name}</button>))}
+          {Object.keys(VLAB_LM_FUNCS).map((k) => (<button key={k} className="vlab-btn" style={{ direction: "ltr", ...(fk === k ? { outline: "2px solid #e0a83e" } : {}) }} onClick={() => { cancelAnimationFrame(raf.current); setFk(k); setD(1); }}>{VLAB_LM_FUNCS[k].name}</button>))}
           <button className="vlab-btn" onClick={go}>▶ نزدیک‌شدن به x = {vlabMFa(F.a, 0)}</button>
         </div>
         <label className="vlab-ctrl-label">فاصله از نقطه (توان ده، از ۱ تا ۰٫۰۰۱): {vlabMFa(dd, 3)}</label>
@@ -32809,6 +32836,174 @@ function VlabCoinDiceExperiment({ onReading }) {
         <rect x="18" y="38" width="22" height="30" fill="#8aa7d8" /><rect x="48" y="26" width="22" height="42" fill="#5b82c6" /><rect x="78" y="32" width="22" height="36" fill="#8aa7d8" />
         <path d="M10,34 H110" stroke="#d83a3a" strokeWidth="1.5" strokeDasharray="4 3" />
         <path d="M6,72 H114" stroke="#999" strokeWidth="1" />
+      </VlabEverydayCard>
+    </div>
+  );
+}
+
+/* ===== ریاضی ۶) ماشین تابع (دامنه، برد، ترکیب) ===== */
+const VLAB_FM_RULES = {
+  lin: { name: "۲x + ۱", f: (x) => 2 * x + 1 },
+  sq: { name: "x²", f: (x) => x * x },
+  sub: { name: "x − ۳", f: (x) => x - 3 },
+  sqrt: { name: "√x", f: (x) => (x < 0 ? NaN : Math.sqrt(x)) },
+  inv: { name: "۱ ÷ x", f: (x) => (x === 0 ? NaN : 1 / x) },
+  abs: { name: "|x|", f: (x) => Math.abs(x) },
+};
+function VlabFunctionMachineExperiment({ onReading }) {
+  const [r1, setR1] = useState("lin");
+  const [r2, setR2] = useState("sq");
+  const [x, setX] = useState(2);
+  const [useG, setUseG] = useState(true);
+  const [log, setLog] = useState([]);
+  const A = VLAB_FM_RULES[r1], B = VLAB_FM_RULES[r2];
+  const y1 = A.f(x), y2 = useG ? B.f(y1) : y1;
+  const bad = (v) => !Number.isFinite(v);
+  const fa = (v) => (bad(v) ? "تعریف‌نشده" : vlabMFa(v, Number.isInteger(v) ? 0 : 2));
+  const addLog = () => setLog((l) => [{ x, y: y2 }, ...l].slice(0, 6));
+  const box = (cx, name, col, dead) => (<g><rect x={cx - 34} y="62" width="68" height="46" rx="8" fill={dead ? "#4a2630" : col} stroke="#fff" strokeWidth="1.5" /><circle cx={cx - 18} cy="62" r="4" fill="#ffd166" /><circle cx={cx + 18} cy="62" r="4" fill="#ffd166" /><text x={cx} y="90" fontSize="12" fontWeight="700" fill="#fff" textAnchor="middle" direction="ltr">{name}</text></g>);
+  const xs = useG ? [48, 160, 272] : [64, 256];
+  return (
+    <div className="vlab-exp">
+      <svg viewBox="0 0 320 170" className="vlab-svg" style={{ background: "#03060f", borderRadius: "10px" }}>
+        <text x="160" y="16" fontSize="9" fill="#cfd6ea" textAnchor="middle">ورودی وارد ماشین می‌شود و خروجی بیرون می‌آید</text>
+        <circle cx="30" cy="40" r="14" fill="#2b7de9" stroke="#fff" strokeWidth="1.5" /><text x="30" y="44" fontSize="11" fontWeight="700" fill="#fff" textAnchor="middle">{fa(x)}</text>
+        <path d="M44,40 H90 V62" fill="none" stroke="#6a7aa8" strokeWidth="2" markerEnd="" />
+        {box(useG ? 70 : 100, A.name, "#2f6b4f", bad(y1))}
+        {useG ? box(210, B.name, "#7a4fa8", bad(y2)) : null}
+        {useG ? <path d="M104,86 H176" stroke="#6a7aa8" strokeWidth="2" /> : null}
+        <circle cx={useG ? 210 : 100} cy="140" r="15" fill={bad(y2) ? "#7a2030" : "#e0a83e"} stroke="#fff" strokeWidth="1.5" />
+        <text x={useG ? 210 : 100} y="144" fontSize="11" fontWeight="700" fill={bad(y2) ? "#fff" : "#03060f"} textAnchor="middle">{bad(y2) ? "؟" : fa(y2)}</text>
+        {useG ? <text x="140" y="150" fontSize="8" fill="#9aa6c8" textAnchor="middle">{bad(y1) ? "" : "میانی: " + fa(y1)}</text> : null}
+        <text x="290" y="100" fontSize="8" fill="#9aa6c8" textAnchor="middle">{bad(y2) ? "خارج از دامنه" : "داخل دامنه"}</text>
+      </svg>
+      <div className="vlab-readout" style={{ textAlign: "center" }}>{useG ? `g(f(${fa(x)})) = ${fa(y2)}` : `f(${fa(x)}) = ${fa(y2)}`}</div>
+      <div className="vlab-controls"><div className="vlab-ctrl-col" style={{ flex: 1 }}>
+        <label className="vlab-ctrl-label">ماشین اول f:</label>
+        <div className="vlab-btn-row">{Object.keys(VLAB_FM_RULES).map((k) => (<button key={k} className="vlab-btn" style={{ direction: "ltr", ...(r1 === k ? { outline: "2px solid #e0a83e" } : {}) }} onClick={() => { setR1(k); setLog([]); }}>{VLAB_FM_RULES[k].name}</button>))}</div>
+        <div className="vlab-btn-row"><button className="vlab-btn" onClick={() => { setUseG((v) => !v); setLog([]); }}>{useG ? "حذف ماشین دوم" : "افزودن ماشین دوم (ترکیب)"}</button></div>
+        {useG ? (<div><label className="vlab-ctrl-label">ماشین دوم g:</label><div className="vlab-btn-row">{Object.keys(VLAB_FM_RULES).map((k) => (<button key={k} className="vlab-btn" style={{ direction: "ltr", ...(r2 === k ? { outline: "2px solid #e0a83e" } : {}) }} onClick={() => { setR2(k); setLog([]); }}>{VLAB_FM_RULES[k].name}</button>))}</div></div>) : null}
+        <label className="vlab-ctrl-label">ورودی x: {fa(x)}</label>
+        <VlabRange min="-5" max="5" step="1" value={x} onChange={(e) => setX(+e.target.value)} />
+        <div className="vlab-btn-row"><button className="vlab-btn" onClick={addLog}>➕ ثبت این ورودی و خروجی</button><button className="vlab-btn" onClick={() => setLog([])}>پاک‌کردن</button></div>
+      </div></div>
+      {log.length ? (<table style={{ width: "100%", textAlign: "center", fontSize: 13, borderCollapse: "collapse" }}><tbody><tr style={{ background: "#eef1fa" }}><td>ورودی</td><td>خروجی</td></tr>{log.map((e, i) => (<tr key={i}><td style={{ padding: 3 }}>{fa(e.x)}</td><td>{fa(e.y)}</td></tr>))}</tbody></table>) : null}
+      <div className="vlab-readout">
+        {`هر ورودیِ مجاز فقط یک خروجی دارد؛ این همان تابع است. ورودی‌هایی که ماشین نمی‌تواند پردازش کند (مثل ریشه‌ی عدد منفی یا تقسیم بر صفر) از دامنه بیرون‌اند. وقتی دو ماشین را پشت هم می‌گذاری، خروجی اولی ورودی دومی می‌شود؛ این ترکیب توابع است و ترتیب مهم است.`}
+      </div>
+      <VlabFormulaCheck title={useG ? "ترکیب دو تابع" : "مقدار تابع"} fa={useG ? "g(f(x)): اول f را بزن، نتیجه را به g بده" : "خروجی = قاعده‌ی ماشین روی ورودی"} en={useG ? "(g∘f)(x) = g( f(x) )" : "y = f(x)"} legend={bad(y2) ? "برای این ورودی خروجی تعریف‌نشده است؛ ورودی دیگری انتخاب کن." : "ورودی را در قاعده بگذار و قدم‌به‌قدم حساب کن."} subst={useG ? `g(f(${fa(x)})) = g(${fa(y1)})` : `f(${fa(x)})`} answer={bad(y2) ? 0 : y2} unit="" decimals={2} />
+      <VlabEverydayCard title="دستگاه نوشابه‌فروش" text="در دستگاه فروش خودکار، به‌ازای هر دکمه فقط یک نوشیدنی بیرون می‌آید: هر ورودی یک خروجی. دکمه‌ای که کالا ندارد، مثل عددی است که خارج از دامنه است. اگر خروجی دستگاه اول ورودی دستگاه دوم شود، ترکیب توابع داریم.">
+        <rect x="30" y="8" width="48" height="66" rx="5" fill="#d9e2f2" stroke="#7d8bb5" strokeWidth="1.5" />
+        <rect x="36" y="14" width="30" height="30" fill="#8fd6ff" /><circle cx="70" cy="22" r="3" fill="#d83a3a" /><circle cx="70" cy="32" r="3" fill="#2e9e66" />
+        <rect x="38" y="58" width="26" height="10" fill="#444" />
+        <path d="M84,52 H108" stroke="#e0a83e" strokeWidth="2.5" /><path d="M102,46 l8,6 l-8,6" fill="none" stroke="#e0a83e" strokeWidth="2.5" />
+      </VlabEverydayCard>
+    </div>
+  );
+}
+
+/* ===== ریاضی ۷) جایگشت و ترکیب ===== */
+const vlabFact = (n) => (n <= 1 ? 1 : n * vlabFact(n - 1));
+function vlabEnum(n, r, ordered, cap) {
+  const out = [];
+  const rec = (cur, used, start) => {
+    if (out.length >= cap) return;
+    if (cur.length === r) { out.push(cur.slice()); return; }
+    for (let i = ordered ? 0 : start; i < n; i++) { if (ordered && used[i]) continue; used[i] = true; cur.push(i); rec(cur, used, i + 1); cur.pop(); used[i] = false; }
+  };
+  rec([], [], 0);
+  return out;
+}
+function VlabPermComboExperiment({ onReading }) {
+  const [n, setN] = useState(5);
+  const [r, setR] = useState(3);
+  const [ordered, setOrdered] = useState(true);
+  const rr = Math.min(r, n);
+  const P = vlabFact(n) / vlabFact(n - rr), C = P / vlabFact(rr);
+  const total = ordered ? P : C;
+  const cols = ["#ff6b6b", "#ffd166", "#5de0a0", "#5bb8ff", "#c792ea", "#ff9d1c", "#9fb4ff", "#e8e8e8"];
+  const list = vlabEnum(n, rr, ordered, 24);
+  const fa = (v) => vlabFaN(String(v));
+  return (
+    <div className="vlab-exp">
+      <svg viewBox="0 0 320 210" className="vlab-svg" style={{ background: "#03060f", borderRadius: "10px" }}>
+        <text x="160" y="14" fontSize="9" fill="#cfd6ea" textAnchor="middle">{`از ${vlabFaN(n)} مهره، ${vlabFaN(rr)} تا انتخاب کن (${ordered ? "ترتیب مهم است" : "ترتیب مهم نیست"})`}</text>
+        {Array.from({ length: n }).map((_, i) => (<circle key={i} cx={160 + (i - (n - 1) / 2) * 34} cy="38" r="12" fill={cols[i]} stroke="#fff" strokeWidth="1.2" />))}
+        {list.map((a, k) => { const col = k % 6, row = Math.floor(k / 6); const w = 50, cx0 = 160 + (col - 2.5) * 52, cy0 = 70 + row * 32; return (<g key={k}><rect x={cx0 - w / 2} y={cy0 - 11} width={w} height="22" rx="6" fill="#0b1330" stroke="#2a3558" strokeWidth="1" />{a.map((q, j) => (<circle key={j} cx={cx0 + (j - (rr - 1) / 2) * 12} cy={cy0} r="4.8" fill={cols[q]} />))}</g>); })}
+        <text x="160" y="200" fontSize="9" fill="#ffd166" textAnchor="middle">{total > 24 ? `فقط ۲۴ حالت اول را می‌بینی؛ کل حالت‌ها ${fa(total)} است` : `همه‌ی ${fa(total)} حالت نمایش داده شد`}</text>
+      </svg>
+      <div className="vlab-readout" style={{ textAlign: "center" }}>تعداد حالت‌ها = <b>{fa(total)}</b></div>
+      <div className="vlab-controls"><div className="vlab-ctrl-col" style={{ flex: 1 }}>
+        <div className="vlab-btn-row">
+          <button className="vlab-btn" style={ordered ? { outline: "2px solid #e0a83e" } : null} onClick={() => setOrdered(true)}>جایگشت (ترتیب مهم)</button>
+          <button className="vlab-btn" style={!ordered ? { outline: "2px solid #e0a83e" } : null} onClick={() => setOrdered(false)}>ترکیب (ترتیب مهم نیست)</button>
+        </div>
+        <label className="vlab-ctrl-label">تعداد کل مهره‌ها (n): {vlabFaN(n)}</label>
+        <VlabRange min="3" max="8" step="1" value={n} onChange={(e) => setN(+e.target.value)} />
+        <label className="vlab-ctrl-label">تعداد انتخاب (r): {vlabFaN(rr)}</label>
+        <VlabRange min="1" max={n} step="1" value={rr} onChange={(e) => setR(+e.target.value)} />
+      </div></div>
+      <div className="vlab-readout">
+        {`در جایگشت «قرمز، زرد» با «زرد، قرمز» دو حالت جداست؛ در ترکیب یک حالت است. برای همین هر ترکیب r! بار در جایگشت‌ها تکرار شده است: جایگشت‌ها = ترکیب × ${fa(vlabFact(rr))}. جایگشت‌ها ${fa(P)} و ترکیب‌ها ${fa(C)} تاست.`}
+      </div>
+      <VlabFormulaCheck title={ordered ? "تعداد جایگشت" : "تعداد ترکیب"} fa={ordered ? "جایگشت = n! ÷ (n − r)!" : "ترکیب = n! ÷ ( r! × (n − r)! )"} en={ordered ? "P(n,r) = n! / (n−r)!" : "C(n,r) = n! / (r!(n−r)!)"} legend="n! یعنی ضرب همه‌ی عددهای ۱ تا n؛ مثلاً ۴! = ۲۴." subst={ordered ? `${fa(vlabFact(n))} ÷ ${fa(vlabFact(n - rr))}` : `${fa(vlabFact(n))} ÷ ( ${fa(vlabFact(rr))} × ${fa(vlabFact(n - rr))} )`} answer={total} unit="" decimals={0} />
+      <VlabEverydayCard title="رمز گوشی و تیم فوتسال" text="رمز چهاررقمی گوشی یک جایگشت است چون ۱۲۳۴ با ۴۳۲۱ فرق دارد. اما انتخاب سه بازیکن از پنج نفر برای یک تیم، ترکیب است چون ترتیب نام‌بردن مهم نیست.">
+        <rect x="14" y="10" width="36" height="60" rx="6" fill="#d9e2f2" stroke="#7d8bb5" strokeWidth="1.5" />
+        <path d="M20,26 h6 M30,26 h6 M40,26 h6 M20,38 h6 M30,38 h6 M40,38 h6" stroke="#7d8bb5" strokeWidth="3" />
+        {[0, 1, 2].map((i) => (<circle key={i} cx={74 + i * 14} cy="30" r="6" fill={["#ff6b6b", "#ffd166", "#5de0a0"][i]} />))}
+        {[0, 1].map((i) => (<circle key={i} cx={80 + i * 14} cy="52" r="6" fill="#bbb" />))}
+      </VlabEverydayCard>
+    </div>
+  );
+}
+
+/* ===== ریاضی ۸) نمودار داده‌ها (میانگین، میانه، واریانس) ===== */
+function VlabDataStatsExperiment({ onReading }) {
+  const [d, setD] = useState([5, 7, 8, 8, 9, 10, 12]);
+  const n = d.length;
+  const mean = d.reduce((a, b) => a + b, 0) / n;
+  const sorted = [...d].sort((a, b) => a - b);
+  const med = n % 2 ? sorted[(n - 1) / 2] : (sorted[n / 2 - 1] + sorted[n / 2]) / 2;
+  const varp = d.reduce((a, b) => a + (b - mean) * (b - mean), 0) / n;
+  const sd = Math.sqrt(varp);
+  const mx = 20, W = 290, H = 120, L = 14, T = 26;
+  const bw = W / n;
+  const set = (i, v) => setD(d.map((q, j) => (j === i ? v : q)));
+  const fa = (v) => vlabMFa(v, Number.isInteger(v) ? 0 : 2);
+  const Yv = (v) => T + H - (v / mx) * H;
+  return (
+    <div className="vlab-exp">
+      <svg viewBox="0 0 320 190" className="vlab-svg" style={{ background: "#03060f", borderRadius: "10px" }}>
+        <line x1={L} y1={T + H} x2={L + W} y2={T + H} stroke="#6a7aa8" strokeWidth="1" />
+        <rect x={L} y={Yv(mean + sd)} width={W} height={Math.max(0, Yv(mean - sd) - Yv(mean + sd))} fill="#ffd166" opacity="0.12" />
+        {d.map((v, i) => (<g key={i}><rect x={L + i * bw + bw * 0.15} y={Yv(v)} width={bw * 0.7} height={(v / mx) * H} rx="2" fill="#5bb8ff" /><text x={L + i * bw + bw / 2} y={Yv(v) - 3} fontSize="8" fill="#cfd6ea" textAnchor="middle">{vlabFaN(v)}</text></g>))}
+        <line x1={L} y1={Yv(mean)} x2={L + W} y2={Yv(mean)} stroke="#ff6b6b" strokeWidth="1.8" />
+        <line x1={L} y1={Yv(med)} x2={L + W} y2={Yv(med)} stroke="#5de0a0" strokeWidth="1.8" strokeDasharray="5 3" />
+        <text x="62" y="14" fontSize="9" fill="#ff6b6b" textAnchor="middle">میانگین</text>
+        <text x="130" y="14" fontSize="9" fill="#5de0a0" textAnchor="middle">میانه</text>
+        <text x="215" y="14" fontSize="9" fill="#ffd166" textAnchor="middle">نوار زرد: یک انحراف معیار</text>
+        <text x="160" y="182" fontSize="9" fill="#9aa6c8" textAnchor="middle">دانه‌ها (نمره‌ی {vlabFaN(n)} دانش‌آموز)</text>
+      </svg>
+      <div className="vlab-readout" style={{ textAlign: "center" }}>
+        <span style={{ color: "#d33" }}>میانگین {fa(mean)}</span>{" · "}<span style={{ color: "#1a9a63" }}>میانه {fa(med)}</span>{" · "}<span style={{ color: "#a07400" }}>واریانس {fa(varp)}</span>{" · "}<span>انحراف معیار {fa(sd)}</span>
+      </div>
+      <div className="vlab-controls"><div className="vlab-ctrl-col" style={{ flex: 1 }}>
+        <div className="vlab-btn-row">
+          <button className="vlab-btn" onClick={() => setD([5, 7, 8, 8, 9, 10, 12])}>داده‌ی نمونه</button>
+          <button className="vlab-btn" onClick={() => setD(d.map(() => 1 + Math.floor(Math.random() * 20)))}>🎲 تصادفی</button>
+          <button className="vlab-btn" onClick={() => setD(d.map(() => 10))}>همه برابر</button>
+          <button className="vlab-btn" onClick={() => set(n - 1, 20)}>یک داده‌ی پرت (۲۰)</button>
+        </div>
+        {d.map((v, i) => (<div key={i}><label className="vlab-ctrl-label">داده‌ی {vlabFaN(i + 1)}: {vlabFaN(v)}</label><VlabRange min="0" max="20" step="1" value={v} onChange={(e) => set(i, +e.target.value)} /></div>))}
+      </div></div>
+      <div className="vlab-readout">
+        {`میانگین با هر داده‌ی پرت جابه‌جا می‌شود اما میانه کمتر. واریانس نشان می‌دهد داده‌ها چقدر از میانگین پراکنده‌اند؛ اگر همه برابر باشند واریانس صفر است. همین الان ${sd < 1 ? "داده‌ها خیلی نزدیک به هم‌اند" : sd < 3 ? "پراکندگی متوسط است" : "پراکندگی زیاد است"}.`}
+      </div>
+      <VlabFormulaCheck title="میانگین" fa="میانگین = مجموع داده‌ها ÷ تعداد داده‌ها" en="x̄ = Σx / n" legend="همه‌ی داده‌ها را جمع کن و بر تعداد آن‌ها تقسیم کن." subst={`(${d.map((v) => vlabFaN(v)).join(" + ")}) ÷ ${vlabFaN(n)}`} answer={mean} unit="" decimals={2} />
+      <VlabFormulaCheck title="واریانس" fa="واریانس = میانگینِ مربع فاصله‌ی داده‌ها از میانگین" en="σ² = Σ(x − x̄)² / n" legend={`میانگین ${fa(mean)} است؛ فاصله‌ی هر داده را از آن بگیر، به توان ۲ برسان و میانگین بگیر.`} subst={`σ² = Σ(x − ${fa(mean)})² ÷ ${vlabFaN(n)}`} answer={varp} unit="" decimals={2} />
+      <VlabEverydayCard title="نمره‌ی کلاس" text="دو کلاس می‌توانند میانگین یکسان داشته باشند ولی در یکی همه نزدیک به ۱۵ باشند و در دیگری نمره‌ها از ۵ تا ۲۰ پخش باشد. واریانس همین تفاوت را نشان می‌دهد؛ و میانه کمک می‌کند یک نمره‌ی خیلی بالا یا پایین تصویر را خراب نکند.">
+        <rect x="14" y="40" width="14" height="30" fill="#8aa7d8" /><rect x="34" y="30" width="14" height="40" fill="#5b82c6" /><rect x="54" y="22" width="14" height="48" fill="#8aa7d8" /><rect x="74" y="34" width="14" height="36" fill="#5b82c6" /><rect x="94" y="46" width="14" height="24" fill="#8aa7d8" />
+        <path d="M8,36 H114" stroke="#d83a3a" strokeWidth="1.6" /><path d="M6,72 H114" stroke="#999" strokeWidth="1" />
       </VlabEverydayCard>
     </div>
   );
@@ -32903,6 +33098,9 @@ const VLAB_COMPONENTS = {
   "function-transform": VlabFunctionTransformExperiment,
   "limit-approach": VlabLimitApproachExperiment,
   "coin-dice": VlabCoinDiceExperiment,
+  "function-machine": VlabFunctionMachineExperiment,
+  "perm-combo": VlabPermComboExperiment,
+  "data-stats": VlabDataStatsExperiment,
 };
 
 function StudentVirtualLabView({ onBack, grade, studentCode, schoolCode }) {

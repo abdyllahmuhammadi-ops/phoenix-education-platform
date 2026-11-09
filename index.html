@@ -23241,6 +23241,51 @@ const VLAB_EXPERIMENTS = [
     intro: "درخت را دور و نزدیک کن، طول چشم را عوض کن و ببین نزدیک‌بینی و دوربینی چطور با عینک اصلاح می‌شود.",
     tools: ["کره‌ی چشم", "عدسی", "عینک"],
   },
+  {
+    id: "bacteria-growth",
+    subject: "زیست‌شناسی",
+    level: "متوسطه اول",
+    title: "رشد باکتری و دمای یخچال",
+    icon: "🦠",
+    intro: "دماسنج را بکش و ببین باکتری‌ها در یخچال، دمای اتاق، دمای بدن و حرارت پختن چطور زیاد یا کم می‌شوند.",
+    tools: ["دماسنج", "ظرف کشت", "نمودار رشد"],
+  },
+  {
+    id: "predator-prey",
+    subject: "زیست‌شناسی",
+    level: "متوسطه دوم",
+    title: "شکارچی و شکار (روباه و خرگوش)",
+    icon: "🦊",
+    intro: "تعداد روباه و خرگوش را با کشیدن نقطه‌ی زرد عوض کن و ببین چرا تعدادشان مثل موج بالا و پایین می‌رود.",
+    tools: ["نمودار جمعیت", "نقشه‌ی حالت", "لغزنده‌ها"],
+  },
+  {
+    id: "flower-pollination",
+    subject: "زیست‌شناسی",
+    level: "متوسطه اول",
+    title: "ساختار گل و گرده‌افشانی",
+    icon: "🌸",
+    intro: "زنبور را از بساک یک گل به کلاله‌ی گل دیگر ببر و ببین چطور دانه و میوه ساخته می‌شود.",
+    tools: ["دو گل", "زنبور", "برچسب اجزای گل"],
+  },
+  {
+    id: "dna-translation",
+    subject: "زیست‌شناسی",
+    level: "متوسطه دوم",
+    title: "از DNA تا پروتئین",
+    icon: "🧬",
+    intro: "حرف‌های DNA را عوض کن و ببین mRNA و پروتئین چه تغییری می‌کنند؛ ریبوزوم را روی mRNA بکش.",
+    tools: ["رشته‌ی DNA", "mRNA", "ریبوزوم", "جدول کدون"],
+  },
+  {
+    id: "reaction-time",
+    subject: "زیست‌شناسی",
+    level: "متوسطه اول",
+    title: "زمان واکنش (خط‌کش افتادنی)",
+    icon: "⏱️",
+    intro: "وقتی خط‌کش افتاد روی صفحه بزن و ببین سرعت واکنش تو چند میلی‌ثانیه است؛ روی ماه و مریخ هم امتحان کن.",
+    tools: ["خط‌کش", "انگشتان", "گرانش زمین/ماه/مریخ"],
+  },
 ];
 
 function vlabClamp(v, min, max) {
@@ -31529,6 +31574,419 @@ function VlabEyeVisionExperiment({ onReading }) {
   );
 }
 
+const vlabFaN = (n) => String(n).replace(/\d/g, (d) => "۰۱۲۳۴۵۶۷۸۹"[d]).replace(/\./g, "٫");
+const VLAB_LTR = { direction: "ltr", unicodeBidi: "isolate" };
+
+/* ===== ۱) رشد باکتری و یخچال ===== */
+function VlabBacteriaGrowthExperiment({ onReading }) {
+  const [T, setT] = useState(37), [h, setH] = useState(4);
+  const N0 = 100;
+  const fOf = (t) => (t <= 5 ? 0 : t <= 37 ? Math.pow((t - 5) / 32, 2) : t <= 47 ? (47 - t) / 10 : 0);
+  const dying = T >= 60;
+  const f = fOf(T);
+  const gr = f > 0 ? Math.max(1, Math.round(30 / f)) : null;
+  const tmin = h * 60;
+  const nRaw = gr ? tmin / gr : 0, nGen = Math.floor(nRaw + 1e-9);
+  const cuts = tmin / 10;
+  const Nat = (th) => (dying ? N0 * Math.pow(10, -(th * 6)) : gr ? N0 * Math.pow(2, Math.floor((th * 60) / gr + 1e-9)) : N0);
+  const N = Nat(h);
+  const { svgRef, startDrag } = useVlabDrag((id, p) => { setT(Math.max(0, Math.min(70, Math.round((170 - p.y) / 2)))); });
+  useEffect(() => {
+    if (onReading) onReading(`دما: ${T}°C | زمان: ${h} ساعت | تعداد باکتری: ${N < 1 ? 0 : Math.round(N)}`);
+    // eslint-disable-next-line
+  }, [T, h]);
+  const logN = Math.log10(Math.max(N, 1));
+  const dots = N < 1 ? 0 : Math.min(200, Math.round((logN / 8.2) * 200));
+  const CX = 140, CY = 108, RR = 66;
+  const tint = T <= 8 ? "#6ab8ff" : dying ? "#ff4a3a" : null;
+  const cntNum = N < 1 ? "0" : N >= 1e6 ? (N / 1e6).toFixed(1) : String(Math.round(N));
+  const cntUnit = N < 1 ? "(همه نابود شدند)" : N >= 1e6 ? "میلیون" : "";
+  const status = dying ? "گرمای بالای ۶۰ درجه باکتری را می‌کشد" : T <= 5 ? "سرمای یخچال: تقریباً تقسیم نمی‌شوند" : T > 47 ? "گرمای زیاد: رشد متوقف می‌شود" : T <= 20 ? "خنک: خیلی کند تقسیم می‌شوند" : T <= 30 ? "هوای اتاق: آرام رشد می‌کنند" : "گرم و مناسب: تند تقسیم می‌شوند";
+  const curve = Array.from({ length: 21 }).map((_, i) => { const th = i * 0.5; const l = Math.max(0, Math.log10(Math.max(Nat(th), 0.1))); return `${222 + th * 9},${140 - l * 10}`; }).join(" ");
+  const curL = Math.max(0, Math.log10(Math.max(N, 0.1)));
+  const dotEls = [];
+  for (let i = 0; i < dots; i++) { const a = i * 2.39996, rr = Math.sqrt((i + 0.5) / 200) * (RR - 7); dotEls.push(<circle key={i} cx={CX + rr * Math.cos(a)} cy={CY + rr * Math.sin(a)} r="2.5" fill={dying ? "#9a9a9a" : i % 3 ? "#7be0a4" : "#a4f0c0"} />); }
+  return (
+    <div className="vlab-exp">
+      <svg ref={svgRef} viewBox="0 0 320 244" className="vlab-svg" style={{ background: "#03060f", borderRadius: "10px", touchAction: "none" }}>
+        <circle cx={CX} cy={CY} r={RR} fill="#c9a447" opacity="0.28" stroke="#9fb0e0" strokeWidth="2.5" />
+        {tint ? <circle cx={CX} cy={CY} r={RR} fill={tint} opacity="0.2" /> : null}
+        {dotEls}
+        <text x={CX} y={CY + RR + 12} fontSize="7.5" fill="#6f7fa8" textAnchor="middle">ظرف کشت (هر نقطه نمایشی است)</text>
+        <rect x="24" y="30" width="8" height="140" rx="4" fill="#16203f" stroke="#9fb0e0" />
+        <rect x="25.5" y={170 - T * 2} width="5" height={T * 2 + 4} fill={dying ? "#ff4a3a" : T <= 8 ? "#6ab8ff" : "#ffb04a"} />
+        <circle cx="28" cy="178" r="9" fill={dying ? "#ff4a3a" : T <= 8 ? "#6ab8ff" : "#ffb04a"} stroke="#fff" strokeWidth="0.8" />
+        {[[4, "یخچال"], [37, "بدن"], [60, "کشنده"]].map(([tv, nm]) => <g key={tv}><line x1="34" y1={170 - tv * 2} x2="40" y2={170 - tv * 2} stroke="#6f7fa8" /><text x="58" y={170 - tv * 2 + 3} fontSize="8" fill="#9fb0e0" textAnchor="middle">{nm}</text></g>)}
+        <circle cx="28" cy={170 - T * 2} r="6" fill="#ffd98a" stroke="#fff" pointerEvents="none" />
+        <circle cx="28" cy={170 - T * 2} r="20" fill="transparent" onPointerDown={startDrag("temp")} style={{ cursor: "grab", touchAction: "none" }} />
+        <text x="28" y="22" fontSize="10" fontWeight="bold" fill="#ffd98a" textAnchor="middle" style={VLAB_LTR}>{vlabFaN(T) + "°C"}</text>
+        <rect x="216" y="44" width="98" height="100" rx="4" fill="#0b1330" stroke="#27324f" />
+        <text x="265" y="38" fontSize="7.5" fill="#cfd6ea" textAnchor="middle">نمودار تعداد (مقیاس لگاریتمی)</text>
+        {[0, 3, 6, 9].map((l) => <line key={l} x1="216" x2="314" y1={140 - l * 10} y2={140 - l * 10} stroke="#1a2547" />)}
+        <polyline points={curve} fill="none" stroke="#7be0a4" strokeWidth="1.6" />
+        <circle cx={222 + h * 9} cy={140 - curL * 10} r="3.2" fill="#ffd98a" stroke="#fff" strokeWidth="0.6" />
+        <text x="265" y="154" fontSize="7.5" fill="#6f7fa8" textAnchor="middle">زمان (ساعت: ۰ تا ۱۰)</text>
+        <text x="160" y="204" fontSize="10.5" fill="#e8ecf8" textAnchor="middle"><tspan>تعداد باکتری: </tspan><tspan style={VLAB_LTR}>{vlabFaN(cntNum)}</tspan><tspan> {cntUnit}</tspan></text>
+        <text x="160" y="219" fontSize="9.5" fill={dying ? "#ff9a9a" : T <= 8 ? "#9fd0ff" : "#7be0a4"} textAnchor="middle">{status}</text>
+        <text x="160" y="236" fontSize="8" fill="#6f7fa8" textAnchor="middle">دماسنج را بالا و پایین بکش</text>
+      </svg>
+      <VlabMeterRow height={150} meters={[{ label: "دما", unit: "°C", value: T, ranges: [70], maj: 5, decimals: 0 }, { label: "زمان دو برابر شدن", unit: "min", value: gr ? Math.min(gr, 600) : 0, ranges: [60, 600], maj: 5, decimals: 0 }, { label: "نسل کامل", unit: "n", value: nGen, ranges: [10, 20, 40], maj: 5, decimals: 0 }]} />
+      <div className="vlab-controls"><div className="vlab-ctrl-col" style={{ flex: 1 }}>
+        <label className="vlab-ctrl-label">دما (°C): {T}</label><VlabRange min="0" max="70" step="1" value={T} onChange={(e) => setT(+e.target.value)} />
+        <label className="vlab-ctrl-label">زمان (ساعت): {h}</label><VlabRange min="0" max="10" step="0.5" value={h} onChange={(e) => setH(+e.target.value)} />
+        <div style={{ display: "flex", gap: "6px", flexWrap: "wrap", marginTop: "6px" }}>
+          <button className="vlab-btn" onClick={() => setT(4)}>یخچال (۴)</button><button className="vlab-btn" onClick={() => setT(25)}>اتاق (۲۵)</button><button className="vlab-btn" onClick={() => setT(37)}>بدن (۳۷)</button><button className="vlab-btn" onClick={() => setT(70)}>پختن (۷۰)</button>
+        </div>
+      </div></div>
+      <div className="vlab-readout">باکتری‌ها با تقسیم شدن زیاد می‌شوند: از یکی دوتا، از دوتا چهارتا و ... . در دمای بدن (۳۷ درجه) هر ۳۰ دقیقه یک بار تقسیم می‌شوند، ولی در یخچال تقریباً متوقف می‌شوند. گرمای بالای ۶۰ درجه آن‌ها را می‌کشد. (مدل ساده‌شده‌ی درسی با ۱۰۰ باکتری در شروع)</div>
+      <VlabFormulaCheck title="تعداد نسل" fa="تعداد نسل = زمان کل (دقیقه) ÷ زمان دو برابر شدن (دقیقه)" en="n = t / g" legend={gr ? `در این دما هر ${vlabFaN(gr)} دقیقه یک بار تقسیم می‌شوند. فقط نسل‌های کامل شمرده می‌شود.` : "در این دما باکتری تقسیم نمی‌شود، پس تعداد نسل صفر است."} subst={gr ? `n = ${tmin} ÷ ${gr} = ?` : "n = 0"} label="n:" answer={nRaw} unit="نسل" decimals={1} />
+      {dying
+        ? <VlabFormulaCheck title="کشتن باکتری" fa="تعداد دفعات کاهش ده‌برابری = زمان (دقیقه) ÷ ۱۰ دقیقه" en="k = t / 10" legend="بالای ۶۰ درجه هر ۱۰ دقیقه ۹۰ درصد باکتری‌ها می‌میرند (یعنی ده برابر کم می‌شوند)" subst={`k = ${tmin} ÷ 10 = ?`} label="k:" answer={cuts} unit="بار" decimals={1} />
+        : <VlabFormulaCheck title="تعداد باکتری" fa="تعداد = تعداد اولیه × دو به توان تعداد نسل کامل" en={`N = ${N0} × 2^n`} legend={`تعداد اولیه ${vlabFaN(N0)} باکتری و نسل کامل ${vlabFaN(nGen)} است`} subst={`N = ${N0} × 2^${nGen} = ?`} label="N:" answer={N0 * Math.pow(2, nGen)} unit="باکتری" decimals={0} />}
+      <VlabEverydayCard title="چرا غذا را در یخچال می‌گذاریم؟" text="باکتری‌های غذا در هوای گرم هر نیم ساعت دوبرابر می‌شوند و غذا زود فاسد می‌شود. یخچال (حدود ۴ درجه) تقسیم آن‌ها را تقریباً متوقف می‌کند و پختن کامل (بالای ۷۰ درجه) آن‌ها را می‌کشد. غذای پخته را بیش از دو ساعت بیرون نگذار.">
+        <rect x="36" y="6" width="48" height="72" rx="6" fill="#dfe8f2" stroke="#7a8aa6" strokeWidth="2" /><line x1="36" y1="30" x2="84" y2="30" stroke="#7a8aa6" strokeWidth="1.5" />
+        <rect x="76" y="14" width="3" height="10" rx="1.5" fill="#7a8aa6" /><rect x="76" y="40" width="3" height="16" rx="1.5" fill="#7a8aa6" />
+        <text x="58" y="22" fontSize="9" fill="#2a6ab8" textAnchor="middle" fontWeight="bold">❄ 4°</text><rect x="46" y="44" width="14" height="22" rx="2" fill="#fff" stroke="#9aa7bd" /><rect x="46" y="44" width="14" height="7" fill="#6ab8ff" />
+      </VlabEverydayCard>
+    </div>
+  );
+}
+/* ===== ۲) شکارچی و شکار ===== */
+function VlabPredatorPreyExperiment({ onReading }) {
+  const [a, setA] = useState(0.8), [d, setD] = useState(0.6), [run, setRun] = useState(true);
+  const B = 0.04, C = 0.02;
+  const S = React.useRef({ R: 40, F: 15, t: 0, hist: [[0, 40, 15]], acc: 0 });
+  const P = React.useRef({ a, d, run }); P.current = { a, d, run };
+  const [, tick] = useState(0);
+  const px = (R) => 30 + Math.min(R, 100) * 1.2, py = (F) => 226 - Math.min(F, 60) * 1.55;
+  const reset = (R, F) => { const s = S.current; s.R = R; s.F = F; s.t = 0; s.hist = [[0, R, F]]; s.acc = 0; tick((v) => v + 1); };
+  const { svgRef, startDrag } = useVlabDrag((id, p) => { reset(Math.max(1, Math.min(100, Math.round((p.x - 30) / 1.2))), Math.max(1, Math.min(60, Math.round((226 - p.y) / 1.55)))); });
+  useEffect(() => {
+    let raf, last = null;
+    const step = (now) => {
+      if (last !== null && P.current.run) {
+        const s = S.current, { a: aa, d: dd } = P.current;
+        let left = Math.min(0.05, (now - last) / 1000) * 1.5;
+        while (left > 1e-9) {
+          const h = Math.min(0.02, left); left -= h;
+          const f = (R, F) => [aa * R - B * R * F, C * R * F - dd * F];
+          const k1 = f(s.R, s.F), k2 = f(s.R + (h / 2) * k1[0], s.F + (h / 2) * k1[1]), k3 = f(s.R + (h / 2) * k2[0], s.F + (h / 2) * k2[1]), k4 = f(s.R + h * k3[0], s.F + h * k3[1]);
+          s.R += (h / 6) * (k1[0] + 2 * k2[0] + 2 * k3[0] + k4[0]); s.F += (h / 6) * (k1[1] + 2 * k2[1] + 2 * k3[1] + k4[1]);
+          if (s.R < 0.5) s.R = 0; if (s.F < 0.5) s.F = 0; if (s.R > 100) s.R = 100;
+          s.t += h; s.acc += h;
+          if (s.acc >= 0.1) { s.acc = 0; s.hist.push([s.t, s.R, s.F]); if (s.hist.length > 400) s.hist.shift(); }
+        }
+        tick((v) => (v + 1) % 1e6);
+      }
+      last = now; raf = requestAnimationFrame(step);
+    };
+    raf = requestAnimationFrame(step);
+    return () => cancelAnimationFrame(raf);
+  }, []);
+  const s = S.current, R = s.R, F = s.F;
+  useEffect(() => { if (onReading) onReading(`خرگوش: ${Math.round(S.current.R)} | روباه: ${Math.round(S.current.F)} | زاد و ولد: ${a} | مرگ روباه: ${d}`); /* eslint-disable-next-line */ }, [a, d, Math.round(R), Math.round(F)]);
+  const t0 = Math.max(0, s.t - 24);
+  const tx = (t) => 20 + ((t - t0) / 24) * 290;
+  const lineR = s.hist.filter((q) => q[0] >= t0).map((q) => `${tx(q[0])},${112 - Math.min(q[1], 100) * 0.9}`).join(" ");
+  const lineF = s.hist.filter((q) => q[0] >= t0).map((q) => `${tx(q[0])},${112 - Math.min(q[2], 100) * 0.9}`).join(" ");
+  const trail = s.hist.map((q) => `${px(q[1])},${py(q[2])}`).join(" ");
+  const Rs = d / C, Fs = a / B, Tper = (2 * Math.PI) / Math.sqrt(a * d);
+  const status = R <= 0 ? "خرگوش‌ها منقرض شدند! روباه‌ها گرسنه می‌مانند" : F <= 0 ? "روباه‌ها منقرض شدند و خرگوش‌ها زیاد می‌شوند تا جای زندگی تمام شود" : "وقتی خرگوش زیاد شود روباه هم زیاد می‌شود؛ بعد خرگوش کم می‌شود و ...";
+  return (
+    <div className="vlab-exp">
+      <svg ref={svgRef} viewBox="0 0 320 246" className="vlab-svg" style={{ background: "#03060f", borderRadius: "10px", touchAction: "none" }}>
+        <rect x="20" y="16" width="290" height="96" fill="#0b1330" stroke="#27324f" />
+        {[25, 50, 75].map((v) => <line key={v} x1="20" x2="310" y1={112 - v * 0.9} y2={112 - v * 0.9} stroke="#1a2547" />)}
+        {[0, 50, 100].map((v) => <text key={v} x="17" y={115 - v * 0.9} fontSize="7" fill="#6f7fa8" textAnchor="end">{vlabFaN(v)}</text>)}
+        {lineR ? <polyline points={lineR} fill="none" stroke="#7be0a4" strokeWidth="1.8" /> : null}{lineF ? <polyline points={lineF} fill="none" stroke="#ff9a5a" strokeWidth="1.8" /> : null}
+        <text x="165" y="10" fontSize="8" fill="#cfd6ea" textAnchor="middle"><tspan fill="#7be0a4">● خرگوش</tspan><tspan>   </tspan><tspan fill="#ff9a5a">● روباه</tspan><tspan fill="#6f7fa8">   (محور افقی: زمان؛ ماه)</tspan></text>
+        <rect x="30" y="133" width="120" height="93" fill="#0b1330" stroke="#27324f" />
+        {trail ? <polyline points={trail} fill="none" stroke="#6f86c8" strokeWidth="1" opacity="0.8" /> : null}
+        <line x1={px(Rs) - 4} x2={px(Rs) + 4} y1={py(Fs)} y2={py(Fs)} stroke="#fff" /><line x1={px(Rs)} x2={px(Rs)} y1={py(Fs) - 4} y2={py(Fs) + 4} stroke="#fff" />
+        <circle cx={px(R)} cy={py(F)} r="5" fill="#ffd98a" stroke="#fff" pointerEvents="none" /><circle cx={px(R)} cy={py(F)} r="18" fill="transparent" onPointerDown={startDrag("pt")} style={{ cursor: "grab", touchAction: "none" }} />
+        <text x="90" y="128" fontSize="7.5" fill="#9fb0e0" textAnchor="middle">نقشه‌ی حالت (نقطه‌ی زرد را بکش)</text>
+        <text x="90" y="238" fontSize="7.5" fill="#9fb0e0" textAnchor="middle">تعداد خرگوش ←</text>
+        <text x="186" y="160" fontSize="22" textAnchor="middle">🐇</text><text x="248" y="160" fontSize="17" fontWeight="bold" fill="#7be0a4" textAnchor="middle" style={VLAB_LTR}>{vlabFaN(Math.round(R))}</text>
+        <text x="186" y="196" fontSize="22" textAnchor="middle">🦊</text><text x="248" y="196" fontSize="17" fontWeight="bold" fill="#ff9a5a" textAnchor="middle" style={VLAB_LTR}>{vlabFaN(Math.round(F))}</text>
+        <text x="236" y="222" fontSize="7.8" fill="#cfd6ea" textAnchor="middle">{status.length > 40 ? status.slice(0, status.lastIndexOf(" ", 40)) : status}</text>
+        {status.length > 40 ? <text x="236" y="233" fontSize="7.8" fill="#cfd6ea" textAnchor="middle">{status.slice(status.lastIndexOf(" ", 40) + 1)}</text> : null}
+      </svg>
+      <VlabMeterRow height={150} meters={[{ label: "خرگوش‌ها", unit: "تا", value: R, ranges: [100], maj: 5, decimals: 0 }, { label: "روباه‌ها", unit: "تا", value: F, ranges: [30, 60, 100], maj: 5, decimals: 0 }, { label: "طول یک چرخه", unit: "ماه", value: Tper, ranges: [20, 40], maj: 5, decimals: 1 }]} />
+      <div className="vlab-controls"><div className="vlab-ctrl-col" style={{ flex: 1 }}>
+        <label className="vlab-ctrl-label">سرعت زاد و ولد خرگوش‌ها: {a}</label><VlabRange min="0.4" max="1.2" step="0.1" value={a} onChange={(e) => setA(+e.target.value)} />
+        <label className="vlab-ctrl-label">سرعت مرگ روباه‌ها (بدون غذا): {d}</label><VlabRange min="0.3" max="1" step="0.1" value={d} onChange={(e) => setD(+e.target.value)} />
+        <div style={{ display: "flex", gap: "6px", flexWrap: "wrap", marginTop: "6px" }}>
+          <button className="vlab-btn" onClick={() => setRun(!run)}>{run ? "⏸ ایست" : "▶ ادامه"}</button>
+          <button className="vlab-btn" onClick={() => { S.current.F = Math.min(100, S.current.F + 10); tick((v) => v + 1); }}>۱۰ روباه اضافه کن</button>
+          <button className="vlab-btn" onClick={() => { S.current.R = Math.round(S.current.R * 0.7); tick((v) => v + 1); }}>شکار انسان (۳۰٪ کم)</button>
+          <button className="vlab-btn" onClick={() => reset(Math.round(Rs), Math.round(Fs))}>حالت تعادل</button>
+          <button className="vlab-btn" onClick={() => reset(40, 15)}>از اول</button>
+        </div>
+      </div></div>
+      <div className="vlab-readout">در طبیعت شکار و شکارچی به هم وابسته‌اند: خرگوش زیاد ← غذای روباه زیاد ← روباه زیاد ← خرگوش کم ← روباه گرسنه ← روباه کم ← دوباره خرگوش زیاد. نقطه‌ی تعادل (علامت + سفید) جایی است که تعداد هیچ‌کدام تغییر نمی‌کند: حدود {vlabFaN(Math.round(Rs))} خرگوش و {vlabFaN(Math.round(Fs))} روباه. اگر نقطه‌ی زرد را روی آن بگذاری، چرخه‌ای شکل نمی‌گیرد.</div>
+      <VlabFormulaCheck title="تعداد خرگوش در تعادل" fa="خرگوش‌های تعادل = سرعت مرگ روباه ÷ ضریب تبدیل شکار به روباه" en="R* = d / c" legend="ضریب تبدیل شکار به روباه در این مدل ۰٫۰۲ است" subst={`R* = ${d} ÷ 0.02 = ?`} label="R*:" answer={d / C} unit="خرگوش" decimals={0} />
+      <VlabFormulaCheck title="طول تقریبی یک چرخه" fa="طول چرخه ≈ دو پی ÷ جذر (سرعت زاد و ولد × سرعت مرگ روباه)" en="T ≈ 2π / √(a · d)" legend="برای چرخه‌های کوچک اطراف تعادل درست است؛ جواب به ماه" subst={`T = 2π ÷ √(${a} × ${d}) = ?`} label="T:" answer={Tper} unit="ماه" decimals={1} />
+      <VlabEverydayCard title="کفشدوزک و شته در باغچه" text="کشاورزان به‌جای سمّ، کفشدوزک رها می‌کنند تا شته‌ها را بخورد. اگر کفشدوزک خیلی زیاد شود شته‌ها تمام می‌شوند و خودش گرسنه می‌ماند؛ پس تعداد باید متعادل بماند. شکارچی و شکار همیشه با هم بالا و پایین می‌روند.">
+        <path d="M10,70 Q60,10 112,64 Q60,76 10,70z" fill="#4cae5e" stroke="#2a7a3a" strokeWidth="2" /><line x1="14" y1="68" x2="104" y2="62" stroke="#2a7a3a" />
+        {[[34, 56], [44, 62], [54, 54], [66, 58], [76, 62]].map(([x, y], i) => <ellipse key={i} cx={x} cy={y} rx="3" ry="2.2" fill="#9ad65a" stroke="#4a8a1a" />)}
+        <ellipse cx="62" cy="40" rx="11" ry="9" fill="#e23b3b" stroke="#701010" strokeWidth="1.5" /><line x1="62" y1="31" x2="62" y2="49" stroke="#111" /><circle cx="57" cy="38" r="2" fill="#111" /><circle cx="67" cy="43" r="2" fill="#111" /><circle cx="62" cy="30" r="3.5" fill="#111" />
+      </VlabEverydayCard>
+    </div>
+  );
+}
+/* ===== ۳) ساختار گل و گرده‌افشانی ===== */
+function VlabFlowerPollinationExperiment({ onReading }) {
+  const CXS = { A: 100, B: 240 };
+  const fresh = () => ({ bx: 160, by: 56, load: { A: 0, B: 0 }, grains: { A: { self: 0, cross: 0 }, B: { self: 0, cross: 0 } }, prog: { A: 0, B: 0 } });
+  const G = React.useRef(fresh());
+  const [, tick] = useState(0);
+  const { svgRef, startDrag } = useVlabDrag((id, p) => {
+    const g = G.current;
+    g.bx = Math.max(12, Math.min(308, p.x)); g.by = Math.max(14, Math.min(212, p.y));
+    ["A", "B"].forEach((k) => {
+      const cx = CXS[k];
+      const tot = g.load.A + g.load.B;
+      [-24, 24].forEach((dx) => { if (Math.hypot(g.bx - (cx + dx), g.by - 112) < 15 && tot < 9) g.load[k] = Math.min(9 - (tot - g.load[k]), g.load[k] + 0.35); });
+      if (Math.hypot(g.bx - cx, g.by - 100) < 14) {
+        const o = k === "A" ? "B" : "A", ns = Math.floor(g.load[k]), nc = Math.floor(g.load[o]);
+        if (ns + nc > 0) {
+          const room = 12 - g.grains[k].self - g.grains[k].cross;
+          const addS = Math.min(ns, Math.max(0, room)), addC = Math.min(nc, Math.max(0, room - addS));
+          g.grains[k].self += addS; g.grains[k].cross += addC;
+          g.load[k] -= ns; g.load[o] -= nc;
+          if (addS + addC > 0) g.prog[k] = Math.min(g.prog[k], 0.3);
+        }
+      }
+    });
+    tick((v) => v + 1);
+  });
+  useEffect(() => {
+    let raf, last = null;
+    const step = (now) => {
+      if (last !== null) {
+        const dt = Math.min(0.05, (now - last) / 1000), g = G.current; let ch = false;
+        ["A", "B"].forEach((k) => { if (g.grains[k].self + g.grains[k].cross > 0 && g.prog[k] < 1) { g.prog[k] = Math.min(1, g.prog[k] + dt * 0.5); ch = true; } });
+        if (ch) tick((v) => (v + 1) % 1e6);
+      }
+      last = now; raf = requestAnimationFrame(step);
+    };
+    raf = requestAnimationFrame(step);
+    return () => cancelAnimationFrame(raf);
+  }, []);
+  const g = G.current;
+  const tot = (k) => g.grains[k].self + g.grains[k].cross;
+  const seedsF = (k) => Math.min(6, tot(k));
+  const seedsAll = seedsF("A") + seedsF("B"), grainsAll = tot("A") + tot("B"), crossAll = g.grains.A.cross + g.grains.B.cross;
+  const beeLoad = Math.floor(g.load.A + g.load.B);
+  useEffect(() => { if (onReading) onReading(`گرده روی زنبور: ${beeLoad} | گرده روی کلاله‌ها: ${grainsAll} | دانه: ${seedsAll}`); /* eslint-disable-next-line */ }, [beeLoad, grainsAll, seedsAll]);
+  const oPos = [[-4.5, -6], [4.5, -6], [-4.5, 1], [4.5, 1], [-4.5, 8], [4.5, 8]];
+  const flower = (k) => {
+    const cx = CXS[k], sc = 1 + Math.min(0.3, seedsF(k) * 0.05 * g.prog[k]);
+    const pr = g.prog[k];
+    return (
+      <g key={k}>
+        <line x1={cx} y1="216" x2={cx} y2="160" stroke="#3fa65a" strokeWidth="5" />
+        <path d={`M${cx - 8},154 Q${cx - 60},140 ${cx - 46},84 Q${cx - 24},100 ${cx - 8},142Z`} fill="#f08ab4" stroke="#b84a7a" strokeWidth="1.4" />
+        <path d={`M${cx + 8},154 Q${cx + 60},140 ${cx + 46},84 Q${cx + 24},100 ${cx + 8},142Z`} fill="#f08ab4" stroke="#b84a7a" strokeWidth="1.4" />
+        <path d={`M${cx - 6},162 Q${cx - 28},166 ${cx - 30},176 Q${cx - 10},176 ${cx - 4},166Z`} fill="#4cae5e" stroke="#2a7a3a" /><path d={`M${cx + 6},162 Q${cx + 28},166 ${cx + 30},176 Q${cx + 10},176 ${cx + 4},166Z`} fill="#4cae5e" stroke="#2a7a3a" />
+        <ellipse cx={cx} cy="160" rx="12" ry="6" fill="#4cae5e" stroke="#2a7a3a" />
+        {[-1, 1].map((sg) => <g key={sg}><path d={`M${cx + sg * 9},152 Q${cx + sg * 24},140 ${cx + sg * 24},116`} fill="none" stroke="#d8e8a0" strokeWidth="2" /><ellipse cx={cx + sg * 24} cy="112" rx="6" ry="4.5" fill="#f2c230" stroke="#a87a10" />{[-2, 2].map((q) => <circle key={q} cx={cx + sg * 24 + q} cy="110" r="1.2" fill="#fff3a0" />)}</g>)}
+        <line x1={cx} y1="134" x2={cx} y2="104" stroke="#b9e07a" strokeWidth="3.4" />
+        {tot(k) > 0 ? <line x1={cx} y1="102" x2={cx} y2="136" stroke="#fff0a0" strokeWidth="1.3" strokeDasharray={`${34 * Math.min(1, pr * 1.6)} 100`} /> : null}
+        <g transform={`translate(${cx},148) scale(${sc}) translate(${-cx},-148)`}>
+          <ellipse cx={cx} cy="148" rx="13" ry="14" fill="#9bd36a" stroke="#4a8a1a" strokeWidth="1.4" />
+          {oPos.map(([ox, oy], i) => <circle key={i} cx={cx + ox} cy={148 + oy} r="2.5" fill={i < seedsF(k) && pr >= 1 ? "#7a4a1a" : "#fff2b0"} stroke="#a89030" strokeWidth="0.5" />)}
+        </g>
+        <circle cx={cx} cy="100" r="5" fill="#e84a7a" stroke="#fff" strokeWidth="0.8" />
+        {Array.from({ length: tot(k) }).map((_, i) => <circle key={i} cx={cx + Math.cos(i * 1.1) * 7.5} cy={100 + Math.sin(i * 1.1) * 7.5 - 1} r="1.5" fill={i < g.grains[k].self ? "#ffe05a" : "#ff9a3a"} stroke="#fff" strokeWidth="0.3" />)}
+      </g>
+    );
+  };
+  const Lbl = ({ x, y, t, tx, ty, ex }) => <g><line x1={x} y1={y - 2.5} x2={tx} y2={ty} stroke="#6f7fa8" strokeDasharray="2 2" strokeWidth="0.7" />{ex ? <line x1={x} y1={y - 2.5} x2={ex[0]} y2={ex[1]} stroke="#6f7fa8" strokeDasharray="2 2" strokeWidth="0.7" /> : null}<text x={x} y={y + 4} fontSize="8" fill="#cfd6ea" textAnchor="middle" stroke="#03060f" strokeWidth="2.5" paintOrder="stroke">{t}</text></g>;
+  return (
+    <div className="vlab-exp">
+      <svg ref={svgRef} viewBox="0 0 320 244" className="vlab-svg" style={{ background: "#03060f", borderRadius: "10px", touchAction: "none" }}>
+        {flower("A")}{flower("B")}
+        <Lbl x={170} y={90} t="کلاله" tx={105} ty={98} ex={[235, 98]} /><Lbl x={170} y={120} t="خامه" tx={101} ty={118} ex={[239, 118]} /><Lbl x={170} y={158} t="تخمدان و تخمک" tx={112} ty={152} ex={[229, 152]} />
+        <Lbl x={27} y={112} t="بساک" tx={72} ty={112} /><Lbl x={298} y={112} t="بساک" tx={268} ty={112} /><Lbl x={26} y={140} t="گلبرگ" tx={54} ty={128} />
+        <g transform={`translate(${g.bx},${g.by})`} pointerEvents="none">
+          <ellipse cx="-6" cy="-9" rx="7" ry="4" fill="#fff" opacity="0.65" transform="rotate(-25 -6 -9)" /><ellipse cx="4" cy="-10" rx="7" ry="4" fill="#fff" opacity="0.65" transform="rotate(20 4 -10)" />
+          <ellipse cx="0" cy="0" rx="10" ry="6.5" fill="#ffd23a" stroke="#6a4a00" strokeWidth="1" /><rect x="-3" y="-6" width="2.4" height="12" fill="#2a1a00" /><rect x="3" y="-5.4" width="2.4" height="10.8" fill="#2a1a00" />
+          <circle cx="-11" cy="-1" r="4.4" fill="#2a1a00" /><circle cx="-12.5" cy="-2" r="1" fill="#fff" />
+          {Array.from({ length: beeLoad }).map((_, i) => <circle key={i} cx={-4 + (i % 5) * 3} cy={7 + Math.floor(i / 5) * 2.6} r="1.6" fill="#ff9a3a" stroke="#fff" strokeWidth="0.3" />)}
+        </g>
+        <circle cx={g.bx} cy={g.by} r="24" fill="transparent" onPointerDown={startDrag("bee")} style={{ cursor: "grab", touchAction: "none" }} />
+        <text x="160" y="233" fontSize="8" fill="#9fb0e0" textAnchor="middle">زنبور را بکش: اول روی بساک‌های زرد، بعد روی کلاله‌ی صورتی</text>
+        <text x="160" y="12" fontSize="8" fill="#cfd6ea" textAnchor="middle"><tspan>گرده‌ی روی زنبور: </tspan><tspan style={VLAB_LTR}>{vlabFaN(beeLoad)}</tspan><tspan>   |   دانه‌های ساخته‌شده: </tspan><tspan style={VLAB_LTR}>{vlabFaN(seedsAll)}</tspan></text>
+      </svg>
+      <VlabMeterRow height={150} meters={[{ label: "گرده‌ی روی زنبور", unit: "دانه", value: beeLoad, ranges: [9], maj: 3, decimals: 0 }, { label: "گرده روی کلاله‌ها", unit: "دانه", value: grainsAll, ranges: [12, 24], maj: 5, decimals: 0 }, { label: "دانه‌ی ساخته‌شده", unit: "دانه", value: seedsAll, ranges: [12], maj: 3, decimals: 0 }]} />
+      <div className="vlab-controls"><div className="vlab-ctrl-col" style={{ flex: 1 }}>
+        <div style={{ display: "flex", gap: "6px", flexWrap: "wrap" }}><button className="vlab-btn" onClick={() => { G.current = fresh(); tick((v) => v + 1); }}>گل‌ها را تازه کن</button></div>
+      </div></div>
+      <div className="vlab-readout">وقتی گرده به کلاله برسد، لوله‌ی گرده از خامه پایین می‌رود و به تخمک می‌رسد (نوار روشن در خامه). هر تخمکی که بارور شود دانه می‌شود و تخمدان بزرگ می‌شود و میوه می‌دهد. گرده‌ی زرد از همان گل (خودگرده‌افشانی) و گرده‌ی نارنجی از گل دیگر (دگرگرده‌افشانی) است؛ دگرگرده‌افشانی گیاهان متنوع‌تر می‌سازد. هر گل ۶ تخمک دارد.</div>
+      <VlabFormulaCheck title="درصد باروری" fa="درصد باروری = دانه‌های ساخته‌شده ÷ کل تخمک‌ها × ۱۰۰" en="fertility = seeds / 12 × 100" legend="هر دو گل با هم ۱۲ تخمک دارند" subst={`${seedsAll} ÷ 12 × 100 = ?`} label="درصد:" answer={(seedsAll / 12) * 100} unit="٪" decimals={0} />
+      <VlabFormulaCheck title="سهم دگرگرده‌افشانی" fa="سهم دگرگرده‌افشانی = گرده‌های رسیده از گل دیگر ÷ کل گرده‌های روی کلاله‌ها × ۱۰۰" en="cross = from other / all × 100" legend={grainsAll ? "گرده‌ی نارنجی = از گل دیگر؛ گرده‌ی زرد = از همان گل" : "هنوز گرده‌ای به کلاله نرسیده؛ جواب صفر است"} subst={grainsAll ? `${crossAll} ÷ ${grainsAll} × 100 = ?` : "0"} label="درصد:" answer={grainsAll ? (crossAll / grainsAll) * 100 : 0} unit="٪" decimals={0} />
+      <VlabEverydayCard title="سیب از کجا می‌آید؟" text="درخت سیب بدون زنبور میوه‌ی کمی می‌دهد. زنبور عسل شهد می‌خورد و بی‌آنکه بخواهد گرده را از گلی به گل دیگر می‌برد؛ پس بخش بزرگی از میوه‌هایی که می‌خوریم کار زنبورهاست. سم‌پاشی بی‌جا زنبور را می‌کشد.">
+        <path d="M60,26 C34,20 18,40 24,62 C30,78 50,78 60,72 C70,78 90,78 96,62 C102,40 86,20 60,26Z" fill="#e0393e" stroke="#8a1a1e" strokeWidth="2" /><path d="M60,26 Q62,14 70,10" fill="none" stroke="#6a4a1a" strokeWidth="2.4" /><path d="M66,16 Q80,8 88,16 Q76,24 66,16Z" fill="#4cae5e" stroke="#2a7a3a" />
+        <ellipse cx="100" cy="30" rx="8" ry="5.5" fill="#ffd23a" stroke="#6a4a00" /><rect x="97" y="25" width="2" height="10" fill="#2a1a00" /><rect x="102" y="25.5" width="2" height="9" fill="#2a1a00" /><ellipse cx="96" cy="22" rx="6" ry="3" fill="#fff" opacity="0.7" />
+      </VlabEverydayCard>
+    </div>
+  );
+}
+/* ===== ۴) از DNA تا پروتئین ===== */
+const VLAB_CODON = "FFLLSSSSYY**CC*WLLLLPPPPHHQQRRRRIIIMTTTTNNKKSSRRVVVVAAAADDEEGGGG";
+const VLAB_AA = { F: "فنیل‌آلانین", L: "لوسین", I: "ایزولوسین", M: "متیونین", V: "والین", S: "سرین", P: "پرولین", T: "ترئونین", A: "آلانین", Y: "تیروزین", H: "هیستیدین", Q: "گلوتامین", N: "آسپاراژین", K: "لیزین", D: "آسپارتیک‌اسید", E: "گلوتامیک‌اسید", C: "سیستئین", W: "تریپتوفان", R: "آرژینین", G: "گلیسین", "*": "توقف" };
+const vlabCodonAA = (c) => VLAB_CODON[16 * "UCAG".indexOf(c[0]) + 4 * "UCAG".indexOf(c[1]) + "UCAG".indexOf(c[2])];
+const VLAB_BASEC = { A: "#4fa86a", T: "#ff6a5a", U: "#ff6a5a", G: "#ffd23a", C: "#5aa8ff" };
+const vlabTranslate = (tpl) => {
+  const m = tpl.map((b) => ({ A: "U", T: "A", G: "C", C: "G" }[b]));
+  const cod = [0, 1, 2, 3, 4].map((i) => m.slice(i * 3, i * 3 + 3).join(""));
+  const aa = [];
+  if (cod[0] === "AUG") { for (let i = 0; i < 5; i++) { const x = vlabCodonAA(cod[i]); aa.push(x); if (x === "*") break; } }
+  return { m, cod, aa };
+};
+
+function VlabDnaTranslationExperiment({ onReading }) {
+  const ORIG = "TACCGAAAGTTTATC".split("");
+  const [tpl, setTpl] = useState(ORIG);
+  const [stp, setStp] = useState(5);
+  const PIT = 20.4, X0 = 7;
+  const { svgRef, startDrag } = useVlabDrag((id, p) => { setStp(Math.max(1, Math.min(5, Math.floor((p.x - X0) / (3 * PIT)) + 1))); });
+  const { m, cod, aa } = vlabTranslate(tpl);
+  const orig = vlabTranslate(ORIG);
+  const muts = tpl.filter((b, i) => b !== ORIG[i]).length;
+  const prot = aa.filter((x) => x !== "*");
+  const stopped = aa[aa.length - 1] === "*";
+  const shown = aa.slice(0, stp).filter((x) => x !== "*");
+  const stopShown = aa.length <= stp && stopped;
+  const same = prot.join("") === orig.aa.filter((x) => x !== "*").join("");
+  const effect = muts === 0 ? "هنوز جهشی نداری؛ روی یک حرف DNA بزن" : cod[0] !== "AUG" ? "کدون شروع (AUG) از بین رفت؛ ریبوزوم شروع نمی‌کند و پروتئینی ساخته نمی‌شود" : same ? "جهش خاموش: حرف عوض شد ولی همان آمینواسید ساخته می‌شود" : prot.length < orig.aa.filter((x) => x !== "*").length ? "جهش بی‌معنی: زودتر کدون توقف آمد و پروتئین کوتاه شد" : prot.length > orig.aa.filter((x) => x !== "*").length ? "کدون توقف از بین رفت و پروتئین بلندتر شد" : "جهش جانشینی: یک آمینواسید پروتئین عوض شد";
+  useEffect(() => { if (onReading) onReading(`رشته‌ی الگو: ${tpl.join("")} | mRNA: ${m.join("")} | پروتئین: ${prot.map((x) => VLAB_AA[x]).join("-") || "هیچ"}`); /* eslint-disable-next-line */ }, [tpl]);
+  const bx = (i) => X0 + i * PIT;
+  const cycle = (i) => setTpl((t) => t.map((b, j) => (j === i ? { A: "T", T: "G", G: "C", C: "A" }[b] : b)));
+  const rcx = X0 + PIT * (3 * (stp - 1) + 1.5) - 0.5 * 1;
+  const ndl = Math.max(0, 3 * (aa.length));
+  return (
+    <div className="vlab-exp">
+      <svg ref={svgRef} viewBox="0 0 320 244" className="vlab-svg" style={{ background: "#03060f", borderRadius: "10px", touchAction: "none" }}>
+        <text x="160" y="16" fontSize="8.5" fill="#cfd6ea" textAnchor="middle">DNA (رشته‌ی الگو) — روی هر حرف بزن تا عوض شود</text>
+        {tpl.map((b, i) => <g key={i} onClick={() => cycle(i)} style={{ cursor: "pointer" }}><rect x={bx(i)} y="22" width="19" height="24" rx="4" fill={VLAB_BASEC[b]} opacity={b !== ORIG[i] ? 1 : 0.8} stroke={b !== ORIG[i] ? "#fff" : "none"} strokeWidth="1.6" /><text x={bx(i) + 9.5} y="39" fontSize="13" fontWeight="bold" fill="#10162b" textAnchor="middle">{b}</text></g>)}
+        <text x="160" y="60" fontSize="8" fill="#9fb0e0" textAnchor="middle">↓ رونویسی (A↔U ، T↔A ، G↔C)</text>
+        <text x="160" y="72" fontSize="8.5" fill="#cfd6ea" textAnchor="middle">mRNA</text>
+        {m.map((b, i) => <g key={i}><rect x={bx(i)} y="76" width="19" height="24" rx="4" fill={VLAB_BASEC[b]} opacity="0.85" /><text x={bx(i) + 9.5} y="93" fontSize="13" fontWeight="bold" fill="#10162b" textAnchor="middle">{b}</text></g>)}
+        {[0, 1, 2, 3, 4].map((c) => <line key={c} x1={bx(c * 3) + 1} x2={bx(c * 3 + 2) + 18} y1="105" y2="105" stroke={c % 2 ? "#6f86c8" : "#9fb0e0"} strokeWidth="2" />)}
+        <rect x={X0 + PIT * 3 * (stp - 1) - 3} y="72" width={PIT * 3 + 4} height="32" rx="8" fill="none" stroke="#ffd98a" strokeWidth="2" pointerEvents="none" />
+        <ellipse cx={rcx} cy="116" rx="26" ry="9" fill="#a86a3a" stroke="#ffd98a" pointerEvents="none" /><text x={rcx} y="119" fontSize="7.5" fill="#fff" textAnchor="middle" pointerEvents="none">ریبوزوم</text>
+        <rect x={rcx - 34} y="66" width="68" height="62" fill="transparent" onPointerDown={startDrag("ribo")} style={{ cursor: "ew-resize", touchAction: "none" }} />
+        <text x="160" y="142" fontSize="8.5" fill="#cfd6ea" textAnchor="middle">پروتئین (زنجیره‌ی آمینواسید) — ریبوزوم را بکش</text>
+        {shown.length > 1 ? <line x1="30" y1="166" x2={30 + (shown.length - 1) * 58} y2="166" stroke="#9fb0e0" strokeWidth="2.4" /> : null}
+        {shown.map((x, i) => <g key={i}><circle cx={30 + i * 58} cy="166" r="14" fill="#2a4a8a" stroke="#9fd0ff" strokeWidth="1.4" /><text x={30 + i * 58} y="171" fontSize="13" fontWeight="bold" fill="#fff" textAnchor="middle">{x}</text><text x={30 + i * 58} y="192" fontSize="7.3" fill="#cfd6ea" textAnchor="middle">{VLAB_AA[x]}</text></g>)}
+        {stopShown ? <g><rect x={30 + shown.length * 58 - 11} y="156" width="22" height="20" rx="3" fill="#a02a2a" stroke="#fff" /><text x={30 + shown.length * 58} y="170" fontSize="9" fill="#fff" textAnchor="middle">توقف</text></g> : null}
+        {shown.length === 0 ? <text x="160" y="170" fontSize="9" fill="#ff9a9a" textAnchor="middle">پروتئینی ساخته نمی‌شود</text> : null}
+        <text x="160" y="215" fontSize="9" fill={muts === 0 ? "#9fb0e0" : same ? "#7be0a4" : "#ffd98a"} textAnchor="middle">{effect.length > 52 ? effect.slice(0, effect.lastIndexOf(" ", 52)) : effect}</text>
+        {effect.length > 52 ? <text x="160" y="228" fontSize="9" fill={muts === 0 ? "#9fb0e0" : same ? "#7be0a4" : "#ffd98a"} textAnchor="middle">{effect.slice(effect.lastIndexOf(" ", 52) + 1)}</text> : null}
+      </svg>
+      <VlabMeterRow height={150} meters={[{ label: "آمینواسید ساخته‌شده", unit: "تا", value: prot.length, ranges: [5], maj: 5, decimals: 0 }, { label: "تعداد جهش‌ها", unit: "تا", value: muts, ranges: [5, 15], maj: 5, decimals: 0 }, { label: "جرم پروتئین", unit: "Da", value: prot.length * 110, ranges: [600], maj: 6, decimals: 0 }]} />
+      <div className="vlab-controls"><div className="vlab-ctrl-col" style={{ flex: 1 }}>
+        <div style={{ display: "flex", gap: "6px", flexWrap: "wrap" }}>
+          <button className="vlab-btn" onClick={() => { setTpl(ORIG); setStp(5); }}>DNA اصلی</button>
+          <button className="vlab-btn" onClick={() => { const i = 3 + Math.floor(Math.random() * 12); cycle(i); }}>یک جهش تصادفی</button>
+          <button className="vlab-btn" onClick={() => setStp((v) => (v >= 5 ? 1 : v + 1))}>گام بعدیِ ریبوزوم</button>
+        </div>
+      </div></div>
+      <div className="vlab-readout">DNA دستور ساخت پروتئین است. نسخه‌ای از آن به نام mRNA ساخته می‌شود و ریبوزوم هر سه حرفِ آن (یک «کدون») را می‌خواند و یک آمینواسید به زنجیره اضافه می‌کند. ساخت همیشه با کدون AUG شروع می‌شود و با یکی از کدون‌های توقف (UAA، UAG، UGA) تمام می‌شود. بالای هر حرفِ عوض‌شده خط سفید می‌افتد. (برای سادگی، جهت رشته‌ها را نشان نداده‌ایم.)</div>
+      <VlabFormulaCheck title="طول mRNA" fa="تعداد نوکلئوتید = ۳ × (تعداد آمینواسید + ۱ کدون توقف)" en="n = 3 × (aa + 1)" legend="برای ساخت پروتئین کدون توقف هم لازم است؛ تعداد آمینواسید پروتئین فعلی:" subst={`n = 3 × (${prot.length} + 1) = ?`} label="n:" answer={3 * (prot.length + 1)} unit="نوکلئوتید" decimals={0} />
+      <VlabFormulaCheck title="جرم تقریبی پروتئین" fa="جرم ≈ تعداد آمینواسید × ۱۱۰ دالتون" en="M ≈ aa × 110 Da" legend="میانگین جرم هر آمینواسید در پروتئین حدود ۱۱۰ دالتون است" subst={`M = ${prot.length} × 110 = ?`} label="M:" answer={prot.length * 110} unit="Da" decimals={0} />
+      <VlabEverydayCard title="یک حرف و کم‌خونی داسی‌شکل" text="در بیماری کم‌خونی داسی‌شکل فقط یک حرف ژنِ هموگلوبین عوض شده و یک آمینواسید در پروتئین تغییر می‌کند؛ گلبول قرمز به شکل داس درمی‌آید و خوب اکسیژن نمی‌رساند. یعنی هر حرف DNA مهم است.">
+        <ellipse cx="32" cy="42" rx="22" ry="22" fill="#d83a3a" stroke="#7a1010" strokeWidth="2" /><ellipse cx="32" cy="42" rx="9" ry="9" fill="#a82020" />
+        <path d="M70,66 Q82,18 108,22 Q92,34 86,66 Q78,72 70,66Z" fill="#d83a3a" stroke="#7a1010" strokeWidth="2" />
+        <text x="32" y="78" fontSize="7" fill="#7a1010" textAnchor="middle">سالم</text><text x="88" y="80" fontSize="7" fill="#7a1010" textAnchor="middle">داسی</text>
+      </VlabEverydayCard>
+    </div>
+  );
+}
+/* ===== ۵) آزمون زمان واکنش (افتادن خط‌کش) ===== */
+function VlabReactionTimeExperiment({ onReading }) {
+  const GS = { earth: { g: 9.8, n: "زمین" }, moon: { g: 1.62, n: "ماه" }, mars: { g: 3.71, n: "مریخ" } };
+  const [gk, setGk] = useState("earth");
+  const g = GS[gk].g;
+  const [phase, setPhase] = useState("idle");
+  const [dist, setDist] = useState(0);
+  const [msg, setMsg] = useState("برای شروع، دکمه‌ی «شروع آزمون» را بزن، بعد با دیدن افتادن خط‌کش روی صفحه بزن");
+  const [hist, setHist] = useState([]);
+  const R = React.useRef({ phase: "idle", timer: null, raf: 0, t0: 0, g, d: 0 });
+  R.current.g = g;
+  useEffect(() => () => { clearTimeout(R.current.timer); cancelAnimationFrame(R.current.raf); }, []);
+  const setPh = (p) => { R.current.phase = p; setPhase(p); };
+  const start = () => {
+    if (R.current.phase === "wait" || R.current.phase === "fall") return;
+    setPh("wait"); setDist(0); R.current.d = 0; setMsg("آماده باش… انگشتانت را آماده نگه دار");
+    R.current.timer = setTimeout(() => {
+      setPh("fall"); R.current.t0 = performance.now(); setMsg("افتاد! بگیرش!");
+      const loop = (now) => {
+        const t = (now - R.current.t0) / 1000, d = 0.5 * R.current.g * t * t * 100;
+        R.current.d = d; setDist(Math.min(d, 52));
+        if (d >= 50) { setPh("done"); setMsg("خط‌کش افتاد و نگرفتی! دوباره امتحان کن"); return; }
+        R.current.raf = requestAnimationFrame(loop);
+      };
+      R.current.raf = requestAnimationFrame(loop);
+    }, 1000 + Math.random() * 2000);
+  };
+  const tap = () => {
+    const r = R.current;
+    if (r.phase === "wait") { clearTimeout(r.timer); setPh("idle"); setMsg("زود زدی! صبر کن تا خط‌کش رها شود، بعد دوباره شروع کن"); }
+    else if (r.phase === "fall") {
+      cancelAnimationFrame(r.raf);
+      const dr = Math.round(r.d * 10) / 10, t = Math.sqrt((2 * dr) / 100 / r.g) * 1000;
+      setDist(dr); setPh("done"); setHist((h) => [...h.slice(-7), { d: dr, t, g: r.g }]);
+      setMsg(`گرفتی! خط‌کش ${vlabFaN(dr)} سانتی‌متر افتاد`);
+    }
+  };
+  const last = hist.length ? hist[hist.length - 1] : null;
+  const avg = hist.length ? hist.reduce((s, q) => s + q.t, 0) / hist.length : 0;
+  const dUse = last ? last.d : 20, gUse = last ? last.g : g;
+  useEffect(() => { if (onReading) onReading(last ? `آخرین زمان واکنش: ${Math.round(last.t)} ms | فاصله: ${last.d} cm | میانگین: ${Math.round(avg)} ms` : "هنوز آزمونی انجام نشده"); /* eslint-disable-next-line */ }, [hist.length]);
+  const caught = phase === "done" && dist < 50;
+  const ticks = Array.from({ length: 51 }).map((_, h) => h);
+  return (
+    <div className="vlab-exp">
+      <svg viewBox="0 0 320 244" className="vlab-svg" onPointerDown={tap} style={{ background: "#03060f", borderRadius: "10px", touchAction: "none", cursor: "pointer" }}>
+        <g transform={`translate(0,${dist * 3})`}>
+          <rect x="150" y="20" width="30" height="150" fill="#e8d8a8" stroke="#8a7a3a" />
+          {ticks.map((h) => <line key={h} x1="150" x2={150 + (h % 10 === 0 ? 14 : h % 5 === 0 ? 10 : 6)} y1={170 - h * 3} y2={170 - h * 3} stroke="#5a4a1a" strokeWidth={h % 5 === 0 ? 1 : 0.6} />)}
+          {ticks.filter((h) => h % 10 === 0 && h > 0).map((h) => <text key={h} x="176" y={173 - h * 3} fontSize="7" fill="#5a4a1a" textAnchor="end">{vlabFaN(h)}</text>)}
+          <text x="176" y="167" fontSize="7" fill="#5a4a1a" textAnchor="end">۰</text>
+        </g>
+        <rect x="140" y="4" width="50" height="14" rx="6" fill="#c98a5a" stroke="#7a4a1a" />
+        <rect x={caught || phase === "fall" ? 112 : 98} y="166" width="38" height="14" rx="7" fill="#d9a47a" stroke="#7a4a1a" /><rect x={caught || phase === "fall" ? 184 : 198} y="166" width="38" height="14" rx="7" fill="#d9a47a" stroke="#7a4a1a" />
+        <line x1="90" x2="230" y1="170" y2="170" stroke="#ffd98a" strokeDasharray="3 3" strokeWidth="0.7" opacity="0.7" />
+        {caught ? <g><line x1="236" x2="252" y1="170" y2="170" stroke="#ffd98a" strokeWidth="1.4" /><text x="276" y="166" fontSize="11" fontWeight="bold" fill="#ffd98a" textAnchor="middle" style={VLAB_LTR}>{vlabFaN(dist) + " cm"}</text></g> : null}
+        <text x="50" y="90" fontSize="9" fill="#9fb0e0" textAnchor="middle">روی صفحه بزن</text><text x="50" y="102" fontSize="9" fill="#9fb0e0" textAnchor="middle">تا خط‌کش را بگیری</text>
+        <text x="160" y="206" fontSize="9.5" fill={phase === "fall" ? "#ffd98a" : caught ? "#7be0a4" : "#cfd6ea"} textAnchor="middle">{msg.length > 46 ? msg.slice(0, msg.lastIndexOf(" ", 46)) : msg}</text>
+        {msg.length > 46 ? <text x="160" y="220" fontSize="9.5" fill="#cfd6ea" textAnchor="middle">{msg.slice(msg.lastIndexOf(" ", 46) + 1)}</text> : null}
+        <text x="160" y="238" fontSize="8" fill="#6f7fa8" textAnchor="middle">{"گرانش: " + GS[gk].n}</text>
+      </svg>
+      <VlabMeterRow height={150} meters={[{ label: "زمان واکنش", unit: "ms", value: last ? last.t : 0, ranges: [500, 1000], maj: 5, decimals: 0 }, { label: "فاصله‌ی افتادن", unit: "cm", value: last ? last.d : 0, ranges: [50], maj: 5, decimals: 1 }, { label: "میانگین آزمون‌ها", unit: "ms", value: avg, ranges: [500, 1000], maj: 5, decimals: 0 }]} />
+      <div className="vlab-controls"><div className="vlab-ctrl-col" style={{ flex: 1 }}>
+        <div style={{ display: "flex", gap: "6px", flexWrap: "wrap" }}>
+          <button className="vlab-btn" onClick={start}>▶ شروع آزمون</button>
+          {Object.keys(GS).map((k) => <button key={k} className="vlab-btn" style={gk === k ? { outline: "2px solid #e0a83e" } : null} onClick={() => setGk(k)}>{GS[k].n}</button>)}
+          <button className="vlab-btn" onClick={() => setHist([])}>پاک‌کردن نتیجه‌ها</button>
+        </div>
+      </div></div>
+      <div className="vlab-readout">{hist.length ? "نتیجه‌ها: " + hist.map((q) => vlabFaN(Math.round(q.t))).join(" ، ") + " میلی‌ثانیه" : "هنوز آزمونی انجام نشده. واکنش آدم‌ها معمولاً بین ۱۵۰ تا ۳۰۰ میلی‌ثانیه است."} روی ماه یا مریخ گرانش کمتر است، پس خط‌کش آرام‌تر می‌افتد و برای همان واکنش، فاصله‌ی کمتری را طی می‌کند؛ اما زمان واکنش تو همان است.</div>
+      <VlabFormulaCheck title="زمان واکنش از فاصله" fa="زمان = جذر (۲ × فاصله‌ی افتادن ÷ شتاب گرانش)" en="t = √(2d / g)" legend={last ? `آخرین آزمون تو: ${vlabFaN(dUse)} سانتی‌متر؛ جواب به میلی‌ثانیه` : "هنوز آزمونی نداده‌ای؛ با فاصله‌ی نمونه‌ی ۲۰ سانتی‌متر حساب کن؛ جواب به میلی‌ثانیه"} subst={`t = √(2 × ${(dUse / 100).toFixed(3)} ÷ ${gUse}) × 1000 = ?`} label="t:" answer={Math.sqrt((2 * dUse) / 100 / gUse) * 1000} unit="ms" decimals={0} />
+      <VlabFormulaCheck title="فاصله‌ی افتادن در ۰٫۲ ثانیه" fa="فاصله = نصف × شتاب گرانش × مربع زمان" en="d = ½ g t²" legend={`اگر واکنشت ۰٫۲ ثانیه باشد، روی ${GS[gk].n} خط‌کش چند سانتی‌متر می‌افتد؟`} subst={`d = 0.5 × ${g} × 0.2² × 100 = ?`} label="d:" answer={0.5 * g * 0.04 * 100} unit="cm" decimals={1} />
+      <VlabEverydayCard title="فاصله‌ی ترمز در رانندگی" text="اگر راننده‌ای با سرعت ۹۰ کیلومتر در ساعت (۲۵ متر بر ثانیه) برود و واکنشش ۰٫۲۵ ثانیه باشد، پیش از آنکه پایش را روی ترمز بگذارد حدود ۶ متر رفته است. خستگی یا موبایل واکنش را کندتر و این فاصله را بیشتر می‌کند.">
+        <rect x="0" y="60" width="120" height="14" fill="#555" /><line x1="0" y1="67" x2="120" y2="67" stroke="#fff" strokeDasharray="8 6" />
+        <rect x="14" y="40" width="40" height="16" rx="5" fill="#d83a3a" stroke="#701010" /><rect x="22" y="32" width="22" height="12" rx="4" fill="#9fd0ff" stroke="#701010" /><circle cx="24" cy="58" r="5" fill="#222" /><circle cx="46" cy="58" r="5" fill="#222" />
+        <line x1="56" y1="26" x2="98" y2="26" stroke="#2a6ab8" strokeWidth="2" /><path d="M98,26 l-6,-4 v8z" fill="#2a6ab8" /><text x="76" y="20" fontSize="8" fill="#2a6ab8" textAnchor="middle" fontWeight="bold">۶ m</text>
+        <path d="M104,62 l6,-16 l6,16z" fill="#ff8a2a" stroke="#7a3a00" />
+      </VlabEverydayCard>
+    </div>
+  );
+}
+
 const VLAB_COMPONENTS = {
   lever: VlabLeverExperiment,
   pendulum: VlabPendulumExperiment,
@@ -31606,6 +32064,11 @@ const VLAB_COMPONENTS = {
   "mitosis": VlabMitosisExperiment,
   "blood-pressure": VlabBloodPressureExperiment,
   "eye-vision": VlabEyeVisionExperiment,
+  "bacteria-growth": VlabBacteriaGrowthExperiment,
+  "predator-prey": VlabPredatorPreyExperiment,
+  "flower-pollination": VlabFlowerPollinationExperiment,
+  "dna-translation": VlabDnaTranslationExperiment,
+  "reaction-time": VlabReactionTimeExperiment,
 };
 
 function StudentVirtualLabView({ onBack, grade, studentCode, schoolCode }) {

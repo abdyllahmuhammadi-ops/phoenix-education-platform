@@ -23323,6 +23323,33 @@ const VLAB_EXPERIMENTS = [
     intro: "دو نقطه‌ی منحنی را با یک خط (قاطع) وصل کن و نقطه‌ی دوم را آن‌قدر نزدیک ببر که خط به مماس تبدیل شود؛ شیبِ آن همان مشتق است.",
     tools: ["چهار تابع", "خط قاطع", "خط مماس"],
   },
+  {
+    id: "function-transform",
+    subject: "ریاضی",
+    level: "متوسطه دوم",
+    title: "نمودار توابع (انتقال و بازتاب)",
+    icon: "📊",
+    intro: "با سه عدد a و h و k نمودار یک تابع را بکش، بالا و پایین ببر، قرینه کن و ببین فرمول چطور شکل را عوض می‌کند.",
+    tools: ["چهار تابع", "انتقال افقی و عمودی", "بازتاب"],
+  },
+  {
+    id: "limit-approach",
+    subject: "ریاضی",
+    level: "متوسطه دوم",
+    title: "حد با نزدیک‌شدن",
+    icon: "🎯",
+    intro: "از دو طرف به نقطه‌ای نزدیک شو و جدول مقدارها را ببین؛ بفهم چرا گاهی حد وجود دارد و گاهی ندارد.",
+    tools: ["سه تابع", "نزدیک‌شدن از چپ و راست", "جدول مقدار"],
+  },
+  {
+    id: "coin-dice",
+    subject: "ریاضی",
+    level: "متوسطه دوم",
+    title: "سکه و تاس (احتمال)",
+    icon: "🎲",
+    intro: "سکه و تاس را هزاران بار بینداز و ببین فراوانی نسبی چطور به احتمال نظری نزدیک می‌شود.",
+    tools: ["سکه", "تاس", "مجموع دو تاس"],
+  },
 ];
 
 function vlabClamp(v, min, max) {
@@ -32606,6 +32633,187 @@ function VlabTangentSlopeExperiment({ onReading }) {
   );
 }
 
+/* ===== ریاضی ۳) نمودار توابع با انتقال و بازتاب ===== */
+const VLAB_FT_FUNCS = {
+  sq: { name: "x²", f: (x) => x * x, y0: -6, y1: 10 },
+  abs: { name: "|x|", f: (x) => Math.abs(x), y0: -6, y1: 10 },
+  cube: { name: "x³", f: (x) => x * x * x, y0: -8, y1: 8 },
+  sin: { name: "sin x", f: Math.sin, y0: -6, y1: 6 },
+};
+function VlabFunctionTransformExperiment({ onReading }) {
+  const [fk, setFk] = useState("sq");
+  const [A, setA] = useState(1);
+  const [Hh, setHh] = useState(0);
+  const [K, setK] = useState(0);
+  const F = VLAB_FT_FUNCS[fk];
+  const x0 = -6, x1 = 6, W = 296, H = 190, L = 12, T = 8;
+  const X = (x) => L + ((x - x0) / (x1 - x0)) * W;
+  const Y = (y) => T + H - ((y - F.y0) / (F.y1 - F.y0)) * H;
+  const path = (fn) => { let d = "", pen = false; for (let i = 0; i <= 240; i++) { const x = x0 + (i / 240) * (x1 - x0); const y = fn(x); if (y < F.y0 || y > F.y1) { pen = false; continue; } d += (pen ? "L" : "M") + X(x).toFixed(1) + "," + Y(y).toFixed(1); pen = true; } return d; };
+  const g = (x) => A * F.f(x - Hh) + K;
+  const px = 2, pyBase = F.f(px), pyNew = g(px);
+  const grid = []; for (let i = -6; i <= 6; i++) grid.push(i);
+  const fa = (n) => vlabMFa(n, Number.isInteger(n) ? 0 : 1);
+  const sgn = (n) => (n < 0 ? "−" : "+");
+  const expr = `${A === 1 ? "" : A === -1 ? "−" : fa(A) + " × "}f(x ${sgn(-Hh)} ${fa(Math.abs(Hh))}) ${sgn(K)} ${fa(Math.abs(K))}`;
+  return (
+    <div className="vlab-exp">
+      <svg viewBox="0 0 320 206" className="vlab-svg" style={{ background: "#03060f", borderRadius: "10px" }}>
+        {grid.map((i) => (<line key={"v" + i} x1={X(i)} y1={T} x2={X(i)} y2={T + H} stroke={i === 0 ? "#6a7aa8" : "#1b2442"} strokeWidth="1" />))}
+        {[-6, -4, -2, 0, 2, 4, 6, 8].filter((v) => v >= F.y0 && v <= F.y1).map((v) => (<line key={"h" + v} x1={L} y1={Y(v)} x2={L + W} y2={Y(v)} stroke={v === 0 ? "#6a7aa8" : "#1b2442"} strokeWidth="1" />))}
+        <path d={path(F.f)} fill="none" stroke="#7d8bb5" strokeWidth="1.5" strokeDasharray="4 3" />
+        <path d={path(g)} fill="none" stroke="#ffd166" strokeWidth="2.4" />
+        <circle cx={X(px)} cy={Y(pyBase)} r="3.4" fill="#7d8bb5" />
+        {pyNew >= F.y0 && pyNew <= F.y1 ? <circle cx={X(px)} cy={Y(pyNew)} r="4.4" fill="#ffd166" stroke="#fff" strokeWidth="1.2" /> : null}
+        <text x="60" y="20" fontSize="9" fill="#9fb4ff" textAnchor="middle" direction="ltr">f(x) = {F.name}</text>
+        <text x="30" y="33" fontSize="8" fill="#7d8bb5" textAnchor="middle">نمودار اصلی</text>
+        <text x="90" y="33" fontSize="8" fill="#ffd166" textAnchor="middle">نمودار جدید</text>
+      </svg>
+      <div className="vlab-readout" style={{ direction: "ltr", textAlign: "center" }}>g(x) = {expr}</div>
+      <div className="vlab-controls"><div className="vlab-ctrl-col" style={{ flex: 1 }}>
+        <div className="vlab-btn-row">
+          {Object.keys(VLAB_FT_FUNCS).map((k) => (<button key={k} className="vlab-btn" style={fk === k ? { outline: "2px solid #e0a83e" } : null} onClick={() => setFk(k)}>{VLAB_FT_FUNCS[k].name}</button>))}
+          <button className="vlab-btn" onClick={() => { setA(1); setHh(0); setK(0); }}>↺ از نو</button>
+        </div>
+        <label className="vlab-ctrl-label">انتقال افقی (h): {fa(Hh)} — به راست یا چپ</label>
+        <VlabRange min="-4" max="4" step="1" value={Hh} onChange={(e) => setHh(+e.target.value)} />
+        <label className="vlab-ctrl-label">انتقال عمودی (k): {fa(K)} — بالا یا پایین</label>
+        <VlabRange min="-4" max="4" step="1" value={K} onChange={(e) => setK(+e.target.value)} />
+        <label className="vlab-ctrl-label">ضریب کشش و بازتاب (a): {fa(A)}</label>
+        <VlabRange min="-3" max="3" step="0.5" value={A} onChange={(e) => setA(+e.target.value)} />
+      </div></div>
+      <div className="vlab-readout">
+        {`علامت منفیِ a نمودار را نسبت به محور x قرینه می‌کند و عدد بزرگ‌تر از ۱ آن را عمودی می‌کشد. h نمودار را افقی جابه‌جا می‌کند (توجه: x − h یعنی h مثبت به راست می‌رود) و k آن را بالا یا پایین می‌برد. نقطه‌ی x = ۲ روی هر دو نمودار علامت خورده تا جابه‌جایی‌اش را ببینی.`}
+      </div>
+      <VlabFormulaCheck title="مقدار تابع جدید در x = ۲" fa="g(x) = a × f(x − h) + k" en="g(2) = a · f(2 − h) + k" legend={`f(x) = ${F.name} است. اول 2 − h را حساب کن، بعد f را روی آن بزن (برای sin ماشین‌حساب را روی رادیان بگذار).`} subst={`g(2) = ${fa(A)} × f(${fa(2 - Hh)}) + ${fa(K)}`} answer={g(2)} unit="" decimals={2} />
+      <VlabEverydayCard title="مسیر پرتاب توپ" text="مسیر توپی که پرتاب می‌شود شکل x² دارد، اما قرینه (a منفی)، جابه‌جا شده به نقطه‌ی اوج (h و k). برای همین نقطه‌ی اوج را «رأس سهمی» می‌نامیم و با همین سه عدد می‌شود هر پرتابی را توصیف کرد.">
+        <path d="M10,72 Q50,-10 100,72" fill="none" stroke="#2e7bd5" strokeWidth="2.5" />
+        <path d="M10,72 Q35,40 60,72" fill="none" stroke="#bbb" strokeWidth="1.5" strokeDasharray="3 3" />
+        <circle cx="55" cy="31" r="4" fill="#d83a3a" />
+        <path d="M6,76 H114" stroke="#999" strokeWidth="1" />
+      </VlabEverydayCard>
+    </div>
+  );
+}
+
+/* ===== ریاضی ۴) حد با نزدیک‌شدن ===== */
+const VLAB_LM_FUNCS = {
+  sinc: { name: "sin x ÷ x", a: 0, f: (x) => Math.sin(x) / x, lim: 1, x0: -3, x1: 3, y0: -0.4, y1: 1.4, note: "در x = ۰ تابع تعریف‌نشده است (۰÷۰) اما از هر دو طرف به ۱ نزدیک می‌شود." },
+  hole: { name: "(x² − ۱) ÷ (x − ۱)", a: 1, f: (x) => (x * x - 1) / (x - 1), lim: 2, x0: -1, x1: 3, y0: -1, y1: 5, note: "در x = ۱ سوراخ دارد، ولی همه‌ی نزدیک‌شدن‌ها به ۲ ختم می‌شود؛ پس حد وجود دارد." },
+  sign: { name: "|x| ÷ x", a: 0, f: (x) => Math.abs(x) / x, lim: null, x0: -3, x1: 3, y0: -2, y1: 2, note: "از راست به ۱ و از چپ به ۱− می‌رسد؛ دو طرف یکی نیست، پس حد وجود ندارد." },
+};
+function VlabLimitApproachExperiment({ onReading }) {
+  const [fk, setFk] = useState("sinc");
+  const [d, setD] = useState(1);
+  const raf = React.useRef(0);
+  useEffect(() => () => cancelAnimationFrame(raf.current), []);
+  const F = VLAB_LM_FUNCS[fk];
+  const W = 296, H = 170, L = 12, T = 8;
+  const X = (x) => L + ((x - F.x0) / (F.x1 - F.x0)) * W;
+  const Y = (y) => T + H - ((y - F.y0) / (F.y1 - F.y0)) * H;
+  const dd = Math.max(0.001, d);
+  const xl = F.a - dd, xr = F.a + dd, yl = F.f(xl), yr = F.f(xr);
+  const clipY = (y) => Math.max(F.y0, Math.min(F.y1, y));
+  let curve = "", pen = false;
+  for (let i = 0; i <= 300; i++) { const x = F.x0 + (i / 300) * (F.x1 - F.x0); if (Math.abs(x - F.a) < 1e-9) { pen = false; continue; } const y = F.f(x); if (fk === "sign" && Math.abs(x - F.a) < (F.x1 - F.x0) / 300) { pen = false; continue; } curve += (pen ? "L" : "M") + X(x).toFixed(1) + "," + Y(clipY(y)).toFixed(1); pen = true; }
+  const go = () => { cancelAnimationFrame(raf.current); const t0 = performance.now(), dur = 3500; const loop = (now) => { const p = Math.min(1, (now - t0) / dur); setD(Math.pow(10, 0 - 3 * p)); if (p < 1) raf.current = requestAnimationFrame(loop); }; raf.current = requestAnimationFrame(loop); };
+  const f4 = (n) => vlabMFa(n, 4);
+  const noLim = F.lim == null;
+  return (
+    <div className="vlab-exp">
+      <svg viewBox="0 0 320 190" className="vlab-svg" style={{ background: "#03060f", borderRadius: "10px" }}>
+        <line x1={L} y1={Y(0)} x2={L + W} y2={Y(0)} stroke="#3a4468" strokeWidth="1" />
+        <line x1={X(F.a)} y1={T} x2={X(F.a)} y2={T + H} stroke="#2a3558" strokeWidth="1" strokeDasharray="3 3" />
+        {!noLim ? <line x1={L} y1={Y(F.lim)} x2={L + W} y2={Y(F.lim)} stroke="#2f6b4f" strokeWidth="1" strokeDasharray="4 3" /> : null}
+        <path d={curve} fill="none" stroke="#9fb4ff" strokeWidth="2" />
+        {!noLim ? <circle cx={X(F.a)} cy={Y(F.lim)} r="4" fill="#03060f" stroke="#9fb4ff" strokeWidth="1.5" /> : null}
+        <line x1={X(xl)} y1={Y(yl)} x2={X(xl)} y2={Y(0)} stroke="#ff9d1c" strokeWidth="0.8" strokeDasharray="2 2" />
+        <line x1={X(xr)} y1={Y(yr)} x2={X(xr)} y2={Y(0)} stroke="#5de0a0" strokeWidth="0.8" strokeDasharray="2 2" />
+        <circle cx={X(xl)} cy={Y(clipY(yl))} r="4" fill="#ff9d1c" stroke="#fff" strokeWidth="1" />
+        <circle cx={X(xr)} cy={Y(clipY(yr))} r="4" fill="#5de0a0" stroke="#fff" strokeWidth="1" />
+        <text x="62" y="20" fontSize="9" fill="#9fb4ff" textAnchor="middle" direction="ltr">f(x) = {F.name}</text>
+        <text x="260" y="20" fontSize="8" fill="#ff9d1c" textAnchor="middle">از چپ</text>
+        <text x="292" y="20" fontSize="8" fill="#5de0a0" textAnchor="middle">از راست</text>
+      </svg>
+      <table style={{ width: "100%", borderCollapse: "collapse", textAlign: "center", fontSize: 13, direction: "ltr" }}>
+        <tbody>
+          <tr style={{ background: "#fff3df" }}><td style={{ padding: 4, color: "#c77a00" }}>x = {vlabMFa(xl, 3)}</td><td style={{ padding: 4 }}>f(x) = {f4(yl)}</td></tr>
+          <tr style={{ background: "#e7f8ef" }}><td style={{ padding: 4, color: "#1a9a63" }}>x = {vlabMFa(xr, 3)}</td><td style={{ padding: 4 }}>f(x) = {f4(yr)}</td></tr>
+        </tbody>
+      </table>
+      <div className="vlab-controls"><div className="vlab-ctrl-col" style={{ flex: 1 }}>
+        <div className="vlab-btn-row">
+          {Object.keys(VLAB_LM_FUNCS).map((k) => (<button key={k} className="vlab-btn" style={fk === k ? { outline: "2px solid #e0a83e" } : null} onClick={() => { cancelAnimationFrame(raf.current); setFk(k); setD(1); }}>{VLAB_LM_FUNCS[k].name}</button>))}
+          <button className="vlab-btn" onClick={go}>▶ نزدیک‌شدن به x = {vlabMFa(F.a, 0)}</button>
+        </div>
+        <label className="vlab-ctrl-label">فاصله از نقطه (توان ده، از ۱ تا ۰٫۰۰۱): {vlabMFa(dd, 3)}</label>
+        <VlabRange min="0" max="3" step="0.05" value={-Math.log10(dd)} onChange={(e) => { cancelAnimationFrame(raf.current); setD(Math.pow(10, -(+e.target.value))); }} />
+      </div></div>
+      <div className="vlab-readout">{F.note} {Math.abs(yl - yr) < 0.01 && !noLim ? "الان هر دو مقدار تقریباً به " + vlabMFa(F.lim, 0) + " رسیده‌اند." : ""}</div>
+      <VlabFormulaCheck title="مقدار تابع در سمت راست" fa="f(x) را در نقطه‌ی راستِ نشان‌داده‌شده حساب کن" en="f(a + d)" legend={`f(x) = ${F.name} و d فاصله‌ی انتخابی است (برای sin ماشین‌حساب را روی رادیان بگذار).`} subst={`f(${vlabMFa(xr, 3)})`} answer={yr} unit="" decimals={3} />
+      <VlabEverydayCard title="لحظه‌ی دقیقِ عکس" text="دوربین سرعت‌سنج جاده سرعت را در یک بازه‌ی بسیار کوتاه (مثلاً چند هزارم ثانیه) اندازه می‌گیرد. هرچه بازه کوتاه‌تر شود، عدد به «سرعت در همان لحظه» نزدیک‌تر می‌شود؛ ایده‌ی حد دقیقاً همین است.">
+        <rect x="14" y="24" width="92" height="26" rx="6" fill="#d9e2f2" stroke="#7d8bb5" strokeWidth="1.5" />
+        <circle cx="34" cy="54" r="7" fill="#444" /><circle cx="86" cy="54" r="7" fill="#444" />
+        <path d="M6,14 H114" stroke="#ccc" strokeWidth="2" strokeDasharray="6 4" />
+        <path d="M60,6 l8,8 l-8,8 l-8,-8 z" fill="#e0a83e" />
+        <path d="M6,72 H114" stroke="#999" strokeWidth="1" />
+      </VlabEverydayCard>
+    </div>
+  );
+}
+
+/* ===== ریاضی ۵) سکه و تاس ===== */
+function VlabCoinDiceExperiment({ onReading }) {
+  const [mode, setMode] = useState("coin");
+  const [cnt, setCnt] = useState({});
+  const [n, setN] = useState(0);
+  const [last, setLast] = useState(null);
+  const [target, setTarget] = useState(7);
+  const faces = mode === "coin" ? ["شیر", "خط"] : mode === "die" ? ["۱", "۲", "۳", "۴", "۵", "۶"] : [2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12].map((v) => vlabFaN(v));
+  const keys = mode === "coin" ? ["H", "T"] : mode === "die" ? [1, 2, 3, 4, 5, 6] : [2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12];
+  const theory = (k) => (mode === "coin" ? 0.5 : mode === "die" ? 1 / 6 : (6 - Math.abs(k - 7)) / 36);
+  const roll = () => (mode === "coin" ? (Math.random() < 0.5 ? "H" : "T") : mode === "die" ? 1 + Math.floor(Math.random() * 6) : 2 + Math.floor(Math.random() * 6) + Math.floor(Math.random() * 6));
+  const throwN = (m) => { const c = { ...cnt }; let l = null; for (let i = 0; i < m; i++) { l = roll(); c[l] = (c[l] || 0) + 1; } setCnt(c); setN(n + m); setLast(l); };
+  const reset = (md) => { setMode(md); setCnt({}); setN(0); setLast(null); };
+  const W = 296, H = 140, L = 12, T = 18;
+  const pmax = mode === "coin" ? 0.7 : mode === "die" ? 0.3 : 0.25;
+  const bw = W / keys.length;
+  const freq = (k) => (n ? (cnt[k] || 0) / n : 0);
+  const tk = mode === "coin" ? "H" : mode === "die" ? 6 : target;
+  const pT = theory(tk);
+  return (
+    <div className="vlab-exp">
+      <svg viewBox="0 0 320 190" className="vlab-svg" style={{ background: "#03060f", borderRadius: "10px" }}>
+        <line x1={L} y1={T + H} x2={L + W} y2={T + H} stroke="#6a7aa8" strokeWidth="1" />
+        {keys.map((k, i) => { const x = L + i * bw, h = (freq(k) / pmax) * H, th = (theory(k) / pmax) * H; return (<g key={String(k)}><rect x={x + bw * 0.14} y={T + H - h} width={bw * 0.72} height={Math.max(0, h)} fill={last === k ? "#ffd166" : "#5bb8ff"} rx="2" /><line x1={x + bw * 0.05} y1={T + H - th} x2={x + bw * 0.95} y2={T + H - th} stroke="#ff6b6b" strokeWidth="1.6" strokeDasharray="3 2" /><text x={x + bw / 2} y={T + H + 12} fontSize={keys.length > 6 ? 8 : 10} fill="#cfd6ea" textAnchor="middle">{faces[i]}</text></g>); })}
+        <text x="160" y="12" fontSize="9" fill="#cfd6ea" textAnchor="middle">فراوانی نسبی (ستون) و احتمال نظری (خط‌چین قرمز)</text>
+        <text x="160" y="182" fontSize="9" fill="#ffd166" textAnchor="middle">تعداد پرتاب: {vlabFaN(n)}</text>
+      </svg>
+      <div className="vlab-controls"><div className="vlab-ctrl-col" style={{ flex: 1 }}>
+        <div className="vlab-btn-row">
+          <button className="vlab-btn" style={mode === "coin" ? { outline: "2px solid #e0a83e" } : null} onClick={() => reset("coin")}>🪙 سکه</button>
+          <button className="vlab-btn" style={mode === "die" ? { outline: "2px solid #e0a83e" } : null} onClick={() => reset("die")}>🎲 یک تاس</button>
+          <button className="vlab-btn" style={mode === "dice2" ? { outline: "2px solid #e0a83e" } : null} onClick={() => reset("dice2")}>🎲🎲 مجموع دو تاس</button>
+        </div>
+        <div className="vlab-btn-row">
+          {[1, 10, 100, 1000].map((m) => (<button key={m} className="vlab-btn" onClick={() => throwN(m)}>{vlabFaN(m)} بار بینداز</button>))}
+          <button className="vlab-btn" onClick={() => reset(mode)}>پاک‌کردن</button>
+        </div>
+        {mode === "dice2" ? (<div><label className="vlab-ctrl-label">مجموع موردنظر برای محاسبه: {vlabFaN(target)}</label><VlabRange min="2" max="12" step="1" value={target} onChange={(e) => setTarget(+e.target.value)} /></div>) : null}
+      </div></div>
+      <div className="vlab-readout">
+        {n === 0 ? "چند بار بینداز. با تعداد کم، ستون‌ها نامنظم‌اند؛ با تعداد زیاد، آن‌ها به خط‌چین نزدیک می‌شوند (قانون اعداد بزرگ)." : `${last != null ? "آخرین پرتاب: " + (mode === "coin" ? (last === "H" ? "شیر" : "خط") : vlabFaN(last)) + ". " : ""}در ${vlabFaN(n)} پرتاب، فراوانی نسبی «${mode === "coin" ? "شیر" : vlabFaN(tk)}» برابر ${vlabMFa(freq(tk), 3)} شد و احتمال نظری ${vlabMFa(pT, 3)} است؛ اختلاف ${vlabMFa(Math.abs(freq(tk) - pT), 3)}.`}
+      </div>
+      <VlabFormulaCheck title="احتمال نظری" fa={mode === "dice2" ? "احتمال = تعداد حالت‌های مطلوب ÷ ۳۶ حالت" : mode === "die" ? "احتمال = ۱ ÷ ۶" : "احتمال = ۱ ÷ ۲"} en="P = favorable / total" legend={mode === "dice2" ? `برای مجموع ${vlabFaN(target)} چند زوج (تاس اول، تاس دوم) داریم؟ آن را بر ۳۶ تقسیم کن.` : "همه‌ی حالت‌ها هم‌شانس‌اند؛ پس یک حالت مطلوب را بر کل حالت‌ها تقسیم کن."} subst={mode === "dice2" ? `P = ${vlabFaN(Math.round(pT * 36))} ÷ ۳۶` : mode === "die" ? "P = ۱ ÷ ۶" : "P = ۱ ÷ ۲"} answer={pT} unit="" decimals={3} />
+      <VlabEverydayCard title="پیش‌بینی هوا و بیمه" text="شرکت‌های بیمه نمی‌دانند کدام خانه آتش می‌گیرد، اما از روی میلیون‌ها پرونده فراوانی نسبی را می‌دانند و همان را احتمال می‌گیرند. هرچه داده بیشتر باشد، حدس دقیق‌تر است؛ دقیقاً مثل ستون‌هایی که با پرتاب بیشتر به خط‌چین می‌رسند.">
+        <rect x="18" y="38" width="22" height="30" fill="#8aa7d8" /><rect x="48" y="26" width="22" height="42" fill="#5b82c6" /><rect x="78" y="32" width="22" height="36" fill="#8aa7d8" />
+        <path d="M10,34 H110" stroke="#d83a3a" strokeWidth="1.5" strokeDasharray="4 3" />
+        <path d="M6,72 H114" stroke="#999" strokeWidth="1" />
+      </VlabEverydayCard>
+    </div>
+  );
+}
+
 const VLAB_COMPONENTS = {
   lever: VlabLeverExperiment,
   pendulum: VlabPendulumExperiment,
@@ -32692,6 +32900,9 @@ const VLAB_COMPONENTS = {
   "atomic-models": VlabAtomicModelsExperiment,
   "unit-circle": VlabUnitCircleExperiment,
   "tangent-slope": VlabTangentSlopeExperiment,
+  "function-transform": VlabFunctionTransformExperiment,
+  "limit-approach": VlabLimitApproachExperiment,
+  "coin-dice": VlabCoinDiceExperiment,
 };
 
 function StudentVirtualLabView({ onBack, grade, studentCode, schoolCode }) {

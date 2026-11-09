@@ -23151,6 +23151,51 @@ const VLAB_EXPERIMENTS = [
     intro: "نقطه‌ی دما و مقدار نمک را روی نمودار بکش؛ محلول را سرد کن و ببین بلور رسوب می‌کند.",
     tools: ["نمودار انحلال‌پذیری", "بشر", "بلور"],
   },
+  {
+    id: "radioactive-decay",
+    subject: "شیمی",
+    level: "متوسطه دوم",
+    title: "نیمه‌عمر و فروپاشی پرتوزا",
+    icon: "☢️",
+    intro: "صد اتم پرتوزا را ببین که یکی‌یکی فروپاشی می‌کنند؛ زمان را بکش و منحنی واقعی را با پیش‌بینی نیمه‌عمر مقایسه کن.",
+    tools: ["۱۰۰ اتم", "نمودار", "نیمه‌عمر"],
+  },
+  {
+    id: "metal-displacement",
+    subject: "شیمی",
+    level: "متوسطه دوم",
+    title: "واکنش‌پذیری فلزات",
+    icon: "🔩",
+    intro: "تیغه‌های منیزیم، روی، آهن، مس و نقره را در محلول فلزها بینداز و ببین کدام فلز دیگری را جابه‌جا می‌کند.",
+    tools: ["۵ تیغه‌ی فلزی", "۵ لوله‌ی آزمایش"],
+  },
+  {
+    id: "rusting-iron",
+    subject: "شیمی",
+    level: "متوسطه اول",
+    title: "زنگ زدن آهن",
+    icon: "🧲",
+    intro: "میخ آهنی را در پنج شرایط مقایسه کن و زمان را جلو ببر تا ببینی زنگ در چه شرایطی و با چه سرعتی می‌زند.",
+    tools: ["۵ لوله", "میخ آهنی", "خط زمان"],
+  },
+  {
+    id: "paper-chromatography",
+    subject: "شیمی",
+    level: "متوسطه اول",
+    title: "کروماتوگرافی کاغذی",
+    icon: "🖍️",
+    intro: "آب را روی کاغذ بالا ببر تا رنگ جوهر قلم‌ها به رنگ‌دانه‌هایش جدا شود؛ جوهر مجهول را مثل کارآگاه شناسایی کن.",
+    tools: ["کاغذ", "شش جوهر", "آب"],
+  },
+  {
+    id: "galvanic-cell",
+    subject: "شیمی",
+    level: "متوسطه دوم",
+    title: "پیل گالوانی (باتری)",
+    icon: "🔋",
+    intro: "دو فلز را در دو لیوان بینداز، ولتاژ پیل را بخوان و جریان الکترون‌ها از آند به کاتد را تماشا کن.",
+    tools: ["دو لیوان", "پل نمکی", "ولت‌سنج"],
+  },
 ];
 
 function vlabClamp(v, min, max) {
@@ -30729,6 +30774,362 @@ function VlabSolubilityExperiment({ onReading }) {
   );
 }
 
+function vlabLerpHex(a, b, f) {
+  const pa = [1, 3, 5].map((i) => parseInt(a.slice(i, i + 2), 16)), pb = [1, 3, 5].map((i) => parseInt(b.slice(i, i + 2), 16));
+  return "rgb(" + [0, 1, 2].map((k) => Math.round(pa[k] + (pb[k] - pa[k]) * Math.max(0, Math.min(1, f)))).join(",") + ")";
+}
+const VLAB_METALS = [
+  { k: "Mg", n: "منیزیم", col: "#d7dce6", lv: 5, E: -2.37, M: 24.3, z: 2, ion: "#dbe6f2", ionn: "منیزیم سولفات", salt: "MgSO₄" },
+  { k: "Zn", n: "روی", col: "#a9b3c3", lv: 4, E: -0.76, M: 65.4, z: 2, ion: "#dbe6f2", ionn: "روی سولفات", salt: "ZnSO₄" },
+  { k: "Fe", n: "آهن", col: "#6f7685", lv: 3, E: -0.44, M: 55.8, z: 2, ion: "#bfe3b4", ionn: "آهن(II) سولفات", salt: "FeSO₄" },
+  { k: "Cu", n: "مس", col: "#c97a4a", lv: 2, E: 0.34, M: 63.5, z: 2, ion: "#3a7fe0", ionn: "مس(II) سولفات", salt: "CuSO₄" },
+  { k: "Ag", n: "نقره", col: "#e8eef5", lv: 1, E: 0.8, M: 107.9, z: 1, ion: "#e6eef6", ionn: "نقره نیترات", salt: "AgNO₃" },
+];
+
+function VlabRadioDecayExperiment({ onReading }) {
+  const ISO = [{ n: "کربن ۱۴", T: 5730, u: "سال", note: "تاریخ‌گذاری باستان‌شناسی" }, { n: "ید ۱۳۱", T: 8.02, u: "روز", note: "درمان غده‌ی تیروئید" }, { n: "تکنسیم ۹۹ام", T: 6, u: "ساعت", note: "تصویربرداری پزشکی" }, { n: "اورانیم ۲۳۸", T: 4.47, u: "میلیارد سال", note: "عمر زمین و سنگ‌ها" }];
+  const [ii, setIi] = useState(0), [x, setX] = useState(1), [seed, setSeed] = useState(7), [run, setRun] = useState(false);
+  const xRef = React.useRef(0); xRef.current = x;
+  const dec = React.useMemo(() => {
+    let a = seed * 2654435761 >>> 0; const rnd = () => { a = (a + 0x6d2b79f5) >>> 0; let t = a; t = Math.imul(t ^ (t >>> 15), t | 1); t ^= t + Math.imul(t ^ (t >>> 7), t | 61); return ((t ^ (t >>> 14)) >>> 0) / 4294967296; };
+    return Array.from({ length: 100 }).map(() => -Math.log(1 - rnd() * 0.999999) / Math.LN2);
+  }, [seed]);
+  const cnt = (v) => dec.reduce((s, t) => s + (t > v ? 1 : 0), 0);
+  const GX0 = 176, GX1 = 304, GY0 = 36, GY1 = 140, gx = (v) => GX0 + (v / 6) * (GX1 - GX0), gy = (c) => GY1 - (c / 100) * (GY1 - GY0);
+  const { svgRef, startDrag } = useVlabDrag((id, p) => { setRun(false); setX(Math.max(0, Math.min(6, Math.round(((p.x - GX0) / (GX1 - GX0)) * 6 * 20) / 20))); });
+  useEffect(() => {
+    if (!run) return;
+    let raf, last = null;
+    const step = (t) => { if (last !== null) { const nx = Math.min(6, xRef.current + ((t - last) / 1000) * 0.75); setX(nx); xRef.current = nx; if (nx >= 6) { setRun(false); return; } } last = t; raf = requestAnimationFrame(step); };
+    raf = requestAnimationFrame(step);
+    return () => cancelAnimationFrame(raf);
+  }, [run]);
+  const iso = ISO[ii], xr = Math.round(x * 100) / 100, N = cnt(x), th = 100 * Math.pow(0.5, x);
+  useEffect(() => {
+    if (onReading) onReading(`${iso.n} | ${xr} نیمه‌عمر | باقی‌مانده: ${N} از ۱۰۰ | نظری: ${th.toFixed(1)}`);
+    // eslint-disable-next-line
+  }, [ii, Math.round(x * 4), seed]);
+  const meas = Array.from({ length: 121 }).map((_, i) => gx(i * 0.05) + "," + gy(cnt(i * 0.05))).join(" ");
+  const theo = Array.from({ length: 61 }).map((_, i) => gx(i * 0.1) + "," + gy(100 * Math.pow(0.5, i * 0.1))).join(" ");
+  const fmt = (v) => (v >= 100 ? v.toFixed(0) : v >= 10 ? v.toFixed(1) : v.toFixed(2));
+  const timeTxt = fmt(xr * iso.T) + " " + iso.u;
+  return (
+    <div className="vlab-exp">
+      <svg ref={svgRef} viewBox="0 0 320 196" className="vlab-svg" style={{ background: "#03060f", borderRadius: "10px", touchAction: "none" }}>
+        <text x="76" y="24" fontSize="9" fill="#9fb0e0" textAnchor="middle">{"۱۰۰ اتم " + iso.n}</text>
+        {dec.map((t, i) => { const alive = t > x; return <circle key={i} cx={22 + (i % 10) * 12} cy={36 + Math.floor(i / 10) * 12} r="4.4" fill={alive ? "#7be0a4" : "#2a3350"} stroke={alive ? "#d7ffe8" : "#3a4466"} strokeWidth="0.8" />; })}
+        <rect x={GX0} y={GY0} width={GX1 - GX0} height={GY1 - GY0} fill="none" stroke="#27324f" />
+        {[0, 1, 2, 3, 4, 5, 6].map((v) => <g key={v}><line x1={gx(v)} y1={GY1} x2={gx(v)} y2={GY1 + 3} stroke="#6f7fa8" /><text x={gx(v)} y={GY1 + 12} fontSize="7.5" fill="#9fb0e0" textAnchor="middle" style={{ direction: "ltr", unicodeBidi: "isolate" }}>{v}</text></g>)}
+        {[0, 50, 100].map((v) => <text key={v} x={GX0 - 4} y={gy(v) + 3} fontSize="7.5" fill="#9fb0e0" textAnchor="end" style={{ direction: "ltr", unicodeBidi: "isolate" }}>{v}</text>)}
+        <polyline points={theo} fill="none" stroke="#ffd98a" strokeWidth="1.2" strokeDasharray="4 3" /><polyline points={meas} fill="none" stroke="#7be0a4" strokeWidth="1.8" />
+        <line x1={gx(x)} y1={GY0} x2={gx(x)} y2={GY1} stroke="#ffffff55" strokeDasharray="2 2" /><circle cx={gx(x)} cy={gy(N)} r="5" fill="#7be0a4" stroke="#fff" /><circle cx={gx(x)} cy={gy(th)} r="3.4" fill="#ffd98a" stroke="#fff" />
+        <rect x={GX0 - 4} y={GY0 - 6} width={GX1 - GX0 + 8} height={GY1 - GY0 + 12} fill="transparent" onPointerDown={startDrag("t")} style={{ cursor: "ew-resize", touchAction: "none" }} />
+        <text x={(GX0 + GX1) / 2} y="26" fontSize="8" fill="#9fb0e0" textAnchor="middle">اتم‌های باقی‌مانده</text><text x={(GX0 + GX1) / 2} y={GY1 + 24} fontSize="8" fill="#9fb0e0" textAnchor="middle">زمان (برحسب نیمه‌عمر)</text>
+        <text x="160" y="166" fontSize="10" fill="#ffd98a" textAnchor="middle"><tspan style={{ direction: "ltr", unicodeBidi: "isolate" }}>{fmt(xr * iso.T)}</tspan><tspan> {iso.u}  </tspan><tspan style={{ direction: "ltr", unicodeBidi: "isolate" }}>{"(" + xr + " T½)"}</tspan></text>
+        <text x="160" y="186" fontSize="8" fill="#6f7fa8" textAnchor="middle">روی نمودار بکش تا زمان جلو برود؛ سبز = واقعی، زرد خط‌چین = پیش‌بینی نظری</text>
+      </svg>
+      <VlabMeterRow height={150} meters={[{ label: "نیمه‌عمر گذشته", unit: "", value: xr, ranges: [2, 6], maj: 5, decimals: 2 }, { label: "اتم باقی‌مانده (واقعی)", unit: "", value: N, ranges: [50, 100], maj: 5, decimals: 0 }, { label: "پیش‌بینی نظری", unit: "", value: th, ranges: [50, 100], maj: 5, decimals: 1 }]} />
+      <div className="vlab-controls"><div className="vlab-ctrl-col" style={{ flex: 1 }}>
+        <div style={{ display: "flex", gap: "6px", flexWrap: "wrap", marginBottom: "6px" }}>{ISO.map((o, i) => <button key={i} className="vlab-btn" style={{ background: i === ii ? "#ffd98a" : undefined, color: i === ii ? "#222" : undefined }} onClick={() => setIi(i)}>{o.n}</button>)}</div>
+        <label className="vlab-ctrl-label">زمان (نیمه‌عمر): {xr}</label><VlabRange min="0" max="6" step="0.05" value={x} onChange={(e) => { setRun(false); setX(+e.target.value); }} />
+        <div style={{ display: "flex", gap: "6px", marginTop: "6px" }}><button className="vlab-btn" onClick={() => { if (x >= 6) { setX(0); xRef.current = 0; } setRun(!run); }}>{run ? "⏸ ایست" : "▶ پخش"}</button><button className="vlab-btn" onClick={() => { setRun(false); setX(0); setSeed((s) => s + 1); }}>🎲 نمونه‌ی تازه</button></div>
+      </div></div>
+      <div className="vlab-readout">نیمه‌عمر {iso.n} برابر {iso.T} {iso.u} است. هر نیمه‌عمر، نیمی از اتم‌های باقی‌مانده فروپاشیده می‌شود. اتم‌ها تصادفی فروپاشی می‌کنند، پس شمارش واقعی (سبز) کمی با پیش‌بینی (زرد) فرق دارد؛ نمونه‌ی بزرگ‌تر به پیش‌بینی نزدیک‌تر است. کاربرد: {iso.note}.</div>
+      <VlabFormulaCheck title="تعداد اتم‌های باقی‌مانده" fa="باقی‌مانده = اتم‌های اول × (یک‌دوم) به توان تعداد نیمه‌عمرها" en="N = N₀ (1/2)ⁿ" legend="۱۰۰ اتم در آغاز؛ n همان شماره‌ی نیمه‌عمر روی شمارنده است" subst={`N = 100 × (1/2)^${xr} = ?`} label="N:" answer={100 * Math.pow(0.5, xr)} unit="" decimals={1} />
+      <VlabFormulaCheck title="زمان گذشته" fa="زمان = تعداد نیمه‌عمرها × نیمه‌عمر ایزوتوپ" en="t = n × T½" legend={`نیمه‌عمر ${iso.n} = ${iso.T} ${iso.u}`} subst={`t = ${xr} × ${iso.T} = ?`} label="t:" answer={xr * iso.T} unit={iso.u} decimals={2} />
+      <VlabEverydayCard title="سن مومیایی و تصویربرداری پزشکی" text="موجودات زنده کربن ۱۴ جذب می‌کنند؛ پس از مرگ، نصف آن هر ۵۷۳۰ سال از بین می‌رود. باستان‌شناس با شمردن آن، سن استخوان و چوب را می‌فهمد. پزشکی هم از تکنسیم ۹۹ام با نیمه‌عمر کوتاه ۶ ساعته استفاده می‌کند تا در بدن بیمار زود تمام شود.">
+        <path d="M30,66 Q22,28 60,24 Q98,28 90,66 Z" fill="#d9b88a" stroke="#8a6a3a" strokeWidth="2" /><rect x="48" y="14" width="24" height="12" rx="3" fill="#d9b88a" stroke="#8a6a3a" strokeWidth="2" />
+        <text x="60" y="50" fontSize="10" fill="#6a4a1a" textAnchor="middle" style={{ direction: "ltr", unicodeBidi: "isolate" }}>¹⁴C</text>
+      </VlabEverydayCard>
+    </div>
+  );
+}
+
+function VlabMetalDisplacementExperiment({ onReading }) {
+  const M = VLAB_METALS, TX = (i) => 36 + 62 * i, CLEAR = "#d8e6f4";
+  const [tubes, setTubes] = useState([null, null, null, null, null]);
+  const [prog, setProg] = useState([0, 0, 0, 0, 0]);
+  const [last, setLast] = useState(null), [ghost, setGhost] = useState(null);
+  const gRef = React.useRef(null), tRef = React.useRef([null, null, null, null, null]), pRef = React.useRef([0, 0, 0, 0, 0]);
+  const reacts = (ti, mi) => mi !== null && mi !== undefined && M[mi].lv > M[ti].lv;
+  const { svgRef, startDrag } = useVlabDrag((id, pt) => { gRef.current = { m: +id.slice(1), x: pt.x, y: pt.y }; setGhost({ ...gRef.current }); }, () => {
+    const g = gRef.current;
+    if (g && g.y > 66) { const ti = Math.round((g.x - 36) / 62); if (ti >= 0 && ti < 5 && Math.abs(g.x - TX(ti)) < 31) { tRef.current = tRef.current.map((v, i) => (i === ti ? g.m : v)); pRef.current = pRef.current.map((v, i) => (i === ti ? 0 : v)); setTubes(tRef.current); setProg(pRef.current); setLast({ t: ti, m: g.m }); } }
+    gRef.current = null; setGhost(null);
+  });
+  useEffect(() => {
+    let raf, lt = null;
+    const step = (t) => {
+      if (lt !== null) { const dt = Math.min(0.05, (t - lt) / 1000); let ch = false; pRef.current = pRef.current.map((v, i) => { if (reacts(i, tRef.current[i]) && v < 1) { ch = true; return Math.min(1, v + dt / 3); } return v; }); if (ch) setProg(pRef.current); }
+      lt = t; raf = requestAnimationFrame(step);
+    };
+    raf = requestAnimationFrame(step);
+    return () => cancelAnimationFrame(raf);
+    // eslint-disable-next-line
+  }, []);
+  const clear = () => { tRef.current = [null, null, null, null, null]; pRef.current = [0, 0, 0, 0, 0]; setTubes(tRef.current); setProg(pRef.current); setLast(null); };
+  const lr = last ? reacts(last.t, last.m) : false, sIdx = last && lr ? last.t : 3;
+  const cntR = tubes.filter((m, i) => reacts(i, m)).length;
+  useEffect(() => {
+    if (onReading && last) onReading(`${M[last.m].n} در ${M[last.t].ionn}: ${lr ? "واکنش می‌دهد" : "واکنش نمی‌دهد"}`);
+    // eslint-disable-next-line
+  }, [last]);
+  const eq = (m, s) => (s.k === "Ag" ? `${m.k} + 2AgNO₃ → ${m.k}(NO₃)₂ + 2Ag` : `${m.k} + ${s.salt} → ${m.k}SO₄ + ${s.k}`);
+  const tubeOutline = (cx) => `M${cx - 17},84 V166 Q${cx - 17},178 ${cx},178 Q${cx + 17},178 ${cx + 17},166 V84`;
+  return (
+    <div className="vlab-exp">
+      <svg ref={svgRef} viewBox="0 0 320 232" className="vlab-svg" style={{ background: "#03060f", borderRadius: "10px", touchAction: "none" }}>
+        <rect x="8" y="8" width="304" height="62" rx="10" fill="#0d1428" stroke="#27324f" />
+        <text x="160" y="22" fontSize="8" fill="#9fb0e0" textAnchor="middle">تیغه‌های فلزی؛ یکی را بگیر و داخل یک لوله بینداز</text>
+        {M.map((m, i) => (
+          <g key={i}>
+            <rect x={TX(i) - 5} y="28" width="10" height="30" rx="2" fill={m.col} stroke="#fff" strokeWidth="0.8" pointerEvents="none" />
+            <text x={TX(i)} y="67" fontSize="8" fill="#ffd98a" textAnchor="middle">{m.n}</text>
+            <rect x={TX(i) - 18} y="24" width="36" height="42" fill="transparent" onPointerDown={startDrag("m" + i)} style={{ cursor: "grab", touchAction: "none" }} />
+          </g>
+        ))}
+        {M.map((s, ti) => {
+          const cx = TX(ti), mi = tubes[ti], r = mi !== null && reacts(ti, mi), pg = prog[ti];
+          const liq = vlabLerpHex(s.ion, CLEAR, r ? pg : 0);
+          return (
+            <g key={ti}>
+              <path d={`M${cx - 16},112 H${cx + 16} V166 Q${cx + 16},177 ${cx},177 Q${cx - 16},177 ${cx - 16},166 Z`} fill={liq} opacity="0.85" />
+              {mi !== null ? <g>
+                <rect x={cx - 4.5} y="80" width="9" height="84" rx="2" fill={M[mi].col} stroke="#fff" strokeWidth="0.6" />
+                {r ? <rect x={cx - 4.5} y="112" width="9" height="52" rx="2" fill={s.col} opacity={pg * 0.95} /> : null}
+                {r ? Array.from({ length: Math.round(pg * 10) }).map((_, k) => <circle key={k} cx={cx + (k % 2 ? 7 : -7) + ((k * 3) % 4) - 1} cy={118 + k * 5} r="1.8" fill={s.col} />) : null}
+              </g> : null}
+              <path d={tubeOutline(cx)} fill="none" stroke="#9fb0e0" strokeWidth="2" />
+              <text x={cx} y="193" fontSize="7.5" fill="#9fb0e0" textAnchor="middle">{s.ionn}</text>
+              {mi !== null ? <text x={cx} y="205" fontSize="8" fill={r ? "#7be0a4" : "#ff9a9a"} textAnchor="middle">{r ? "واکنش داد" : "بدون واکنش"}</text> : null}
+            </g>
+          );
+        })}
+        {ghost ? <rect x={ghost.x - 5} y={ghost.y - 16} width="10" height="32" rx="2" fill={M[ghost.m].col} stroke="#fff" opacity="0.92" pointerEvents="none" /> : null}
+        <text x="160" y="224" fontSize="8" fill="#6f7fa8" textAnchor="middle">در هر لوله یک محلول فلزی است؛ تیغه‌ی فعال‌تر فلز محلول را بیرون می‌راند</text>
+      </svg>
+      <VlabMeterRow height={150} meters={[{ label: "لوله‌ی واکنش‌دهنده", unit: "", value: cntR, ranges: [5], maj: 5, decimals: 0 }, { label: "فلز رسوب‌کرده (آخرین)", unit: "g", value: last && lr ? 0.1 * M[last.t].M * prog[last.t] : 0, ranges: [2, 5, 12], maj: 5, decimals: 2 }]} />
+      <div className="vlab-controls"><div className="vlab-ctrl-col" style={{ flex: 1 }}><button className="vlab-btn" onClick={clear}>🧹 همه را خالی کن</button></div></div>
+      <div className="vlab-readout">{last ? <span><b>{M[last.m].n}</b> در <b>{M[last.t].ionn}</b>: {lr ? `${M[last.m].n} فعال‌تر است و فلز ${M[last.t].n} را از محلول جدا می‌کند. ` : `${M[last.m].n} فعال‌تر از ${M[last.t].n} نیست، پس واکنشی رخ نمی‌دهد. `}{lr ? <span style={{ direction: "ltr", unicodeBidi: "isolate", display: "inline-block" }}>{eq(M[last.m], M[last.t])}</span> : null}</span> : "ترتیب فعالی: منیزیم > روی > آهن > مس > نقره. تیغه‌ای را در لوله بینداز و نتیجه را ببین."}</div>
+      <VlabFormulaCheck title="جرم فلز رسوب‌کرده" fa="جرم = مول یون × جرم مولی فلز ؛ هر لوله ۰٫۱ مول یون فلزی دارد" en="m = n × M" legend={`جرم مولی ${M[sIdx].n} = ${M[sIdx].M} گرم بر مول`} subst={`m = 0.1 × ${M[sIdx].M} = ?`} label="m:" answer={0.1 * M[sIdx].M} unit="g" decimals={2} />
+      <VlabFormulaCheck title="مول الکترون لازم" fa="مول الکترون = مول یون × بار یون" en="n(e⁻) = n(ion) × z" legend={`بار یون ${M[sIdx].n}: ${M[sIdx].z}+`} subst={`n(e⁻) = 0.1 × ${M[sIdx].z} = ?`} label="n:" answer={0.1 * M[sIdx].z} unit="mol" decimals={2} />
+      <VlabEverydayCard title="میخ آهنی در سم مسی و آبکاری" text="اگر میخ آهنی را در محلول مس سولفات (سم باغ) بگذاری، رویش مس سرخ می‌نشیند؛ چون آهن از مس فعال‌تر است. با همین اصل، فلزها را آبکاری می‌کنند و مس را از محلول معدن‌ها جدا می‌کنند.">
+        <path d="M30,10 V68 Q30,76 40,76 H80 Q90,76 90,68 V10" fill="#3a7fe0" opacity="0.5" stroke="#556" strokeWidth="2" /><rect x="56" y="4" width="8" height="58" rx="2" fill="#6f7685" /><rect x="56" y="30" width="8" height="32" rx="2" fill="#c97a4a" />
+      </VlabEverydayCard>
+    </div>
+  );
+}
+
+function VlabRustingExperiment({ onReading }) {
+  const TX = (i) => 36 + 62 * i;
+  const C = [{ n: "هوای خشک", rate: 0, why: "آب ندارد" }, { n: "آب جوشیده و روغن", rate: 0, why: "اکسیژن ندارد" }, { n: "آب و هوا", rate: 1, why: "آهن، آب و اکسیژن دارد" }, { n: "آب نمک", rate: 3, why: "نمک، زنگ را تندتر می‌کند" }, { n: "گالوانیزه در آب‌نمک", rate: 0.08, why: "روی، آهن را حفاظت می‌کند" }];
+  const [d, setD] = useState(12), [m, setM] = useState(5.6), [run, setRun] = useState(false);
+  const dRef = React.useRef(12); dRef.current = d;
+  const { svgRef, startDrag } = useVlabDrag((id, p) => { setRun(false); setD(Math.max(0, Math.min(30, Math.round(((p.x - 30) / 260) * 30)))); });
+  useEffect(() => {
+    if (!run) return;
+    let raf, last = null;
+    const step = (t) => { if (last !== null) { const nd = Math.min(30, dRef.current + ((t - last) / 1000) * 4); setD(nd); dRef.current = nd; if (nd >= 30) { setRun(false); return; } } last = t; raf = requestAnimationFrame(step); };
+    raf = requestAnimationFrame(step);
+    return () => cancelAnimationFrame(raf);
+  }, [run]);
+  const dd = Math.round(d), rs = C.map((c) => 1 - Math.exp((-c.rate * d) / 12));
+  const nFe = Math.round((m / 56) * 1000) / 1000, rustMass = (nFe / 2) * 160;
+  useEffect(() => {
+    if (onReading) onReading(`روز ${dd} | زنگ در آب: ${(rs[2] * 100).toFixed(0)}٪ | در آب‌نمک: ${(rs[3] * 100).toFixed(0)}٪`);
+    // eslint-disable-next-line
+  }, [dd]);
+  const tube = (cx) => `M${cx - 17},84 V166 Q${cx - 17},178 ${cx},178 Q${cx + 17},178 ${cx + 17},166 V84`;
+  return (
+    <div className="vlab-exp">
+      <svg ref={svgRef} viewBox="0 0 320 232" className="vlab-svg" style={{ background: "#03060f", borderRadius: "10px", touchAction: "none" }}>
+        {C.map((c, i) => {
+          const cx = TX(i), r = rs[i], water = i >= 1, liqCol = vlabLerpHex(i >= 3 ? "#b4d8f2" : "#9fd0f5", "#c9702a", r * 0.55);
+          return (
+            <g key={i}>
+              {water ? <path d={`M${cx - 16},110 H${cx + 16} V166 Q${cx + 16},177 ${cx},177 Q${cx - 16},177 ${cx - 16},166 Z`} fill={liqCol} opacity="0.7" /> : null}
+              {i === 1 ? <rect x={cx - 16} y="106" width="32" height="6" fill="#e8c14a" opacity="0.9" /> : null}
+              {i === 0 ? [0, 1, 2, 3, 4, 5].map((k) => <circle key={k} cx={cx - 11 + k * 4.4} cy="172" r="2.2" fill="#fff" />) : null}
+              {i >= 3 ? [0, 1, 2, 3].map((k) => <rect key={k} x={cx - 9 + k * 6} y="172" width="3" height="3" fill="#fff" />) : null}
+              <rect x={cx - 3} y="92" width="6" height="76" rx="2" fill={i === 4 ? "#c4d0de" : "#7d8696"} stroke="#222" strokeWidth="0.5" />
+              <ellipse cx={cx} cy="92" rx="6" ry="2.4" fill={i === 4 ? "#c4d0de" : "#7d8696"} />
+              <rect x={cx - 3} y="92" width="6" height="76" rx="2" fill="#b5501c" opacity={r * 0.95} />
+              {r > 0.25 && water ? [0, 1, 2].map((k) => <circle key={k} cx={cx - 6 + k * 6} cy={150 + ((k * 7) % 12) + r * 10} r="1.6" fill="#b5501c" opacity="0.8" />) : null}
+              <path d={tube(cx)} fill="none" stroke="#9fb0e0" strokeWidth="2" />
+              <text x={cx} y="194" fontSize="7" fill="#9fb0e0" textAnchor="middle">{c.n}</text>
+              <text x={cx} y="75" fontSize="11" fill={r > 0.5 ? "#ff9a5a" : r > 0.05 ? "#ffd98a" : "#7be0a4"} textAnchor="middle" style={{ direction: "ltr", unicodeBidi: "isolate" }}>{(r * 100).toFixed(0) + "%"}</text>
+              <text x={cx} y="86" fontSize="7" fill="#6f7fa8" textAnchor="middle">زنگ</text>
+            </g>
+          );
+        })}
+        <text x="160" y="32" fontSize="9" fill="#9fb0e0" textAnchor="middle">میخ آهنی پس از چند روز در پنج شرایط مختلف</text>
+        <text x="160" y="46" fontSize="8" fill="#6f7fa8" textAnchor="middle">(مدل ساده‌شده؛ زنگ برحسب درصد)</text>
+        <rect x="30" y="208" width="260" height="4" rx="2" fill="#27324f" /><rect x="30" y="208" width={(d / 30) * 260} height="4" rx="2" fill="#ffd98a" />
+        <circle cx={30 + (d / 30) * 260} cy="210" r="7" fill="#ffd98a" stroke="#fff" pointerEvents="none" /><circle cx={30 + (d / 30) * 260} cy="210" r="18" fill="transparent" onPointerDown={startDrag("d")} style={{ cursor: "ew-resize", touchAction: "none" }} />
+        <text x="160" y="228" fontSize="8" fill="#9fb0e0" textAnchor="middle" style={{ direction: "ltr", unicodeBidi: "isolate" }}>{"روز " + dd + " / 30  —  دکمه‌ی زرد را بکش"}</text>
+      </svg>
+      <VlabMeterRow height={150} meters={[{ label: "روز", unit: "", value: dd, ranges: [30], maj: 5, decimals: 0 }, { label: "زنگ در آب و هوا", unit: "%", value: rs[2] * 100, ranges: [100], maj: 5, decimals: 0 }, { label: "زنگ در آب‌نمک", unit: "%", value: rs[3] * 100, ranges: [100], maj: 5, decimals: 0 }]} />
+      <div className="vlab-controls"><div className="vlab-ctrl-col" style={{ flex: 1 }}>
+        <label className="vlab-ctrl-label">جرم میخ آهنی (g): {m}</label><VlabRange min="2" max="20" step="0.4" value={m} onChange={(e) => setM(+e.target.value)} />
+        <div style={{ display: "flex", gap: "6px", marginTop: "6px" }}><button className="vlab-btn" onClick={() => { if (d >= 30) { setD(0); dRef.current = 0; } setRun(!run); }}>{run ? "⏸ ایست" : "▶ زمان را جلو ببر"}</button><button className="vlab-btn" onClick={() => { setRun(false); setD(0); }}>↺ از اول</button></div>
+      </div></div>
+      <div className="vlab-readout">زنگ زدن فقط وقتی رخ می‌دهد که <b>آهن، آب و اکسیژن</b> هر سه باشند. {C.map((c, i) => <span key={i}>{i ? "؛ " : ""}{c.n}: {c.why}</span>)}.</div>
+      <VlabFormulaCheck title="مول آهن در میخ" fa="مول = جرم ÷ جرم مولی آهن (۵۶ گرم بر مول)" en="n = m / M" legend="جواب را تا سه رقم اعشار بنویس" subst={`n = ${m} ÷ 56 = ?`} label="n:" answer={m / 56} unit="mol" decimals={3} />
+      <VlabFormulaCheck title="جرم زنگ اگر همه‌ی میخ زنگ بزند" fa="چهار آهن + سه اکسیژن می‌شود دو زنگ؛ پس مول زنگ = نصف مول آهن ؛ جرم مولی زنگ ۱۶۰" en="4Fe + 3O₂ → 2Fe₂O₃" legend="زنگ از اکسیژن هم جرم می‌گیرد، برای همین سنگین‌تر از میخ است" subst={`m = ${nFe} ÷ 2 × 160 = ?`} label="m:" answer={rustMass} unit="g" decimals={1} />
+      <VlabEverydayCard title="نرده، ماشین و سطل گالوانیزه" text="رنگ‌کردن، روغن‌کاری یا پوشاندن آهن با لایه‌ی روی (گالوانیزه) آب و هوا را از آهن دور می‌کند. ماشین‌ها در شهرهای ساحلی چون هوای نمکین دارند، زودتر زنگ می‌زنند. برای همین زیر ماشین را ضدزنگ می‌زنند.">
+        {[0, 1, 2, 3, 4].map((i) => <rect key={i} x={12 + i * 22} y="12" width="6" height="56" fill={i === 2 ? "#b5501c" : "#556"} />)}
+        <rect x="6" y="24" width="108" height="5" fill="#556" /><rect x="6" y="50" width="108" height="5" fill="#556" /><circle cx="56" cy="26" r="5" fill="#b5501c" opacity="0.9" />
+      </VlabEverydayCard>
+    </div>
+  );
+}
+
+const VLAB_PENS = [
+  { n: "سیاه", c: [["y", 0.88], ["m", 0.62], ["c", 0.36]] }, { n: "سبز", c: [["y", 0.88], ["c", 0.46]] }, { n: "قهوه‌ای", c: [["y", 0.82], ["m", 0.58], ["c", 0.28]] }, { n: "بنفش", c: [["m", 0.64], ["c", 0.3]] }, { n: "نارنجی", c: [["y", 0.86], ["m", 0.6]] },
+];
+const VLAB_DYE = { y: "#f2d12a", m: "#e0368a", c: "#28b4d8" };
+const VLAB_DYE_N = { y: "زرد", m: "سرخابی", c: "فیروزه‌ای" };
+function VlabChromatographyExperiment({ onReading }) {
+  const [front, setFront] = useState(70), [run, setRun] = useState(false);
+  const [sel, setSel] = useState([0, 0]);
+  const [mystery] = useState(() => Math.floor(Math.random() * 5));
+  const [guess, setGuess] = useState(null);
+  const fRef = React.useRef(70); fRef.current = front;
+  const BL = 164, PPC = 14, LX = (i) => 50 + 44 * i;
+  const { svgRef, startDrag } = useVlabDrag((id, p) => { setRun(false); setFront(Math.max(0, Math.min(140, Math.round(BL - p.y)))); });
+  useEffect(() => {
+    if (!run) return;
+    let raf, last = null;
+    const step = (t) => { if (last !== null) { const nf = Math.min(140, fRef.current + ((t - last) / 1000) * 22); setFront(nf); fRef.current = nf; if (nf >= 140) { setRun(false); return; } } last = t; raf = requestAnimationFrame(step); };
+    raf = requestAnimationFrame(step);
+    return () => cancelAnimationFrame(raf);
+  }, [run]);
+  const lanes = [0, 1, 2, 3, 4, 5].map((i) => ({ pen: i < 5 ? i : mystery, label: i < 5 ? VLAB_PENS[i].n : "؟" }));
+  const sp = lanes[sel[0]] ? VLAB_PENS[lanes[sel[0]].pen].c[Math.min(sel[1], VLAB_PENS[lanes[sel[0]].pen].c.length - 1)] : ["y", 0.8];
+  const df = Math.round((front / PPC) * 10) / 10, ds = Math.round(((sp[1] * front) / PPC) * 10) / 10;
+  useEffect(() => {
+    if (onReading) onReading(`جبهه‌ی آب: ${df} cm | لکه‌ی انتخابی: ${VLAB_DYE_N[sp[0]]} | Rf = ${sp[1]}`);
+    // eslint-disable-next-line
+  }, [Math.round(front / 4), sel[0], sel[1]]);
+  const mk = (i) => lanes[i].pen;
+  return (
+    <div className="vlab-exp">
+      <svg ref={svgRef} viewBox="0 0 320 232" className="vlab-svg" style={{ background: "#03060f", borderRadius: "10px", touchAction: "none" }}>
+        <rect x="20" y="16" width="280" height="168" rx="4" fill="#f6f3ea" /><rect x="20" y={BL - front} width="280" height={184 - BL + front} fill="#dbe8f5" opacity="0.85" />
+        <line x1="20" y1={BL} x2="300" y2={BL} stroke="#9aa" strokeDasharray="3 3" /><line x1="20" y1={BL - front} x2="300" y2={BL - front} stroke="#3a7fe0" strokeWidth="1.5" />
+        {lanes.map((l, i) => (
+          <g key={i}>
+            <text x={LX(i)} y="12" fontSize="8" fill={i === 5 ? "#ffd98a" : "#9fb0e0"} textAnchor="middle">{l.label}</text>
+            {VLAB_PENS[mk(i)].c.map(([k, rf], j) => {
+              const y = BL - rf * front, sel1 = sel[0] === i && sel[1] === j;
+              return (
+                <g key={j}>
+                  <ellipse cx={LX(i)} cy={y} rx="9" ry="5.5" fill={VLAB_DYE[k]} style={{ mixBlendMode: "multiply" }} opacity="0.95" pointerEvents="none" />
+                  {sel1 ? <ellipse cx={LX(i)} cy={y} rx="12" ry="8.5" fill="none" stroke="#111" strokeWidth="1.3" strokeDasharray="2 2" pointerEvents="none" /> : null}
+                  <ellipse cx={LX(i)} cy={y} rx="13" ry="9" fill="transparent" onPointerDown={() => setSel([i, j])} style={{ cursor: "pointer" }} />
+                </g>
+              );
+            })}
+          </g>
+        ))}
+        <rect x="14" y="176" width="292" height="38" rx="6" fill="#3a7fe0" opacity="0.35" /><rect x="14" y="178" width="292" height="36" rx="6" fill="none" stroke="#9fb0e0" strokeWidth="2" />
+        <circle cx="12" cy={BL - front} r="7" fill="#3a7fe0" stroke="#fff" pointerEvents="none" /><circle cx="12" cy={BL - front} r="18" fill="transparent" onPointerDown={startDrag("front")} style={{ cursor: "ns-resize", touchAction: "none" }} />
+        <text x="160" y="200" fontSize="8" fill="#cfe3ff" textAnchor="middle">آب</text>
+        <text x="160" y="228" fontSize="8" fill="#6f7fa8" textAnchor="middle">دکمه‌ی آبی را بالا بکش؛ روی هر لکه بزن تا Rf آن اندازه‌گیری شود</text>
+      </svg>
+      <VlabMeterRow height={150} meters={[{ label: "پیشروی آب", unit: "cm", value: df, ranges: [5, 12], maj: 5, decimals: 1 }, { label: "پیشروی لکه", unit: "cm", value: ds, ranges: [5, 12], maj: 5, decimals: 1 }, { label: "Rf لکه", unit: "", value: sp[1], ranges: [1], maj: 5, decimals: 2 }]} />
+      <div className="vlab-controls"><div className="vlab-ctrl-col" style={{ flex: 1 }}>
+        <div style={{ display: "flex", gap: "6px" }}><button className="vlab-btn" onClick={() => { if (front >= 140) { setFront(0); fRef.current = 0; } setRun(!run); }}>{run ? "⏸ ایست" : "▶ آب را بالا ببر"}</button><button className="vlab-btn" onClick={() => { setRun(false); setFront(0); }}>↺ از اول</button></div>
+        <div style={{ marginTop: "8px", fontWeight: "bold" }}>🕵️ جوهر مجهول (ستون «؟») با کدام قلم یکی است؟</div>
+        <div style={{ display: "flex", gap: "6px", flexWrap: "wrap", marginTop: "4px" }}>{VLAB_PENS.map((p, i) => <button key={i} className="vlab-btn" style={{ background: guess === i ? (i === mystery ? "#7be0a4" : "#ff9a9a") : undefined }} onClick={() => setGuess(i)}>{p.n}</button>)}</div>
+      </div></div>
+      <div className="vlab-readout">{front < 8 ? "هنوز آب بالا نرفته؛ هر جوهر یک لکه است. آب را بالا ببر تا رنگ‌ها جدا شوند. " : ""}لکه‌ی انتخاب‌شده: رنگ <b>{VLAB_DYE_N[sp[0]]}</b> با Rf = {sp[1]}. رنگ‌هایی که Rf یکسان دارند همان ماده‌اند. {guess !== null ? (guess === mystery ? "آفرین! جوهر مجهول همان قلم " + VLAB_PENS[mystery].n + " است: الگوی لکه‌هایش دقیقاً یکی است." : "نه؛ الگوی لکه‌های مجهول را با قلم " + VLAB_PENS[guess].n + " دقیق مقایسه کن (جای هر لکه).") : ""}</div>
+      <VlabFormulaCheck title="ضریب نگهداری (Rf)" fa="Rf = فاصله‌ی پیمودهٔ لکه ÷ فاصله‌ی پیمودهٔ آب" en="Rf = d(spot) / d(solvent)" legend="هر دو فاصله از خط شروع اندازه گرفته می‌شود؛ آب را کمی بالا ببر" subst={`Rf = ${ds} ÷ ${df} = ?`} label="Rf:" answer={df > 0 ? ds / df : 0} unit="" decimals={2} />
+      <VlabFormulaCheck title="فاصله‌ی لکه از خط شروع" fa="فاصله = Rf × فاصله‌ی پیمودهٔ آب" en="d = Rf × d(solvent)" legend="Rf هر ماده در یک حلال همیشه ثابت است" subst={`d = ${sp[1]} × ${df} = ?`} label="d:" answer={sp[1] * df} unit="cm" decimals={1} />
+      <VlabEverydayCard title="تشخیص جوهر جعلی و رنگ خوراکی" text="پلیس با کروماتوگرافی جوهر امضای جعلی را از اصلی جدا می‌کند و آزمایشگاه‌ها رنگ غیرمجاز را در شیرینی و آب‌نبات پیدا می‌کنند. هر رنگ‌دانه الگوی لکه‌ی مخصوص خودش را دارد.">
+        <rect x="26" y="8" width="68" height="68" fill="#f6f3ea" stroke="#aaa" />{[0, 1, 2].map((i) => <g key={i}><ellipse cx={42 + i * 18} cy={58 - i * 6} rx="5" ry="3" fill="#f2d12a" opacity="0.9" /><ellipse cx={42 + i * 18} cy={44 - i * 4} rx="5" ry="3" fill="#e0368a" opacity="0.9" /><ellipse cx={42 + i * 18} cy={30 - i * 2} rx="5" ry="3" fill="#28b4d8" opacity="0.9" /></g>)}
+      </VlabEverydayCard>
+    </div>
+  );
+}
+
+function VlabGalvanicCellExperiment({ onReading }) {
+  const M = VLAB_METALS, BX = [75, 245];
+  const [ml, setMl] = useState([1, 3]), [min, setMin] = useState(30), [ph, setPh] = useState(0), [ghost, setGhost] = useState(null);
+  const gRef = React.useRef(null);
+  const { svgRef, startDrag } = useVlabDrag((id, pt) => { gRef.current = { m: +id.slice(1), x: pt.x, y: pt.y }; setGhost({ ...gRef.current }); }, () => {
+    const g = gRef.current;
+    if (g && g.y > 76 && g.y < 200) { const side = g.x < 160 ? 0 : 1; setMl((o) => o.map((v, i) => (i === side ? g.m : v))); }
+    gRef.current = null; setGhost(null);
+  });
+  useEffect(() => {
+    let raf, last = null;
+    const step = (t) => { if (last !== null) setPh((x) => (x + Math.min(0.05, (t - last) / 1000) * 0.9) % 1); last = t; raf = requestAnimationFrame(step); };
+    raf = requestAnimationFrame(step);
+    return () => cancelAnimationFrame(raf);
+  }, []);
+  const A = M[ml[0]], B = M[ml[1]], E = Math.abs(B.E - A.E), same = ml[0] === ml[1];
+  const an = A.E <= B.E ? 0 : 1, ca = 1 - an, Ma = M[ml[an]], Mc = M[ml[ca]];
+  const t = min * 60, I = 0.2, dmA = same ? 0 : (I * t * Ma.M) / (Ma.z * 96485), dmC = same ? 0 : (I * t * Mc.M) / (Mc.z * 96485);
+  useEffect(() => {
+    if (onReading) onReading(`آند: ${Ma.n} | کاتد: ${Mc.n} | ولتاژ: ${E.toFixed(2)} V`);
+    // eslint-disable-next-line
+  }, [ml]);
+  const path = [[BX[an], 82], [BX[an], 50], [BX[ca], 50], [BX[ca], 82]];
+  const seg = []; let tot = 0; for (let i = 0; i < 3; i++) { const l = Math.hypot(path[i + 1][0] - path[i][0], path[i + 1][1] - path[i][1]); seg.push(l); tot += l; }
+  const at = (u) => { let d = u * tot; for (let i = 0; i < 3; i++) { if (d <= seg[i]) { const f = d / seg[i]; return [path[i][0] + (path[i + 1][0] - path[i][0]) * f, path[i][1] + (path[i + 1][1] - path[i][1]) * f]; } d -= seg[i]; } return path[3]; };
+  const dots = same ? [] : [0, 1, 2, 3, 4, 5].map((k) => at((ph + k / 6) % 1));
+  const lampOn = !same && E >= 0.4;
+  const e2 = Math.round(E * 100) / 100, dmr = Math.round(dmA * 1000) / 1000;
+  return (
+    <div className="vlab-exp">
+      <svg ref={svgRef} viewBox="0 0 320 244" className="vlab-svg" style={{ background: "#03060f", borderRadius: "10px", touchAction: "none" }}>
+        <polyline points={path.map((p) => p.join(",")).join(" ")} fill="none" stroke="#c9d3ea" strokeWidth="2" />
+        <rect x="124" y="30" width="72" height="40" rx="8" fill="#0d1428" stroke={lampOn ? "#ffd98a" : "#556"} strokeWidth="2" />
+        <text x="160" y="46" fontSize="8" fill="#9fb0e0" textAnchor="middle">ولت‌سنج</text><text x="160" y="62" fontSize="13" fontWeight="bold" fill={same ? "#ff9a9a" : "#7be0a4"} textAnchor="middle" style={{ direction: "ltr", unicodeBidi: "isolate" }}>{e2.toFixed(2) + " V"}</text>
+        {lampOn ? <g><circle cx="160" cy="16" r="9" fill="#ffd98a" opacity="0.95" /><circle cx="160" cy="16" r="16" fill="#ffd98a" opacity="0.25" /></g> : <circle cx="160" cy="16" r="7" fill="#27324f" stroke="#556" />}
+        {dots.map((p, i) => <circle key={i} cx={p[0]} cy={p[1]} r="3" fill="#4aa3ff" stroke="#cfe6ff" strokeWidth="0.8" />)}
+        {[0, 1].map((s) => {
+          const mt = M[ml[s]], cx = BX[s];
+          return (
+            <g key={s}>
+              <path d={`M${cx - 46},100 V164 Q${cx - 46},174 ${cx - 36},174 H${cx + 36} Q${cx + 46},174 ${cx + 46},164 V100`} fill="none" stroke="#9fb0e0" strokeWidth="2" />
+              <rect x={cx - 45} y="122" width="90" height="51" fill={mt.ion} opacity="0.8" />
+              <rect x={cx - 5} y="82" width="10" height="82" rx="2" fill={mt.col} stroke="#fff" strokeWidth="0.8" />
+              {!same && s === ca ? <rect x={cx - 5} y="122" width="10" height="42" fill={mt.col} opacity="0.4" /> : null}
+              <text x={cx} y="188" fontSize="8.5" fill={same ? "#9fb0e0" : s === an ? "#ff9a9a" : "#8ab8ff"} textAnchor="middle">{same ? mt.n : s === an ? "آند (−)  " + mt.n : "کاتد (+)  " + mt.n}</text>
+              {!same ? <text x={cx} y="199" fontSize="8" fill="#9fb0e0" textAnchor="middle" style={{ direction: "ltr", unicodeBidi: "isolate" }}>{(s === an ? (10 - dmA).toFixed(3) : (10 + dmC).toFixed(3)) + " g"}</text> : null}
+            </g>
+          );
+        })}
+        <path d="M100,126 V108 Q100,100 108,100 H212 Q220,100 220,108 V126" fill="none" stroke="#e8d9a8" strokeWidth="9" opacity="0.9" strokeLinecap="round" />
+        <text x="160" y="96" fontSize="8" fill="#e8d9a8" textAnchor="middle">پل نمکی</text>
+        <rect x="8" y="206" width="304" height="34" rx="8" fill="#0d1428" stroke="#27324f" />
+        {M.map((m, i) => (
+          <g key={i}>
+            <rect x={36 + 62 * i - 4} y="212" width="8" height="18" rx="2" fill={m.col} stroke="#fff" strokeWidth="0.6" pointerEvents="none" />
+            <text x={36 + 62 * i + 16} y="226" fontSize="7.5" fill="#ffd98a" textAnchor="start" style={{ direction: "ltr" }} pointerEvents="none">{m.k}</text>
+            <rect x={36 + 62 * i - 18} y="208" width="40" height="30" fill="transparent" onPointerDown={startDrag("m" + i)} style={{ cursor: "grab", touchAction: "none" }} />
+          </g>
+        ))}
+        {ghost ? <rect x={ghost.x - 5} y={ghost.y - 16} width="10" height="32" rx="2" fill={M[ghost.m].col} stroke="#fff" opacity="0.92" pointerEvents="none" /> : null}
+      </svg>
+      <VlabMeterRow height={150} meters={[{ label: "ولتاژ پیل", unit: "V", value: E, ranges: [1, 2, 3.5], maj: 5, decimals: 2 }, { label: "کاهش جرم آند", unit: "mg", value: dmA * 1000, ranges: [100, 500, 2000], maj: 5, decimals: 0 }, { label: "افزایش جرم کاتد", unit: "mg", value: dmC * 1000, ranges: [100, 500, 2000], maj: 5, decimals: 0 }]} />
+      <div className="vlab-controls"><div className="vlab-ctrl-col" style={{ flex: 1 }}>
+        <label className="vlab-ctrl-label">مدت کار پیل (دقیقه): {min}</label><VlabRange min="1" max="120" step="1" value={min} onChange={(e) => setMin(+e.target.value)} />
+        <div style={{ fontSize: "12px", color: "#556" }}>جریان ثابت ۰٫۲ آمپر فرض شده. تیغه را از پایین بگیر و داخل یکی از دو لیوان بینداز.</div>
+      </div></div>
+      <div className="vlab-readout">{same ? "هر دو الکترود یک فلزند؛ اختلاف پتانسیل صفر است و جریانی نمی‌گذرد. یکی را عوض کن." : `الکترون‌ها از ${Ma.n} (آند؛ فعال‌تر) به ${Mc.n} (کاتد) می‌روند. آند حل می‌شود و کاهش جرم دارد؛ روی کاتد فلز می‌نشیند. ${lampOn ? "ولتاژ کافی است و لامپ روشن شد." : "ولتاژ کمتر از ۰٫۴ ولت است و لامپ روشن نمی‌شود."}`}</div>
+      <VlabFormulaCheck title="ولتاژ پیل گالوانی" fa="ولتاژ = پتانسیل کاتد منهای پتانسیل آند" en="E = E(cathode) − E(anode)" legend={`پتانسیل استاندارد: ${Mc.n} ${Mc.E} ولت ؛ ${Ma.n} ${Ma.E} ولت`} subst={`E = ${Mc.E} − (${Ma.E}) = ?`} label="E:" answer={Mc.E - Ma.E} unit="V" decimals={2} />
+      <VlabFormulaCheck title="کاهش جرم آند (قانون فارادی)" fa="جرم = جریان × زمان × جرم مولی ÷ (الکترون مبادله‌شده × ۹۶۴۸۵)" en="m = I t M / (n F)" legend={`${Ma.n}: جرم مولی ${Ma.M} و ${Ma.z} الکترون برای هر اتم؛ زمان به ثانیه`} subst={`m = 0.2 × ${t} × ${Ma.M} ÷ (${Ma.z} × 96485) = ?`} label="m:" answer={same ? 0 : (0.2 * t * Ma.M) / (Ma.z * 96485)} unit="g" decimals={3} />
+      <VlabEverydayCard title="باتری قلمی و باتری لیمویی" text="باتری‌ها همین دو فلز مختلف و یک محیط رسانا هستند. اگر یک میخ گالوانیزه و یک سکه‌ی مسی را در لیمو فرو کنی، حدود یک ولت می‌دهد و ساعت کوچک را راه می‌اندازد. وقتی باتری تمام می‌شود، آند به‌کلی مصرف شده است.">
+        <ellipse cx="60" cy="44" rx="34" ry="24" fill="#f4e04d" stroke="#b9a200" strokeWidth="2" /><rect x="40" y="14" width="4" height="30" fill="#a9b3c3" /><rect x="76" y="14" width="4" height="30" fill="#c97a4a" />
+        <path d="M42,14 V6 H78 V14" fill="none" stroke="#555" strokeWidth="1.5" /><circle cx="60" cy="6" r="3" fill="#ffd98a" />
+      </VlabEverydayCard>
+    </div>
+  );
+}
+
 const VLAB_COMPONENTS = {
   lever: VlabLeverExperiment,
   pendulum: VlabPendulumExperiment,
@@ -30796,6 +31197,11 @@ const VLAB_COMPONENTS = {
   "household-ph": VlabHouseholdPhExperiment,
   "baking-soda-vinegar": VlabBakingSodaExperiment,
   "solubility-curves": VlabSolubilityExperiment,
+  "radioactive-decay": VlabRadioDecayExperiment,
+  "metal-displacement": VlabMetalDisplacementExperiment,
+  "rusting-iron": VlabRustingExperiment,
+  "paper-chromatography": VlabChromatographyExperiment,
+  "galvanic-cell": VlabGalvanicCellExperiment,
 };
 
 function StudentVirtualLabView({ onBack, grade, studentCode, schoolCode }) {

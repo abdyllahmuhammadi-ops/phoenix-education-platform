@@ -1,7 +1,7 @@
 // ققنوس — Service Worker
 // هدف: نصب‌پذیرشدن سامانه روی صفحه‌ی اصلی گوشی (PWA) و کارکردن حداقلی آفلاین.
 // نسخه‌ی کش را هر بار که index.html تغییر مهمی می‌کند، تغییر بده تا کاربران نسخه‌ی تازه را بگیرند.
-const CACHE_VERSION = "phoenix-cache-v45";
+const CACHE_VERSION = "phoenix-cache-v46";
 const APP_SHELL = [
   "./",
   "./index.html",

@@ -23106,6 +23106,51 @@ const VLAB_EXPERIMENTS = [
     intro: "دو ماده‌ی هم‌جرم را با یک شعله گرم کن و ببین چرا ماسه زودتر از آب داغ می‌شود.",
     tools: ["دو نمونه", "شعله", "دماسنج"],
   },
+  {
+    id: "atom-builder",
+    subject: "شیمی",
+    level: "متوسطه اول",
+    title: "ساخت اتم (پروتون، نوترون، الکترون)",
+    icon: "⚛️",
+    intro: "پروتون، نوترون و الکترون را با انگشت داخل اتم بینداز و ببین چه عنصری ساخته می‌شود؛ ایزوتوپ و یون هم بساز.",
+    tools: ["پروتون", "نوترون", "الکترون", "لایه‌ها"],
+  },
+  {
+    id: "charles-law",
+    subject: "شیمی",
+    level: "متوسطه دوم",
+    title: "قانون شارل (گاز و دما)",
+    icon: "🎈",
+    intro: "پیستون گاز را بالا و پایین بکش و ببین دما و حجم چطور با هم تغییر می‌کنند؛ مولکول‌ها هم تندتر می‌شوند.",
+    tools: ["پیستون", "دماسنج", "نمودار"],
+  },
+  {
+    id: "household-ph",
+    subject: "شیمی",
+    level: "متوسطه اول",
+    title: "pH مواد خانگی",
+    icon: "🍋",
+    intro: "پروب pH را در آب‌لیمو، سرکه، شیر، صابون و سفیدکننده فرو ببر و با نشانگر جهانی اسیدی یا بازی بودن را ببین.",
+    tools: ["پروب pH", "نشانگر جهانی", "مواد خانگی"],
+  },
+  {
+    id: "baking-soda-vinegar",
+    subject: "شیمی",
+    level: "متوسطه اول",
+    title: "جوش‌شیرین و سرکه (گاز CO₂)",
+    icon: "🧪",
+    intro: "مقدار جوش‌شیرین و سرکه را انتخاب کن و ببین بادکنک چقدر پر می‌شود؛ ماده‌ی محدودکننده را پیدا کن.",
+    tools: ["ارلن", "بادکنک", "ترازو"],
+  },
+  {
+    id: "solubility-curves",
+    subject: "شیمی",
+    level: "متوسطه دوم",
+    title: "منحنی انحلال‌پذیری و بلورسازی",
+    icon: "💎",
+    intro: "نقطه‌ی دما و مقدار نمک را روی نمودار بکش؛ محلول را سرد کن و ببین بلور رسوب می‌کند.",
+    tools: ["نمودار انحلال‌پذیری", "بشر", "بلور"],
+  },
 ];
 
 function vlabClamp(v, min, max) {
@@ -30340,6 +30385,350 @@ function VlabSpecificHeatExperiment({ onReading }) {
   );
 }
 
+const VLAB_ATOM_EL = [
+  ["", "—", 0], ["H", "هیدروژن", 0], ["He", "هلیم", 2], ["Li", "لیتیم", 4], ["Be", "بریلیم", 5], ["B", "بور", 6], ["C", "کربن", 6], ["N", "نیتروژن", 7], ["O", "اکسیژن", 8],
+  ["F", "فلوئور", 10], ["Ne", "نئون", 10], ["Na", "سدیم", 12], ["Mg", "منیزیم", 12], ["Al", "آلومینیوم", 14], ["Si", "سیلیسیم", 14], ["P", "فسفر", 16], ["S", "گوگرد", 16], ["Cl", "کلر", 18], ["Ar", "آرگون", 22],
+];
+function VlabAtomBuilderExperiment({ onReading }) {
+  const [p, setP] = useState(6), [n, setN] = useState(6), [e, setE] = useState(6);
+  const [ghost, setGhost] = useState(null), [ph, setPh] = useState(0);
+  const gRef = React.useRef(null);
+  const CX = 160, CY = 92;
+  const { svgRef, startDrag } = useVlabDrag((id, pt) => { gRef.current = { kind: id, x: pt.x, y: pt.y }; setGhost({ kind: id, x: pt.x, y: pt.y }); }, (id) => {
+    const g = gRef.current;
+    if (g && Math.hypot(g.x - CX, g.y - CY) < 98) { if (id === "p") setP((v) => Math.min(18, v + 1)); else if (id === "n") setN((v) => Math.min(24, v + 1)); else setE((v) => Math.min(21, v + 1)); }
+    gRef.current = null; setGhost(null);
+  });
+  useEffect(() => {
+    let raf, last = null;
+    const step = (t) => { if (last !== null) setPh((x) => x + Math.min(0.05, (t - last) / 1000)); last = t; raf = requestAnimationFrame(step); };
+    raf = requestAnimationFrame(step);
+    return () => cancelAnimationFrame(raf);
+  }, []);
+  const A = p + n, q = p - e, el = VLAB_ATOM_EL[p] || VLAB_ATOM_EL[0];
+  const shells = [Math.min(e, 2), Math.min(Math.max(e - 2, 0), 8), Math.min(Math.max(e - 10, 0), 8), Math.max(e - 18, 0)];
+  const valence = e === 0 ? 0 : (shells[3] || shells[2] || shells[1] || shells[0]);
+  const RAD = [30, 50, 68, 84];
+  useEffect(() => {
+    if (onReading) onReading(`پروتون: ${p} | نوترون: ${n} | الکترون: ${e} | عنصر: ${el[1]} | بار: ${q}`);
+    // eslint-disable-next-line
+  }, [p, n, e]);
+  const kinds = []; { let pi = 0, ni = 0; while (pi < p || ni < n) { if (pi < p) { kinds.push("p"); pi++; } if (ni < n) { kinds.push("n"); ni++; } } }
+  const nuc = kinds.map((k, i) => { const r = 3.5 * Math.sqrt(i + 0.3), a = i * 2.39996; return <circle key={i} cx={CX + r * Math.cos(a)} cy={CY + r * Math.sin(a)} r="3.6" fill={k === "p" ? "#ff5a5a" : "#aab3c8"} stroke={k === "p" ? "#8a1d1d" : "#5b6479"} strokeWidth="0.6" />; });
+  const els = []; shells.forEach((c, si) => { for (let k = 0; k < c; k++) { const a = ph * (1.6 - si * 0.3) + (k * 2 * Math.PI) / c + si; els.push(<circle key={si + "-" + k} cx={CX + RAD[si] * Math.cos(a)} cy={CY + RAD[si] * Math.sin(a)} r="3.4" fill="#4aa3ff" stroke="#cfe6ff" strokeWidth="0.8" />); } });
+  const common = p >= 1 && n === el[2];
+  let iso = "";
+  if (p === 0) iso = "بدون پروتون، اتمی وجود ندارد؛ یک پروتون اضافه کن.";
+  else if (p === 1 && n === 1) iso = "دوتریوم: هیدروژن سنگین";
+  else if (p === 1 && n === 2) iso = "تریتیوم: هیدروژن پرتوزا";
+  else if (p === 6 && n === 8) iso = "کربن چهارده: پرتوزا و ابزار تاریخ‌گذاری باستان‌شناسان";
+  else if (common) iso = "رایج‌ترین و پایدارترین ایزوتوپ این عنصر";
+  else iso = "ایزوتوپ کمیاب یا ناپایدار";
+  const qtxt = q === 0 ? "اتم خنثی است (پروتون = الکترون)" : q > 0 ? `یون مثبت (کاتیون) با بار ${q}+ ؛ الکترون از دست داده` : `یون منفی (آنیون) با بار ${-q}− ؛ الکترون گرفته`;
+  const tray = [{ id: "p", x: 76, c: "#ff5a5a", s: "+", t: "پروتون" }, { id: "n", x: 160, c: "#aab3c8", s: "", t: "نوترون" }, { id: "e", x: 244, c: "#4aa3ff", s: "−", t: "الکترون" }];
+  const row = (lab, v, set, mx, col) => (
+    <div style={{ display: "flex", alignItems: "center", gap: "8px", margin: "4px 0" }}>
+      <span style={{ flex: 1, color: col, fontWeight: "bold" }}>{lab}: {v}</span>
+      <button className="vlab-btn" onClick={() => set(Math.max(0, v - 1))}>−</button>
+      <button className="vlab-btn" onClick={() => set(Math.min(mx, v + 1))}>+</button>
+    </div>
+  );
+  return (
+    <div className="vlab-exp">
+      <svg ref={svgRef} viewBox="0 0 320 232" className="vlab-svg" style={{ background: "#03060f", borderRadius: "10px", touchAction: "none" }}>
+        {RAD.map((r, i) => (i < 3 || shells[3] > 0 ? <circle key={i} cx={CX} cy={CY} r={r} fill="none" stroke={shells[i] > 0 ? "#3a4f86" : "#1b2438"} strokeWidth="1" strokeDasharray="3 3" /> : null))}
+        {nuc}{els}
+        <text x={CX} y={CY + 4} fontSize="0" fill="none">.</text>
+        <text x="14" y="22" fontSize="22" fontWeight="bold" fill="#ffd98a" style={{ direction: "ltr", unicodeBidi: "isolate" }}>{el[0]}</text>
+        <text x="26" y="38" fontSize="9" fill="#9fb0e0" textAnchor="middle">{el[1]}</text>
+        <text x="306" y="22" fontSize="11" fill={q === 0 ? "#7be0a4" : q > 0 ? "#ff9a9a" : "#8ab8ff"} textAnchor="end" style={{ direction: "ltr", unicodeBidi: "isolate" }}>{q === 0 ? "بار 0" : q > 0 ? "بار +" + q : "بار " + q}</text>
+        <rect x="8" y="190" width="304" height="40" rx="10" fill="#0d1428" stroke="#27324f" />
+        {tray.map((t) => (
+          <g key={t.id}>
+            <circle cx={t.x} cy="208" r="9" fill={t.c} stroke="#fff" strokeWidth="1.2" pointerEvents="none" />
+            <text x={t.x} y="212" fontSize="11" fontWeight="bold" fill="#0a1020" textAnchor="middle" pointerEvents="none">{t.s}</text>
+            <text x={t.x} y="226" fontSize="8" fill="#9fb0e0" textAnchor="middle" pointerEvents="none">{t.t}</text>
+            <circle cx={t.x} cy="210" r="22" fill="transparent" onPointerDown={startDrag(t.id)} style={{ cursor: "grab", touchAction: "none" }} />
+          </g>
+        ))}
+        {ghost ? <circle cx={ghost.x} cy={ghost.y} r="8" fill={ghost.kind === "p" ? "#ff5a5a" : ghost.kind === "n" ? "#aab3c8" : "#4aa3ff"} stroke="#fff" strokeWidth="1.5" opacity="0.92" pointerEvents="none" /> : null}
+        <text x="160" y="184" fontSize="8" fill="#6f7fa8" textAnchor="middle">ذره را از سینی بگیر و داخل اتم بینداز</text>
+      </svg>
+      <VlabMeterRow height={150} meters={[{ label: "عدد اتمی (پروتون)", unit: "", value: p, ranges: [10, 20], maj: 5, decimals: 0 }, { label: "عدد جرمی", unit: "", value: A, ranges: [20, 40], maj: 5, decimals: 0 }, { label: "الکترون لایه‌ی آخر", unit: "", value: valence, ranges: [8], maj: 5, decimals: 0 }]} />
+      <div className="vlab-controls"><div className="vlab-ctrl-col" style={{ flex: 1 }}>
+        {row("پروتون", p, setP, 18, "#ff7a7a")}{row("نوترون", n, setN, 24, "#c0c8dc")}{row("الکترون", e, setE, 21, "#7aa8ff")}
+        <div style={{ display: "flex", gap: "6px", flexWrap: "wrap", marginTop: "6px" }}>
+          <button className="vlab-btn" onClick={() => setE(p)}>اتم خنثی کن</button>
+          <button className="vlab-btn" onClick={() => { setP(6); setN(6); setE(6); }}>کربن</button>
+          <button className="vlab-btn" onClick={() => { setP(11); setN(12); setE(11); }}>سدیم</button>
+          <button className="vlab-btn" onClick={() => { setP(0); setN(0); setE(0); }}>پاک کن</button>
+        </div>
+      </div></div>
+      <div className="vlab-readout"><b>{p ? `${el[1]} (${el[0]})` : "—"}</b>{p ? <span> — عدد جرمی <span style={{ direction: "ltr", unicodeBidi: "isolate", display: "inline-block" }}>{A}</span>. </span> : " "}{p ? qtxt + ". " : ""}{iso}</div>
+      <VlabFormulaCheck title="عدد جرمی" fa="عدد جرمی = شمار پروتون‌ها + شمار نوترون‌ها" en="A = Z + N" legend="الکترون‌ها جرم بسیار ناچیز دارند و شمرده نمی‌شوند" subst={`A = ${p} + ${n} = ?`} label="A:" answer={A} unit="" decimals={0} />
+      <VlabFormulaCheck title="بار الکتریکی اتم یا یون" fa="بار = شمار پروتون‌ها منهای شمار الکترون‌ها" en="q = p − e" legend="مثبت یعنی الکترون از دست داده؛ منفی یعنی الکترون گرفته" subst={`q = ${p} − ${e} = ?`} label="q:" answer={q} unit="" decimals={0} />
+      <VlabEverydayCard title="نمک خوراکی و چراغ نئونی" text="اتم سدیم یک الکترون می‌دهد و کلر آن را می‌گیرد؛ دو یون مخالف هم را می‌ربایند و بلور نمک سفره می‌سازند. در چراغ نئونی، الکترون‌های گاز نئون برانگیخته می‌شوند و نور می‌دهند.">
+        <rect x="8" y="14" width="60" height="60" rx="6" fill="#f6f6f6" stroke="#bbb" />
+        {[0, 1, 2].map((i) => [0, 1, 2].map((j) => <circle key={i + "-" + j} cx={22 + i * 20} cy={28 + j * 20} r={(i + j) % 2 ? 7 : 5} fill={(i + j) % 2 ? "#3fa66a" : "#7a8ee6"} />))}
+        <rect x="86" y="14" width="26" height="60" rx="13" fill="none" stroke="#ff4d6a" strokeWidth="4" /><text x="99" y="48" fontSize="9" fill="#d12a48" textAnchor="middle">Ne</text>
+      </VlabEverydayCard>
+    </div>
+  );
+}
+
+function VlabCharlesLawExperiment({ onReading }) {
+  const [tc, setTc] = useState(25);
+  const X0 = 98, X1 = 222, YB = 190, KP = 36;
+  const Tk = tc + 273.15, V = 2 * (Tk / 273.15), H = V * 38;
+  const sim = React.useRef(null), TkRef = React.useRef(Tk), HRef = React.useRef(H);
+  TkRef.current = Tk; HRef.current = H;
+  const [, tick] = useState(0);
+  if (!sim.current) sim.current = Array.from({ length: 26 }, (_, i) => ({ x: X0 + 10 + ((i * 37) % 100), y: YB - 12 - ((i * 53) % 40), vx: (i % 2 ? 1 : -1) * (20 + (i * 7) % 30), vy: (i % 3 ? 1 : -1) * (20 + (i * 11) % 30) }));
+  useEffect(() => {
+    let raf, last = null;
+    const step = (t) => {
+      if (last !== null) {
+        const dt = Math.min(0.04, (t - last) / 1000), top = YB - HRef.current + 6, sc = Math.sqrt(TkRef.current / 273.15);
+        sim.current.forEach((a) => {
+          const sp = Math.hypot(a.vx, a.vy) || 1, want = 48 * sc, k = Math.min(1, dt * 3);
+          a.vx *= 1 + ((want / sp) - 1) * k; a.vy *= 1 + ((want / sp) - 1) * k;
+          a.x += a.vx * dt; a.y += a.vy * dt;
+          if (a.x < X0 + 5) { a.x = X0 + 5; a.vx = Math.abs(a.vx); } if (a.x > X1 - 5) { a.x = X1 - 5; a.vx = -Math.abs(a.vx); }
+          if (a.y < top) { a.y = top; a.vy = Math.abs(a.vy); } if (a.y > YB - 5) { a.y = YB - 5; a.vy = -Math.abs(a.vy); }
+        });
+        tick((x) => (x + 1) % 1e6);
+      }
+      last = t; raf = requestAnimationFrame(step);
+    };
+    raf = requestAnimationFrame(step);
+    return () => cancelAnimationFrame(raf);
+  }, []);
+  const { svgRef, startDrag } = useVlabDrag((id, p) => { const Hn = YB - p.y; const Tn = ((Hn / 38) / 2) * 273.15 - 273.15; setTc(Math.max(-100, Math.min(200, Math.round(Tn)))); });
+  const vrms = 29.85 * Math.sqrt(Tk);
+  useEffect(() => {
+    if (onReading) onReading(`دما: ${tc} °C (${Tk.toFixed(1)} K) | حجم: ${V.toFixed(2)} L | سرعت مولکول‌ها: ${vrms.toFixed(0)} m/s`);
+    // eslint-disable-next-line
+  }, [tc]);
+  const py = YB - H;
+  const gx = (T) => 236 + ((T - 173.15) / 300) * 72, gy = (v) => 150 - ((v - 1.2) / 2.4) * 100;
+  return (
+    <div className="vlab-exp">
+      <svg ref={svgRef} viewBox="0 0 320 232" className="vlab-svg" style={{ background: "#03060f", borderRadius: "10px", touchAction: "none" }}>
+        <rect x={X0 - 3} y={KP} width="3" height={YB - KP + 3} fill="#9fb0e0" /><rect x={X1} y={KP} width="3" height={YB - KP + 3} fill="#9fb0e0" /><rect x={X0 - 3} y={YB} width={X1 - X0 + 6} height="4" fill="#9fb0e0" />
+        <rect x={X0} y={py} width={X1 - X0} height={YB - py} fill={tc > 60 ? "#3a1a14" : tc < 0 ? "#102a44" : "#0d1a30"} opacity="0.85" />
+        {sim.current.map((a, i) => <circle key={i} cx={a.x} cy={a.y} r="3" fill="#7be0a4" />)}
+        <rect x={X0} y={py - 8} width={X1 - X0} height="8" rx="2" fill="#ffd98a" stroke="#fff" />
+        <rect x={(X0 + X1) / 2 - 3} y="14" width="6" height={Math.max(2, py - 22)} fill="#ffd98a" />
+        <rect x={(X0 + X1) / 2 - 22} y="8" width="44" height="10" rx="5" fill="#ffd98a" stroke="#fff" />
+        <rect x={X0 - 6} y={py - 24} width={X1 - X0 + 12} height={YB - py + 24} fill="transparent" onPointerDown={startDrag("piston")} style={{ cursor: "ns-resize", touchAction: "none" }} />
+        <text x={X1 - 6} y="30" fontSize="8" fill="#ffd98a" textAnchor="end" style={{ direction: "ltr", unicodeBidi: "isolate" }}>1 atm</text>
+        {tc > 25 ? [0, 1, 2, 3, 4].map((i) => <path key={i} d={`M${X0 + 12 + i * 24},${YB + 16} q5,-10 0,-18 q-6,6 0,18`} fill="#ff8a3a" opacity={Math.min(1, 0.3 + (tc - 25) / 120)} />) : null}
+        {tc < 0 ? [0, 1, 2, 3].map((i) => <rect key={i} x={X0 + 14 + i * 28} y={YB + 6} width="16" height="12" rx="2" fill="#bfe8ff" opacity="0.85" />) : null}
+        <rect x="34" y="34" width="12" height="156" rx="6" fill="#1b2438" stroke="#9fb0e0" />
+        <rect x="36" y={188 - ((tc + 100) / 300) * 150} width="8" height={((tc + 100) / 300) * 150 + 2} rx="4" fill="#ff4d4d" />
+        <text x="40" y="206" fontSize="9" fill="#ffb78a" textAnchor="middle" style={{ direction: "ltr", unicodeBidi: "isolate" }}>{tc + " °C"}</text>
+        <rect x="232" y="46" width="80" height="108" rx="4" fill="none" stroke="#27324f" />
+        <line x1={gx(173.15)} y1={gy(2 * 173.15 / 273.15)} x2={gx(473.15)} y2={gy(2 * 473.15 / 273.15)} stroke="#4aa3ff" strokeWidth="1.5" />
+        <circle cx={gx(Tk)} cy={gy(V)} r="4.5" fill="#ffd98a" stroke="#fff" />
+        <text x="272" y="40" fontSize="8" fill="#9fb0e0" textAnchor="middle">حجم برحسب دما</text>
+        <text x="272" y="166" fontSize="8" fill="#9fb0e0" textAnchor="middle">دما (کلوین)</text>
+        <text x="160" y="226" fontSize="8" fill="#9fb0e0" textAnchor="middle">پیستون را بالا و پایین بکش؛ فشار ثابت است و فقط دما و حجم عوض می‌شوند</text>
+      </svg>
+      <VlabMeterRow height={150} meters={[{ label: "دما", unit: "K", value: Tk, ranges: [300, 500], maj: 5, decimals: 1 }, { label: "حجم گاز", unit: "L", value: V, ranges: [2, 4], maj: 5, decimals: 2 }, { label: "سرعت مولکول", unit: "m/s", value: vrms, ranges: [400, 600, 800], maj: 5, decimals: 0 }]} />
+      <div className="vlab-controls"><div className="vlab-ctrl-col" style={{ flex: 1 }}>
+        <label className="vlab-ctrl-label">دما (°C): {tc}</label><VlabRange min="-100" max="200" step="1" value={tc} onChange={(e) => setTc(+e.target.value)} />
+        <div style={{ display: "flex", gap: "6px", flexWrap: "wrap", marginTop: "6px" }}><button className="vlab-btn" onClick={() => setTc(0)}>صفر درجه</button><button className="vlab-btn" onClick={() => setTc(25)}>دمای اتاق</button><button className="vlab-btn" onClick={() => setTc(100)}>جوش آب</button></div>
+      </div></div>
+      <div className="vlab-readout">وقتی دما (برحسب کلوین) دو برابر شود، حجم هم دو برابر می‌شود. نسبت حجم به دما ثابت است: <span style={{ direction: "ltr", unicodeBidi: "isolate", display: "inline-block" }}>{(V / Tk).toFixed(5)} L/K</span>. مولکول‌ها در دمای بالا تندتر برخورد می‌کنند و پیستون را بالاتر می‌برند.</div>
+      <VlabFormulaCheck title="تبدیل دما به کلوین" fa="دمای کلوین = دمای سلسیوس + ۲۷۳٫۱۵" en="T = θ + 273.15" legend="صفر مطلق (۰ کلوین) سردترین دمای ممکن است" subst={`T = ${tc} + 273.15 = ?`} label="T:" answer={Tk} unit="K" decimals={2} />
+      <VlabFormulaCheck title="قانون شارل" fa="حجم نهایی = حجم اولیه × دمای نهایی ÷ دمای اولیه (کلوین)" en="V₂ = V₁ T₂ / T₁" legend="حجم اولیه ۲ لیتر در دمای ۲۷۳٫۱۵ کلوین (صفر درجه)" subst={`V₂ = 2 × ${Tk.toFixed(2)} ÷ 273.15 = ?`} label="V₂:" answer={(2 * Math.round(Tk * 100) / 100) / 273.15} unit="L" decimals={2} />
+      <VlabEverydayCard title="بالن هوای گرم و توپ در زمستان" text="هوای داخل بالن را گرم می‌کنند، منبسط می‌شود و چگالی‌اش کم می‌شود و بالن بالا می‌رود. توپ بادشده در هوای سرد کمی پوک می‌شود چون حجم گاز درونش کم شده است.">
+        <path d="M60,6 C28,6 22,44 46,56 L74,56 C98,44 92,6 60,6Z" fill="#ff7a4a" stroke="#a33" /><path d="M60,6 C48,18 48,44 54,56 M60,6 C72,18 72,44 66,56" stroke="#ffd0a0" fill="none" />
+        <rect x="52" y="66" width="16" height="10" fill="#8a5a2a" /><line x1="52" y1="56" x2="52" y2="66" stroke="#555" /><line x1="68" y1="56" x2="68" y2="66" stroke="#555" />
+      </VlabEverydayCard>
+    </div>
+  );
+}
+
+function vlabPhColor(pH) {
+  const st = [[0, [232, 38, 43]], [2, [232, 38, 43]], [3, [240, 90, 36]], [4, [244, 124, 32]], [5, [247, 193, 38]], [6, [236, 228, 58]], [7, [60, 180, 75]], [8, [42, 165, 154]], [9, [58, 111, 216]], [10, [75, 67, 196]], [11, [110, 58, 170]], [14, [122, 58, 168]]];
+  let i = 0; while (i < st.length - 2 && pH > st[i + 1][0]) i++;
+  const [a, ca] = st[i], [b, cb] = st[i + 1], f = Math.max(0, Math.min(1, (pH - a) / (b - a)));
+  return "rgb(" + [0, 1, 2].map((k) => Math.round(ca[k] + (cb[k] - ca[k]) * f)).join(",") + ")";
+}
+function VlabHouseholdPhExperiment({ onReading }) {
+  const L = [{ n: "آب‌لیمو", pH: 2.2, c: "#f4e04d" }, { n: "سرکه", pH: 2.9, c: "#e6c98a" }, { n: "نوشابه", pH: 2.5, c: "#4a2a18" }, { n: "شیر", pH: 6.6, c: "#f4f1ea" }, { n: "آب", pH: 7.0, c: "#b9dcff" }, { n: "جوش‌شیرین", pH: 8.3, c: "#e9f1f5" }, { n: "صابون", pH: 10.0, c: "#cfe8d4" }, { n: "سفیدکننده", pH: 12.6, c: "#e8f0c8" }];
+  const [sel, setSel] = useState(0), [py, setPy] = useState(110), [ind, setInd] = useState(true);
+  const SL = 38, cxOf = (i) => 8 + i * SL + SL / 2;
+  const { svgRef, startDrag } = useVlabDrag((id, p) => { setSel(Math.max(0, Math.min(7, Math.floor((p.x - 8) / SL)))); setPy(Math.max(52, Math.min(120, p.y))); });
+  const cur = L[sel], pH = cur.pH, dipped = py >= 100, pOH = 14 - pH;
+  const h = Math.pow(10, -pH), ex = Math.floor(Math.log10(h)), man = h / Math.pow(10, ex);
+  const sup = (s) => String(s).replace(/-/g, "⁻").replace(/[0-9]/g, (d) => "⁰¹²³⁴⁵⁶⁷⁸⁹"[+d]);
+  const ratio = Math.pow(10, Math.abs(pH - 7));
+  useEffect(() => {
+    if (onReading) onReading(`${cur.n} | pH: ${dipped ? pH : "پروب بیرون است"}`);
+    // eslint-disable-next-line
+  }, [sel, dipped]);
+  const kind = pH < 6.5 ? "اسیدی" : pH > 7.5 ? "بازی (قلیایی)" : "خنثی";
+  return (
+    <div className="vlab-exp">
+      <svg ref={svgRef} viewBox="0 0 320 232" className="vlab-svg" style={{ background: "#03060f", borderRadius: "10px", touchAction: "none" }}>
+        <defs><linearGradient id="phg" x1="0" x2="1">{Array.from({ length: 15 }).map((_, i) => <stop key={i} offset={`${(i / 14) * 100}%`} stopColor={vlabPhColor(i)} />)}</linearGradient></defs>
+        <rect x="20" y="14" width="280" height="12" rx="6" fill="url(#phg)" />
+        {[0, 2, 4, 6, 7, 8, 10, 12, 14].map((v) => <text key={v} x={20 + (v / 14) * 280} y="38" fontSize="8" fill="#9fb0e0" textAnchor="middle" style={{ direction: "ltr", unicodeBidi: "isolate" }}>{v}</text>)}
+        {dipped ? <g><polygon points={`${20 + (pH / 14) * 280},29 ${16 + (pH / 14) * 280},9 ${24 + (pH / 14) * 280},9`} fill="#fff" /><text x={20 + (pH / 14) * 280} y="7" fontSize="9" fill="#ffd98a" textAnchor="middle" style={{ direction: "ltr", unicodeBidi: "isolate" }}>{"pH " + pH}</text></g> : null}
+        {L.map((x, i) => {
+          const cx = cxOf(i), col = ind ? vlabPhColor(x.pH) : x.c;
+          return (
+            <g key={i} onPointerDown={() => { setSel(i); setPy(110); }} style={{ cursor: "pointer" }}>
+              <rect x={cx - 14} y="104" width="28" height="68" rx="4" fill={col} opacity="0.9" />
+              <path d={`M${cx - 15},84 V168 Q${cx - 15},174 ${cx - 9},174 H${cx + 9} Q${cx + 15},174 ${cx + 15},168 V84`} fill="none" stroke={i === sel ? "#ffd98a" : "#7d8aa8"} strokeWidth={i === sel ? 2.4 : 1.4} />
+              <text x={cx} y="188" fontSize="7.5" fill={i === sel ? "#ffd98a" : "#9fb0e0"} textAnchor="middle">{x.n}</text>
+              <text x={cx} y="199" fontSize="7" fill="#6f7fa8" textAnchor="middle" style={{ direction: "ltr", unicodeBidi: "isolate" }}>{x.pH}</text>
+            </g>
+          );
+        })}
+        <g>
+          <line x1={cxOf(sel)} y1="44" x2={cxOf(sel)} y2={py + 4} stroke="#ddd" strokeWidth="3" /><rect x={cxOf(sel) - 5} y="44" width="10" height="16" rx="3" fill="#ffd98a" stroke="#fff" />
+          <circle cx={cxOf(sel)} cy={py + 4} r="3.2" fill="#fff" pointerEvents="none" />
+          <circle cx={cxOf(sel)} cy={Math.max(py - 10, 60)} r="22" fill="transparent" onPointerDown={startDrag("probe")} style={{ cursor: "grab", touchAction: "none" }} />
+        </g>
+        <text x="160" y="224" fontSize="8" fill="#9fb0e0" textAnchor="middle">پروب را بکش و در مایع فرو ببر یا روی لیوان بزن</text>
+      </svg>
+      <VlabMeterRow height={150} meters={[{ label: "pH", unit: "", value: dipped ? pH : 0, ranges: [14], maj: 7, decimals: 1 }, { label: "pOH", unit: "", value: dipped ? pOH : 0, ranges: [14], maj: 7, decimals: 1 }]} />
+      <div className="vlab-controls"><div className="vlab-ctrl-col" style={{ flex: 1 }}>
+        <button className="vlab-btn" onClick={() => setInd(!ind)}>{ind ? "🧪 نشانگر جهانی: روشن" : "🧪 نشانگر جهانی: خاموش"}</button>
+      </div></div>
+      <div className="vlab-readout">{dipped ? <span><b>{cur.n}</b>: {kind}. غلظت یون هیدروژن <span style={{ direction: "ltr", unicodeBidi: "isolate", display: "inline-block" }}>{man.toFixed(1) + " × 10" + sup(ex) + " mol/L"}</span> است؛ {pH === 7 ? "همان آب خالص." : `${ratio >= 10 ? Math.round(ratio).toLocaleString("en") : ratio.toFixed(1)} برابر ${pH < 7 ? "غلیظ‌تر" : "رقیق‌تر"} از آب خالص.`}</span> : "پروب بیرون از مایع است و چیزی نمی‌خواند؛ آن را پایین ببر."}</div>
+      <VlabFormulaCheck title="رابطه‌ی pH و pOH" fa="عدد pOH از کم‌کردن pH از ۱۴ به دست می‌آید (در آب و دمای اتاق)" en="pH + pOH = 14" legend="pH کمتر از ۷ اسیدی، بیشتر از ۷ بازی" subst={`pOH = 14 − ${pH} = ?`} label="pOH:" answer={pOH} unit="" decimals={1} />
+      <VlabFormulaCheck title="چند برابر آب خالص؟" fa="هر یک واحد pH یعنی ۱۰ برابر تغییر غلظت یون هیدروژن" en="n = 10 ^ abs(pH − 7)" legend="جواب را به نزدیک‌ترین عدد صحیح بنویس" subst={`n = 10 ^ abs(${pH} − 7) = ?`} label="n:" answer={ratio} unit="برابر" decimals={0} />
+      <VlabEverydayCard title="آب‌لیمو، شامپو و جوش‌شیرین" text="آب‌لیمو و سرکه اسیدی‌اند و طعم ترش دارند. صابون و جوش‌شیرین بازی‌اند و لغزنده‌اند. شامپوی کودک را با pH نزدیک به خنثی می‌سازند تا چشم و پوست را نسوزاند.">
+        <circle cx="36" cy="46" r="22" fill="#f4e04d" stroke="#b9a200" /><path d="M36,24 V68 M14,46 H58 M20,30 L52,62 M52,30 L20,62" stroke="#fff6a0" strokeWidth="1.5" />
+        <rect x="80" y="26" width="28" height="44" rx="6" fill="#7ac8a6" stroke="#2a7a5a" /><rect x="88" y="16" width="12" height="12" fill="#2a7a5a" /><circle cx="94" cy="48" r="6" fill="#e9fff4" />
+      </VlabEverydayCard>
+    </div>
+  );
+}
+
+function VlabBakingSodaExperiment({ onReading }) {
+  const [soda, setSoda] = useState(4), [vin, setVin] = useState(60), [prog, setProg] = useState(0), [run, setRun] = useState(false);
+  const pRef = React.useRef(0), [ts, setTs] = useState(0);
+  const nS = soda / 84.0, nA = (vin / 1000) * 0.83, nC = Math.min(nS, nA), Vco2 = nC * 24.5 * 1000, BURST = 2500;
+  const shown = Vco2 * prog, burst = Vco2 > BURST && shown >= BURST;
+  useEffect(() => {
+    if (!run) return;
+    let raf, last = null;
+    const step = (t) => {
+      if (last !== null) { pRef.current = Math.min(1, pRef.current + (t - last) / 5500); setProg(pRef.current); }
+      setTs(t / 1000); last = t;
+      if (pRef.current >= 1) { setRun(false); return; }
+      raf = requestAnimationFrame(step);
+    };
+    raf = requestAnimationFrame(step);
+    return () => cancelAnimationFrame(raf);
+  }, [run]);
+  const reset = () => { pRef.current = 0; setProg(0); setRun(false); };
+  useEffect(() => {
+    if (onReading) onReading(`جوش‌شیرین: ${soda} g | سرکه: ${vin} mL | گاز CO₂: ${shown.toFixed(0)} mL`);
+    // eslint-disable-next-line
+  }, [soda, vin, Math.round(shown / 50)]);
+  const rcm = Math.cbrt((3 * Math.min(shown, BURST)) / (4 * Math.PI)), rp = Math.max(0, rcm * 5), by = 96 - rp * 0.9;
+  const liq = 40 + (vin / 200) * 46;
+  const fizz = run || (prog > 0 && prog < 1);
+  const left = nS > nA ? "جوش‌شیرین اضافه می‌ماند: " + ((nS - nA) * 84).toFixed(1) + " گرم" : nA > nS ? "سرکه اضافه می‌ماند: " + (((nA - nS) / 0.83) * 1000).toFixed(0) + " میلی‌لیتر" : "هر دو دقیقاً تمام می‌شوند";
+  const bub = Array.from({ length: 14 }).map((_, i) => { const ph = (ts * (0.7 + (i % 5) * 0.18) + i * 0.37) % 1; return <circle key={i} cx={110 + ((i * 37) % 100)} cy={188 - ph * (liq + 6)} r={1.6 + (i % 3)} fill="#fff" opacity={0.75 - ph * 0.5} />; });
+  return (
+    <div className="vlab-exp">
+      <svg viewBox="0 0 320 232" className="vlab-svg" style={{ background: "#03060f", borderRadius: "10px" }}>
+        <path d="M146,98 H174 V122 L228,190 Q232,198 222,198 H98 Q88,198 92,190 L146,122 Z" fill="#0f1a33" stroke="#9fb0e0" strokeWidth="2" />
+        <clipPath id="fl"><path d="M146,98 H174 V122 L228,190 Q232,198 222,198 H98 Q88,198 92,190 L146,122 Z" /></clipPath>
+        <g clipPath="url(#fl)">
+          <rect x="80" y={198 - liq} width="160" height={liq} fill="#d9b97a" opacity="0.8" />
+          {fizz ? <rect x="80" y={198 - liq - 6} width="160" height="10" fill="#fff" opacity="0.7" /> : null}
+          {fizz ? bub : null}
+          {prog >= 1 ? <rect x="80" y="192" width="160" height="6" fill="#fff" opacity="0.5" /> : null}
+        </g>
+        {!burst ? (
+          <g><ellipse cx="160" cy={by} rx={Math.max(3, rp * 0.85)} ry={Math.max(3, rp)} fill="#ff6a8a" opacity="0.88" stroke="#ffd0dc" />
+            <rect x="152" y="92" width="16" height="8" rx="2" fill="#ff6a8a" />{shown > 20 ? <text x="160" y={by + 3} fontSize="9" fill="#fff" textAnchor="middle" style={{ direction: "ltr", unicodeBidi: "isolate" }}>CO₂</text> : null}</g>
+        ) : (
+          <g><text x="160" y="52" fontSize="26" textAnchor="middle">💥</text><text x="160" y="76" fontSize="10" fill="#ff9a9a" textAnchor="middle">بادکنک ترکید! گاز بیش از ظرفیتش بود</text></g>
+        )}
+        <text x="160" y="216" fontSize="9" fill="#9fb0e0" textAnchor="middle" style={{ direction: "ltr", unicodeBidi: "isolate" }}>{soda + " g NaHCO₃  +  " + vin + " mL vinegar"}</text>
+        <text x="160" y="228" fontSize="8" fill="#6f7fa8" textAnchor="middle">مقدار مواد را انتخاب کن و واکنش را شروع کن</text>
+      </svg>
+      <VlabMeterRow height={150} meters={[{ label: "جوش‌شیرین", unit: "mmol", value: nS * 1000, ranges: [50, 100, 200], maj: 5, decimals: 0 }, { label: "سرکه (استیک‌اسید)", unit: "mmol", value: nA * 1000, ranges: [50, 100, 200], maj: 5, decimals: 0 }, { label: "گاز تولیدشده", unit: "mL", value: Math.min(shown, 9999), ranges: [500, 1500, 3000, 6000], maj: 5, decimals: 0 }]} />
+      <div className="vlab-controls"><div className="vlab-ctrl-col" style={{ flex: 1 }}>
+        <label className="vlab-ctrl-label">جوش‌شیرین (g): {soda}</label><VlabRange min="1" max="15" step="0.5" value={soda} onChange={(e) => { reset(); setSoda(+e.target.value); }} />
+        <label className="vlab-ctrl-label">سرکه ۵٪ (mL): {vin}</label><VlabRange min="20" max="200" step="10" value={vin} onChange={(e) => { reset(); setVin(+e.target.value); }} />
+        <div style={{ display: "flex", gap: "6px", marginTop: "6px" }}><button className="vlab-btn" onClick={() => { if (prog >= 1) reset(); setRun(true); }}>▶ شروع واکنش</button><button className="vlab-btn" onClick={reset}>↺ از اول</button></div>
+      </div></div>
+      <div className="vlab-readout">جوش‌شیرین و سرکه با هم گاز کربن دی‌اکسید، آب و نمک استات می‌سازند. ماده‌ای که کمتر است گاز را محدود می‌کند: {nS < nA ? "جوش‌شیرین" : nA < nS ? "سرکه" : "هیچ‌کدام (برابرند)"}. {left}. {Vco2 > BURST ? "هشدار: بیش از ۲٫۵ لیتر گاز، بادکنک را می‌ترکاند!" : ""}</div>
+      <VlabFormulaCheck title="شمار مول جوش‌شیرین" fa="مول = جرم ÷ جرم مولی ؛ جرم مولی جوش‌شیرین ۸۴ گرم بر مول" en="n = m / M" legend="جواب را بر حسب مول بنویس" subst={`n = ${soda} ÷ 84 = ?`} label="n:" answer={soda / 84} unit="mol" decimals={3} />
+      <VlabFormulaCheck title="حجم گاز تولیدشده" fa="حجم = مول ماده‌ی محدودکننده × ۲۴٫۵ لیتر × ۱۰۰۰ (برحسب میلی‌لیتر)" en="V = n(limit) × 24.5 L/mol" legend="هر مول گاز در دمای اتاق ۲۴٫۵ لیتر جا می‌گیرد" subst={`V = min(${nS.toFixed(4)}, ${nA.toFixed(4)}) × 24.5 × 1000 = ?`} label="V:" answer={Math.min(+nS.toFixed(4), +nA.toFixed(4)) * 24500} unit="mL" decimals={0} />
+      <VlabEverydayCard title="پف کردن کیک و کپسول آتش‌نشانی" text="جوش‌شیرین در خمیر کیک با اسید واکنش می‌دهد و حباب CO₂ می‌سازد و کیک پف می‌کند. گاز CO₂ سنگین‌تر از هواست و روی آتش را می‌پوشاند؛ پایه‌ی بسیاری از کپسول‌های آتش‌نشانی همین است.">
+        <path d="M14,66 Q14,36 60,34 Q106,36 106,66 Z" fill="#e8b66a" stroke="#8a5a1a" />{[0, 1, 2, 3, 4].map((i) => <circle key={i} cx={30 + i * 14} cy={50 + (i % 2) * 6} r="3" fill="#fbe3b0" />)}
+        <circle cx="40" cy="22" r="3" fill="#7fb8f0" /><circle cx="64" cy="14" r="2.4" fill="#7fb8f0" /><circle cx="84" cy="24" r="3" fill="#7fb8f0" />
+      </VlabEverydayCard>
+    </div>
+  );
+}
+
+const VLAB_SOL = [
+  { n: "نیترات پتاسیم", s: [13, 32, 64, 110, 169, 246], ymax: 250, col: "#b5a8ff" }, { n: "نمک خوراکی", s: [35.7, 35.9, 36.4, 37.1, 38, 39.2], ymax: 50, col: "#8fe0c8" },
+  { n: "پتاسیم کلرید", s: [28, 34, 40, 45.5, 51, 56.7], ymax: 60, col: "#ffd98a" }, { n: "آمونیوم کلرید", s: [29.4, 37.2, 45.8, 55.2, 65.6, 77.3], ymax: 80, col: "#ff9ac0" }, { n: "شکر", s: [179, 204, 238, 287, 362, 487], ymax: 500, col: "#ffcf7a" },
+];
+function vlabSolOf(s, T) { const i = Math.min(4, Math.floor(T / 20)), f = (T - 20 * i) / 20; return s[i] + (s[i + 1] - s[i]) * f; }
+function VlabSolubilityExperiment({ onReading }) {
+  const [si, setSi] = useState(0), [T, setT] = useState(80), [m, setM] = useState(100);
+  const sa = VLAB_SOL[si], S = vlabSolOf(sa.s, T), cr = Math.max(0, m - S), ymax = sa.ymax;
+  const GX0 = 34, GX1 = 194, GY0 = 22, GY1 = 176, gx = (t) => GX0 + (t / 100) * (GX1 - GX0), gy = (g) => GY1 - (g / ymax) * (GY1 - GY0);
+  const { svgRef, startDrag } = useVlabDrag((id, p) => { setT(Math.max(0, Math.min(100, Math.round(((p.x - GX0) / (GX1 - GX0)) * 100)))); setM(Math.max(0, Math.min(ymax, Math.round(((GY1 - p.y) / (GY1 - GY0)) * ymax * 10) / 10))); });
+  const pick = (i) => { setSi(i); const s2 = VLAB_SOL[i]; setM(Math.round(vlabSolOf(s2.s, T) * 0.85)); };
+  const status = cr > 0.05 ? "فراسیر شده: " + cr.toFixed(1) + " گرم رسوب می‌کند" : Math.abs(m - S) <= 0.5 ? "سیرشده" : "سیرنشده (همه حل می‌شود)";
+  useEffect(() => {
+    if (onReading) onReading(`${sa.n} | دما ${T} °C | حل‌پذیری ${S.toFixed(1)} g | افزوده ${m} g | رسوب ${cr.toFixed(1)} g`);
+    // eslint-disable-next-line
+  }, [si, T, m]);
+  const pts = Array.from({ length: 21 }).map((_, i) => gx(i * 5) + "," + gy(vlabSolOf(sa.s, i * 5))).join(" ");
+  const crh = Math.min(30, 2 + Math.sqrt(cr / ymax) * 40), cn = Math.min(26, Math.round(3 + Math.sqrt(cr / ymax) * 40));
+  const Sr = Math.round(S * 10) / 10, wp = (Sr / (100 + Sr)) * 100;
+  return (
+    <div className="vlab-exp">
+      <svg ref={svgRef} viewBox="0 0 320 232" className="vlab-svg" style={{ background: "#03060f", borderRadius: "10px", touchAction: "none" }}>
+        <polygon points={`${pts} ${gx(100)},${GY0} ${gx(0)},${GY0}`} fill="#ff8a3a" opacity="0.14" /><polygon points={`${pts} ${gx(100)},${GY1} ${gx(0)},${GY1}`} fill="#4aa3ff" opacity="0.14" />
+        <rect x={GX0} y={GY0} width={GX1 - GX0} height={GY1 - GY0} fill="none" stroke="#27324f" />
+        {[0, 20, 40, 60, 80, 100].map((t) => <g key={t}><line x1={gx(t)} y1={GY1} x2={gx(t)} y2={GY1 + 3} stroke="#6f7fa8" /><text x={gx(t)} y={GY1 + 12} fontSize="8" fill="#9fb0e0" textAnchor="middle" style={{ direction: "ltr", unicodeBidi: "isolate" }}>{t}</text></g>)}
+        {[0, 1, 2, 3, 4].map((i) => <g key={i}><line x1={GX0 - 3} y1={gy((ymax / 4) * i)} x2={GX0} y2={gy((ymax / 4) * i)} stroke="#6f7fa8" /><text x={GX0 - 5} y={gy((ymax / 4) * i) + 3} fontSize="7.5" fill="#9fb0e0" textAnchor="end" style={{ direction: "ltr", unicodeBidi: "isolate" }}>{Math.round((ymax / 4) * i)}</text></g>)}
+        <polyline points={pts} fill="none" stroke={sa.col} strokeWidth="2.4" />
+        <line x1={gx(T)} y1={gy(m)} x2={gx(T)} y2={gy(S)} stroke={cr > 0 ? "#ff8a3a" : "#4aa3ff"} strokeWidth="1.5" strokeDasharray="3 2" />
+        <circle cx={gx(T)} cy={gy(S)} r="3" fill="#fff" />
+        <circle cx={gx(T)} cy={gy(m)} r="6" fill="#ffd98a" stroke="#fff" pointerEvents="none" /><circle cx={gx(T)} cy={gy(m)} r="18" fill="transparent" onPointerDown={startDrag("pt")} style={{ cursor: "grab", touchAction: "none" }} />
+        <text x={110} y="14" fontSize="8" fill="#9fb0e0" textAnchor="middle">گرم نمک در ۱۰۰ گرم آب</text><text x={(GX0 + GX1) / 2} y={GY1 + 24} fontSize="8" fill="#9fb0e0" textAnchor="middle">دما (°C)</text>
+        <path d="M214,70 V176 Q214,182 220,182 H290 Q296,182 296,176 V70" fill="none" stroke="#9fb0e0" strokeWidth="2" />
+        <rect x="216" y="90" width="78" height="90" fill={T > 60 ? "#27456b" : "#1d3a5c"} opacity="0.75" />
+        {Array.from({ length: cn }).map((_, i) => <polygon key={i} points={`${222 + ((i * 29) % 66)},${180 - ((i * 7) % 3)} ${226 + ((i * 29) % 66)},${180 - crh * (0.5 + (i % 4) * 0.18)} ${230 + ((i * 29) % 66)},${180 - ((i * 5) % 3)}`} fill="#fff" opacity="0.92" />)}
+        <text x="255" y="62" fontSize="9" fill="#ffd98a" textAnchor="middle">{sa.n}</text>
+        <text x="255" y="200" fontSize="8.5" fill={cr > 0.05 ? "#ff9a5a" : "#7be0a4"} textAnchor="middle">{cr > 0.05 ? "رسوب" : Math.abs(m - S) <= 0.5 ? "سیرشده" : "سیرنشده"}</text>
+        <text x="160" y="228" fontSize="8" fill="#9fb0e0" textAnchor="middle">نقطه‌ی زرد را بکش؛ به سمت چپ ببر تا محلول سرد شود</text>
+      </svg>
+      <VlabMeterRow height={150} meters={[{ label: "دما", unit: "°C", value: T, ranges: [100], maj: 5, decimals: 0 }, { label: "حل‌پذیری", unit: "g", value: S, ranges: [60, 150, 300, 500], maj: 5, decimals: 1 }, { label: "رسوب", unit: "g", value: cr, ranges: [30, 100, 300, 500], maj: 5, decimals: 1 }]} />
+      <div className="vlab-controls"><div className="vlab-ctrl-col" style={{ flex: 1 }}>
+        <div style={{ display: "flex", gap: "6px", flexWrap: "wrap", marginBottom: "6px" }}>{VLAB_SOL.map((x, i) => <button key={i} className="vlab-btn" style={{ background: i === si ? "#ffd98a" : undefined, color: i === si ? "#222" : undefined }} onClick={() => pick(i)}>{x.n}</button>)}</div>
+        <label className="vlab-ctrl-label">دما (°C): {T}</label><VlabRange min="0" max="100" step="1" value={T} onChange={(e) => setT(+e.target.value)} />
+        <label className="vlab-ctrl-label">نمک افزوده در ۱۰۰ گرم آب (g): {m}</label><VlabRange min="0" max={ymax} step={ymax > 100 ? 1 : 0.5} value={m} onChange={(e) => setM(+e.target.value)} />
+      </div></div>
+      <div className="vlab-readout"><b>{status}.</b> منحنی، بیشترین مقدار نمکی را نشان می‌دهد که در آن دما حل می‌شود. بالای منحنی (ناحیه‌ی نارنجی) نمک اضافه رسوب می‌کند.</div>
+      <VlabFormulaCheck title="مقدار رسوب (بلور)" fa="رسوب = نمک افزوده منهای حل‌پذیری در آن دما (اگر منفی شد، رسوبی نیست و جواب صفر است)" en="m(ppt) = m − S" legend={`حل‌پذیری ${sa.n} در ${T} درجه برابر ${Sr} گرم در ۱۰۰ گرم آب است`} subst={`m(ppt) = ${m} − ${Sr} = ?`} label="m:" answer={Math.max(0, m - Sr)} unit="g" decimals={1} />
+      <VlabFormulaCheck title="درصد جرمی محلول سیرشده" fa="درصد = حل‌پذیری ÷ (۱۰۰ + حل‌پذیری) × ۱۰۰" en="w% = S / (100 + S) × 100" legend="۱۰۰ گرم آب به‌اضافه‌ی نمک حل‌شده، جرم کل محلول است" subst={`w = ${Sr} ÷ (100 + ${Sr}) × 100 = ?`} label="w:" answer={wp} unit="%" decimals={1} />
+      <VlabEverydayCard title="نبات، نمک‌زار و شکر در چای" text="چای داغ شکر بیشتری از چای سرد در خود حل می‌کند. وقتی شربت شکر غلیظ و داغ را آرام سرد می‌کنند، شکر اضافه به‌صورت بلور روی نخ می‌نشیند و نبات می‌شود. نمکِ کویر هم با تبخیر آب بلور می‌شود.">
+        <path d="M30,22 H90 V70 Q90,76 84,76 H36 Q30,76 30,70 Z" fill="#f6e3b0" opacity="0.7" stroke="#8a7a45" strokeWidth="2" /><line x1="60" y1="12" x2="60" y2="62" stroke="#8a6a2a" strokeWidth="2" />
+        {[0, 1, 2, 3, 4, 5].map((i) => <rect key={i} x={54 + (i % 3) * 5} y={34 + Math.floor(i / 3) * 12 + (i % 2) * 3} width="7" height="9" fill="#fff" stroke="#d9c28a" transform={`rotate(${i * 21} 58 40)`} />)}
+      </VlabEverydayCard>
+    </div>
+  );
+}
+
 const VLAB_COMPONENTS = {
   lever: VlabLeverExperiment,
   pendulum: VlabPendulumExperiment,
@@ -30402,6 +30791,11 @@ const VLAB_COMPONENTS = {
   "wire-resistance": VlabWireResistanceExperiment,
   "light-colors": VlabLightColorsExperiment,
   "specific-heat": VlabSpecificHeatExperiment,
+  "atom-builder": VlabAtomBuilderExperiment,
+  "charles-law": VlabCharlesLawExperiment,
+  "household-ph": VlabHouseholdPhExperiment,
+  "baking-soda-vinegar": VlabBakingSodaExperiment,
+  "solubility-curves": VlabSolubilityExperiment,
 };
 
 function StudentVirtualLabView({ onBack, grade, studentCode, schoolCode }) {

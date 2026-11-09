@@ -23377,6 +23377,33 @@ const VLAB_EXPERIMENTS = [
     intro: "نمره‌ی هفت دانش‌آموز را تغییر بده و ببین میانگین، میانه و پراکندگی چطور حرکت می‌کنند؛ با داده‌ی پرت تفاوت میانگین و میانه را ببین.",
     tools: ["هفت داده", "میانگین و میانه", "واریانس"],
   },
+  {
+    id: "counting-tree",
+    subject: "ریاضی",
+    level: "متوسطه دوم",
+    title: "اصل ضرب و درخت",
+    icon: "🌳",
+    intro: "تعداد پیراهن، شلوار و کفش را عوض کن و درخت انتخاب‌ها را ببین؛ یک مسیر را روشن کن و بفهم چرا تعداد کل حالت‌ها حاصل‌ضرب است.",
+    tools: ["درخت انتخاب", "سه مرحله", "مسیر روشن"],
+  },
+  {
+    id: "sequence-growth",
+    subject: "ریاضی",
+    level: "متوسطه دوم",
+    title: "رشد حسابی و هندسی",
+    icon: "📈",
+    intro: "دو دنباله را کنار هم رسم کن: یکی با جمع ثابت و یکی با ضرب ثابت؛ ببین کدام زودتر سبقت می‌گیرد.",
+    tools: ["دنباله‌ی حسابی", "دنباله‌ی هندسی", "مجموع جمله‌ها"],
+  },
+  {
+    id: "sine-wave",
+    subject: "ریاضی",
+    level: "متوسطه دوم",
+    title: "موج سینوسی (دامنه، دوره، انتقال)",
+    icon: "🌊",
+    intro: "چهار عدد A و B و C و D را عوض کن و ببین موج سینوسی چطور بلندتر، فشرده‌تر یا جابه‌جا می‌شود.",
+    tools: ["دامنه", "دوره‌ی تناوب", "انتقال"],
+  },
 ];
 
 function vlabClamp(v, min, max) {
@@ -32526,9 +32553,9 @@ function VlabUnitCircleExperiment({ onReading }) {
         <line x1={CX} y1={CY} x2={px} y2={CY} stroke="#5bb8ff" strokeWidth="3" />
         <circle cx={px} cy={py} r="5" fill="#ffd166" stroke="#fff" strokeWidth="1.5" />
         <text x={CX + R - 6} y={CY + 11} fontSize="8" fill="#9aa6c8" textAnchor="middle">۱</text>
-        <text x={CX - R + 8} y={CY + 11} fontSize="8" fill="#9aa6c8" textAnchor="middle">−۱</text>
+        <text x={CX - R + 8} y={CY + 11} fontSize="8" fill="#9aa6c8" direction="ltr" textAnchor="middle">−۱</text>
         <text x={CX + 4} y={CY - R - 3} fontSize="8" fill="#9aa6c8" textAnchor="start">۱</text>
-        <text x={CX + 10} y={CY + R + 10} fontSize="8" fill="#9aa6c8" textAnchor="middle">−۱</text>
+        <text x={CX + 10} y={CY + R + 10} fontSize="8" fill="#9aa6c8" direction="ltr" textAnchor="middle">−۱</text>
         <text x={CX + 20} y={CY - 6} fontSize="8" fill="#ffd166" textAnchor="start">θ</text>
         <line x1={WX} y1={CY} x2={WX + WW} y2={CY} stroke="#4a5578" strokeWidth="1" />
         <line x1={WX} y1={CY - WH - 6} x2={WX} y2={CY + WH + 6} stroke="#4a5578" strokeWidth="1" />
@@ -33009,6 +33036,179 @@ function VlabDataStatsExperiment({ onReading }) {
   );
 }
 
+/* ===== ریاضی ۹) اصل ضرب و درخت ===== */
+function VlabCountingTreeExperiment({ onReading }) {
+  const [n1, setN1] = useState(3);
+  const [n2, setN2] = useState(2);
+  const [n3, setN3] = useState(2);
+  const [k, setK] = useState(0);
+  const total = n1 * n2 * n3;
+  const kk = Math.min(k, total - 1);
+  const a = Math.floor(kk / (n2 * n3)), b = Math.floor(kk / n3) % n2, c = kk % n3;
+  const cols1 = ["#ff6b6b", "#ffd166", "#5de0a0", "#5bb8ff"], cols2 = ["#c792ea", "#ff9d1c", "#9fb4ff", "#e8e8e8"], cols3 = ["#5de0a0", "#ff6b6b", "#ffd166"];
+  const H = 170, T = 14;
+  const yLeaf = (i) => T + ((i + 0.5) / total) * H;
+  const y1 = (i) => T + ((i + 0.5) / n1) * H;
+  const y2 = (i, j) => yLeaf((i * n2 + j) * n3 + (n3 - 1) / 2);
+  const X = [24, 92, 170, 262];
+  const items = [["پیراهن", "👕"], ["شلوار", "👖"], ["کفش", "👟"]];
+  const fa = (v) => vlabFaN(v);
+  const hi = (on) => (on ? 3 : 1);
+  return (
+    <div className="vlab-exp">
+      <svg viewBox="0 0 320 214" className="vlab-svg" style={{ background: "#03060f", borderRadius: "10px" }}>
+        <circle cx={X[0]} cy={T + H / 2} r="5" fill="#fff" />
+        {Array.from({ length: n1 }).map((_, i) => (<g key={i}>
+          <line x1={X[0]} y1={T + H / 2} x2={X[1]} y2={y1(i)} stroke={cols1[i]} strokeWidth={hi(i === a)} opacity={i === a ? 1 : 0.55} />
+          {Array.from({ length: n2 }).map((_, j) => (<g key={j}>
+            <line x1={X[1]} y1={y1(i)} x2={X[2]} y2={y2(i, j)} stroke={cols2[j]} strokeWidth={hi(i === a && j === b)} opacity={i === a && j === b ? 1 : 0.5} />
+            {Array.from({ length: n3 }).map((_, l) => { const idx = (i * n2 + j) * n3 + l; const on = idx === kk; return (<g key={l}><line x1={X[2]} y1={y2(i, j)} x2={X[3]} y2={yLeaf(idx)} stroke={cols3[l]} strokeWidth={hi(on)} opacity={on ? 1 : 0.45} /><circle cx={X[3]} cy={yLeaf(idx)} r={on ? 4.5 : total > 30 ? 1.8 : 2.6} fill={on ? "#fff" : cols3[l]} /></g>); })}
+            <circle cx={X[2]} cy={y2(i, j)} r="3.6" fill={cols2[j]} />
+          </g>))}
+          <circle cx={X[1]} cy={y1(i)} r="4.4" fill={cols1[i]} />
+        </g>))}
+        <text x="92" y="204" fontSize="9" fill="#cfd6ea" textAnchor="middle">{items[0][1]} {fa(n1)} مدل</text>
+        <text x="170" y="204" fontSize="9" fill="#cfd6ea" textAnchor="middle">{items[1][1]} {fa(n2)} مدل</text>
+        <text x="262" y="204" fontSize="9" fill="#cfd6ea" textAnchor="middle">{items[2][1]} {fa(n3)} مدل</text>
+      </svg>
+      <div className="vlab-readout" style={{ textAlign: "center" }}>{fa(n1)} × {fa(n2)} × {fa(n3)} = <b>{fa(total)}</b> دست لباس</div>
+      <div className="vlab-controls"><div className="vlab-ctrl-col" style={{ flex: 1 }}>
+        <label className="vlab-ctrl-label">تعداد پیراهن‌ها: {fa(n1)}</label>
+        <VlabRange min="1" max="4" step="1" value={n1} onChange={(e) => setN1(+e.target.value)} />
+        <label className="vlab-ctrl-label">تعداد شلوارها: {fa(n2)}</label>
+        <VlabRange min="1" max="4" step="1" value={n2} onChange={(e) => setN2(+e.target.value)} />
+        <label className="vlab-ctrl-label">تعداد کفش‌ها: {fa(n3)}</label>
+        <VlabRange min="1" max="3" step="1" value={n3} onChange={(e) => setN3(+e.target.value)} />
+        <label className="vlab-ctrl-label">یک مسیر (یک دست لباس) را روشن کن: شماره‌ی {fa(kk + 1)} از {fa(total)}</label>
+        <VlabRange min="0" max={total - 1} step="1" value={kk} onChange={(e) => setK(+e.target.value)} />
+      </div></div>
+      <div className="vlab-readout">
+        {`مسیر روشن یعنی پیراهن ${fa(a + 1)} + شلوار ${fa(b + 1)} + کفش ${fa(c + 1)}. هر شاخه‌ی پیراهن به همه‌ی شلوارها می‌رسد و هر شلوار به همه‌ی کفش‌ها؛ پس تعداد برگ‌های درخت (کل انتخاب‌ها) حاصل‌ضرب تعداد گزینه‌های هر مرحله است.`}
+      </div>
+      <VlabFormulaCheck title="اصل ضرب" fa="کل حالت‌ها = تعداد انتخاب مرحله‌ی اول × دوم × سوم" en="N = n₁ · n₂ · n₃" legend="اگر مرحله‌ها پشت سر هم و مستقل باشند، گزینه‌های هر مرحله را در هم ضرب می‌کنیم." subst={`${fa(n1)} × ${fa(n2)} × ${fa(n3)}`} answer={total} unit="" decimals={0} />
+      <VlabEverydayCard title="منوی رستوران" text="اگر رستوران ۳ پیش‌غذا، ۴ غذای اصلی و ۲ نوشیدنی داشته باشد، ۳ × ۴ × ۲ = ۲۴ منوی متفاوت می‌شود. هر مشتری یک مسیر از درخت را انتخاب می‌کند.">
+        <circle cx="16" cy="40" r="4" fill="#555" />
+        <path d="M16,40 L50,18 M16,40 L50,40 M16,40 L50,62 M50,18 L90,10 M50,18 L90,28 M50,62 L90,52 M50,62 L90,70" stroke="#e0a83e" strokeWidth="1.6" fill="none" />
+        {[[50, 18], [50, 40], [50, 62]].map((q, i) => (<circle key={i} cx={q[0]} cy={q[1]} r="3.6" fill="#d83a3a" />))}
+        {[[90, 10], [90, 28], [90, 52], [90, 70]].map((q, i) => (<circle key={i} cx={q[0]} cy={q[1]} r="3" fill="#2e9e66" />))}
+      </VlabEverydayCard>
+    </div>
+  );
+}
+
+/* ===== ریاضی ۱۰) رشد حسابی و هندسی ===== */
+function VlabSequenceGrowthExperiment({ onReading }) {
+  const [a1, setA1] = useState(2);
+  const [d, setD] = useState(3);
+  const [r, setR] = useState(2);
+  const [n, setN] = useState(8);
+  const ar = (i) => a1 + (i - 1) * d;
+  const ge = (i) => a1 * Math.pow(r, i - 1);
+  const fa = (v) => vlabMFa(v, Number.isInteger(v) ? 0 : 2);
+  const W = 288, H = 130, L = 18, T = 22;
+  const mxv = Math.max(10, ...Array.from({ length: n }, (_, i) => Math.max(ar(i + 1), ge(i + 1))));
+  const X = (i) => L + ((i - 0.5) / n) * W;
+  const Y = (v) => T + H - (Math.max(0, v) / mxv) * H;
+  const lin = Array.from({ length: n }, (_, i) => `${i ? "L" : "M"}${X(i + 1)},${Y(ar(i + 1))}`).join("");
+  const geo = Array.from({ length: n }, (_, i) => `${i ? "L" : "M"}${X(i + 1)},${Y(ge(i + 1))}`).join("");
+  const Sa = (n * (2 * a1 + (n - 1) * d)) / 2;
+  const Sg = r === 1 ? a1 * n : (a1 * (Math.pow(r, n) - 1)) / (r - 1);
+  const bigger = ge(n) > ar(n) ? "هندسی" : ge(n) < ar(n) ? "حسابی" : "هر دو برابر";
+  return (
+    <div className="vlab-exp">
+      <svg viewBox="0 0 320 190" className="vlab-svg" style={{ background: "#03060f", borderRadius: "10px" }}>
+        <line x1={L} y1={T + H} x2={L + W} y2={T + H} stroke="#6a7aa8" strokeWidth="1" />
+        <path d={lin} fill="none" stroke="#5bb8ff" strokeWidth="1.8" />
+        <path d={geo} fill="none" stroke="#ff9d1c" strokeWidth="1.8" />
+        {Array.from({ length: n }).map((_, i) => (<g key={i}><circle cx={X(i + 1)} cy={Y(ar(i + 1))} r="3.6" fill="#5bb8ff" /><circle cx={X(i + 1)} cy={Y(ge(i + 1))} r="3.6" fill="#ff9d1c" /><text x={X(i + 1)} y={T + H + 12} fontSize="8" fill="#9aa6c8" textAnchor="middle">{vlabFaN(i + 1)}</text></g>))}
+        <text x="72" y="14" fontSize="9" fill="#5bb8ff" textAnchor="middle">حسابی: هر بار + {fa(d)}</text>
+        <text x="220" y="14" fontSize="9" fill="#ff9d1c" textAnchor="middle">هندسی: هر بار × {fa(r)}</text>
+        <text x="160" y="182" fontSize="8" fill="#9aa6c8" textAnchor="middle">شماره‌ی جمله</text>
+      </svg>
+      <div className="vlab-readout" style={{ textAlign: "center" }}>
+        <span style={{ color: "#1e72c8" }}>جمله‌ی {vlabFaN(n)}ام حسابی: {fa(ar(n))}</span>{" · "}<span style={{ color: "#c77a00" }}>هندسی: {fa(ge(n))}</span>
+      </div>
+      <div className="vlab-controls"><div className="vlab-ctrl-col" style={{ flex: 1 }}>
+        <label className="vlab-ctrl-label">جمله‌ی اول: {fa(a1)}</label>
+        <VlabRange min="1" max="10" step="1" value={a1} onChange={(e) => setA1(+e.target.value)} />
+        <label className="vlab-ctrl-label">قدر نسبت حسابی (d): {fa(d)}</label>
+        <VlabRange min="-3" max="10" step="1" value={d} onChange={(e) => setD(+e.target.value)} />
+        <label className="vlab-ctrl-label">قدر نسبت هندسی (r): {fa(r)}</label>
+        <VlabRange min="0.5" max="3" step="0.5" value={r} onChange={(e) => setR(+e.target.value)} />
+        <label className="vlab-ctrl-label">تعداد جمله‌ها: {vlabFaN(n)}</label>
+        <VlabRange min="3" max="12" step="1" value={n} onChange={(e) => setN(+e.target.value)} />
+      </div></div>
+      <div className="vlab-readout">
+        {`در دنباله‌ی حسابی هر بار یک عدد ثابت اضافه می‌شود و نمودار خط راست است؛ در هندسی هر بار در یک عدد ثابت ضرب می‌شود و نمودار کم‌کم تند می‌شود. در جمله‌ی ${vlabFaN(n)}ام، دنباله‌ی ${bigger} بزرگ‌تر است. مجموع ${vlabFaN(n)} جمله‌ی حسابی ${fa(Sa)} و هندسی ${fa(Sg)} می‌شود.`}
+      </div>
+      <VlabFormulaCheck title="جمله‌ی عمومی حسابی" fa="جمله‌ی n‌ام = جمله‌ی اول + (n − ۱) × d" en="aₙ = a₁ + (n−1)d" legend="d همان قدر نسبت حسابی است." subst={`${fa(a1)} + (${vlabFaN(n)} − ۱) × ${fa(d)}`} answer={ar(n)} unit="" decimals={2} />
+      <VlabFormulaCheck title="جمله‌ی عمومی هندسی" fa="جمله‌ی n‌ام = جمله‌ی اول × r به توان (n − ۱)" en="aₙ = a₁ · rⁿ⁻¹" legend="r همان قدر نسبت هندسی است." subst={`${fa(a1)} × ${fa(r)}^(${vlabFaN(n)} − ۱)`} answer={ge(n)} unit="" decimals={2} />
+      <VlabEverydayCard title="پس‌انداز و سود بانکی" text="اگر هر ماه مبلغ ثابتی کنار بگذاری، پس‌انداز تو دنباله‌ی حسابی است. اما سود مرکب هر سال مبلغ را در عددی مثل ۱٫۲ ضرب می‌کند؛ دنباله‌ی هندسی که در بلندمدت خیلی سریع‌تر رشد می‌کند.">
+        <path d="M10,70 L106,36" stroke="#2e7bd5" strokeWidth="2.4" fill="none" />
+        <path d="M10,70 Q60,66 106,8" stroke="#e08a1c" strokeWidth="2.4" fill="none" />
+        <path d="M6,74 H114" stroke="#999" strokeWidth="1" />
+      </VlabEverydayCard>
+    </div>
+  );
+}
+
+/* ===== ریاضی ۱۱) موج سینوسی ===== */
+function VlabSineWaveExperiment({ onReading }) {
+  const [A, setA] = useState(2);
+  const [B, setB] = useState(1);
+  const [C, setC] = useState(0);
+  const [D, setD] = useState(0);
+  const x0 = -2 * Math.PI, x1 = 2 * Math.PI, y0 = -5, y1 = 5, L = 12, T = 8, W = 296, H = 170;
+  const X = (x) => L + ((x - x0) / (x1 - x0)) * W;
+  const Y = (y) => T + H - ((y - y0) / (y1 - y0)) * H;
+  const f = (x) => A * Math.sin(B * (x - C)) + D;
+  let path = ""; for (let i = 0; i <= 300; i++) { const x = x0 + (i / 300) * (x1 - x0); path += (i ? "L" : "M") + X(x).toFixed(1) + "," + Y(f(x)).toFixed(1); }
+  let base = ""; for (let i = 0; i <= 300; i++) { const x = x0 + (i / 300) * (x1 - x0); base += (i ? "L" : "M") + X(x).toFixed(1) + "," + Y(Math.sin(x)).toFixed(1); }
+  const period = (2 * Math.PI) / B;
+  const fa = (v, d = 2) => vlabMFa(v, d);
+  const xp = 1;
+  const labels = [[-2 * Math.PI, "−۲π"], [-Math.PI, "−π"], [0, "۰"], [Math.PI, "π"], [2 * Math.PI, "۲π"]];
+  return (
+    <div className="vlab-exp">
+      <svg viewBox="0 0 320 196" className="vlab-svg" style={{ background: "#03060f", borderRadius: "10px" }}>
+        {[-4, -2, 2, 4].map((v) => (<line key={v} x1={L} y1={Y(v)} x2={L + W} y2={Y(v)} stroke="#141c36" strokeWidth="1" />))}
+        <line x1={L} y1={Y(0)} x2={L + W} y2={Y(0)} stroke="#6a7aa8" strokeWidth="1" />
+        <line x1={X(0)} y1={T} x2={X(0)} y2={T + H} stroke="#6a7aa8" strokeWidth="1" />
+        {D !== 0 ? <line x1={L} y1={Y(D)} x2={L + W} y2={Y(D)} stroke="#2f6b4f" strokeWidth="1" strokeDasharray="4 3" /> : null}
+        <path d={base} fill="none" stroke="#7d8bb5" strokeWidth="1.2" strokeDasharray="4 3" />
+        <path d={path} fill="none" stroke="#ffd166" strokeWidth="2.4" />
+        <circle cx={X(xp)} cy={Y(f(xp))} r="4.4" fill="#ff6b6b" stroke="#fff" strokeWidth="1.2" />
+        {labels.map(([v, t]) => (<text key={t} x={X(v)} y={T + H + 12} fontSize="8" fill="#9aa6c8" textAnchor="middle" direction="ltr">{t}</text>))}
+        <text x="64" y="20" fontSize="9" fill="#ffd166" textAnchor="middle">نمودار جدید</text>
+        <text x="130" y="20" fontSize="9" fill="#7d8bb5" textAnchor="middle">sin x اصلی</text>
+      </svg>
+      <div className="vlab-readout" style={{ textAlign: "center" }}>
+        <span dir="ltr">y = {fa(A, 1)} sin( {fa(B, 1)} (x − {fa(C, 1)}) ) + {fa(D, 1)}</span>
+      </div>
+      <div className="vlab-controls"><div className="vlab-ctrl-col" style={{ flex: 1 }}>
+        <label className="vlab-ctrl-label">دامنه‌ی نوسان (A): {fa(A, 1)}</label>
+        <VlabRange min="0.5" max="4" step="0.5" value={A} onChange={(e) => setA(+e.target.value)} />
+        <label className="vlab-ctrl-label">تندی نوسان (B): {fa(B, 1)} — دوره‌ی تناوب {fa(period)} رادیان</label>
+        <VlabRange min="0.5" max="3" step="0.5" value={B} onChange={(e) => setB(+e.target.value)} />
+        <label className="vlab-ctrl-label">جابه‌جایی افقی (C): {fa(C, 1)}</label>
+        <VlabRange min="-3" max="3" step="0.5" value={C} onChange={(e) => setC(+e.target.value)} />
+        <label className="vlab-ctrl-label">جابه‌جایی عمودی (D): {fa(D, 1)}</label>
+        <VlabRange min="-3" max="3" step="0.5" value={D} onChange={(e) => setD(+e.target.value)} />
+        <div className="vlab-btn-row"><button className="vlab-btn" onClick={() => { setA(2); setB(1); setC(0); setD(0); }}>↺ از نو</button></div>
+      </div></div>
+      <div className="vlab-readout">
+        {`A بلندی قله‌ها را تعیین می‌کند، B تعداد نوسان‌ها را (هرچه بزرگ‌تر، موج فشرده‌تر و دوره‌ی تناوب ${fa(period)} کوتاه‌تر)، C موج را به راست یا چپ می‌برد و D کل موج را بالا یا پایین. قله‌ی موج روی ${fa(D + A, 1)} و دره‌ی آن روی ${fa(D - A, 1)} است. نقطه‌ی قرمز در x = ۱ علامت خورده است.`}
+      </div>
+      <VlabFormulaCheck title="مقدار موج در x = ۱" fa="y = A × sin( B × (x − C) ) + D" en="y = A·sin(B(x−C)) + D" legend="ماشین‌حساب را روی رادیان (Rad) بگذار." subst={`y = ${fa(A, 1)} × sin( ${fa(B, 1)} × (۱ − ${fa(C, 1)}) ) + ${fa(D, 1)}`} answer={f(1)} unit="" decimals={2} />
+      <VlabEverydayCard title="برق خانه و صدا" text="برق شهری با بسامد ۵۰ هرتز یک موج سینوسی است: ولتاژ پنجاه بار در ثانیه بالا و پایین می‌شود. صدای یک نت موسیقی هم موجی سینوسی است؛ بلندی صدا همان A و زیر یا بم بودنش همان B است.">
+        <path d="M6,40 q12,-34 24,0 t24,0 t24,0 t24,0" fill="none" stroke="#e08a1c" strokeWidth="2.4" />
+        <path d="M6,40 H114" stroke="#999" strokeWidth="1" />
+        <path d="M30,66 l6,-10 l6,10 z" fill="#2e7bd5" />
+      </VlabEverydayCard>
+    </div>
+  );
+}
+
 const VLAB_COMPONENTS = {
   lever: VlabLeverExperiment,
   pendulum: VlabPendulumExperiment,
@@ -33101,6 +33301,9 @@ const VLAB_COMPONENTS = {
   "function-machine": VlabFunctionMachineExperiment,
   "perm-combo": VlabPermComboExperiment,
   "data-stats": VlabDataStatsExperiment,
+  "counting-tree": VlabCountingTreeExperiment,
+  "sequence-growth": VlabSequenceGrowthExperiment,
+  "sine-wave": VlabSineWaveExperiment,
 };
 
 function StudentVirtualLabView({ onBack, grade, studentCode, schoolCode }) {

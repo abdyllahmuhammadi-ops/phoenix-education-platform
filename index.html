@@ -22394,7 +22394,7 @@ function StudentRecitationPracticeView({ onBack }) {
    ============================================================ */
 
 const VLAB_LEVELS = ["ابتدایی", "متوسطه اول", "متوسطه دوم"];
-const VLAB_SUBJECTS = ["فیزیک", "شیمی", "زیست‌شناسی", "برق و الکترونیک"];
+const VLAB_SUBJECTS = ["فیزیک", "شیمی", "زیست‌شناسی", "ریاضی", "برق و الکترونیک"];
 
 /* ============================================================
    ققنوس — آمپرمتر و ولت‌مترِ عقربه‌ایِ دقیق (با برد خودکار، مثل مولتی‌متر)
@@ -23304,6 +23304,24 @@ const VLAB_EXPERIMENTS = [
     icon: "⚛️",
     intro: "یک عنصر را انتخاب کن و آن را در پنج مدل اتمی ببین: توپ دالتون، کیک کشمشی، هسته‌دار رادرفورد، لایه‌ای بور و ابر الکترونی؛ با دیدن نقطه‌ضعف هر مدل بفهم چرا مدل بعدی ساخته شد.",
     tools: ["پنج مدل", "هفت عنصر", "جهش الکترون"],
+  },
+  {
+    id: "unit-circle",
+    subject: "ریاضی",
+    level: "متوسطه دوم",
+    title: "دایره‌ی مثلثاتی (سینوس، کسینوس، تانژانت)",
+    icon: "📐",
+    intro: "نقطه‌ای را روی دایره‌ی یکه بچرخان و ببین سینوس و کسینوس چطور از ارتفاع و طول نقطه ساخته می‌شوند؛ بعد موج سینوس را با چرخش خودت بساز.",
+    tools: ["دایره‌ی یکه", "نمودار موج", "زاویه‌های خاص"],
+  },
+  {
+    id: "tangent-slope",
+    subject: "ریاضی",
+    level: "متوسطه دوم",
+    title: "شیب مماس و مفهوم مشتق",
+    icon: "📈",
+    intro: "دو نقطه‌ی منحنی را با یک خط (قاطع) وصل کن و نقطه‌ی دوم را آن‌قدر نزدیک ببر که خط به مماس تبدیل شود؛ شیبِ آن همان مشتق است.",
+    tools: ["چهار تابع", "خط قاطع", "خط مماس"],
   },
 ];
 
@@ -32400,6 +32418,194 @@ function VlabAtomicModelsExperiment({ onReading }) {
   );
 }
 
+/* ===== ریاضی ۱) دایره‌ی مثلثاتی ===== */
+const vlabMFa = (n, d = 2) => { const v = Number(n); const s = (Math.abs(v) < 0.5 * Math.pow(10, -d) ? 0 : v).toFixed(d); return s.replace(/\d/g, (q) => "۰۱۲۳۴۵۶۷۸۹"[q]).replace(".", "٫").replace("-", "−"); };
+const VLAB_UC_SPECIAL = [0, 30, 45, 60, 90, 120, 135, 150, 180, 210, 225, 240, 270, 300, 315, 330, 360];
+function vlabUcRad(deg) {
+  const g = (a, b) => (b ? g(b, a % b) : a);
+  if (deg === 0) return "۰";
+  const k = g(deg, 180), n = deg / k, m = 180 / k;
+  const fn = (n === 1 ? "" : vlabFaN(n)) + "π";
+  return m === 1 ? fn : fn + "/" + vlabFaN(m);
+}
+function VlabUnitCircleExperiment({ onReading }) {
+  const [deg, setDeg] = useState(30);
+  const [useRad, setUseRad] = useState(false);
+  const [showTan, setShowTan] = useState(true);
+  const [trace, setTrace] = useState(false);
+  const raf = React.useRef(0);
+  const last = React.useRef(0);
+  useEffect(() => {
+    cancelAnimationFrame(raf.current);
+    if (!trace) return;
+    const loop = (now) => {
+      const dt = last.current ? now - last.current : 16; last.current = now;
+      setDeg((d) => (d + dt * 0.045) % 360);
+      raf.current = requestAnimationFrame(loop);
+    };
+    last.current = 0;
+    raf.current = requestAnimationFrame(loop);
+    return () => cancelAnimationFrame(raf.current);
+  }, [trace]);
+  const th = (deg * Math.PI) / 180;
+  const s = Math.sin(th), c = Math.cos(th);
+  const nearVert = Math.abs(c) < 0.0005;
+  const t = nearVert ? null : s / c;
+  const R = 62, CX = 84, CY = 100;
+  const px = CX + R * c, py = CY - R * s;
+  const WX = 176, WW = 136, WH = 52;
+  const wave = (fn) => { let d = ""; for (let i = 0; i <= 72; i++) { const a = (i / 72) * 360; const y = CY - WH * fn((a * Math.PI) / 180); d += (i ? "L" : "M") + (WX + (a / 360) * WW).toFixed(1) + "," + y.toFixed(1); } return d; };
+  const wx = WX + (deg / 360) * WW;
+  const label = useRad ? vlabUcRad(Math.round(deg)) + " rad" : vlabFaN(Math.round(deg)) + "°";
+  const quad = deg === 0 || deg === 90 || deg === 180 || deg === 270 || deg === 360 ? "روی یکی از محورها" : deg < 90 ? "ناحیه‌ی اول (همه مثبت)" : deg < 180 ? "ناحیه‌ی دوم (فقط سینوس مثبت)" : deg < 270 ? "ناحیه‌ی سوم (فقط تانژانت مثبت)" : "ناحیه‌ی چهارم (فقط کسینوس مثبت)";
+  const ang = Math.round(deg);
+  return (
+    <div className="vlab-exp">
+      <svg viewBox="0 0 320 200" className="vlab-svg" style={{ background: "#03060f", borderRadius: "10px" }}>
+        <line x1="12" y1={CY} x2="162" y2={CY} stroke="#4a5578" strokeWidth="1" />
+        <line x1={CX} y1="18" x2={CX} y2="182" stroke="#4a5578" strokeWidth="1" />
+        <circle cx={CX} cy={CY} r={R} fill="none" stroke="#8fa0c8" strokeWidth="1.5" />
+        <path d={`M${CX + 16},${CY} A16,16 0 ${deg > 180 ? 1 : 0} 0 ${CX + 16 * c},${CY - 16 * s}`} fill="none" stroke="#ffd166" strokeWidth="2" />
+        {showTan && !nearVert ? <g><line x1={CX + R} y1="18" x2={CX + R} y2="182" stroke="#2f6b4f" strokeWidth="1" strokeDasharray="3 3" /><line x1={px} y1={py} x2={CX + R} y2={Math.max(18, Math.min(182, CY - R * t))} stroke="#5de0a0" strokeWidth="1.2" opacity="0.8" /><line x1={CX + R} y1={CY} x2={CX + R} y2={Math.max(18, Math.min(182, CY - R * t))} stroke="#5de0a0" strokeWidth="3" /></g> : null}
+        <line x1={CX} y1={CY} x2={px} y2={py} stroke="#fff" strokeWidth="2" />
+        <line x1={px} y1={py} x2={px} y2={CY} stroke="#ff6b6b" strokeWidth="3" />
+        <line x1={CX} y1={CY} x2={px} y2={CY} stroke="#5bb8ff" strokeWidth="3" />
+        <circle cx={px} cy={py} r="5" fill="#ffd166" stroke="#fff" strokeWidth="1.5" />
+        <text x={CX + R - 6} y={CY + 11} fontSize="8" fill="#9aa6c8" textAnchor="middle">۱</text>
+        <text x={CX - R + 8} y={CY + 11} fontSize="8" fill="#9aa6c8" textAnchor="middle">−۱</text>
+        <text x={CX + 4} y={CY - R - 3} fontSize="8" fill="#9aa6c8" textAnchor="start">۱</text>
+        <text x={CX + 10} y={CY + R + 10} fontSize="8" fill="#9aa6c8" textAnchor="middle">−۱</text>
+        <text x={CX + 20} y={CY - 6} fontSize="8" fill="#ffd166" textAnchor="start">θ</text>
+        <line x1={WX} y1={CY} x2={WX + WW} y2={CY} stroke="#4a5578" strokeWidth="1" />
+        <line x1={WX} y1={CY - WH - 6} x2={WX} y2={CY + WH + 6} stroke="#4a5578" strokeWidth="1" />
+        <path d={wave(Math.sin)} fill="none" stroke="#ff6b6b" strokeWidth="1.6" />
+        <path d={wave(Math.cos)} fill="none" stroke="#5bb8ff" strokeWidth="1.6" />
+        <line x1={wx} y1={CY - WH - 6} x2={wx} y2={CY + WH + 6} stroke="#ffd166" strokeWidth="1" strokeDasharray="2 3" />
+        <circle cx={wx} cy={CY - WH * s} r="3.6" fill="#ff6b6b" stroke="#fff" strokeWidth="1" />
+        <circle cx={wx} cy={CY - WH * c} r="3.6" fill="#5bb8ff" stroke="#fff" strokeWidth="1" />
+        <line x1={px} y1={py} x2={wx} y2={CY - WH * s} stroke="#ff6b6b" strokeWidth="0.6" strokeDasharray="1 3" opacity="0.7" />
+        <text x={WX + WW - 10} y={CY + 11} fontSize="7" fill="#9aa6c8" textAnchor="middle">۳۶۰°</text>
+        <text x={WX + WW / 2} y={CY + 11} fontSize="7" fill="#9aa6c8" textAnchor="middle">۱۸۰°</text>
+        <text x={WX + 14} y="30" fontSize="8" fill="#ff6b6b" textAnchor="middle">sin</text>
+        <text x={WX + 40} y="30" fontSize="8" fill="#5bb8ff" textAnchor="middle">cos</text>
+        <text x="160" y="195" fontSize="9" fontWeight="700" fill="#ffd166" textAnchor="middle" direction="ltr">{label}</text>
+      </svg>
+      <div className="vlab-readout" style={{ direction: "ltr", textAlign: "center" }}>
+        <span style={{ color: "#d33" }}>sin θ = {vlabMFa(s)}</span>{"   "}
+        <span style={{ color: "#1e72c8" }}>cos θ = {vlabMFa(c)}</span>{"   "}
+        <span style={{ color: "#1a9a63" }}>tan θ = {nearVert ? "تعریف‌نشده" : vlabMFa(t)}</span>
+      </div>
+      <div className="vlab-controls"><div className="vlab-ctrl-col" style={{ flex: 1 }}>
+        <label className="vlab-ctrl-label">زاویه‌ی θ: {label}</label>
+        <VlabRange min="0" max="360" step="1" value={Math.round(deg)} onChange={(e) => { setTrace(false); setDeg(+e.target.value); }} />
+        <div className="vlab-btn-row">
+          <button className="vlab-btn" onClick={() => setTrace((v) => !v)}>{trace ? "⏸ ایست" : "▶ بچرخان و موج را بساز"}</button>
+          <button className="vlab-btn" onClick={() => setUseRad((v) => !v)}>{useRad ? "نمایش درجه" : "نمایش رادیان"}</button>
+          <button className="vlab-btn" onClick={() => setShowTan((v) => !v)}>{showTan ? "پنهان‌کردن خط تانژانت" : "نمایش خط تانژانت"}</button>
+        </div>
+        <label className="vlab-ctrl-label">زاویه‌های خاص (یکی را بزن):</label>
+        <div className="vlab-btn-row">
+          {VLAB_UC_SPECIAL.map((a) => (<button key={a} className="vlab-btn" style={ang === a ? { outline: "2px solid #e0a83e" } : null} onClick={() => { setTrace(false); setDeg(a); }}>{useRad ? vlabUcRad(a) : vlabFaN(a) + "°"}</button>))}
+        </div>
+      </div></div>
+      <div className="vlab-readout">
+        {`نقطه‌ی زرد روی دایره‌ای به شعاع ۱ است. طول افقی آن کسینوس (آبی) و ارتفاع آن سینوس (قرمز) است؛ پس همیشه sin² + cos² = ۱. تانژانت (سبز) طول پاره‌خطی است روی خط عمودی x = ۱. الان در ${quad} هستی. وقتی نقطه می‌چرخد، ارتفاعش در نمودار سمت راست موج سینوس را می‌سازد.`}
+      </div>
+      <VlabFormulaCheck title="مقدار سینوس" fa="سینوس θ = ارتفاع نقطه روی دایره‌ی یکه" en="sin θ = y" legend={`ماشین‌حساب را روی درجه (Deg) بگذار و زاویه‌ی ${vlabFaN(ang)} درجه را وارد کن.`} subst={`sin(${ang}°)`} answer={s} unit="" decimals={2} />
+      <VlabFormulaCheck title="بررسی رابطه‌ی اصلی" fa="مجذور سینوس + مجذور کسینوس = ۱" en="sin²θ + cos²θ = 1" legend="مقدار سینوس و کسینوس را از بالا بردار و هر کدام را به توان ۲ برسان؛ جواب همیشه یک است." subst={`(${vlabMFa(s)})² + (${vlabMFa(c)})²`} answer={s * s + c * c} unit="" decimals={2} />
+      <VlabEverydayCard title="چرخ‌وفلک" text="ارتفاع هر کابین چرخ‌وفلک از مرکز چرخ برابر شعاع × سینوسِ زاویه‌ی چرخش است. برای همین، اگر ارتفاع کابین را بر حسب زمان رسم کنی، دقیقاً موج سینوس به دست می‌آید؛ همان شکلی که در نمودار همین آزمایش ساختی. همین ایده در جریان برق شهر (موج سینوسی) هم هست.">
+        <circle cx="46" cy="38" r="26" fill="none" stroke="#5a6a90" strokeWidth="2" />
+        <path d="M46,12 V64 M20,38 H72 M28,20 L64,56 M64,20 L28,56" stroke="#8aa0c8" strokeWidth="1" />
+        <path d="M46,38 L62,55 L46,80 M46,38 L30,55" stroke="#5a6a90" strokeWidth="2" fill="none" />
+        <circle cx="64" cy="26" r="4" fill="#e0a83e" />
+        <line x1="64" y1="26" x2="64" y2="38" stroke="#d33" strokeWidth="2" />
+        <line x1="46" y1="38" x2="64" y2="38" stroke="#1e72c8" strokeWidth="2" />
+        <path d="M84,70 q6,-34 12,0 t12,0" fill="none" stroke="#d33" strokeWidth="2" />
+      </VlabEverydayCard>
+    </div>
+  );
+}
+/* ===== ریاضی ۲) شیب مماس و مشتق ===== */
+const VLAB_TS_FUNCS = {
+  sq: { name: "x²", f: (x) => x * x, df: (x) => 2 * x, dtxt: "۲x", x0: -3, x1: 3, y0: -1.5, y1: 9.5, fa: (a) => `f′(${a}) = ۲ × ${a}` },
+  cube: { name: "x³ − ۳x", f: (x) => x * x * x - 3 * x, df: (x) => 3 * x * x - 3, dtxt: "۳x² − ۳", x0: -2.4, x1: 2.4, y0: -4.5, y1: 4.5, fa: (a) => `f′(${a}) = ۳ × (${a})² − ۳` },
+  sin: { name: "sin x", f: Math.sin, df: Math.cos, dtxt: "cos x", x0: -3.3, x1: 3.3, y0: -1.6, y1: 1.6, fa: (a) => `f′(${a}) = cos(${a})` },
+  exp: { name: "eˣ", f: Math.exp, df: Math.exp, dtxt: "eˣ", x0: -3, x1: 2.2, y0: -1, y1: 9.5, fa: (a) => `f′(${a}) = e^${a}` },
+};
+function VlabTangentSlopeExperiment({ onReading }) {
+  const [fk, setFk] = useState("sq");
+  const [a, setA] = useState(1);
+  const [h, setH] = useState(1.5);
+  const raf = React.useRef(0);
+  useEffect(() => () => cancelAnimationFrame(raf.current), []);
+  const F = VLAB_TS_FUNCS[fk];
+  const W = 300, H = 190, L = 10, T = 8;
+  const X = (x) => L + ((x - F.x0) / (F.x1 - F.x0)) * W;
+  const Y = (y) => T + H - ((y - F.y0) / (F.y1 - F.y0)) * H;
+  const clipY = (y) => Math.max(F.y0, Math.min(F.y1, y));
+  const aa = Math.max(F.x0 + 0.2, Math.min(F.x1 - 0.2, a));
+  const ha = Math.abs(h) < 0.02 ? 0.02 : h;
+  const fa = F.f(aa), fb = F.f(aa + ha);
+  const secant = (fb - fa) / ha;
+  const tang = F.df(aa);
+  let curve = ""; for (let i = 0; i <= 140; i++) { const x = F.x0 + (i / 140) * (F.x1 - F.x0); const y = F.f(x); if (y < F.y0 - 0.5 || y > F.y1 + 0.5) continue; curve += (curve ? "L" : "M") + X(x).toFixed(1) + "," + Y(clipY(y)).toFixed(1); }
+  const lineAt = (m, x0, y0) => { const xa = F.x0, xb = F.x1; let ya = y0 + m * (xa - x0), yb = y0 + m * (xb - x0); return `M${X(xa)},${Y(clipY(ya))} L${X(xb)},${Y(clipY(yb))}`; };
+  const lineClip = (m, x0, y0) => { const pts = []; const f = (x) => y0 + m * (x - x0); let xa = F.x0, xb = F.x1; if (Math.abs(m) > 1e-9) { const xs = [(F.y0 - y0) / m + x0, (F.y1 - y0) / m + x0].sort((p, q) => p - q); xa = Math.max(xa, xs[0]); xb = Math.min(xb, xs[1]); } return `M${X(xa)},${Y(f(xa))} L${X(xb)},${Y(f(xb))}`; };
+  const shrink = () => {
+    cancelAnimationFrame(raf.current);
+    const h0 = Math.abs(h) < 0.05 ? 1.5 : h, t0 = performance.now(), dur = 3200;
+    const loop = (now) => { const p = Math.min(1, (now - t0) / dur); setH(Math.max(0.02, h0 * Math.pow(0.02 / Math.max(0.02, h0), p))); if (p < 1) raf.current = requestAnimationFrame(loop); };
+    raf.current = requestAnimationFrame(loop);
+  };
+  const aS = vlabMFa(aa, 1), hS = vlabMFa(ha, 2);
+  const gap = Math.abs(secant - tang);
+  return (
+    <div className="vlab-exp">
+      <svg viewBox="0 0 320 206" className="vlab-svg" style={{ background: "#03060f", borderRadius: "10px" }}>
+        {F.y0 < 0 && F.y1 > 0 ? <line x1={L} y1={Y(0)} x2={L + W} y2={Y(0)} stroke="#3a4468" strokeWidth="1" /> : null}
+        {F.x0 < 0 && F.x1 > 0 ? <line x1={X(0)} y1={T} x2={X(0)} y2={T + H} stroke="#3a4468" strokeWidth="1" /> : null}
+        <path d={curve} fill="none" stroke="#9fb4ff" strokeWidth="2" />
+        <path d={lineClip(tang, aa, fa)} fill="none" stroke="#5de0a0" strokeWidth="1.6" />
+        <path d={lineClip(secant, aa, fa)} fill="none" stroke="#ff9d1c" strokeWidth="1.6" strokeDasharray={Math.abs(ha) < 0.1 ? "0" : "0"} />
+        <line x1={X(aa)} y1={Y(fa)} x2={X(aa + ha)} y2={Y(fa)} stroke="#ffd166" strokeWidth="1" strokeDasharray="3 2" />
+        <line x1={X(aa + ha)} y1={Y(fa)} x2={X(aa + ha)} y2={Y(fb)} stroke="#ffd166" strokeWidth="1" strokeDasharray="3 2" />
+        <circle cx={X(aa + ha)} cy={Y(fb)} r="4" fill="#ff9d1c" stroke="#fff" strokeWidth="1" />
+        <circle cx={X(aa)} cy={Y(fa)} r="4.6" fill="#ffd166" stroke="#fff" strokeWidth="1.4" />
+        <text x="52" y="20" fontSize="9" fill="#9fb4ff" textAnchor="middle" direction="ltr">f(x) = {F.name}</text>
+        <text x="26" y="34" fontSize="8" fill="#5de0a0" textAnchor="middle">مماس</text>
+        <text x="62" y="34" fontSize="8" fill="#ff9d1c" textAnchor="middle">قاطع</text>
+        <text x={X(aa + ha / 2)} y={Y(fa) + (Y(fa) < T + H - 14 ? 11 : -4)} fontSize="7" fill="#ffd166" textAnchor="middle">h</text>
+      </svg>
+      <div className="vlab-readout" style={{ textAlign: "center" }}>
+        <span style={{ color: "#c77a00" }}>شیب قاطع = {vlabMFa(secant, 3)}</span>{"   "}
+        <span style={{ color: "#1a9a63" }}>شیب مماس = {vlabMFa(tang, 3)}</span>
+      </div>
+      <div className="vlab-controls"><div className="vlab-ctrl-col" style={{ flex: 1 }}>
+        <label className="vlab-ctrl-label">تابع:</label>
+        <div className="vlab-btn-row">
+          {Object.keys(VLAB_TS_FUNCS).map((k) => (<button key={k} className="vlab-btn" style={fk === k ? { outline: "2px solid #e0a83e" } : null} onClick={() => { setFk(k); setA(k === "exp" ? 0.5 : 1); setH(1.5); }}>{VLAB_TS_FUNCS[k].name}</button>))}
+        </div>
+        <label className="vlab-ctrl-label">نقطه‌ی تماس x = {aS}</label>
+        <VlabRange min={F.x0 + 0.3} max={F.x1 - 0.3} step="0.1" value={aa} onChange={(e) => setA(+e.target.value)} />
+        <label className="vlab-ctrl-label">فاصله‌ی نقطه‌ی دوم (h): {hS}</label>
+        <VlabRange min="-2" max="2" step="0.02" value={ha} onChange={(e) => { cancelAnimationFrame(raf.current); setH(+e.target.value); }} />
+        <div className="vlab-btn-row"><button className="vlab-btn" onClick={shrink}>▶ نقطه‌ی دوم را به نقطه‌ی اول نزدیک کن</button></div>
+      </div></div>
+      <div className="vlab-readout">
+        {`خط نارنجی از دو نقطه‌ی منحنی می‌گذرد و شیبش «تغییر ارتفاع ÷ تغییر افقی» است. هرچه نقطه‌ی دوم نزدیک‌تر شود (h کوچک‌تر)، خط نارنجی روی خط سبز می‌خوابد؛ شیبِ این خط حدی همان مشتق است. الان اختلاف دو شیب ${vlabMFa(gap, 3)} است${gap < 0.05 ? " و تقریباً صفر شده." : "."}`}
+      </div>
+      <VlabFormulaCheck title="شیب قاطع" fa="شیب قاطع = (f(x+h) − f(x)) ÷ h" en="m = ( f(x+h) − f(x) ) / h" legend="مقدار تابع را در دو نقطه با ماشین‌حساب بگیر (برای sin ماشین‌حساب را روی رادیان بگذار)." subst={`m = (${vlabMFa(fb, 3)} − ${vlabMFa(fa, 3)}) ÷ ${hS}`} answer={secant} unit="" decimals={2} />
+      <VlabFormulaCheck title="شیب مماس (مشتق)" fa={`مشتقِ ${F.name} برابر ${F.dtxt} است`} en={`f′(x) = ${F.dtxt.replace(/[۰-۹]/g, (d) => "0123456789"["۰۱۲۳۴۵۶۷۸۹".indexOf(d)])}`} legend="x را در مشتق بگذار." subst={F.fa(aS)} answer={tang} unit="" decimals={2} />
+      <VlabEverydayCard title="سرعت‌سنج خودرو" text="وقتی به عدد سرعت‌سنج نگاه می‌کنی، همان شیبِ مماس نمودار «مسافت - زمان» را می‌خوانی: سرعت لحظه‌ای. سرعت متوسط، شیبِ قاطع است و هرچه بازه‌ی زمانی کوتاه‌تر شود، به سرعت لحظه‌ای نزدیک‌تر می‌شود.">
+        <path d="M6,70 Q40,66 60,40 T112,10" fill="none" stroke="#3a7bd5" strokeWidth="2.5" />
+        <line x1="30" y1="76" x2="104" y2="14" stroke="#2e9e66" strokeWidth="1.6" />
+        <circle cx="62" cy="40" r="3.5" fill="#d83a3a" />
+        <path d="M6,80 H112 M6,80 V6" stroke="#999" strokeWidth="1" fill="none" />
+      </VlabEverydayCard>
+    </div>
+  );
+}
+
 const VLAB_COMPONENTS = {
   lever: VlabLeverExperiment,
   pendulum: VlabPendulumExperiment,
@@ -32484,6 +32690,8 @@ const VLAB_COMPONENTS = {
   "reaction-time": VlabReactionTimeExperiment,
   "alpha-scattering": VlabAlphaScatteringExperiment,
   "atomic-models": VlabAtomicModelsExperiment,
+  "unit-circle": VlabUnitCircleExperiment,
+  "tangent-slope": VlabTangentSlopeExperiment,
 };
 
 function StudentVirtualLabView({ onBack, grade, studentCode, schoolCode }) {

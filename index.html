@@ -36037,13 +36037,31 @@ function VlabHardyWeinbergExperiment({ onReading }) {
   const next = () => { let k = 0; for (let i = 0; i < 2 * N; i++) if (Math.random() < p) k++; const np = Math.round((k / (2 * N)) * 100) / 100; setHist([...hist.slice(-19), p]); setP(Math.min(0.99, Math.max(0.01, np))); };
   const fa = (v, d = 2) => vlabMFa(v, d);
   const cols = ["#ff6b6b", "#ffd166", "#5bb8ff"];
-  const dots = []; let k = 0; const nn = [Math.round(g[0] * 100), Math.round(g[1] * 100), 100 - Math.round(g[0] * 100) - Math.round(g[1] * 100)];
-  nn.forEach((c, gi) => { for (let i = 0; i < c; i++) { dots.push(<circle key={k} cx={22 + (k % 20) * 14} cy={20 + Math.floor(k / 20) * 14} r="5" fill={cols[gi]} />); k++; } });
+  const nn = [Math.round(g[0] * 100), Math.round(g[1] * 100), 0]; nn[2] = 100 - nn[0] - nn[1];
+  const S = 104, X0 = 24, Y0 = 30;
+  const wA = p * S, wa = q * S;
+  const cells = [[0, 0, wA, wA, 0, "AA"], [wA, 0, wa, wA, 1, "Aa"], [0, wA, wA, wa, 1, "Aa"], [wA, wA, wa, wa, 2, "aa"]];
+  const person = []; let k = 0;
+  nn.forEach((c, gi) => { for (let i = 0; i < c; i++) { const cx = 176 + (k % 10) * 14, cy = 36 + Math.floor(k / 10) * 11.5; person.push(<g key={k} transform={`translate(${cx} ${cy})`}><circle cx="0" cy="-4.2" r="2.6" fill={cols[gi]} /><rect x="-3.4" y="-1.2" width="6.8" height="6.2" rx="2.4" fill={cols[gi]} /></g>); k++; } });
+  const series = [...hist, p];
+  const CXs = 24, CWd = 276, CYs = 170, CHs = 40;
+  const pt = (v, i) => `${(CXs + (series.length <= 1 ? 0 : (i / (series.length - 1)) * CWd)).toFixed(1)},${(CYs + CHs - v * CHs).toFixed(1)}`;
   return (
     <div className="vlab-exp">
-      <svg viewBox="0 0 320 190" className="vlab-svg" style={{ background: "#03060f", borderRadius: "10px" }}>
-        {dots}
-        {g.map((v, i) => (<g key={i}><rect x={50 + i * 80} y={170 - v * 70} width="42" height={v * 70} fill={cols[i]} rx="3" /><text x={71 + i * 80} y={165 - v * 70} fontSize="9" fill="#fff" textAnchor="middle">{fa(v)}</text><text x={71 + i * 80} y="183" fontSize="8" fill="#9aa6c8" textAnchor="middle" direction="ltr">{["AA", "Aa", "aa"][i]}</text></g>))}
+      <svg viewBox="0 0 320 226" className="vlab-svg" style={{ background: "#050a18", borderRadius: "10px" }}>
+        <text x={X0 + S / 2} y="12" fontSize="7" fill="#cfd6ea" textAnchor="middle">مربع گامت‌ها (مساحت = فراوانی)</text>
+        {[[0, "A", p], [1, "a", q]].map(([i, L, v]) => (<g key={"gt" + i}><text x={X0 + (i ? wA + wa / 2 : wA / 2)} y={Y0 - 5} fontSize="8" fontWeight="700" fill="#fff" textAnchor="middle" direction="ltr">{L}</text><text x={X0 - 8} y={Y0 + (i ? wA + wa / 2 : wA / 2) + 3} fontSize="8" fontWeight="700" fill="#fff" textAnchor="middle" direction="ltr">{L}</text></g>))}
+        {cells.map(([x, y, w, h, gi, L], i) => (<g key={"c" + i}><rect x={X0 + x} y={Y0 + y} width={Math.max(0.5, w)} height={Math.max(0.5, h)} fill={cols[gi]} stroke="#050a18" strokeWidth="1.2" />{w * h > 380 && <text x={X0 + x + w / 2} y={Y0 + y + h / 2 + 3} fontSize={w < 50 ? 6.5 : 8} fontWeight="700" fill="#050a18" textAnchor="middle" direction="ltr">{L} {fa(w * h / (S * S))}</text>}</g>))}
+        <text x="176" y="12" fontSize="7" fill="#cfd6ea" textAnchor="start" />
+        <text x="246" y="26" fontSize="7" fill="#cfd6ea" textAnchor="middle">جمعیت ۱۰۰ نفری نمونه</text>
+        {person}
+        {[["AA", 0], ["Aa", 1], ["aa", 2]].map(([L, i]) => (<g key={"lg" + i}><circle cx={186 + i * 46} cy="148" r="4" fill={cols[i]} /><text x={196 + i * 46} y="151" fontSize="7.5" fill="#cfd6ea" textAnchor="start" direction="ltr">{L} {fa(g[i] * 100, 0)}%</text></g>))}
+        <text x="162" y="164" fontSize="7" fill="#cfd6ea" textAnchor="middle">فراوانی p در نسل‌ها</text>
+        <path d={`M${CXs},${CYs} V${CYs + CHs} H${CXs + CWd}`} fill="none" stroke="#4a5578" />
+        <path d={series.map((v, i) => (i ? "L" : "M") + pt(v, i)).join("")} fill="none" stroke="#5bb8ff" strokeWidth="1.8" />
+        <circle cx={pt(p, series.length - 1).split(",")[0]} cy={pt(p, series.length - 1).split(",")[1]} r="3" fill="#fff" />
+        <text x="14" y={CYs + 4} fontSize="6" fill="#9aa6c8" textAnchor="middle">۱</text><text x="14" y={CYs + CHs} fontSize="6" fill="#9aa6c8" textAnchor="middle">۰</text>
+        <text x="160" y="222" fontSize="7" fill="#9aa6c8" textAnchor="middle">{hist.length ? `${vlabFaN(hist.length)} نسل گذشته` : "هنوز نسلی نگذشته"}</text>
       </svg>
       <div className="vlab-readout" style={{ textAlign: "center" }}>p (فراوانی A) = <b>{fa(p)}</b> · q (فراوانی a) = <b>{fa(q)}</b> · ناقلان Aa = <b>{fa(g[1] * 100, 0)}٪</b></div>
       <div className="vlab-controls"><div className="vlab-ctrl-col" style={{ flex: 1 }}>
@@ -36051,7 +36069,7 @@ function VlabHardyWeinbergExperiment({ onReading }) {
         <label className="vlab-ctrl-label">اندازه‌ی جمعیت: {vlabFaN(N)} نفر</label><VlabRange min="10" max="500" step="10" value={N} onChange={(e) => setN(+e.target.value)} />
         <div className="vlab-btn-row"><button className="vlab-btn" onClick={next}>نسل بعد (آمیزش تصادفی)</button><button className="vlab-btn" onClick={() => { setP(0.6); setHist([]); }}>بازنشانی</button></div>
       </div></div>
-      <div className="vlab-readout">{`اگر جمعیت بزرگ باشد، آمیزش تصادفی انجام شود و جهش، مهاجرت و انتخاب طبیعی نباشد، فراوانی الل‌ها نسل‌به‌نسل ثابت می‌ماند (تعادل). با کوچک‌کردن جمعیت و زدن «نسل بعد»، فراوانی‌ها به‌صورت تصادفی تغییر می‌کنند؛ این رانش ژنی است. ${hist.length ? "تعداد نسل‌های گذشته: " + vlabFaN(hist.length) + "." : ""}`}</div>
+      <div className="vlab-readout">{`در مربع بالا، ستون‌ها و ردیف‌ها گامت‌های A و a هستند و مساحت هر خانه فراوانی آن ژنوتیپ را نشان می‌دهد: AA = p²، Aa = ۲pq (دو خانه) و aa = q². اگر جمعیت بزرگ باشد، آمیزش تصادفی انجام شود و جهش، مهاجرت و انتخاب طبیعی نباشد، فراوانی الل‌ها نسل‌به‌نسل ثابت می‌ماند (تعادل). با کوچک‌کردن جمعیت و زدن «نسل بعد»، فراوانی‌ها به‌صورت تصادفی تغییر می‌کنند؛ این رانش ژنی است و نمودار پایین آن را نشان می‌دهد.`}</div>
       <VlabFormulaCheck title="فراوانی ناقلان" fa="۲pq" en="2pq" legend="p + q = ۱؛ ناقل یعنی ناهمخوان Aa." subst={`۲ × ${fa(p)} × ${fa(q)}`} answer={2 * p * q} unit="" decimals={2} />
       <VlabFormulaCheck title="فراوانی افراد بیمار (aa)" fa="q²" en="q²" legend="بیماری مغلوب فقط در حالت aa دیده می‌شود." subst={`${fa(q)}²`} answer={q * q} unit="" decimals={3} />
       <VlabEverydayCard title="ناقلان بیماری‌های نادر" text="اگر از هر ۱۰۰۰۰ نفر یک نفر بیمار مغلوب باشد، q = ۰٫۰۱ است و حدود ۲٪ جمعیت ناقل‌اند؛ یعنی ناقل‌ها بسیار بیشتر از بیمارها هستند، چون الل در افراد سالم پنهان می‌ماند.">
@@ -36060,7 +36078,6 @@ function VlabHardyWeinbergExperiment({ onReading }) {
     </div>
   );
 }
-
 /* ===== شیمی) آرایش الکترونی ===== */
 const VLAB_ORB = [["1s", 1], ["2s", 1], ["2p", 3], ["3s", 1], ["3p", 3], ["4s", 1], ["3d", 5], ["4p", 3]];
 const VLAB_SYM = ["H", "He", "Li", "Be", "B", "C", "N", "O", "F", "Ne", "Na", "Mg", "Al", "Si", "P", "S", "Cl", "Ar", "K", "Ca", "Sc", "Ti", "V", "Cr", "Mn", "Fe", "Co", "Ni", "Cu", "Zn", "Ga", "Ge", "As", "Se", "Br", "Kr"];
@@ -38100,29 +38117,64 @@ function VlabMuscleExperiment({ onReading }) {
 /* ===== زیست) چرخه‌ی قاعدگی و هورمون‌ها ===== */
 function VlabMenstrualExperiment({ onReading }) {
   const [day, setDay] = useState(14);
+  const [play, setPlay] = useState(false);
+  useEffect(() => { if (!play) return; const id = setInterval(() => setDay((v) => (v >= 28 ? 1 : v + 1)), 500); return () => clearInterval(id); }, [play]);
   const g = (d, c, w, h) => h * Math.exp(-Math.pow((d - c) / w, 2));
   const H = {
     FSH: (d) => 30 + g(d, 4, 4, 30) + g(d, 14, 1.5, 25) + g(d, 24, 3, 8), LH: (d) => 15 + g(d, 14, 1.2, 85),
-    E: (d) => 20 + g(d, 13, 3, 70) + g(d, 21, 3, 35), P: (d) => 5 + g(d, 21, 4, 85) - g(d, 28, 1.4, 0),
+    E: (d) => 20 + g(d, 13, 3, 70) + g(d, 21, 3, 35), P: (d) => 5 + g(d, 21, 4, 85),
   };
-  const GX = 24, GW = 280, GY = 14, GH = 100;
+  const GX = 24, GW = 280, GY = 136, GH = 60;
   const cv = (f, col, nm) => { let d = ""; for (let i = 0; i <= 56; i++) { const x = (i / 56) * 28; d += (i ? "L" : "M") + (GX + (x / 28) * GW).toFixed(1) + "," + (GY + GH - Math.min(100, f(x)) / 100 * GH).toFixed(1); } return <path key={nm} d={d} fill="none" stroke={col} strokeWidth="2" />; };
   const phase = day <= 5 ? "قاعدگی (ریزش دیواره‌ی رحم)" : day < 14 ? "فولیکولی (رشد فولیکول و دیواره‌ی رحم)" : day <= 15 ? "تخمک‌گذاری" : "لوتئال (جسم زرد، آمادگی رحم)";
+  const FX = 84, FY = 50;
+  const fr = day <= 5 ? 4 + day * 0.15 : day <= 14 ? 5 + ((day - 5) / 9) * 11 : 0;
+  const cl = day >= 15 && day <= 26 ? 11 : day >= 27 ? 8 : 0;
+  const th = day <= 4 ? 2 + (day === 1 ? 2 : 0) : day <= 14 ? 2 + ((day - 5) / 9) * 11 : day <= 26 ? 13 : 13 - (day - 26) * 4;
+  const bleed = day <= 5 || day >= 27;
+  const CX0 = 202, CY0 = 22, CW = 76, CH = 58;
+  const mx = (d) => GX + ((d - 0.5) / 28) * GW;
+  const segs = [[1, 5, "#c0392b", "قاعدگی"], [6, 13, "#4a8bd6", "فولیکولی"], [14, 14, "#ffd166", ""], [15, 28, "#4caf6a", "لوتئال"]];
   return (
     <div className="vlab-exp">
-      <svg viewBox="0 0 320 176" className="vlab-svg" style={{ background: "#03060f", borderRadius: "10px" }}>
+      <svg viewBox="0 0 320 226" className="vlab-svg" style={{ background: "#050a18", borderRadius: "10px" }}>
+        <defs><radialGradient id="mnOv" cx="0.4" cy="0.35" r="0.8"><stop offset="0" stopColor="#f0a8b8" /><stop offset="1" stopColor="#b8586e" /></radialGradient></defs>
+        {/* لوله‌ی فالوپ و تخمدان */}
+        <path d="M128,8 C136,24 122,38 106,44" fill="none" stroke="#e8a0b0" strokeWidth="6" strokeLinecap="round" />
+        <path d="M100,40 l-5,-3 M102,46 l-6,0 M104,50 l-5,3" stroke="#e8a0b0" strokeWidth="1.6" strokeLinecap="round" />
+        <ellipse cx="62" cy="56" rx="50" ry="36" fill="url(#mnOv)" stroke="#8a3a4e" strokeWidth="1.2" />
+        {[[34, 46, 4], [42, 72, 3.4], [58, 40, 3], [66, 76, 3.6], [28, 62, 3]].map((c, i) => (<circle key={i} cx={c[0]} cy={c[1]} r={c[2]} fill="#f7c6d2" stroke="#c9707f" strokeWidth="0.6" />))}
+        {fr > 0 && (<g><circle cx={FX} cy={FY} r={fr} fill="#f9d6de" stroke="#c9707f" strokeWidth="1" /><circle cx={FX} cy={FY} r={Math.max(1, fr - 2.5)} fill="#bfe3ff" />{fr > 6 && <g><circle cx={FX - fr * 0.4} cy={FY - fr * 0.25} r="3" fill="#fff4d0" stroke="#d4b86a" strokeWidth="0.6" /><circle cx={FX - fr * 0.4} cy={FY - fr * 0.25} r="1" fill="#c99" /></g>}</g>)}
+        {day === 14 && (<g><circle cx={FX + 14} cy={FY - 3} r="4.4" fill="#fff4d0" stroke="#ffd166" strokeWidth="1.2"><animate attributeName="r" values="4;5.2;4" dur="1s" repeatCount="indefinite" /></circle><circle cx={FX + 14} cy={FY - 3} r="9" fill="none" stroke="#ffd166" strokeOpacity="0.4" /></g>)}
+        {(day === 15 || day === 16) && <circle r="4.4" fill="#fff4d0" stroke="#ffd166" strokeWidth="1.2"><animateMotion dur="2.5s" repeatCount="indefinite" path="M98,44 C112,40 124,32 128,12" /></circle>}
+        {cl > 0 && (<g><circle cx={FX} cy={FY} r={cl} fill={day >= 27 ? "#e8dcb8" : "#f2c14e"} stroke={day >= 27 ? "#b8a878" : "#d98a1e"} strokeWidth="1.2" /><path d={`M${FX - cl * 0.5},${FY - 2} q${cl * 0.5},${cl * 0.5} ${cl},0 M${FX - cl * 0.4},${FY + 3} q${cl * 0.4},${cl * 0.3} ${cl * 0.8},0`} stroke="#d98a1e" strokeOpacity="0.5" fill="none" /></g>)}
+        <text x="62" y="98" fontSize="7" fill="#f0a8b8" textAnchor="middle">تخمدان</text>
+        <text x="164" y="12" fontSize="6.5" fill="#e8a0b0" textAnchor="middle">لوله‌ی رحمی</text>
+        <text x={FX} y={day >= 15 ? FY + 24 : FY + fr + 9} fontSize="6.5" fill="#fff" textAnchor="middle" stroke="#050a18" strokeWidth="2" paintOrder="stroke">{day <= 14 ? "فولیکول" : day <= 26 ? "جسم زرد" : "جسم زرد (در حال زوال)"}</text>
+        {/* رحم */}
+        <path d={`M${CX0 - 12},${CY0 - 4} Q${CX0 - 12},${CY0 - 14} ${CX0 + 38},${CY0 - 14} Q${CX0 + CW + 12},${CY0 - 14} ${CX0 + CW + 12},${CY0 - 4} L${CX0 + CW + 12},${CY0 + CH - 6} Q${CX0 + CW + 12},${CY0 + CH + 12} ${CX0 + 38},${CY0 + CH + 14} Q${CX0 - 12},${CY0 + CH + 12} ${CX0 - 12},${CY0 + CH - 6}Z`} fill="#8a3a4e" stroke="#5a2030" strokeWidth="1" />
+        <rect x={CX0} y={CY0} width={CW} height={CH} rx="8" fill="#e06a7e" />
+        <rect x={CX0 + th} y={CY0 + th} width={Math.max(2, CW - 2 * th)} height={Math.max(2, CH - 2 * th)} rx="5" fill="#2a0f18" />
+        {day >= 15 && day <= 26 && [0.2, 0.4, 0.6, 0.8].map((q, i) => (<path key={i} d={`M${CX0 + CW * q},${CY0 + 1} q3,4 0,7 t0,${th - 8}`} stroke="#fff" strokeOpacity="0.4" strokeWidth="0.9" fill="none" />))}
+        {bleed && [0.25, 0.5, 0.75].map((q, i) => (<circle key={"b" + i} cx={CX0 + CW * q} cy={CY0 + CH / 2} r="2.2" fill="#d9302a"><animate attributeName="cy" values={`${CY0 + th + 3};${CY0 + CH - th - 3}`} dur={`${1.6 + i * 0.3}s`} repeatCount="indefinite" /></circle>))}
+        <text x={CX0 + CW / 2} y={CY0 + CH + 26} fontSize="7" fill="#f0a8b8" textAnchor="middle">رحم و دیواره‌ی آن (آندومتر)</text>
+        <text x={CX0 + CW / 2} y={CY0 + CH + 36} fontSize="6.5" fill="#cfd6ea" textAnchor="middle">ضخامت دیواره: {vlabFaN(Math.round(th * 0.7))} mm (تقریبی)</text>
+        {/* نوار مرحله‌ها */}
+        {segs.map(([a, b, c, n], i) => (<g key={"s" + i}><rect x={GX + ((a - 1) / 28) * GW} y="125" width={((b - a + 1) / 28) * GW - 1} height="5" fill={c} opacity={day >= a && day <= b ? 1 : 0.45} />{n && <text x={GX + (((a + b + 1) / 2 - 1) / 28) * GW} y="123" fontSize="6" fill="#cfd6ea" textAnchor="middle">{n}</text>}</g>))}
+        {/* نمودار */}
         <line x1={GX} y1={GY + GH} x2={GX + GW} y2={GY + GH} stroke="#4a5578" />
         {cv(H.FSH, "#5bb8ff", "f")}{cv(H.LH, "#ffd166", "l")}{cv(H.E, "#ff9d9d", "e")}{cv(H.P, "#5de0a0", "p")}
-        <line x1={GX + (day / 28) * GW} y1={GY} x2={GX + (day / 28) * GW} y2={GY + GH} stroke="#fff" strokeDasharray="3 3" />
-        {[0, 7, 14, 21, 28].map((d) => (<text key={d} x={GX + (d / 28) * GW} y={GY + GH + 11} fontSize="8" fill="#9aa6c8" textAnchor="middle">{vlabFaN(d)}</text>))}
-        <text x="60" y="162" fontSize="8" fill="#5bb8ff" textAnchor="middle">FSH</text><text x="120" y="162" fontSize="8" fill="#ffd166" textAnchor="middle">LH</text><text x="180" y="162" fontSize="8" fill="#ff9d9d" textAnchor="middle">استروژن</text><text x="250" y="162" fontSize="8" fill="#5de0a0" textAnchor="middle">پروژسترون</text>
-        <text x="160" y="150" fontSize="8" fill="#9aa6c8" textAnchor="middle">روز چرخه</text>
+        <line x1={mx(day)} y1={GY} x2={mx(day)} y2={GY + GH} stroke="#fff" strokeDasharray="3 3" />
+        {[[H.FSH, "#5bb8ff"], [H.LH, "#ffd166"], [H.E, "#ff9d9d"], [H.P, "#5de0a0"]].map(([f, c], i) => (<circle key={"d" + i} cx={mx(day)} cy={GY + GH - Math.min(100, f(day - 0.5)) / 100 * GH} r="2.6" fill={c} stroke="#fff" strokeWidth="0.6" />))}
+        {[1, 7, 14, 21, 28].map((d) => (<text key={d} x={mx(d)} y={GY + GH + 10} fontSize="7.5" fill="#9aa6c8" textAnchor="middle">{vlabFaN(d)}</text>))}
+        <text x="60" y="219" fontSize="8" fill="#5bb8ff" textAnchor="middle">FSH</text><text x="120" y="219" fontSize="8" fill="#ffd166" textAnchor="middle">LH</text><text x="190" y="219" fontSize="8" fill="#ff9d9d" textAnchor="middle">استروژن</text><text x="258" y="219" fontSize="8" fill="#5de0a0" textAnchor="middle">پروژسترون</text>
       </svg>
       <div className="vlab-readout" style={{ textAlign: "center" }}>روز {vlabFaN(day)}: <b>{phase}</b></div>
       <div className="vlab-controls"><div className="vlab-ctrl-col" style={{ flex: 1 }}>
-        <label className="vlab-ctrl-label">روز چرخه: {vlabFaN(day)}</label><VlabRange min="1" max="28" step="1" value={day} onChange={(e) => setDay(+e.target.value)} />
+        <label className="vlab-ctrl-label">روز چرخه: {vlabFaN(day)}</label><VlabRange min="1" max="28" step="1" value={day} onChange={(e) => { setPlay(false); setDay(+e.target.value); }} />
+        <div className="vlab-btn-row"><button className="vlab-btn" onClick={() => setPlay((p) => !p)}>{play ? "⏸ توقف" : "▶ پخش چرخه"}</button></div>
       </div></div>
-      <div className="vlab-readout">{`چرخه‌ی ۲۸ روزه با هورمون‌های هیپوفیز (FSH و LH) و تخمدان (استروژن و پروژسترون) تنظیم می‌شود. FSH رشد فولیکول را شروع می‌کند، استروژن دیواره‌ی رحم را ضخیم می‌کند و جهش ناگهانی LH در روز ۱۴ تخمک‌گذاری را برمی‌انگیزد. جسم زرد پروژسترون می‌سازد؛ اگر بارداری نشود، سطح هورمون‌ها می‌افتد و قاعدگی شروع می‌شود (بازخورد منفی و مثبت).`}</div>
+      <div className="vlab-readout">{`چرخه‌ی ۲۸ روزه با هورمون‌های هیپوفیز (FSH و LH) و تخمدان (استروژن و پروژسترون) تنظیم می‌شود. FSH رشد فولیکول را شروع می‌کند، استروژن دیواره‌ی رحم را ضخیم می‌کند و جهش ناگهانی LH در حدود روز ۱۴ تخمک‌گذاری را برمی‌انگیزد. فولیکول خالی‌شده به جسم زرد تبدیل می‌شود و پروژسترون می‌سازد تا دیواره‌ی رحم آماده بماند. اگر بارداری نشود، جسم زرد از بین می‌رود، سطح هورمون‌ها می‌افتد و دیواره ریزش می‌کند (قاعدگی). طول چرخه در افراد مختلف فرق می‌کند و منحنی‌ها نمونه‌ی ساده‌شده‌اند.`}</div>
       <VlabFormulaCheck title="روز تخمک‌گذاری" fa="تخمک‌گذاری ≈ طول چرخه ÷ ۲" en="ovulation ≈ day 14" legend="جهش LH تقریباً ۲۴ تا ۳۶ ساعت قبل از آن است." subst="۲۸ ÷ ۲" answer={14} unit="" decimals={0} />
       <VlabEverydayCard title="چرا قرص جلوگیری اثر دارد؟" text="قرص‌های هورمونی سطح استروژن و پروژسترون را ثابت نگه می‌دارند، پس جهش LH رخ نمی‌دهد و تخمک‌گذاری انجام نمی‌شود. این یعنی آگاهی از چرخه، پایه‌ی بسیاری از درمان‌هاست.">
         <circle cx="60" cy="38" r="22" fill="#ff9d9d" opacity="0.8" /><circle cx="60" cy="38" r="8" fill="#fff" />
@@ -38130,28 +38182,53 @@ function VlabMenstrualExperiment({ onReading }) {
     </div>
   );
 }
-
 /* ===== زیست) اپرون لاکتوز ===== */
+function vlabLcHex(cx, cy, r, fill) { const p = []; for (let i = 0; i < 6; i++) { const a = (Math.PI / 3) * i + Math.PI / 6; p.push((cx + r * Math.cos(a)).toFixed(1) + "," + (cy + r * Math.sin(a)).toFixed(1)); } return <polygon points={p.join(" ")} fill={fill} stroke="#03060f" strokeWidth="0.6" />; }
 function VlabLacOperonExperiment({ onReading }) {
   const [lac, setLac] = useState(false);
   const [glu, setGlu] = useState(true);
-  const rep = !lac;
   const tr = lac ? (glu ? 12 : 100) : 0;
   const fa = (v) => vlabFaN(v);
+  const nm = tr > 50 ? 6 : tr > 0 ? 1 : 0;
+  const xs = [130, 150, 170, 190, 210, 230, 250];
+  const float = (dx, dy, d) => <animateTransform attributeName="transform" type="translate" values={`0 0;${dx} ${dy};0 0`} dur={d} repeatCount="indefinite" />;
+  const enz = (x) => (x < 186 ? (<g><circle cx={x - 3} cy="-3" r="3.2" fill="#ffd166" /><circle cx={x + 3} cy="-3" r="3.2" fill="#ffd166" /><circle cx={x - 3} cy="3" r="3.2" fill="#ffd166" /><circle cx={x + 3} cy="3" r="3.2" fill="#ffd166" /></g>) : x < 234 ? <rect x={x - 5} y="-4" width="10" height="8" rx="3" fill="#ff9d1c" /> : <circle cx={x} cy="0" r="4" fill="#5de0a0" />);
+  const Rep = ({ free }) => (<g>{free ? [[-9, -7], [9, -7], [-9, 7], [9, 7]] .map((c, i) => <circle key={i} cx={c[0]} cy={c[1]} r="6" fill="#b8c2e0" stroke="#5a6794" strokeWidth="0.8" />) : [[-6, -5], [6, -5], [-6, 5], [6, 5]].map((c, i) => <circle key={i} cx={c[0]} cy={c[1]} r="6.5" fill="#9aa6c8" stroke="#5a6794" strokeWidth="0.8" />)}{!free && (<g><rect x="-9" y="9" width="5" height="5" fill="#9aa6c8" /><rect x="4" y="9" width="5" height="5" fill="#9aa6c8" /></g>)}</g>);
   return (
     <div className="vlab-exp">
-      <svg viewBox="0 0 320 176" className="vlab-svg" style={{ background: "#03060f", borderRadius: "10px" }}>
-        <rect x="14" y="108" width="292" height="8" fill="#4a5578" />
-        {[["مهارکننده", 20, 38, "#9aa6c8"], ["پیشبر", 70, 38, "#5bb8ff"], ["اپراتور", 118, 30, "#ff6b6b"], ["lacZ", 160, 48, "#ffd166"], ["lacY", 214, 40, "#ff9d1c"], ["lacA", 260, 40, "#5de0a0"]].map(([n, x, w, c], i) => (<g key={i}><rect x={x} y="96" width={w} height="14" fill={c} opacity="0.85" rx="2" /><text x={x + w / 2} y="130" fontSize="7" fill="#cfd6ea" textAnchor="middle" direction="ltr">{n}</text></g>))}
-        {rep ? (<g><ellipse cx="133" cy="76" rx="18" ry="14" fill="#9aa6c8" stroke="#fff" /><text x="133" y="79" fontSize="8" fill="#03060f" textAnchor="middle">مهار</text><path d="M133,90 V96" stroke="#fff" /><text x="190" y="64" fontSize="9" fill="#ff9d9d" textAnchor="middle">RNA پلیمراز مسدود</text></g>)
-          : (<g><ellipse cx="60" cy="68" rx="18" ry="14" fill="#9aa6c8" opacity="0.6" /><circle cx="78" cy="62" r="6" fill="#ffd166" /><text x="60" y="48" fontSize="8" fill="#ffd166" textAnchor="middle">لاکتوز مهار را بر می‌دارد</text><path d="M86,86 Q150,60 220,86" fill="none" stroke="#5de0a0" strokeWidth={tr > 50 ? 4 : 1.5} /><text x="190" y="60" fontSize="9" fill="#5de0a0" textAnchor="middle">رونویسی {tr > 50 ? "زیاد" : "کم"}</text></g>)}
-        <rect x="30" y="148" width={(tr / 100) * 260} height="12" fill="#5de0a0" /><text x="160" y="170" fontSize="8" fill="#9aa6c8" textAnchor="middle">سطح آنزیم‌های مصرف لاکتوز: {fa(tr)}٪</text>
+      <svg viewBox="0 0 320 212" className="vlab-svg" style={{ background: "#050a18", borderRadius: "10px" }}>
+        {/* محیط */}
+        <rect x="204" y="8" width="108" height="54" rx="8" fill="#0d1530" stroke="#2a3a66" strokeDasharray="3 3" />
+        <text x="258" y="18" fontSize="6.5" fill="#9aa6c8" textAnchor="middle">محیط اطراف باکتری</text>
+        {lac && [[222, 34], [250, 46], [282, 32]].map((p, i) => (<g key={"l" + i}><g>{vlabLcHex(p[0], p[1], 5, "#5bb8ff")}{vlabLcHex(p[0] + 9, p[1], 5, "#ffd166")}{float(3, -3, `${3 + i}s`)}</g></g>))}
+        {glu && [[236, 28], [270, 48], [296, 30]].map((p, i) => (<g key={"g" + i}>{vlabLcHex(p[0], p[1], 5, "#ff9d1c")}</g>))}
+        {!lac && !glu && <text x="258" y="40" fontSize="7" fill="#6a7aa8" textAnchor="middle">خالی</text>}
+        <text x="258" y="58" fontSize="6" fill="#9aa6c8" textAnchor="middle">{lac ? "لاکتوز (دو قندی)" : ""}{lac && glu ? " · " : ""}{glu ? "گلوکز" : ""}</text>
+        {/* DNA */}
+        <rect x="6" y="97" width="278" height="10" rx="3" fill="#2a3566" /><rect x="6" y="101" width="278" height="2" fill="#4a5578" />
+        {[["lacI", 8, 38, "#7d8bb5"], ["CAP", 54, 14, "#3fd0e0"], ["پیشبر", 70, 28, "#5bb8ff"], ["اپراتور", 100, 18, "#ff6b6b"], ["lacZ", 120, 64, "#ffd166"], ["lacY", 186, 46, "#ff9d1c"], ["lacA", 234, 46, "#5de0a0"]].map(([n, x, w, c], i) => (<g key={i}><rect x={x} y="93" width={w} height="18" fill={c} stroke="#03060f" strokeWidth="0.8" rx="2.5" /><text x={x + w / 2} y="104.5" fontSize={w < 20 ? 5 : 6.5} fontWeight="700" fill="#03060f" textAnchor="middle" direction="ltr">{n}</text></g>))}
+        <text x="27" y="122" fontSize="5.5" fill="#9aa6c8" textAnchor="middle">ژن مهارکننده</text>
+        {nm === 0 && <text x="204" y="122" fontSize="6" fill="#9aa6c8" textAnchor="middle">ژن‌های اپرون (آنزیم‌های مصرف لاکتوز)</text>}
+        {/* CAP */}
+        {!glu && (<g><ellipse cx="61" cy="84" rx="9" ry="6.5" fill="#3fd0e0" stroke="#fff" strokeWidth="0.8" /><text x="61" y="86.5" fontSize="5.5" fontWeight="700" fill="#03060f" textAnchor="middle" direction="ltr">CAP</text><text x="61" y="72" fontSize="5.5" fill="#3fd0e0" textAnchor="middle">فعال‌کننده</text></g>)}
+        {/* مهارکننده */}
+        {!lac ? (<g transform="translate(109 83)"><Rep free={false} /></g>) : (<g transform="translate(60 40)"><g><Rep free={true} /><circle cx="14" cy="-8" r="3.2" fill="#ffd166" /><circle cx="-14" cy="8" r="3.2" fill="#ffd166" />{float(4, -3, "3.5s")}</g></g>)}
+        <text x={lac ? 60 : 109} y={lac ? 62 : 66} fontSize="6.5" fill="#cfd6ea" textAnchor="middle" stroke="#050a18" strokeWidth="2" paintOrder="stroke">{lac ? "مهارکننده (جداشده)" : "مهارکننده"}</text>
+        {/* RNA پلیمراز */}
+        {!lac ? (<g><ellipse cx="84" cy="85" rx="14" ry="9" fill="#8a5cd6" stroke="#d9c8ff" strokeWidth="1"><animate attributeName="rx" values="14;15.5;14" dur="1s" repeatCount="indefinite" /></ellipse><text x="134" y="84" fontSize="9" fontWeight="700" fill="#ff6b6b" textAnchor="middle">✕</text><text x="160" y="76" fontSize="6.5" fill="#ff9d9d" textAnchor="middle">مسیر بسته است</text></g>) : (<g><ellipse rx="14" ry="9" fill="#8a5cd6" stroke="#d9c8ff" strokeWidth="1"><animateMotion dur={tr > 50 ? "3s" : "9s"} repeatCount="indefinite" path="M84,85 L124,85 L276,85" /></ellipse></g>)}
+        <text x="62" y="60" fontSize="6.5" fill="#d9c8ff" textAnchor="middle" stroke="#050a18" strokeWidth="2" paintOrder="stroke">{lac ? "" : "RNA پلیمراز"}</text>
+        {/* mRNA و آنزیم‌ها */}
+        {xs.slice(0, nm).map((x, i) => (<g key={"m" + i}><path d={`M${x},111 q5,10 0,20 t0,20`} fill="none" stroke="#ff9d1c" strokeWidth="1.4" strokeDasharray="3 2"><animate attributeName="stroke-dashoffset" from="0" to="-10" dur="1.5s" repeatCount="indefinite" /></path><circle cx={x} cy="140" r="2.6" fill="#c9a0ff" /><circle cx={x} cy="150" r="2.6" fill="#c9a0ff" /><g transform={`translate(0 168)`}>{enz(x)}</g></g>))}
+        {nm === 0 && <text x="160" y="150" fontSize="8" fill="#6a7aa8" textAnchor="middle">رونویسی نمی‌شود: mRNA و آنزیمی ساخته نمی‌شود</text>}
+        {nm > 0 && <text x="160" y="186" fontSize="6" fill="#9aa6c8" textAnchor="middle">mRNA ← رناتن‌ها ← آنزیم‌ها (β‑گالاکتوزیداز، پرمئاز، ترانس‌استیلاز)</text>}
+        <rect x="30" y="192" width="260" height="6" rx="3" fill="#1c2644" /><rect x="30" y="192" width={(tr / 100) * 260} height="6" rx="3" fill="#5de0a0" />
+        <text x="160" y="208" fontSize="7.5" fill="#9aa6c8" textAnchor="middle">سطح آنزیم‌های مصرف لاکتوز: {fa(tr)}٪</text>
       </svg>
-      <div className="vlab-readout" style={{ textAlign: "center" }}>{lac ? (glu ? "لاکتوز هست ولی گلوکز هم هست: باکتری ترجیح می‌دهد گلوکز بخورد (رونویسی کم)" : "لاکتوز هست و گلوکز نیست: ژن‌ها فعال و آنزیم‌ها زیاد") : "لاکتوز نیست: مهارکننده روی اپراتور است و ژن‌ها خاموش"}</div>
+      <div className="vlab-readout" style={{ textAlign: "center" }}>{lac ? (glu ? "لاکتوز هست ولی گلوکز هم هست: مهارکننده برداشته شده ولی فعال‌کننده (CAP) نیست؛ رونویسی کم است" : "لاکتوز هست و گلوکز نیست: مهارکننده جدا و CAP فعال است؛ ژن‌ها پُرفعال و آنزیم‌ها زیاد") : "لاکتوز نیست: مهارکننده روی اپراتور است و ژن‌ها خاموش‌اند"}</div>
       <div className="vlab-controls"><div className="vlab-ctrl-col" style={{ flex: 1 }}>
         <div className="vlab-btn-row"><button className="vlab-btn" style={lac ? { outline: "2px solid #e0a83e" } : null} onClick={() => setLac(!lac)}>لاکتوز {lac ? "هست" : "نیست"}</button><button className="vlab-btn" style={glu ? { outline: "2px solid #2e7bd5" } : null} onClick={() => setGlu(!glu)}>گلوکز {glu ? "هست" : "نیست"}</button></div>
       </div></div>
-      <div className="vlab-readout">{`باکتری فقط وقتی آنزیم‌های مصرف لاکتوز را می‌سازد که لازم باشند. وقتی لاکتوز نیست، پروتئین مهارکننده به اپراتور می‌چسبد و رونویسی نمی‌شود. لاکتوز به مهارکننده می‌چسبد، آن را از اپراتور جدا می‌کند و RNA پلیمراز ژن‌ها را رونویسی می‌کند. وجود گلوکز (منبع بهتر) رونویسی را کاهش می‌دهد؛ یک تنظیم دوگانه و اقتصادی.`}</div>
+      <div className="vlab-readout">{`باکتری فقط وقتی آنزیم‌های مصرف لاکتوز را می‌سازد که لازم باشند. وقتی لاکتوز نیست، پروتئین مهارکننده (ساخته‌شده از ژن lacI) به اپراتور می‌چسبد و RNA پلیمراز نمی‌تواند عبور کند. لاکتوز به مهارکننده می‌چسبد، شکل آن را عوض می‌کند و آن را از اپراتور جدا می‌کند؛ پس RNA پلیمراز ژن‌ها را رونویسی می‌کند. وجود گلوکز (منبع بهتر) رونویسی را کم می‌کند، چون پروتئین فعال‌کننده‌ی CAP نمی‌تواند به DNA بچسبد؛ یک تنظیم دوگانه و اقتصادی. درصدها برای نمایش ساده شده‌اند.`}</div>
       <VlabFormulaCheck title="سطح رونویسی" fa="فقط وقتی لاکتوز هست و گلوکز نیست حداکثر است" en="lac operon logic" legend="مدل ساده‌شده‌ی درصدی." subst={`لاکتوز ${lac ? "هست" : "نیست"}، گلوکز ${glu ? "هست" : "نیست"}`} answer={tr} unit="٪" decimals={0} />
       <VlabEverydayCard title="اقتصاد سلول" text="مثل خاموش‌کردن چراغ اتاق خالی: سلول ژن‌هایی را که لازم نیست خاموش می‌کند تا انرژی و ماده هدر نرود. همین تنظیم در همه‌ی سلول‌های بدن ما هم هست.">
         <circle cx="60" cy="30" r="14" fill="#ffd166" /><path d="M60,44 V60" stroke="#7d8bb5" strokeWidth="4" />
@@ -38159,7 +38236,6 @@ function VlabLacOperonExperiment({ onReading }) {
     </div>
   );
 }
-
 /* ===== زیست) جهش ===== */
 const VLAB_MUTAA = "FFLLSSSSYY**CC*WLLLLPPPPHHQQRRRRIIIMTTTTNNKKSSRRVVVVAAAADDEEGGGG";
 function vlabTr(dna) { const rna = dna.replace(/T/g, "U"); const idx = (c) => "UCAG".indexOf(c); const out = []; for (let i = 0; i + 2 < rna.length; i += 3) { const a = VLAB_MUTAA[idx(rna[i]) * 16 + idx(rna[i + 1]) * 4 + idx(rna[i + 2])]; out.push(a); if (a === "*") break; } return out; }

@@ -36601,7 +36601,7 @@ function VlabWaterCycleExperiment({ onReading }) {
           const snowShade = snowPts.filter((p) => p[0] >= peakX);
           const shadePoly = snowShade.length > 1 ? snowShade.map((p) => p[0] + "," + p[1].toFixed(1)).join(" ") + " " + zig(snowShade, 1.5) : "";
           const rightSide = ridge.filter((p) => p[0] >= peakX);
-          const nv = Math.round(3 + sun / 14), nd = Math.min(12, Math.round(3 + P * 2.2));
+          const nv = Math.round(6 + sun / 7), nd = Math.min(12, Math.round(3 + P * 2.2));
           const vd = Math.max(1.2, 3.4 - sun / 40), rd = Math.max(0.6, 1.1 - P * 0.08);
           const cloudDark = Math.min(1, 0.7 + P * 0.06);
           const rays = Array.from({ length: 8 }, (_, k) => { const an = (k * Math.PI) / 4, r0 = 12 + sun / 14, r1 = r0 + 4 + sun / 16; return <line key={k} x1={34 + Math.cos(an) * r0} y1={28 + Math.sin(an) * r0} x2={34 + Math.cos(an) * r1} y2={28 + Math.sin(an) * r1} stroke="#ffd166" strokeWidth="1.6" />; });
@@ -36629,7 +36629,7 @@ function VlabWaterCycleExperiment({ onReading }) {
               <line x1="0" y1={SL} x2="320" y2={SL} stroke="#fff" strokeOpacity="0.5" strokeDasharray="2 3" />
               <text x="276" y={SL - 4} fontSize="7" fill="#ffffff" fillOpacity="0.95" textAnchor="middle">سطح دریا (ارتفاع صفر)</text>
               <text x="150" y="184" fontSize="9" fill="#eaf8ff" textAnchor="middle">دریا</text>
-              {Array.from({ length: nv }, (_, k) => { const x0 = 100 + (k * 80) / nv; return (<circle key={"v" + k} cx={x0} cy={SL + 3} r="2.2" fill="#fff"><animate attributeName="cy" from={SL + 3} to="98" dur={vd + "s"} begin={(k * vd) / nv + "s"} repeatCount="indefinite" /><animate attributeName="cx" from={x0} to={96 + (k % 3) * 10} dur={vd + "s"} begin={(k * vd) / nv + "s"} repeatCount="indefinite" /><animate attributeName="opacity" values="0;0.95;0.95;0" dur={vd + "s"} begin={(k * vd) / nv + "s"} repeatCount="indefinite" /></circle>); })}
+              {Array.from({ length: nv }, (_, k) => { const x0 = 14 + (((k * 97 + 31) % 100) / 100) * 270, y0 = SL + 3 + (k % 3) * 3, d = vd * (0.85 + (k % 4) * 0.1), bg = ((k * 0.37) % 1) * d, xe = x0 + (118 - x0) * 0.3, ye = 92 + (k % 5) * 9; return (<circle key={"v" + k} cx={x0} cy={y0} r={1.8 + (k % 3) * 0.4} fill="#fff"><animate attributeName="cy" from={y0} to={ye} dur={d + "s"} begin={bg + "s"} repeatCount="indefinite" /><animate attributeName="cx" values={`${x0};${x0 + (xe - x0) * 0.4 + 4};${x0 + (xe - x0) * 0.7 - 3};${xe}`} dur={d + "s"} begin={bg + "s"} repeatCount="indefinite" /><animate attributeName="opacity" values="0;0.95;0.9;0" dur={d + "s"} begin={bg + "s"} repeatCount="indefinite" /></circle>); })}
               <text x="60" y="128" fontSize="8" fill="#123a5e" textAnchor="middle">تبخیر {fa(E)}</text>
               <g transform="translate(-50,32)"><g><animateTransform attributeName="transform" type="translate" values="0 0;6 0;0 0" dur="7s" repeatCount="indefinite" />
                 <ellipse cx="172" cy="52" rx="34" ry="11" fill="#fff" opacity={cloudDark} /><circle cx="156" cy="48" r="11" fill="#fff" opacity={cloudDark} /><circle cx="176" cy="42" r="13" fill="#f4f8fd" opacity={cloudDark} /><circle cx="192" cy="49" r="10" fill="#fff" opacity={cloudDark} />

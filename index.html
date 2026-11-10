@@ -22394,7 +22394,7 @@ function StudentRecitationPracticeView({ onBack }) {
    ============================================================ */
 
 const VLAB_LEVELS = ["ابتدایی", "متوسطه اول", "متوسطه دوم"];
-const VLAB_SUBJECTS = ["فیزیک", "شیمی", "زیست‌شناسی", "ریاضی", "برق و الکترونیک"];
+const VLAB_SUBJECTS = ["فیزیک", "شیمی", "زیست‌شناسی", "ریاضی", "زمین‌شناسی", "برق و الکترونیک"];
 
 /* ============================================================
    ققنوس — آمپرمتر و ولت‌مترِ عقربه‌ایِ دقیق (با برد خودکار، مثل مولتی‌متر)
@@ -23466,6 +23466,33 @@ const VLAB_EXPERIMENTS = [
     icon: "🧲",
     intro: "الکترون یا پروتون را در میدان مغناطیسی بفرست و ببین چرا روی دایره می‌چرخد و شعاعش به چه چیزی بستگی دارد.",
     tools: ["الکترون و پروتون", "میدان مغناطیسی", "شعاع مدار"],
+  },
+  {
+    id: "molecule-builder",
+    subject: "شیمی",
+    level: "متوسطه دوم",
+    title: "مدل‌ساز مولکول (هیدروکربن و پلیمر)",
+    icon: "🧬",
+    intro: "با افزودن کربن و تغییر نوع پیوند، آلکان، آلکن و آلکین بساز و نام و فرمولش را ببین؛ سپس تک‌پار را به پلیمر تبدیل کن.",
+    tools: ["اتم کربن", "پیوند یگانه، دوگانه و سه‌گانه", "پلیمر"],
+  },
+  {
+    id: "action-potential",
+    subject: "زیست‌شناسی",
+    level: "متوسطه دوم",
+    title: "پتانسیل عمل در نورون",
+    icon: "🧠",
+    intro: "نورون را با شدت‌های مختلف تحریک کن و ببین چرا زیر آستانه هیچ اتفاقی نمی‌افتد و بالای آستانه یک پتانسیل عمل کامل ساخته می‌شود؛ کانال‌های سدیم و پتاسیم را هم‌زمان ببین.",
+    tools: ["نمودار پتانسیل", "کانال سدیم", "کانال پتاسیم"],
+  },
+  {
+    id: "tectonic-quake",
+    subject: "زمین‌شناسی",
+    level: "متوسطه دوم",
+    title: "صفحات زمین‌ساختی و زلزله",
+    icon: "🌍",
+    intro: "سه نوع مرز صفحه‌ها را ببین، تنش را روی گسل جمع کن و زلزله را رها کن؛ بزرگا را عوض کن تا انرژی و دامنه‌ی موج را مقایسه کنی.",
+    tools: ["سه نوع مرز", "گسل", "موج لرزه‌ای"],
   },
 ];
 
@@ -33681,6 +33708,213 @@ function VlabLorentzExperiment({ onReading }) {
   );
 }
 
+/* ===== شیمی) مدل‌ساز مولکول (هیدروکربن و پلیمر) ===== */
+const VLAB_MB_ALK = ["", "متان", "اتان", "پروپان", "بوتان", "پنتان", "هگزان", "هپتان", "اوکتان"];
+const VLAB_MB_ENE = ["", "", "اتن", "پروپن", "بوتن", "پنتن", "هگزن", "هپتن", "اوکتن"];
+const VLAB_MB_YNE = ["", "", "اتین", "پروپین", "بوتین", "پنتین", "هگزین", "هپتین", "اوکتین"];
+const VLAB_MB_MON = {
+  eth: { name: "اتن ← پلی‌اتن", x: "H", mass: 28.05, f: "C₂H₄", use: "کیسه و بطری" },
+  prop: { name: "پروپن ← پلی‌پروپن", x: "CH₃", mass: 42.08, f: "C₃H₆", use: "ظرف غذا و طناب" },
+  vcl: { name: "وینیل‌کلرید ← PVC", x: "Cl", mass: 62.50, f: "C₂H₃Cl", use: "لوله‌ی آب" },
+  tfe: { name: "تترافلوئورواتن ← تفلون", x: "F", mass: 100.02, f: "C₂F₄", use: "ماهیتابه‌ی نچسب" },
+};
+function VlabMoleculeBuilderExperiment({ onReading }) {
+  const [mode, setMode] = useState("hc");
+  const [n, setN] = useState(4);
+  const [bond, setBond] = useState(1);
+  const [mon, setMon] = useState("eth");
+  const [rep, setRep] = useState(3);
+  const fa = (v, d = 2) => vlabMFa(v, d);
+  const nn = bond > 1 ? Math.max(2, n) : n;
+  const B = []; for (let i = 0; i < nn - 1; i++) B.push(i === 0 ? bond : 1);
+  const H = Array.from({ length: nn }, (_, i) => 4 - ((i > 0 ? B[i - 1] : 0) + (i < nn - 1 ? B[i] : 0)));
+  const totalH = H.reduce((a, b) => a + b, 0);
+  const mass = 12.011 * nn + 1.008 * totalH;
+  const name = bond === 1 ? VLAB_MB_ALK[nn] : bond === 2 ? VLAB_MB_ENE[nn] : VLAB_MB_YNE[nn];
+  const gen = bond === 1 ? "CₙH₂ₙ₊₂ (آلکان)" : bond === 2 ? "CₙH₂ₙ (آلکن)" : "CₙH₂ₙ₋₂ (آلکین)";
+  const sp = nn === 1 ? 0 : Math.min(36, 250 / (nn - 1));
+  const x0 = 160 - (sp * (nn - 1)) / 2;
+  const C = Array.from({ length: nn }, (_, i) => [nn === 1 ? 160 : x0 + i * sp, 98 + (nn === 1 ? 0 : i % 2 ? 12 : -12)]);
+  const out = (i) => { let dx = 0, dy = 0; [i - 1, i + 1].forEach((j) => { if (j >= 0 && j < nn) { const l = Math.hypot(C[j][0] - C[i][0], C[j][1] - C[i][1]); dx += (C[j][0] - C[i][0]) / l; dy += (C[j][1] - C[i][1]) / l; } }); if (nn === 1) return -90; if (Math.hypot(dx, dy) < 0.05) return i % 2 ? 90 : -90; return (Math.atan2(-dy, -dx) * 180) / Math.PI; };
+  const atoms = []; const bonds = [];
+  C.forEach((c, i) => { const d0 = out(i), h = H[i], step = h >= 4 ? 90 : h === 3 ? 62 : h === 2 ? 80 : 0; for (let k = 0; k < h; k++) { const a = ((d0 + (k - (h - 1) / 2) * step) * Math.PI) / 180; atoms.push([c[0] + 15 * Math.cos(a), c[1] + 15 * Math.sin(a), c[0], c[1]]); } });
+  const unitW = 44, ux0 = 160 - (unitW * rep) / 2;
+  const M = VLAB_MB_MON[mon];
+  const Hc = (v) => (v === "H" ? "H" : v);
+  const Mb = (id, t) => (<button className="vlab-btn" style={mode === id ? { outline: "2px solid #e0a83e" } : null} onClick={() => setMode(id)}>{t}</button>);
+  return (
+    <div className="vlab-exp">
+      {mode === "hc" ? (
+        <svg viewBox="0 0 320 200" className="vlab-svg" style={{ background: "#03060f", borderRadius: "10px" }}>
+          {atoms.map((a, i) => (<line key={"h" + i} x1={a[2]} y1={a[3]} x2={a[0]} y2={a[1]} stroke="#8a95b8" strokeWidth="1.4" />))}
+          {B.map((b, i) => { const [ax, ay] = C[i], [bx, by] = C[i + 1]; const l = Math.hypot(bx - ax, by - ay), ox = (-(by - ay) / l) * 2.6, oy = ((bx - ax) / l) * 2.6; return (<g key={i}>{b === 1 ? <line x1={ax} y1={ay} x2={bx} y2={by} stroke="#fff" strokeWidth="2.4" /> : null}{b === 2 ? <g><line x1={ax + ox} y1={ay + oy} x2={bx + ox} y2={by + oy} stroke="#ffd166" strokeWidth="2" /><line x1={ax - ox} y1={ay - oy} x2={bx - ox} y2={by - oy} stroke="#ffd166" strokeWidth="2" /></g> : null}{b === 3 ? <g><line x1={ax} y1={ay} x2={bx} y2={by} stroke="#ff9d1c" strokeWidth="2" /><line x1={ax + ox * 1.6} y1={ay + oy * 1.6} x2={bx + ox * 1.6} y2={by + oy * 1.6} stroke="#ff9d1c" strokeWidth="2" /><line x1={ax - ox * 1.6} y1={ay - oy * 1.6} x2={bx - ox * 1.6} y2={by - oy * 1.6} stroke="#ff9d1c" strokeWidth="2" /></g> : null}</g>); })}
+          {C.map((c, i) => (<circle key={i} cx={c[0]} cy={c[1]} r="7.4" fill="#4a5578" stroke="#cfd6ea" strokeWidth="1.4" />))}
+          {atoms.map((a, i) => (<circle key={"a" + i} cx={a[0]} cy={a[1]} r="4.4" fill="#f4f4f4" stroke="#999" strokeWidth="0.8" />))}
+          <text x="160" y="190" fontSize="10" fill="#ffd166" textAnchor="middle" direction="ltr">C{nn > 1 ? vlabFaN(nn) : ""}H{vlabFaN(totalH)}</text>
+        </svg>
+      ) : (
+        <svg viewBox="0 0 320 200" className="vlab-svg" style={{ background: "#03060f", borderRadius: "10px" }}>
+          <g transform="translate(60,18)"><text x="100" y="-4" fontSize="9" fill="#cfd6ea" textAnchor="middle">تک‌پار (مونومر) با پیوند دوگانه</text>
+            <circle cx="70" cy="30" r="7" fill="#4a5578" stroke="#cfd6ea" /><circle cx="130" cy="30" r="7" fill="#4a5578" stroke="#cfd6ea" />
+            <line x1="70" y1="28" x2="130" y2="28" stroke="#ffd166" strokeWidth="2" /><line x1="70" y1="33" x2="130" y2="33" stroke="#ffd166" strokeWidth="2" />
+            <text x="58" y="12" fontSize="9" fill="#fff" textAnchor="middle">H</text><text x="58" y="55" fontSize="9" fill="#fff" textAnchor="middle">H</text>
+            <text x="142" y="12" fontSize="9" fill="#fff" textAnchor="middle">H</text><text x="142" y="55" fontSize="9" fill="#ff9d1c" textAnchor="middle">{M.x}</text></g>
+          <text x="160" y="98" fontSize="12" fill="#5de0a0" textAnchor="middle">↓ پلیمر شدن (باز شدن پیوند دوگانه)</text>
+          {Array.from({ length: rep }).map((_, i) => { const x = ux0 + i * unitW + 14; return (<g key={i}><line x1={x} y1="150" x2={x + 16} y2="150" stroke="#fff" strokeWidth="2.4" />{i < rep - 1 ? <line x1={x + 16} y1="150" x2={x + unitW} y2="150" stroke="#fff" strokeWidth="2.4" /> : null}<circle cx={x} cy="150" r="6.4" fill="#4a5578" stroke="#cfd6ea" /><circle cx={x + 16} cy="150" r="6.4" fill="#4a5578" stroke="#cfd6ea" />
+            <text x={x - 2} y="132" fontSize="8" fill="#fff" textAnchor="middle">H</text><text x={x - 2} y="172" fontSize="8" fill="#fff" textAnchor="middle">H</text><text x={x + 18} y="132" fontSize="8" fill="#fff" textAnchor="middle">H</text><text x={x + 18} y="172" fontSize="8" fill="#ff9d1c" textAnchor="middle">{M.x}</text></g>); })}
+          <line x1={ux0 - 2} y1="150" x2={ux0 + 12} y2="150" stroke="#fff" strokeWidth="2" strokeDasharray="3 3" /><line x1={ux0 + rep * unitW - 4} y1="150" x2={ux0 + rep * unitW + 12} y2="150" stroke="#fff" strokeWidth="2" strokeDasharray="3 3" />
+        </svg>
+      )}
+      <div className="vlab-readout" style={{ textAlign: "center" }}>
+        {mode === "hc" ? <span>نام: <b>{name}</b> · فرمول: {fa(nn, 0)} کربن، {fa(totalH, 0)} هیدروژن · جرم مولی {fa(mass)} گرم بر مول</span> : <span><b>{M.name}</b> · {fa(rep, 0)} واحد تکرار: جرم مولی ≈ {fa(M.mass * rep, 1)} گرم بر مول</span>}
+      </div>
+      <div className="vlab-controls"><div className="vlab-ctrl-col" style={{ flex: 1 }}>
+        <div className="vlab-btn-row">{Mb("hc", "هیدروکربن")}{Mb("poly", "پلیمر")}</div>
+        {mode === "hc" ? (<div>
+          <div className="vlab-btn-row"><button className="vlab-btn" style={bond === 1 ? { outline: "2px solid #e0a83e" } : null} onClick={() => setBond(1)}>آلکان (پیوند یگانه)</button><button className="vlab-btn" style={bond === 2 ? { outline: "2px solid #e0a83e" } : null} onClick={() => setBond(2)}>آلکن (دوگانه)</button><button className="vlab-btn" style={bond === 3 ? { outline: "2px solid #e0a83e" } : null} onClick={() => setBond(3)}>آلکین (سه‌گانه)</button></div>
+          <label className="vlab-ctrl-label">تعداد اتم کربن: {fa(nn, 0)}</label>
+          <VlabRange min={bond > 1 ? 2 : 1} max="8" step="1" value={nn} onChange={(e) => setN(+e.target.value)} />
+        </div>) : (<div>
+          <div className="vlab-btn-row">{Object.keys(VLAB_MB_MON).map((k) => (<button key={k} className="vlab-btn" style={mon === k ? { outline: "2px solid #e0a83e" } : null} onClick={() => setMon(k)}>{VLAB_MB_MON[k].name.split(" ")[0]}</button>))}</div>
+          <label className="vlab-ctrl-label">تعداد واحدهای تکرار: {fa(rep, 0)}</label>
+          <VlabRange min="1" max="6" step="1" value={rep} onChange={(e) => setRep(+e.target.value)} />
+        </div>)}
+      </div></div>
+      <div className="vlab-readout">
+        {mode === "hc" ? `هر کربن چهار پیوند دارد؛ هر پیوند دوگانه یا سه‌گانه جای هیدروژن را می‌گیرد. پس آلکان‌ها بیشترین هیدروژن (۲n+۲) را دارند، آلکن‌ها ۲n و آلکین‌ها ۲n−۲. فرمول کلی این خانواده: ${gen}.` : `در پلیمر شدن، پیوند دوگانه‌ی هر تک‌پار باز می‌شود و به تک‌پار بعدی می‌چسبد؛ زنجیر بلندی از واحدهای تکراری ساخته می‌شود. ${M.f} پس از پلیمر شدن برای ${M.use} به کار می‌رود.`}
+      </div>
+      <VlabFormulaCheck title={mode === "hc" ? "تعداد هیدروژن" : "جرم مولی پلیمر"} fa={mode === "hc" ? (bond === 1 ? "H = ۲n + ۲" : bond === 2 ? "H = ۲n" : "H = ۲n − ۲") : "جرم = تعداد واحد × جرم مولی تک‌پار"} en={mode === "hc" ? "number of H" : "M = k · M(monomer)"} legend={mode === "hc" ? "n تعداد اتم‌های کربن است." : `جرم مولی تک‌پار ${fa(M.mass, 2)} گرم بر مول است.`} subst={mode === "hc" ? `H = ${bond === 1 ? "2×" + nn + " + 2" : bond === 2 ? "2×" + nn : "2×" + nn + " − 2"}` : `M = ${rep} × ${fa(M.mass, 2)}`} answer={mode === "hc" ? totalH : M.mass * rep} unit={mode === "hc" ? "" : "g/mol"} decimals={mode === "hc" ? 0 : 1} />
+      <VlabEverydayCard title="گاز پخت‌وپز و کیسه‌ی نایلونی" text="گاز شهری و کپسول گاز مخلوطی از آلکان‌های کوچک (متان، پروپان، بوتان) است که می‌سوزند و گرما می‌دهند. اتن هم با پلیمر شدن به پلی‌اتن، یعنی کیسه‌ی نایلونی و بطری پلاستیکی تبدیل می‌شود.">
+        <circle cx="30" cy="48" r="16" fill="#e0a83e" stroke="#a37400" strokeWidth="1.5" /><rect x="24" y="26" width="12" height="8" fill="#555" />
+        <path d="M30,6 q8,10 0,16 q-8,-6 0,-16z" fill="#ff7a29" />
+        <path d="M70,24 q14,-6 28,0 l-4,40 h-20 z" fill="#d9e2f2" stroke="#7d8bb5" strokeWidth="1.5" />
+      </VlabEverydayCard>
+    </div>
+  );
+}
+
+/* ===== زیست) پتانسیل عمل در نورون ===== */
+function vlabApV(t, s) {
+  const REST = -70, TH = -55;
+  const sm = (a, b, x) => { const u = Math.max(0, Math.min(1, (x - a) / (b - a))); return u * u * (3 - 2 * u); };
+  if (t < 0) return REST;
+  if (REST + s < TH) { if (t < 0.5) return REST + s * sm(0, 0.5, t); return REST + s * Math.exp(-(t - 0.5) / 0.9); }
+  if (t < 0.5) return REST + (TH - REST) * sm(0, 0.5, t);
+  if (t < 1.5) return TH + (30 - TH) * sm(0.5, 1.5, t);
+  if (t < 3) return 30 + (-80 - 30) * sm(1.5, 3, t);
+  return REST + (-80 - REST) * Math.exp(-(t - 3) / 1.1);
+}
+function VlabActionPotentialExperiment({ onReading }) {
+  const [s, setS] = useState(20);
+  const [t, setT] = useState(-1);
+  const raf = React.useRef(0);
+  useEffect(() => () => cancelAnimationFrame(raf.current), []);
+  const fire = () => { cancelAnimationFrame(raf.current); const t0 = performance.now(); const dur = 4200; const loop = (now) => { const p = Math.min(1, (now - t0) / dur); setT(p * 7); if (p < 1) raf.current = requestAnimationFrame(loop); }; raf.current = requestAnimationFrame(loop); };
+  const spike = -70 + s >= -55;
+  const GX = 24, GY = 14, GW = 280, GH = 118;
+  const X = (ms) => GX + (ms / 7) * GW, Y = (v) => GY + GH - ((v + 90) / 130) * GH;
+  let path = ""; if (t >= 0) for (let i = 0; i <= 120; i++) { const tt = (i / 120) * Math.min(t, 7); path += (i ? "L" : "M") + X(tt).toFixed(1) + "," + Y(vlabApV(tt, s)).toFixed(1); }
+  const v = t >= 0 ? vlabApV(t, s) : -70;
+  const phase = t < 0 ? "استراحت (پتانسیل آرامش)" : t < 0.5 ? "تحریک" : !spike ? "تحریک ضعیف است؛ زیر آستانه برمی‌گردد" : t < 1.5 ? "ورود سدیم (دپلاریزاسیون)" : t < 3 ? "خروج پتاسیم (رپلاریزاسیون)" : t < 6 ? "پس‌بیش‌قطبی و بازگشت با پمپ سدیم–پتاسیم" : "استراحت";
+  const naOpen = spike && t >= 0.5 && t < 2, kOpen = spike && t >= 1.3 && t < 3.6;
+  const fa = (x, d = 0) => vlabMFa(x, d);
+  return (
+    <div className="vlab-exp">
+      <svg viewBox="0 0 320 232" className="vlab-svg" style={{ background: "#03060f", borderRadius: "10px" }}>
+        <line x1={GX} y1={Y(-70)} x2={GX + GW} y2={Y(-70)} stroke="#2a3558" strokeWidth="1" strokeDasharray="3 3" />
+        <line x1={GX} y1={Y(-55)} x2={GX + GW} y2={Y(-55)} stroke="#ff6b6b" strokeWidth="1" strokeDasharray="4 3" />
+        <line x1={GX} y1={Y(0)} x2={GX + GW} y2={Y(0)} stroke="#2a3558" strokeWidth="1" />
+        <line x1={GX} y1={GY} x2={GX} y2={GY + GH} stroke="#6a7aa8" strokeWidth="1" /><line x1={GX} y1={GY + GH} x2={GX + GW} y2={GY + GH} stroke="#6a7aa8" strokeWidth="1" />
+        <text x={GX + GW - 40} y={Y(-55) - 3} fontSize="8" fill="#ff6b6b" textAnchor="middle">آستانه (−۵۵)</text>
+        <text x={GX + GW - 40} y={Y(-70) + 10} fontSize="8" fill="#9aa6c8" textAnchor="middle">استراحت (−۷۰)</text>
+        <path d={path} fill="none" stroke="#ffd166" strokeWidth="2.2" />
+        {t >= 0 ? <circle cx={X(Math.min(t, 7))} cy={Y(v)} r="4" fill="#fff" stroke="#ffd166" strokeWidth="1.5" /> : null}
+        <text x="160" y={GY + GH + 14} fontSize="8" fill="#9aa6c8" textAnchor="middle">زمان (میلی‌ثانیه)</text>
+        <rect x="14" y="156" width="292" height="12" fill="#b58a3c" /><rect x="14" y="182" width="292" height="12" fill="#b58a3c" />
+        <text x="30" y="150" fontSize="8" fill="#9aa6c8" textAnchor="middle">بیرون سلول</text><text x="30" y="210" fontSize="8" fill="#9aa6c8" textAnchor="middle">درون سلول</text>
+        <rect x="90" y="156" width="26" height="38" fill={naOpen ? "#0b2a1d" : "#7a2b2b"} stroke="#fff" strokeWidth="1" /><text x="103" y="179" fontSize="8" fill="#fff" textAnchor="middle" direction="ltr">Na⁺</text>
+        <rect x="200" y="156" width="26" height="38" fill={kOpen ? "#0b2a1d" : "#7a2b2b"} stroke="#fff" strokeWidth="1" /><text x="213" y="179" fontSize="8" fill="#fff" textAnchor="middle" direction="ltr">K⁺</text>
+        {naOpen ? <path d="M103,150 V198" stroke="#5ba8ff" strokeWidth="2.6" markerEnd="" /> : null}
+        {naOpen ? <path d="M98,190 l5,8 l5,-8" stroke="#5ba8ff" strokeWidth="2.2" fill="none" /> : null}
+        {kOpen ? <path d="M213,198 V150" stroke="#ff9d1c" strokeWidth="2.6" /> : null}
+        {kOpen ? <path d="M208,158 l5,-8 l5,8" stroke="#ff9d1c" strokeWidth="2.2" fill="none" /> : null}
+        <text x="160" y="226" fontSize="9" fill="#ffd166" textAnchor="middle">{phase}</text>
+      </svg>
+      <div className="vlab-readout" style={{ textAlign: "center" }}>پتانسیل غشا: <b>{fa(v)}</b> میلی‌ولت</div>
+      <div className="vlab-controls"><div className="vlab-ctrl-col" style={{ flex: 1 }}>
+        <label className="vlab-ctrl-label">قدرت تحریک: {fa(s)} میلی‌ولت بالاتر از استراحت</label>
+        <VlabRange min="5" max="40" step="1" value={s} onChange={(e) => { setS(+e.target.value); setT(-1); }} />
+        <div className="vlab-btn-row"><button className="vlab-btn" onClick={fire}>⚡ نورون را تحریک کن</button></div>
+      </div></div>
+      <div className="vlab-readout">
+        {`قانون «همه یا هیچ»: اگر تحریک پتانسیل را به آستانه (−۵۵ میلی‌ولت) برساند، یک پتانسیل عمل کامل ساخته می‌شود و با تحریک قوی‌تر بزرگ‌تر نمی‌شود؛ زیر آستانه هیچ پتانسیل عملی پدید نمی‌آید. تحریک فعلی ${spike ? "از آستانه گذشته است" : "به آستانه نمی‌رسد (حداقل تحریک لازم ۱۵ میلی‌ولت است)"}.`}
+      </div>
+      <VlabFormulaCheck title="اختلاف پتانسیل بیشینه" fa="تغییر = پتانسیل اوج − پتانسیل استراحت" en="ΔV = V_peak − V_rest" legend="اوج پتانسیل عمل ۳۰+ میلی‌ولت و استراحت ۷۰− میلی‌ولت است." subst="ΔV = 30 − (−70)" answer={100} unit="mV" decimals={0} />
+      <VlabFormulaCheck title="حداقل تحریک لازم" fa="تحریک آستانه = آستانه − استراحت" en="ΔV_min = V_th − V_rest" legend="آستانه ۵۵− و استراحت ۷۰− میلی‌ولت است." subst="ΔV = (−55) − (−70)" answer={15} unit="mV" decimals={0} />
+      <VlabEverydayCard title="دست‌زدن به اجاق داغ" text="وقتی دست‌ات به سطح داغ می‌خورد، گیرنده‌های درد نورون را تحریک می‌کنند. اگر تحریک به آستانه برسد، پتانسیل عمل در طول رشته‌ی عصبی تا نخاع می‌دود و دستت را در کسری از ثانیه عقب می‌کشد؛ بی‌حس‌کننده‌ها کانال‌های سدیم را می‌بندند تا پتانسیل عمل پدید نیاید.">
+        <circle cx="20" cy="40" r="12" fill="#e0a83e" /><path d="M32,40 H108" stroke="#d9a441" strokeWidth="3" />
+        <path d="M44,34 l8,6 l-8,6" stroke="#d83a3a" strokeWidth="2" fill="none" /><path d="M72,34 l8,6 l-8,6" stroke="#d83a3a" strokeWidth="2" fill="none" />
+      </VlabEverydayCard>
+    </div>
+  );
+}
+
+/* ===== زمین‌شناسی) صفحات زمین‌ساختی و زلزله ===== */
+function VlabTectonicQuakeExperiment({ onReading }) {
+  const [kind, setKind] = useState("conv");
+  const [stress, setStress] = useState(40);
+  const [Mg, setMg] = useState(6);
+  const [wave, setWave] = useState(-1);
+  const raf = React.useRef(0);
+  useEffect(() => () => cancelAnimationFrame(raf.current), []);
+  const quake = () => { cancelAnimationFrame(raf.current); const t0 = performance.now(); const loop = (now) => { const p = Math.min(1, (now - t0) / 3000); setWave(p); if (p < 1) raf.current = requestAnimationFrame(loop); else setStress(0); }; raf.current = requestAnimationFrame(loop); };
+  const kinds = { conv: "همگرا (برخورد)", div: "واگرا (دور شدن)", trans: "امتداد‌لغز (کنار هم لغزیدن)" };
+  const off = (stress / 100) * 14;
+  const fx = 160, fy = 126;
+  const energy = Math.pow(10, 1.5 * Mg + 4.8);
+  const ratio = Math.pow(10, 1.5 * (Mg - 5)), amp = Math.pow(10, Mg - 5);
+  const fa = (v, d = 0) => vlabMFa(v, d);
+  const sci = (v) => { const e = Math.floor(Math.log10(v)); const m = v / Math.pow(10, e); return fa(m, 1) + "×۱۰" + String(e).replace(/\d/g, (q) => "⁰¹²³⁴⁵⁶⁷⁸⁹"[q]).replace("-", "⁻"); };
+  const L = { conv: [off, -off], div: [-off, off], trans: [0, 0] }[kind];
+  return (
+    <div className="vlab-exp">
+      <svg viewBox="0 0 320 210" className="vlab-svg" style={{ background: "#0a1226", borderRadius: "10px" }}>
+        <rect x="0" y="62" width="320" height="26" fill="#2f6f99" opacity="0.55" />
+        <g transform={`translate(${L[0]},0)`}><path d="M0,70 H160 V190 H0z" fill="#8a6b3a" stroke="#fff" strokeWidth="1" /><path d="M0,70 H160 V84 H0z" fill="#5a8a3a" /></g>
+        <g transform={`translate(${L[1]},0)`}><path d="M160,70 H320 V190 H160z" fill="#a47a42" stroke="#fff" strokeWidth="1" /><path d="M160,70 H320 V84 H160z" fill="#5a8a3a" /></g>
+        {kind === "conv" ? <g><path d="M40,100 l30,0" stroke="#ff6b6b" strokeWidth="3" /><path d="M64,94 l8,6 l-8,6" stroke="#ff6b6b" strokeWidth="2.4" fill="none" /><path d="M280,100 l-30,0" stroke="#ff6b6b" strokeWidth="3" /><path d="M256,94 l-8,6 l8,6" stroke="#ff6b6b" strokeWidth="2.4" fill="none" /></g> : null}
+        {kind === "div" ? <g><path d="M120,100 l-30,0" stroke="#5de0a0" strokeWidth="3" /><path d="M96,94 l-8,6 l8,6" stroke="#5de0a0" strokeWidth="2.4" fill="none" /><path d="M200,100 l30,0" stroke="#5de0a0" strokeWidth="3" /><path d="M224,94 l8,6 l-8,6" stroke="#5de0a0" strokeWidth="2.4" fill="none" /></g> : null}
+        {kind === "trans" ? <g><circle cx="90" cy="100" r="9" fill="none" stroke="#ffd166" strokeWidth="2" /><text x="90" y="104" fontSize="11" fill="#ffd166" textAnchor="middle">↑</text><circle cx="230" cy="100" r="9" fill="none" stroke="#ffd166" strokeWidth="2" /><text x="230" y="104" fontSize="11" fill="#ffd166" textAnchor="middle">↓</text></g> : null}
+        <line x1="160" y1="70" x2="160" y2="190" stroke="#ff6b6b" strokeWidth="1.6" strokeDasharray="5 3" />
+        <circle cx={fx} cy={fy} r="5" fill="#ff3b3b" stroke="#fff" strokeWidth="1.2" />
+        {wave >= 0 ? [0, 1, 2].map((i) => { const r = Math.max(0, wave * 150 - i * 22); const a = Math.max(0, 1 - wave) * (0.3 + 0.7 * (Mg - 3) / 6); return r > 0 ? <circle key={i} cx={fx} cy={fy} r={r} fill="none" stroke="#ffd166" strokeWidth={1 + (Mg - 3) * 0.7} opacity={a} /> : null; }) : null}
+        <text x="160" y="22" fontSize="10" fill="#cfd6ea" textAnchor="middle">{kinds[kind]}</text>
+        <text x="160" y="200" fontSize="9" fill="#ffd166" textAnchor="middle">کانون زلزله (نقطه‌ی قرمز) روی گسل</text>
+        <rect x="10" y="32" width="86" height="8" fill="#1b2442" rx="4" /><rect x="10" y="32" width={0.86 * stress} height="8" fill={stress > 75 ? "#ff6b6b" : "#ffd166"} rx="4" />
+        <text x="53" y="52" fontSize="8" fill="#cfd6ea" textAnchor="middle">تنش انباشته</text>
+      </svg>
+      <div className="vlab-readout" style={{ textAlign: "center" }}>بزرگای زلزله {fa(Mg, 1)} · انرژی ≈ {sci(energy)} ژول</div>
+      <div className="vlab-controls"><div className="vlab-ctrl-col" style={{ flex: 1 }}>
+        <div className="vlab-btn-row">{Object.keys(kinds).map((k) => (<button key={k} className="vlab-btn" style={kind === k ? { outline: "2px solid #e0a83e" } : null} onClick={() => { setKind(k); setWave(-1); }}>{kinds[k]}</button>))}</div>
+        <label className="vlab-ctrl-label">سال‌های انباشت تنش (جابه‌جایی صفحه‌ها): {fa(stress)}٪</label>
+        <VlabRange min="0" max="100" step="5" value={stress} onChange={(e) => { setStress(+e.target.value); setWave(-1); }} />
+        <label className="vlab-ctrl-label">بزرگای زلزله: {fa(Mg, 1)}</label>
+        <VlabRange min="3" max="9" step="0.5" value={Mg} onChange={(e) => setMg(+e.target.value)} />
+        <div className="vlab-btn-row"><button className="vlab-btn" onClick={quake}>💥 رها شدن تنش (زلزله)</button></div>
+      </div></div>
+      <div className="vlab-readout">
+        {`صفحه‌ها آرام و کند حرکت می‌کنند ولی روی گسل به هم گیر می‌کنند و تنش جمع می‌شود. وقتی تنش از مقاومت سنگ بیشتر شود، ناگهان رها می‌شود و موج‌های لرزه پخش می‌شود. در مرز همگرا (مثل ایران) صفحه‌ی عربی به صفحه‌ی اوراسیا فشار می‌آورد. هر یک واحد بزرگا ${fa(Math.pow(10, 1.5), 1)} برابر انرژی و ${fa(10, 0)} برابر دامنه‌ی موج دارد.`}
+      </div>
+      <VlabFormulaCheck title="نسبت انرژی زلزله‌ها" fa="نسبت انرژی = ۱۰ به توان ۱٫۵ × (بزرگای زلزله − ۵)" en="E / E₅ = 10^(1.5·(M−5))" legend="انرژی زلزله‌ی بزرگا ۵ مبنا است؛ جواب را برای بزرگای انتخابی بنویس." subst={`10^(1.5 × (${fa(Mg, 1)} − 5))`} answer={ratio} unit="برابر" decimals={1} />
+      <VlabFormulaCheck title="نسبت دامنه‌ی موج" fa="نسبت دامنه = ۱۰ به توان (بزرگا − ۵)" en="A / A₅ = 10^(M−5)" legend="دامنه‌ی زلزله‌ی بزرگا ۵ مبنا است." subst={`10^(${fa(Mg, 1)} − 5)`} answer={amp} unit="برابر" decimals={1} />
+      <VlabEverydayCard title="ساختمان مقاوم در برابر زلزله" text="ایران روی کمربند لرزه‌خیز آلپ–هیمالیاست و صفحه‌ی عربی هر سال چند میلی‌متر به آن فشار می‌آورد. برای همین ساختمان‌ها با آیین‌نامه‌ی ۲۸۰۰ ساخته می‌شوند تا وقتی تنش رها شد فرو نریزند.">
+        <rect x="26" y="18" width="30" height="52" fill="#d9e2f2" stroke="#7d8bb5" strokeWidth="1.5" /><path d="M32,26 h6 M44,26 h6 M32,40 h6 M44,40 h6 M32,54 h6 M44,54 h6" stroke="#7d8bb5" strokeWidth="3" />
+        <path d="M70,72 l8,-10 l8,10 l8,-10 l8,10" fill="none" stroke="#d83a3a" strokeWidth="2.2" /><path d="M6,72 H114" stroke="#999" strokeWidth="1.5" />
+      </VlabEverydayCard>
+    </div>
+  );
+}
+
 const VLAB_COMPONENTS = {
   lever: VlabLeverExperiment,
   pendulum: VlabPendulumExperiment,
@@ -33783,6 +34017,9 @@ const VLAB_COMPONENTS = {
   "electric-field": VlabElectricFieldExperiment,
   "piston-pv": VlabPistonPVExperiment,
   "lorentz-force": VlabLorentzExperiment,
+  "molecule-builder": VlabMoleculeBuilderExperiment,
+  "action-potential": VlabActionPotentialExperiment,
+  "tectonic-quake": VlabTectonicQuakeExperiment,
 };
 
 function StudentVirtualLabView({ onBack, grade, studentCode, schoolCode }) {

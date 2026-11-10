@@ -36586,36 +36586,43 @@ function VlabWaterCycleExperiment({ onReading }) {
         </defs>
         <rect x="0" y="0" width="320" height="200" fill="url(#wcSky)" />
         {(() => {
-          const H = 15 + mh * 0.8, SL = 150;
-          const ridge = [[130, SL], [165, SL - 0.38 * H], [200, SL - 0.68 * H], [245, SL - H], [285, SL - 0.5 * H], [320, SL - 0.25 * H]];
+          const H = 40 + mh * 1.0, SL = 150;
+          const prof = (x) => { const g = (c, sg, h) => h * Math.exp(-Math.pow((x - c) / sg, 2)); return Math.max(g(245, 40, 1), g(190, 20, 0.58), g(292, 22, 0.5), g(150, 30, 0.12)); };
+          const jag = (x) => Math.sin(x * 1.7) * 2.2 + Math.sin(x * 4.3 + 1) * 1.6 + Math.sin(x * 0.9) * 1.8;
+          const ridge = []; for (let x = 130; x <= 320; x += 5) ridge.push([x, Math.min(SL, SL - H * prof(x) + (x > 135 ? jag(x) * (0.3 + H / 140) : 0))]);
+          ridge[0][1] = SL;
           const yAt = (x) => { for (let k = 0; k < ridge.length - 1; k++) { const [x0, y0] = ridge[k], [x1, y1] = ridge[k + 1]; if (x >= x0 && x <= x1) return y0 + ((y1 - y0) * (x - x0)) / (x1 - x0); } return SL; };
-          const lerp = (p, q, t) => [p[0] + (q[0] - p[0]) * t, p[1] + (q[1] - p[1]) * t];
-          const nv = Math.round(3 + sun / 14), nd = Math.min(12, Math.round(3 + P * 2.2));
+          const peakY = Math.min(...ridge.map((p) => p[1]));
+          const peakX = ridge.find((p) => p[1] === peakY)[0];
+          const thr = peakY + (SL - peakY) * 0.3;
+          const snowPts = ridge.filter((p) => p[1] < thr);
+          const snowPoly = snowPts.length > 1 ? snowPts.map((p) => p[0] + "," + p[1].toFixed(1)).join(" ") + " " + snowPts.slice().reverse().map((p, k) => p[0] + "," + (thr + 4 + Math.sin(k * 2.3) * 4 - (p[1] - peakY) * 0.0).toFixed(1)).join(" ") : "";
+          const shade = ridge.filter((p) => p[0] >= peakX);
+const nv = Math.round(3 + sun / 14), nd = Math.min(12, Math.round(3 + P * 2.2));
           const vd = Math.max(1.2, 3.4 - sun / 40), rd = Math.max(0.6, 1.1 - P * 0.08);
-          const sl = lerp(ridge[2], ridge[3], 0.62), sr = lerp(ridge[3], ridge[4], 0.38);
           const cloudDark = Math.min(1, 0.55 + P * 0.1);
           const rays = Array.from({ length: 8 }, (_, k) => { const an = (k * Math.PI) / 4, r0 = 14 + sun / 12, r1 = r0 + 5 + sun / 14; return <line key={k} x1={36 + Math.cos(an) * r0} y1={30 + Math.sin(an) * r0} x2={36 + Math.cos(an) * r1} y2={30 + Math.sin(an) * r1} stroke="#ffd166" strokeWidth="1.6" opacity="0.85" />; });
-          const riverPts = [[212, yAt(212) + 3], [190, yAt(190) + 3], [165, yAt(165) + 3], [140, SL - 1], [128, SL + 1]];
+          const riverPts = [...Array.from({ length: 9 }, (_, k) => 220 - k * 11).map((x) => [x, yAt(x) + 3]), [128, SL + 1]];
           return (
             <g>
               <circle cx="36" cy="30" r={10 + sun / 14} fill="#ffd166" />{rays}
-              <polygon points={`${ridge.map((p) => p.join(",")).join(" ")} 320,200 130,200`} fill="url(#wcRock)" />
-              <polygon points={`${ridge[3].join(",")} ${ridge[4].join(",")} ${ridge[5].join(",")} 320,200 245,200`} fill="#000" opacity="0.18" />
-              <polygon points={`${sl.join(",")} ${ridge[3].join(",")} ${sr.join(",")} 247,${ridge[3][1] + 11} 238,${ridge[3][1] + 8}`} fill="#fff" opacity={mh > 35 ? 0.95 : 0} />
-              {[145, 156, 168].map((x, k) => (<g key={"t" + k} transform={`translate(${x},${yAt(x)})`}><rect x="-1" y="-4" width="2" height="4" fill="#4a3320" /><polygon points="0,-14 -5,-3 5,-3" fill="#2f6b3a" /></g>))}
+              <polygon points={`${ridge.map((p) => p[0] + "," + p[1].toFixed(1)).join(" ")} 320,200 130,200`} fill="url(#wcRock)" />
+              <polygon points={`${shade.map((p) => p[0] + "," + p[1].toFixed(1)).join(" ")} 320,200 ${peakX},200`} fill="#000" opacity="0.22" />
+              <polygon points={snowPoly} fill="#fff" opacity={mh > 25 ? 0.95 : 0} />
+              {Array.from({ length: 22 }, (_, k) => 133 + k * 5).filter((x) => yAt(x) > SL - H * 0.42).map((x, k) => (<polygon key={"t" + k} points={`${x},${yAt(x) - 8 - (k % 3)} ${x - 3},${yAt(x) + 1} ${x + 3},${yAt(x) + 1}`} fill={k % 2 ? "#2f6b3a" : "#245a30"} />))}
               <rect x="0" y={SL} width="132" height="50" fill="url(#wcSea)" />
               <g clipPath="url(#wcSeaClip)"><path d={"M-20," + SL + " " + Array.from({ length: 12 }, () => "q5,-3 10,0 t10,0").join(" ")} fill="none" stroke="#bfe3ff" strokeWidth="1.2" opacity="0.8"><animateTransform attributeName="transform" type="translate" from="0 0" to="20 0" dur="2.4s" repeatCount="indefinite" /></path>
               <path d={"M-30," + (SL + 8) + " " + Array.from({ length: 12 }, () => "q5,-3 10,0 t10,0").join(" ")} fill="none" stroke="#bfe3ff" strokeWidth="1" opacity="0.5"><animateTransform attributeName="transform" type="translate" from="20 0" to="0 0" dur="3.1s" repeatCount="indefinite" /></path></g>
               <line x1="0" y1={SL} x2="320" y2={SL} stroke="#fff" strokeOpacity="0.35" strokeDasharray="2 3" />
               <text x="270" y={SL + 10} fontSize="7" fill="#fff" fillOpacity="0.8" textAnchor="middle">سطح دریا (ارتفاع صفر)</text>
               <text x="66" y="182" fontSize="9" fill="#fff" textAnchor="middle">دریا</text>
-              {Array.from({ length: nv }, (_, k) => { const x0 = 14 + (k * 96) / nv; return (<circle key={"v" + k} cx={x0} cy={SL - 3} r="2.2" fill="#e6f4ff"><animate attributeName="cy" from={SL - 3} to="66" dur={vd + "s"} begin={(k * vd) / nv + "s"} repeatCount="indefinite" /><animate attributeName="cx" from={x0} to={150 + (k % 3) * 10} dur={vd + "s"} begin={(k * vd) / nv + "s"} repeatCount="indefinite" /><animate attributeName="opacity" values="0;0.9;0.9;0" dur={vd + "s"} begin={(k * vd) / nv + "s"} repeatCount="indefinite" /></circle>); })}
-              <text x="46" y="104" fontSize="8" fill="#cfe8ff" textAnchor="middle">تبخیر {fa(E)}</text>
-              <g><animateTransform attributeName="transform" type="translate" values="0 0;6 0;0 0" dur="7s" repeatCount="indefinite" />
+              {Array.from({ length: nv }, (_, k) => { const x0 = 14 + (k * 96) / nv; return (<circle key={"v" + k} cx={x0} cy={SL - 3} r="2.2" fill="#e6f4ff"><animate attributeName="cy" from={SL - 3} to="98" dur={vd + "s"} begin={(k * vd) / nv + "s"} repeatCount="indefinite" /><animate attributeName="cx" from={x0} to={104 + (k % 3) * 10} dur={vd + "s"} begin={(k * vd) / nv + "s"} repeatCount="indefinite" /><animate attributeName="opacity" values="0;0.9;0.9;0" dur={vd + "s"} begin={(k * vd) / nv + "s"} repeatCount="indefinite" /></circle>); })}
+              <text x="40" y="128" fontSize="8" fill="#cfe8ff" textAnchor="middle">تبخیر {fa(E)}</text>
+              <g transform="translate(-50,32)"><g><animateTransform attributeName="transform" type="translate" values="0 0;6 0;0 0" dur="7s" repeatCount="indefinite" />
                 <ellipse cx="172" cy="52" rx="34" ry="11" fill="#e8eef8" opacity={cloudDark} /><circle cx="156" cy="48" r="11" fill="#e8eef8" opacity={cloudDark} /><circle cx="176" cy="42" r="13" fill="#dfe7f5" opacity={cloudDark} /><circle cx="192" cy="49" r="10" fill="#e8eef8" opacity={cloudDark} />
-                <text x="172" y="55" fontSize="8" fill="#13233f" textAnchor="middle">میعان (ابر)</text></g>
-              {Array.from({ length: nd }, (_, k) => { const x = 160 + (k * 40) / nd + (k % 2) * 3, yS = 64, yE = yAt(x) - 2, d = (yE - yS) / 100 * rd * 1.6 + 0.35; return (<line key={"d" + k} x1={x} y1={yS} x2={x - 1.2} y2={yS + 6} stroke="#5bb8ff" strokeWidth="1.8" strokeLinecap="round"><animateTransform attributeName="transform" type="translate" from="0 0" to={"-4 " + (yE - yS - 6)} dur={d + "s"} begin={(k * 0.13) + "s"} repeatCount="indefinite" /><animate attributeName="opacity" values="1;1;0" dur={d + "s"} begin={(k * 0.13) + "s"} repeatCount="indefinite" /></line>); })}
-              <text x="226" y="82" fontSize="8" fill="#9fd4ff" textAnchor="middle">بارش {fa(P)}</text>
+                <text x="172" y="55" fontSize="8" fill="#13233f" textAnchor="middle">میعان (ابر)</text></g></g>
+              {Array.from({ length: nd }, (_, k) => { const x = 112 + (k * 50) / nd + (k % 2) * 3, yS = 96, yE = yAt(x) - 2, d = (yE - yS) / 100 * rd * 1.6 + 0.35; return (<line key={"d" + k} x1={x} y1={yS} x2={x - 1.2} y2={yS + 6} stroke="#5bb8ff" strokeWidth="1.8" strokeLinecap="round"><animateTransform attributeName="transform" type="translate" from="0 0" to={"-4 " + (yE - yS - 6)} dur={d + "s"} begin={(k * 0.13) + "s"} repeatCount="indefinite" /><animate attributeName="opacity" values="1;1;0" dur={d + "s"} begin={(k * 0.13) + "s"} repeatCount="indefinite" /></line>); })}
+              <text x="62" y="92" fontSize="8" fill="#9fd4ff" textAnchor="middle">بارش {fa(P)}</text>
               <polyline points={riverPts.map((p) => p.join(",")).join(" ")} fill="none" stroke="#8fd0ff" strokeWidth={1 + runoff * 0.6} strokeDasharray="5 4" strokeLinecap="round"><animate attributeName="stroke-dashoffset" from="18" to="0" dur="1.2s" repeatCount="indefinite" /></polyline>
               <text x="215" y={yAt(215) + 24} fontSize="8" fill="#d6eeff" textAnchor="middle">رواناب {fa(runoff)}</text>
             </g>

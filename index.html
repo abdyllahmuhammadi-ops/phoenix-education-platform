@@ -34687,8 +34687,9 @@ function VlabTectonicQuakeExperiment({ onReading }) {
           const tree = (cx, k) => (<g key={k} transform={`translate(${cx + shk * 1.2},70) rotate(${-shk * 2},0,0)`}><rect x="-1.5" y="-12" width="3" height="12" fill="#6b4e2a" /><circle cx="0" cy="-16" r="7" fill="#3f8f3f" /></g>);
           const quakeFx = wave >= 0 && wave < 1;
           if (kind === "trans") {
+            const slip = wave >= 0 ? Math.min(1, wave * 2.5) * (Mg - 2) * 2.2 : 0;
             const tp = (x0, x1, dy, key, tone) => (
-              <g key={key} transform={`translate(${shk * 1.2},${dy + shk * 0.5})`}>
+              <g key={key} transform={`translate(${(key === "L" ? 1 : -1) * shk * 0.5},${dy + (key === "L" ? -1 : 1) * slip})`}>
                 <rect x={x0} y="48" width={x1 - x0} height="142" fill={tone} />
                 {[0, 1, 2, 3].map((q) => (<rect key={q} x={x0 + 8 + (q % 2) * 70} y={56 + q * 6 + (q > 1 ? 70 : 0)} width="56" height="26" fill="#000" fillOpacity="0.08" />))}
                 <rect x={x0} y="116" width={x1 - x0} height="7" fill="#4a4a4a" />

@@ -24988,7 +24988,7 @@ function VlabOhmExperiment({ onReading }) {
 
         {/* باتری: عکسِ واقعیِ باتریِ نوستالژیکِ «قوه پارس» — دکمه‌ی فلزیِ بالا = +، ته‌ی تخت = − (قطبِ واقعی) */}
         <VlabBatteryPhoto x={31} y={60} width={42} />
-        <text x="52" y="159" fontSize="10" fill="#aab3cc" textAnchor="middle">باتری {voltage} ولت</text>
+        <text x="52" y="174" fontSize="10" fill="#aab3cc" textAnchor="middle">باتری {voltage} ولت</text>
 
         {/* سیم از قطب مثبت (دکمه‌ی بالا) — به نوک تماس در ته لامپ وصل می‌شود */}
         <path d="M 52,60 L 52,40 L 112,40 L 112,188 L 222,188 L 222,138" fill="none" stroke="#f2c548" strokeWidth="3" strokeLinecap="round" />
@@ -25151,7 +25151,7 @@ function VlabSeriesParallelExperiment({ onReading }) {
 
         {/* باتری: عکسِ واقعیِ باتریِ نوستالژیکِ «قوه پارس» — دکمه‌ی فلزیِ بالا = +، ته‌ی تخت = − */}
         <VlabBatteryPhoto x={31} y={60} width={42} />
-        <text x="52" y="159" fontSize="10" fill="#aab3cc" textAnchor="middle">باتری {voltage} ولت</text>
+        <text x="52" y="174" fontSize="10" fill="#aab3cc" textAnchor="middle">باتری {voltage} ولت</text>
 
         {mode === "سری" ? (
           <g>
@@ -25467,7 +25467,7 @@ function VlabStatesOfMatterExperiment({ onReading }) {
             <line x1="44" y1="150" x2="308" y2="150" stroke="#8fa0c8" /><line x1="44" y1="150" x2="44" y2="30" stroke="#8fa0c8" />
             {[0, 50, 100].map((t) => (<g key={"sy" + t}><line x1="40" y1={Y(t)} x2="44" y2={Y(t)} stroke="#8fa0c8" /><text x="36" y={Y(t) + 3} fontSize="8" fill="#cfd6ea" textAnchor="end">{String(t).replace(/\d/g, (d) => "۰۱۲۳۴۵۶۷۸۹"[d])}</text><line x1="44" y1={Y(t)} x2="308" y2={Y(t)} stroke="#2a3a73" strokeDasharray="2 4" strokeWidth="0.6" /></g>))}
             <text x="48" y="28" fontSize="7.5" fill="#9fb0e0">دما (°C)</text>
-            <text x="306" y="162" fontSize="7.5" fill="#9fb0e0" textAnchor="end">گرمای داده‌شده (kJ)</text>
+            <text x="262" y="162" fontSize="7.5" fill="#9fb0e0" textAnchor="middle">گرمای داده‌شده (kJ)</text>
             <polyline points={pts.map(([q, t]) => `${X(q)},${Y(t)}`).join(" ")} fill="none" stroke="#7be0a4" strokeWidth="2" />
             <text x={X(Qice + Qmelt / 2)} y={Y(0) - 5} fontSize="7.5" fill="#ffd98a" textAnchor="middle">ذوب</text>
             <text x={X(Qice + Qmelt + Qwater + Qboil / 2)} y={Y(100) - 5} fontSize="7.5" fill="#ffd98a" textAnchor="middle">جوش</text>
@@ -28501,7 +28501,7 @@ function VlabHeartRateExperiment({ onReading }) {
             <line x1="0" y1="-32" x2="0" y2="-10" stroke="#e8c3a0" strokeWidth="3.5" strokeLinecap="round" />
           </g>
 
-          <text x="0" y="46" fontSize="8" fill="#9aa3c0" textAnchor="middle">{runLabel}</text>
+          <text x="0" y="-52" fontSize="8" fill="#9aa3c0" textAnchor="middle">{runLabel}</text>
         </g>
       </svg>
       <VlabMeterRow height={160} meters={[{ label: "ضربان قلب", unit: "BPM", value: heartRate, ranges: [200], maj: 5, decimals: 0 }, { label: "ضربان در ۱۵ ثانیه", unit: "", value: heartRate / 4, ranges: [50], maj: 5, decimals: 0 }]} />
@@ -29319,7 +29319,7 @@ function VlabElectricityConductionExperiment({ onReading }) {
         <circle cx="222" cy="52" r={16 + t * 20} fill="#ffd84d" opacity={0.06 + t * 0.48} />
 
         <VlabBatteryPhoto x={30} y={58} width={40} />
-        <text x="50" y="155" fontSize="10" fill="#aab3cc" textAnchor="middle">باتری</text>
+        <text x="18" y="104" fontSize="8" fill="#aab3cc" textAnchor="middle">باتری</text>
 
         {/* سیمِ مثبت تا شکافِ آزمایش */}
         <path d="M50,58 L50,38 L108,38" fill="none" stroke="#f2c548" strokeWidth="3" strokeLinecap="round" />
@@ -29628,7 +29628,7 @@ function VlabProjectileExperiment({ onReading }) {
       <svg viewBox="0 0 320 200" className="vlab-svg" style={{ background: "#03060f", borderRadius: "10px" }}>
         {[0, 20, 40, 60, 80].map((hm) => (<g key={"gh" + hm}><line x1={X0} y1={py(hm)} x2="314" y2={py(hm)} stroke="#1c2748" strokeWidth="0.8" /><text x="20" y={py(hm) + 3} fontSize="7" fill="#7f8fb8" textAnchor="end">{hm}</text></g>))}
         {[0, 40, 80, 120, 160].map((xm) => (<g key={"gv" + xm}><line x1={px(xm)} y1="20" x2={px(xm)} y2={GY} stroke="#1c2748" strokeWidth="0.8" /><text x={px(xm)} y={GY + 12} fontSize="7" fill="#7f8fb8" textAnchor="middle">{xm}</text></g>))}
-        <text x="316" y={GY + 12} fontSize="7" fill="#9fb0e0" textAnchor="end">متر</text>
+        <text x="300" y={GY + 12} fontSize="7" fill="#9fb0e0" textAnchor="middle">متر</text>
         <rect x="0" y={GY} width="320" height="32" fill="#16301f" />
         <line x1="0" y1={GY} x2="320" y2={GY} stroke="#4fae6b" strokeWidth="2" />
         <polyline points={arc.join(" ")} fill="none" stroke="#5b7fd0" strokeWidth="1.2" strokeDasharray="4 4" opacity="0.8" />
@@ -34459,7 +34459,7 @@ function VlabLorentzExperiment({ onReading }) {
         <line x1={px} y1={py} x2={px + (fx / fl) * 30} y2={py + (fy / fl) * 30} stroke="#5de0a0" strokeWidth="2.4" />
         <text x={px + (fx / fl) * 42} y={py + (fy / fl) * 42 + 3} fontSize="9" fill="#5de0a0" textAnchor="middle" direction="ltr">F</text>
         <line x1="24" y1="190" x2={24 + P.pxcm} y2="190" stroke="#fff" strokeWidth="2" /><text x={24 + P.pxcm / 2} y="184" fontSize="8" fill="#cfd6ea" textAnchor="middle">۱ cm</text>
-        <text x="296" y="190" fontSize="8" fill="#5ba8ff" textAnchor="middle">B (به داخل صفحه)</text>
+        <text x="268" y="190" fontSize="8" fill="#5ba8ff" textAnchor="middle">B (به داخل صفحه)</text>
       </svg>
       <div className="vlab-readout" style={{ textAlign: "center" }}>شعاع مدار <b>{fa(rcm)}</b> سانتی‌متر · نیرو {part === "e" ? vlabMFa(F * 1e15, 1) + " فمتونیوتن" : vlabMFa(F * 1e18, 1) + " آتونیوتن"}</div>
       <div className="vlab-controls"><div className="vlab-ctrl-col" style={{ flex: 1 }}>
@@ -35021,6 +35021,20 @@ function VlabRightTriangleExperiment({ onReading }) {
         <rect x={O[0] - a * S} y={O[1] - a * S} width={a * S} height={a * S} fill="#ff6b6b" fillOpacity="0.3" stroke="#ff6b6b" />
         <rect x={O[0]} y={O[1]} width={b * S} height={b * S} fill="#5bb8ff" fillOpacity="0.3" stroke="#5bb8ff" />
         <polygon points={`${P} ${Q} ${Q[0] + nx * c * S} ${Q[1] + ny * c * S} ${P[0] + nx * c * S} ${P[1] + ny * c * S}`} fill="#5de0a0" fillOpacity="0.22" stroke="#5de0a0" />
+        {(() => {
+          const gl = (o, ex, ey, w, h, col, key) => {
+            const L = [];
+            for (let i = 1; i < w - 1e-9; i++) L.push(<line key={key + "i" + i} x1={o[0] + ex[0] * i * S} y1={o[1] + ex[1] * i * S} x2={o[0] + ex[0] * i * S + ey[0] * h * S} y2={o[1] + ex[1] * i * S + ey[1] * h * S} stroke={col} strokeOpacity="0.55" strokeWidth="0.8" />);
+            for (let j = 1; j < h - 1e-9; j++) L.push(<line key={key + "j" + j} x1={o[0] + ey[0] * j * S} y1={o[1] + ey[1] * j * S} x2={o[0] + ey[0] * j * S + ex[0] * w * S} y2={o[1] + ey[1] * j * S + ex[1] * w * S} stroke={col} strokeOpacity="0.55" strokeWidth="0.8" />);
+            return L;
+          };
+          const u = [(Q[0] - P[0]) / (c * S), (Q[1] - P[1]) / (c * S)];
+          return (<g>
+            {gl([O[0] - a * S, O[1] - a * S], [1, 0], [0, 1], a, a, "#ff9d9d", "ga")}
+            {gl([O[0], O[1]], [1, 0], [0, 1], b, b, "#9fd4ff", "gb")}
+            {gl(P, u, [nx, ny], c, c, "#9df5c8", "gc")}
+          </g>);
+        })()}
         <polygon points={`${O} ${P} ${Q}`} fill="#ffd166" fillOpacity="0.35" stroke="#ffd166" strokeWidth="2" />
         <path d={`M${O[0] + 9},${O[1]} v-9 h-9`} fill="none" stroke="#fff" strokeWidth="1.2" transform={`translate(0,0)`} />
         <text x={O[0] - a * S / 2} y={O[1] - a * S / 2 + 4} fontSize="10" fill="#fff" textAnchor="middle">a² = {fa(a * a)}</text>
@@ -35034,7 +35048,7 @@ function VlabRightTriangleExperiment({ onReading }) {
         <VlabRange min="1" max="8" step="1" value={b} onChange={(e) => setB(+e.target.value)} />
       </div></div>
       <div className="vlab-readout">
-        {`مجموع مساحت دو مربع روی ضلع‌های قائم (قرمز و آبی) همیشه با مساحت مربع روی وتر (سبز) برابر است. زاویه‌ی A روبه‌روی ضلع a است: sin A = ${fa(a / c, 3)}، cos A = ${fa(b / c, 3)}، tan A = ${fa(a / b, 3)} و خودِ زاویه ${fa(angA, 1)} درجه است.`}
+        {`مجموع مساحت دو مربع روی ضلع‌های قائم (قرمز و آبی) همیشه با مساحت مربع روی وتر (سبز) برابر است. هر مربع به مربع‌های واحد مساوی تقسیم شده است؛ تعداد مربع‌های واحد قرمز و آبی روی هم همان مساحت مربع سبز است. زاویه‌ی A روبه‌روی ضلع a است: sin A = ${fa(a / c, 3)}، cos A = ${fa(b / c, 3)}، tan A = ${fa(a / b, 3)} و خودِ زاویه ${fa(angA, 1)} درجه است.`}
       </div>
       <VlabFormulaCheck title="وتر (قضیه‌ی فیثاغورس)" fa="c = √(a² + b²)" en="c = sqrt(a² + b²)" legend="مجذور دو ضلع قائم را جمع کن و جذر بگیر." subst={`c = √(${fa(a, 1)}² + ${fa(b, 1)}²)`} answer={c} unit="" decimals={2} />
       <VlabFormulaCheck title="سینوس زاویه‌ی A" fa="sin A = ضلع روبه‌رو ÷ وتر" en="sin A = a / c" legend="وتر را از بالا بردار." subst={`sin A = ${fa(a, 1)} ÷ ${fa(c)}`} answer={a / c} unit="" decimals={2} />

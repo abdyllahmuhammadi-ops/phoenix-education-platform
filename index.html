@@ -36413,29 +36413,60 @@ const VLAB_FL = [
   { n: "مس", s: "Cu²⁺", c: "#2ef5c8", t: "سبز مایل به آبی", l: 510, u: "آتش‌بازی سبز‌آبی" },
   { n: "باریم", s: "Ba²⁺", c: "#9aff5a", t: "سبز زرد", l: 524, u: "آتش‌بازی سبز" },
 ];
+const VLAB_FLL = [[589, 589.6, 330], [766, 770, 404], [671, 610, 497], [622, 554, 423], [650, 606, 461], [510, 522, 578], [524, 514, 553]];
 function VlabFlameTestExperiment({ onReading }) {
   const [i, setI] = useState(0);
   const [unk, setUnk] = useState(null);
   const [msg, setMsg] = useState("");
   const shown = unk != null ? VLAB_FL[unk] : VLAB_FL[i];
   const guess = (k) => { setMsg(k === unk ? "درست! یون " + VLAB_FL[k].n + " است." : "نه، دوباره از روی رنگ شعله فکر کن."); if (k === unk) setTimeout(() => setUnk(null), 1500); };
-  const Fl = shown;
+  const Fl = shown, lines = VLAB_FLL[unk != null ? unk : i];
+  const wx = (l) => 20 + ((l - 380) / 400) * 280;
+  const fl = (x, y, sc, dur, op, col) => (<path d={`M${x},${y} C${x - 16 * sc},${y - 22 * sc} ${x - 10 * sc},${y - 46 * sc} ${x},${y - 70 * sc} C${x + 10 * sc},${y - 46 * sc} ${x + 16 * sc},${y - 22 * sc} ${x},${y}Z`} fill={col} opacity={op}><animateTransform attributeName="transform" type="scale" additive="sum" values="1 1;1.06 1.1;0.96 0.94;1 1" dur={dur} repeatCount="indefinite" /></path>);
   return (
     <div className="vlab-exp">
-      <svg viewBox="0 0 320 170" className="vlab-svg" style={{ background: "#03060f", borderRadius: "10px" }}>
-        <rect x="130" y="110" width="60" height="34" rx="4" fill="#7d8bb5" /><rect x="152" y="144" width="16" height="14" fill="#9aa6c8" />
-        <ellipse cx="160" cy="84" rx="22" ry="40" fill={Fl.c} opacity="0.92" /><ellipse cx="160" cy="94" rx="12" ry="24" fill="#fff" opacity="0.55" />
-        <ellipse cx="160" cy="84" rx="40" ry="52" fill={Fl.c} opacity="0.12" />
-        <text x="160" y="14" fontSize="11" fill={unk != null ? "#ffd166" : Fl.c} textAnchor="middle">{unk != null ? "نمونه‌ی ناشناس: چه یونی است؟" : Fl.n + " " + Fl.s}</text>
-        {unk == null && <text x="280" y="90" fontSize="9" fill="#cfd6ea" textAnchor="middle">{Fl.t}</text>}
-        {unk == null && <text x="40" y="90" fontSize="9" fill="#9aa6c8" textAnchor="middle" direction="ltr">≈ {Fl.l} nm</text>}
+      <svg viewBox="0 0 320 210" className="vlab-svg" style={{ background: "#050a18", borderRadius: "10px" }}>
+        <defs><radialGradient id="flGl" cx="0.5" cy="0.6" r="0.6"><stop offset="0" stopColor={Fl.c} stopOpacity="0.45" /><stop offset="1" stopColor={Fl.c} stopOpacity="0" /></radialGradient>
+          <linearGradient id="flIn" x1="0" y1="1" x2="0" y2="0"><stop offset="0" stopColor="#3a6bff" /><stop offset="1" stopColor="#8fb8ff" stopOpacity="0.6" /></linearGradient></defs>
+        <text x="160" y="13" fontSize="10" fontWeight="700" fill={unk != null ? "#ffd166" : Fl.c} textAnchor="middle">{unk != null ? "نمونه‌ی ناشناس: چه یونی است؟" : Fl.n + " " + Fl.s}</text>
+        <ellipse cx="160" cy="84" rx="62" ry="70" fill="url(#flGl)" />
+        {/* مشعل */}
+        <rect x="150" y="118" width="20" height="46" fill="#9aa6c8" /><rect x="150" y="118" width="6" height="46" fill="#fff" opacity="0.25" />
+        <rect x="145" y="140" width="30" height="10" rx="2" fill="#6a7aa8" /><ellipse cx="160" cy="145" rx="3.5" ry="2" fill="#050a18" />
+        <rect x="136" y="164" width="48" height="8" rx="3" fill="#5a6794" />
+        {/* شعله */}
+        <g transform="translate(0 0)">
+          {fl(160, 118, 1.15, "0.9s", 0.55, Fl.c)}
+          {fl(160, 118, 0.9, "0.7s", 0.9, Fl.c)}
+          {fl(160, 118, 0.55, "0.55s", 0.85, "#fff6d0")}
+          {fl(160, 118, 0.3, "0.45s", 0.9, "url(#flIn)")}
+        </g>
+        {[0, 1, 2, 3, 4].map((q) => (<circle key={q} r="1.5" fill={Fl.c}><animateMotion dur={`${1.4 + q * 0.3}s`} begin={`${-q * 0.4}s`} repeatCount="indefinite" path={`M${152 + q * 4},96 q${q % 2 ? 8 : -8},-30 ${q % 2 ? 4 : -4},-62`} /><animate attributeName="opacity" values="1;0" dur={`${1.4 + q * 0.3}s`} begin={`${-q * 0.4}s`} repeatCount="indefinite" /></circle>))}
+        {/* سیم و نمونه */}
+        <path d="M232,98 L176,96" stroke="#c9d3f0" strokeWidth="1.2" /><circle cx="172" cy="96" r="5" fill="none" stroke="#c9d3f0" strokeWidth="1.2" /><circle cx="172" cy="96" r="3" fill={Fl.c} opacity="0.9" />
+        <text x="262" y="100" fontSize="6.5" fill="#9aa6c8" textAnchor="middle">سیم نمونه‌گیر</text>
+        {/* تراز انرژی */}
+        <text x="44" y="30" fontSize="6.5" fill="#9aa6c8" textAnchor="middle">گذار الکترون</text>
+        <line x1="14" y1="40" x2="74" y2="40" stroke="#cfd6ea" strokeWidth="1.6" /><line x1="14" y1="86" x2="74" y2="86" stroke="#cfd6ea" strokeWidth="1.6" />
+        <text x="44" y="36" fontSize="6" fill="#9aa6c8" textAnchor="middle">تراز بالا</text><text x="44" y="98" fontSize="6" fill="#9aa6c8" textAnchor="middle">تراز پایه</text>
+        <circle r="3.6" fill="#5bb8ff" stroke="#fff" strokeWidth="0.8"><animateMotion dur="2.4s" repeatCount="indefinite" keyPoints="0;0;1;1" keyTimes="0;0.3;0.55;1" calcMode="linear" path="M30,83 L30,43" /></circle>
+        <path d="M52,50 q4,-4 8,0 t8,0 t8,0" fill="none" stroke={Fl.c} strokeWidth="1.8" transform="rotate(75 52 50) translate(2 -2)"><animate attributeName="opacity" values="0;0;1;0" keyTimes="0;0.5;0.7;1" dur="2.4s" repeatCount="indefinite" /></path>
+        <text x="44" y="112" fontSize="6" fill="#cfd6ea" textAnchor="middle">برگشت به تراز پایه</text><text x="44" y="121" fontSize="6" fill={Fl.c} textAnchor="middle">= نشر نور</text>
+        {/* طیف */}
+        <rect x="20" y="170" width="280" height="14" fill="#02040a" stroke="#2a3a66" />
+        {unk == null && lines.map((l, q) => (<rect key={q} x={wx(l) - 1} y="170" width={q === 0 ? 2.6 : 1.6} height="14" fill={vlabWlRgb(l)} opacity={q === 0 ? 1 : 0.7} />))}
+        {unk != null && <text x="160" y="180" fontSize="6.5" fill="#6a7aa8" textAnchor="middle">طیف در حالت آزمون پنهان است</text>}
+        {[400, 500, 600, 700].map((l) => (<g key={l}><line x1={wx(l)} y1="184" x2={wx(l)} y2="188" stroke="#6a7aa8" /><text x={wx(l)} y="197" fontSize="6.5" fill="#9aa6c8" textAnchor="middle" direction="ltr">{l}</text></g>))}
+        <text x="160" y="207" fontSize="6.5" fill="#9aa6c8" textAnchor="middle">طیف نشری (nm): هر فلز خط‌های مخصوص خودش را دارد</text>
+        {unk == null && <text x="276" y="40" fontSize="8" fill={Fl.c} textAnchor="middle">{Fl.t}</text>}
+        {unk == null && <text x="276" y="52" fontSize="7" fill="#9aa6c8" textAnchor="middle" direction="ltr">≈ {Fl.l} nm</text>}
       </svg>
       <div className="vlab-readout" style={{ textAlign: "center" }}>{unk != null ? (msg || "رنگ شعله را ببین و یکی از یون‌ها را انتخاب کن") : `رنگ: ${Fl.t} · کاربرد: ${Fl.u}`}</div>
       <div className="vlab-controls"><div className="vlab-ctrl-col" style={{ flex: 1 }}>
         <div className="vlab-btn-row">{VLAB_FL.map((o, k) => (<button key={k} className="vlab-btn" style={(unk == null ? i === k : false) ? { outline: "2px solid #e0a83e" } : null} onClick={() => { if (unk == null) setI(k); else guess(k); }}>{o.n}</button>))}</div>
         <div className="vlab-btn-row"><button className="vlab-btn" onClick={() => { setUnk(Math.floor(Math.random() * VLAB_FL.length)); setMsg(""); }}>آزمون: نمونه‌ی ناشناس</button>{unk != null && <button className="vlab-btn" onClick={() => setUnk(null)}>برگشت</button>}</div>
       </div></div>
-      <div className="vlab-readout">{`وقتی ترکیب یک فلز را در شعله می‌گیریم، الکترون‌های یون انرژی می‌گیرند و با بازگشت به تراز پایین، نوری با رنگ مخصوص آن فلز می‌دهند. شیمی‌دان‌ها از این رنگ برای شناسایی سریع کاتیون‌ها استفاده می‌کنند. رنگ‌ها برای چند یون شبیه‌اند (مثلاً سدیم همیشه مزاحم است)؛ پس این آزمون نشانه است و نه اثبات.`}</div>
+      <div className="vlab-readout">{`وقتی ترکیب یک فلز را در شعله می‌گیریم، الکترون‌های یون انرژی می‌گیرند و به تراز بالاتر می‌روند. با بازگشت به تراز پایین، انرژی را به‌صورت نور با رنگ مخصوص آن فلز پس می‌دهند. شیمی‌دان‌ها از این رنگ برای شناسایی سریع کاتیون‌ها استفاده می‌کنند. رنگ‌ها برای چند یون شبیه‌اند (مثلاً سدیم همیشه مزاحم است)؛ پس این آزمون نشانه است و نه اثبات.`}</div>
       <VlabFormulaCheck title="انرژی نور" fa="E = ۱۲۴۰ ÷ λ" en="E(eV)=1240/λ(nm)" legend="هرچه طول موج کوتاه‌تر، انرژی بیشتر." subst={`E = ۱۲۴۰ ÷ ${vlabFaN(Fl.l)}`} answer={1240 / Fl.l} unit="eV" decimals={2} />
       <VlabEverydayCard title="آتش‌بازی" text="رنگ آتش‌بازی از همین آزمون می‌آید: نمک استرانسیم قرمز، مس سبز‌آبی، سدیم زرد و باریم سبز می‌دهد. ترکیب نمک‌ها رنگ‌های میانی می‌سازد.">
         <circle cx="60" cy="38" r="3" fill="#ffd166" /><path d="M60,38 l-30,-22 M60,38 l30,-22 M60,38 l-34,12 M60,38 l34,12 M60,38 l0,-30" stroke="#ff6b6b" strokeWidth="2" />
@@ -36443,7 +36474,6 @@ function VlabFlameTestExperiment({ onReading }) {
     </div>
   );
 }
-
 /* ===== زیست) قند خون و انسولین ===== */
 function VlabGlucoseExperiment({ onReading }) {
   const [typ, setTyp] = useState("healthy");
@@ -37732,27 +37762,52 @@ function VlabFuelCellExperiment({ onReading }) {
 
 /* ===== شیمی) بلور یونی ===== */
 const VLAB_CR = { NaCl: ["سدیم کلرید", 1, 1, 0.282, 801], LiF: ["لیتیم فلوئورید", 1, 1, 0.201, 845], MgO: ["منیزیم اکسید", 2, 2, 0.210, 2852] };
+const VLAB_CRV = { NaCl: { cat: "Na⁺", an: "Cl⁻", rc: 0.102, ra: 0.181, cc: "#a47cf0", ca: "#5de08a" }, LiF: { cat: "Li⁺", an: "F⁻", rc: 0.076, ra: 0.133, cc: "#d06cf0", ca: "#b6f06a" }, MgO: { cat: "Mg²⁺", an: "O²⁻", rc: 0.072, ra: 0.14, cc: "#ffb347", ca: "#ff6b6b" } };
 function VlabIonicCrystalExperiment({ onReading }) {
   const [ck, setCk] = useState("NaCl");
   const [sh, setSh] = useState(0);
-  const C = VLAB_CR[ck];
+  const [ang, setAng] = useState(35);
+  const [auto, setAuto] = useState(true);
+  useEffect(() => { if (!auto) return; const id = setInterval(() => setAng((a) => (a + 1.2) % 360), 60); return () => clearInterval(id); }, [auto]);
+  const C = VLAB_CR[ck], V = VLAB_CRV[ck];
   const F = (C[1] * C[2]) / (C[3] * C[3]);
   const F0 = (VLAB_CR.NaCl[1] * VLAB_CR.NaCl[2]) / (VLAB_CR.NaCl[3] ** 2);
-  const sp = 26, rows = 4, cols = 8;
   const repel = sh > 0.35 && sh < 0.65;
+  const K = 80, s = C[3] * K, ca = Math.cos((ang * Math.PI) / 180), sa = Math.sin((ang * Math.PI) / 180), tl = 0.45, ct = Math.cos(tl), st = Math.sin(tl);
+  const ions = [];
+  for (let i = 0; i < 4; i++) for (let j = 0; j < 4; j++) for (let k = 0; k < 4; k++) {
+    const x0 = (i - 1.5) * s, y0 = (j - 1.5) * s, z0 = (k - 1.5) * s;
+    const x1 = x0 * ca + z0 * sa, z1 = -x0 * sa + z0 * ca;
+    const y2 = y0 * ct - z1 * st, z2 = y0 * st + z1 * ct;
+    const pos = (i + j + k) % 2 === 0, f = 420 / (420 - z2);
+    ions.push({ x: 76 + x1 * f, y: 92 + y2 * f, z: z2, r: (pos ? V.rc : V.ra) * K * f * 0.8, pos });
+  }
+  ions.sort((a, b) => b.z - a.z);
+  const sp = 19, rr = 4, cc = 6;
   return (
     <div className="vlab-exp">
-      <svg viewBox="0 0 320 170" className="vlab-svg" style={{ background: "#03060f", borderRadius: "10px" }}>
-        {Array.from({ length: rows }, (_, r) => Array.from({ length: cols }, (_, c) => { const x = 40 + c * sp + (r === 0 ? sh * sp * 1 : 0) * 1, y = 36 + r * sp, pos = (r + c) % 2 === 0; return (<g key={r + "-" + c}><circle cx={x} cy={y} r={pos ? 8 : 10.5} fill={pos ? "#ff6b6b" : "#5bb8ff"} opacity="0.9" stroke="#fff" strokeWidth="0.6" /><text x={x} y={y + 3} fontSize="9" fill="#fff" textAnchor="middle">{pos ? "+" : "−"}</text></g>); }))}
-        <text x="160" y="18" fontSize="10" fill="#ffd166" textAnchor="middle">لایه‌ی بالا را به راست بلغزان</text>
-        <text x="160" y="154" fontSize="11" fontWeight="700" fill={repel ? "#ff6b6b" : sh >= 0.9 ? "#5de0a0" : "#cfd6ea"} textAnchor="middle">{repel ? "همنام‌ها روبه‌روی هم؛ دافعه‌ی شدید ← بلور می‌شکند" : sh >= 0.9 ? "دوباره ناهم‌نام‌ها رو به رو" : "ناهم‌نام‌ها کنار هم؛ پایدار"}</text>
+      <svg viewBox="0 0 320 200" className="vlab-svg" style={{ background: "#050a18", borderRadius: "10px" }}>
+        <defs>
+          <radialGradient id="icCat" cx="0.35" cy="0.3" r="0.75"><stop offset="0" stopColor="#fff" stopOpacity="0.85" /><stop offset="0.35" stopColor={V.cc} /><stop offset="1" stopColor={V.cc} stopOpacity="0.55" /></radialGradient>
+          <radialGradient id="icAn" cx="0.35" cy="0.3" r="0.75"><stop offset="0" stopColor="#fff" stopOpacity="0.8" /><stop offset="0.35" stopColor={V.ca} /><stop offset="1" stopColor={V.ca} stopOpacity="0.55" /></radialGradient>
+        </defs>
+        <text x="76" y="12" fontSize="7" fill="#cfd6ea" textAnchor="middle">بلور {C[0]} (سه‌بعدی، ۶۴ یون)</text>
+        {ions.map((n, q) => (<g key={q}><circle cx={n.x} cy={n.y} r={n.r} fill={n.pos ? "url(#icCat)" : "url(#icAn)"} /><circle cx={n.x} cy={n.y} r={n.r} fill="#000" opacity={Math.max(0, Math.min(0.5, (n.z + 70) / 280))} /></g>))}
+        <text x="204" y="26" fontSize="6.5" fill="#cfd6ea" textAnchor="middle">برش دوبعدی: لایه‌ی بالا را بلغزان</text>
+        {Array.from({ length: rr }, (_, r) => Array.from({ length: cc }, (_, c) => { const x = 148 + c * sp + (r === 0 ? sh * sp : 0), y = 44 + r * sp, pos = (r + c) % 2 === 0; return (<circle key={r + "-" + c} cx={x} cy={y} r={(pos ? V.rc : V.ra) * 60} fill={pos ? "url(#icCat)" : "url(#icAn)"} />); }))}
+        <text x="232" y="132" fontSize="7" fontWeight="700" fill={repel ? "#ff6b6b" : sh >= 0.9 ? "#5de0a0" : "#cfd6ea"} textAnchor="middle">{repel ? "همنام‌ها روبه‌روی هم ← می‌شکند" : sh >= 0.9 ? "دوباره ناهم‌نام‌ها رو به رو" : "ناهم‌نام‌ها کنار هم؛ پایدار"}</text>
+        <circle cx="24" cy="168" r="5" fill="url(#icCat)" /><text x="34" y="171" fontSize="8" fill="#cfd6ea" textAnchor="start" direction="ltr">{V.cat}</text>
+        <circle cx="76" cy="168" r="7" fill="url(#icAn)" /><text x="88" y="171" fontSize="8" fill="#cfd6ea" textAnchor="start" direction="ltr">{V.an}</text>
+        <text x="236" y="171" fontSize="7" fill="#9aa6c8" textAnchor="middle">اندازه‌ی نسبی یون‌ها واقعی است</text>
+        <text x="160" y="192" fontSize="8" fill="#ffd166" textAnchor="middle">نقطه‌ی ذوب {vlabFaN(C[4])}°C</text>
       </svg>
       <div className="vlab-readout" style={{ textAlign: "center" }}>{C[0]}: نیروی جاذبه‌ی نسبی <b>{vlabMFa(F / F0, 1)}</b> برابر NaCl · نقطه‌ی ذوب {vlabFaN(C[4])}°C</div>
       <div className="vlab-controls"><div className="vlab-ctrl-col" style={{ flex: 1 }}>
-        <div className="vlab-btn-row">{Object.keys(VLAB_CR).map((k) => (<button key={k} className="vlab-btn" style={{ direction: "ltr", ...(ck === k ? { outline: "2px solid #e0a83e" } : {}) }} onClick={() => setCk(k)}>{k}</button>))}</div>
-        <label className="vlab-ctrl-label">لغزش لایه‌ی بالا: {vlabMFa(sh, 2)}</label><VlabRange min="0" max="1" step="0.05" value={sh} onChange={(e) => setSh(+e.target.value)} />
+        <div className="vlab-btn-row">{Object.keys(VLAB_CR).map((k) => (<button key={k} className="vlab-btn" style={{ direction: "ltr", ...(ck === k ? { outline: "2px solid #e0a83e" } : {}) }} onClick={() => setCk(k)}>{k}</button>))}<button className="vlab-btn" onClick={() => setAuto((a) => !a)}>{auto ? "⏸ توقف چرخش" : "▶ چرخش"}</button></div>
+        <label className="vlab-ctrl-label">لغزش لایه‌ی بالا (برش دوبعدی): {vlabMFa(sh, 2)}</label><VlabRange min="0" max="1" step="0.05" value={sh} onChange={(e) => setSh(+e.target.value)} />
+        <label className="vlab-ctrl-label">چرخش بلور: {vlabFaN(Math.round(ang))}°</label><VlabRange min="0" max="359" step="1" value={Math.round(ang)} onChange={(e) => { setAuto(false); setAng(+e.target.value); }} />
       </div></div>
-      <div className="vlab-readout">{`در بلور یونی هر یون مثبت را یون‌های منفی احاطه کرده‌اند (و بر عکس)؛ این جاذبه‌ی قوی، نقطه‌ی ذوب را بالا می‌برد. هرچه بار یون‌ها بیشتر و فاصله‌ی آن‌ها کمتر باشد، نیروی جاذبه (و نقطه‌ی ذوب) بیشتر است: F ∝ q₁q₂ ÷ d². اگر لایه‌ها نیم‌خانه بلغزند، یون‌های همنام روبه‌روی هم قرار می‌گیرند و می‌رانند؛ پس بلورهای یونی سخت ولی شکننده‌اند.`}</div>
+      <div className="vlab-readout">{`در بلور یونی هر یون مثبت را یون‌های منفی احاطه کرده‌اند (و بر عکس)؛ این جاذبه‌ی قوی، نقطه‌ی ذوب را بالا می‌برد. هرچه بار یون‌ها بیشتر و فاصله‌ی آن‌ها کمتر باشد، نیروی جاذبه (و نقطه‌ی ذوب) بیشتر است: F ∝ q₁q₂ ÷ d². اگر لایه‌ها نیم‌خانه بلغزند، یون‌های همنام روبه‌روی هم قرار می‌گیرند و می‌رانند؛ پس بلورهای یونی سخت ولی شکننده‌اند. یون مثبت کوچک‌تر از یون منفی است چون الکترون از دست داده است.`}</div>
       <VlabFormulaCheck title="جاذبه‌ی نسبی" fa="F ∝ q₁·q₂ ÷ d² (d بر حسب نانومتر)" en="F ∝ q1q2/d²" legend="بار بر حسب ضریب e و فاصله‌ی یون‌ها در بلور." subst={`${vlabFaN(C[1])}×${vlabFaN(C[2])} ÷ ${vlabMFa(C[3], 3)}²`} answer={F} unit="" decimals={1} />
       <VlabEverydayCard title="نمک و آجر" text="نمک سفره را به آسانی با چکش می‌شکنی ولی ذوب نمی‌شود مگر در ۸۰۱°C. آجر نسوز از MgO می‌سازند چون بلورش با پیوند قوی تا ۲۸۵۲°C دوام می‌آورد.">
         <rect x="20" y="40" width="30" height="20" fill="#d6935c" /><rect x="52" y="40" width="30" height="20" fill="#d6935c" /><rect x="36" y="18" width="30" height="20" fill="#d6935c" />
@@ -37760,7 +37815,6 @@ function VlabIonicCrystalExperiment({ onReading }) {
     </div>
   );
 }
-
 /* ===== زیست) نفرون و تشکیل ادرار ===== */
 function vlabNpPts(x0, x1, y, amp, wl) { const o = []; for (let x = x0; x <= x1; x += 2) o.push([x, y + amp * Math.sin(((x - x0) * 6.283) / wl)]); return o; }
 const vlabNpP = (a) => a.map((p, i) => (i ? "L" : "M") + p[0].toFixed(1) + "," + p[1].toFixed(1)).join("");
@@ -38051,23 +38105,54 @@ function VlabAntibodyExperiment({ onReading }) {
 
 /* ===== شیمی) برج تقطیر نفت ===== */
 const VLAB_OIL = [["گاز (متان تا بوتان)", "C₁–C₄", "زیر ۴۰", "گاز مایع، سوخت پخت‌وپز", "#9fd4ff"], ["بنزین", "C₅–C₁₂", "۴۰ تا ۲۰۰", "سوخت خودرو", "#ffd166"], ["نفت سفید", "C₁₀–C₁₆", "۱۷۵ تا ۲۷۵", "سوخت هواپیما و چراغ", "#ff9d1c"], ["گازوئیل", "C₁₅–C₂₀", "۲۵۰ تا ۳۵۰", "سوخت کامیون", "#d9742c"], ["روغن موتور", "C₂₀–C₇₀", "۳۵۰ تا ۵۰۰", "روان‌کننده، موم", "#8b6b4a"], ["قیر (ته‌مانده)", "بیش از C₇₀", "بالای ۵۰۰", "آسفالت جاده", "#3a2a22"]];
+const VLAB_OILY = [24, 50, 76, 102, 128, 176];
+const VLAB_OILT = ["۳۰", "۱۲۰", "۲۲۰", "۳۰۰", "۴۲۰", "۵۰۰+"];
 function VlabOilTowerExperiment({ onReading }) {
   const [i, setI] = useState(1);
   const f = VLAB_OIL[i];
   const nC = [3, 8, 13, 18, 35, 80][i];
+  const nz = Math.min(10, Math.max(3, Math.round(nC / 2)));
+  const chain = Array.from({ length: nz }, (_, k) => [8 + k * 7, 46 + (k % 2 ? -5 : 5)]);
   return (
     <div className="vlab-exp">
-      <svg viewBox="0 0 320 188" className="vlab-svg" style={{ background: "#03060f", borderRadius: "10px" }}>
-        <rect x="100" y="10" width="70" height="170" rx="8" fill="#1c2644" stroke="#6a7aa8" strokeWidth="2" />
-        {VLAB_OIL.map((o, k) => (<g key={k}><line x1="100" y1={22 + k * 26} x2="170" y2={22 + k * 26} stroke={o[4]} strokeWidth={k === i ? 4 : 1.5} /><line x1="170" y1={22 + k * 26} x2="198" y2={22 + k * 26} stroke={o[4]} strokeWidth={k === i ? 4 : 1.5} /><text x="244" y={26 + k * 26} fontSize="8" fill={k === i ? "#fff" : "#9aa6c8"} textAnchor="middle" onClick={() => setI(k)} style={{ cursor: "pointer" }}>{o[0].split(" ")[0]}</text></g>))}
-        <rect x="30" y="160" width="50" height="14" fill="#8b6b4a" /><text x="55" y="154" fontSize="8" fill="#ffb27a" textAnchor="middle">نفت خام داغ</text><path d="M80,167 H100" stroke="#ffb27a" strokeWidth="3" />
-        <text x="135" y="185" fontSize="7" fill="#9aa6c8" textAnchor="middle">پایین داغ‌تر ← بالا خنک‌تر</text>
+      <svg viewBox="0 0 320 212" className="vlab-svg" style={{ background: "#050a18", borderRadius: "10px" }}>
+        <defs>
+          <linearGradient id="oilCol" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stopColor="#2c5f9e" /><stop offset="0.5" stopColor="#7a4a6a" /><stop offset="1" stopColor="#c2491f" /></linearGradient>
+          <linearGradient id="oilMet" x1="0" y1="0" x2="1" y2="0"><stop offset="0" stopColor="#5a6794" /><stop offset="0.4" stopColor="#c9d3f0" /><stop offset="1" stopColor="#4a5578" /></linearGradient>
+        </defs>
+        {/* مولکول نمونه */}
+        <text x="44" y="14" fontSize="6.5" fill="#9aa6c8" textAnchor="middle">مولکول نمونه‌ی این برش</text>
+        <path d={chain.map((p, k) => (k ? "L" : "M") + p.join(",")).join("")} fill="none" stroke="#9aa6c8" strokeWidth="1.6" />
+        {chain.map((p, k) => (<circle key={k} cx={p[0]} cy={p[1]} r="2.8" fill={f[4]} stroke="#050a18" strokeWidth="0.6" />))}
+        <text x="44" y="68" fontSize="7" fill={f[4]} textAnchor="middle" direction="ltr">{f[1]}{nC > 20 ? "  (زنجیر بلندتر، فقط بخشی دیده می‌شود)" : ""}</text>
+        {/* برج */}
+        <rect x="118" y="12" width="64" height="172" rx="10" fill="url(#oilCol)" stroke="#9aa6c8" strokeWidth="1.6" />
+        <rect x="118" y="12" width="9" height="172" rx="4" fill="#fff" opacity="0.12" />
+        {VLAB_OILY.slice(0, 5).map((y, k) => (<g key={"tr" + k}><line x1="119" y1={y + 6} x2="181" y2={y + 6} stroke="#d7def5" strokeWidth="1.6" />{[128, 142, 156, 170].map((x, q) => <path key={q} d={`M${x - 4},${y + 6} a4,4 0 0 1 8,0`} fill="#d7def5" />)}{[0, 1, 2].map((q) => (<circle key={"dr" + q} r="1.3" fill={VLAB_OIL[k][4]}><animate attributeName="cy" values={`${y + 7};${y + 24}`} dur={`${1.2 + q * 0.3}s`} repeatCount="indefinite" /><animate attributeName="opacity" values="1;0" dur={`${1.2 + q * 0.3}s`} repeatCount="indefinite" /><set attributeName="cx" to={132 + q * 18 + k * 2} /></circle>))}</g>))}
+        {/* بخارهای در حال بالا رفتن */}
+        {VLAB_OIL.slice(0, 5).map((o, k) => [0, 1, 2].map((q) => (<circle key={"v" + k + q} r={k === i ? 2.4 : 1.6} fill={o[4]} opacity={k === i ? 1 : 0.8}><animateMotion dur={`${2 + (q * 0.4) + k * 0.3}s`} begin={`${-q * 0.7}s`} repeatCount="indefinite" path={`M${126 + k * 11 + q * 3},152 L${126 + k * 11 + q * 3},${VLAB_OILY[k] + 10}`} /></circle>)))}
+        {/* لوله‌های کناری و مخازن */}
+        {VLAB_OILY.map((y, k) => { const o = VLAB_OIL[k], on = k === i; return (<g key={"pp" + k} onClick={() => setI(k)} style={{ cursor: "pointer" }}>
+          <path d={k === 5 ? `M150,184 V${y + 12} H206` : `M182,${y + 2} H206`} stroke={o[4]} strokeWidth={on ? 5 : 3} fill="none" opacity={on ? 1 : 0.7} />
+          <rect x="206" y={y - 7 + (k === 5 ? 5 : 0)} width="34" height="16" rx="3" fill="#1c2644" stroke={on ? "#fff" : "#4a5578"} strokeWidth={on ? 1.6 : 1} /><rect x="208" y={y - 5 + (k === 5 ? 5 : 0)} width="30" height="12" rx="2" fill={o[4]} opacity={on ? 1 : 0.8} />
+          <text x="276" y={y + 3.5 + (k === 5 ? 5 : 0)} fontSize="7.5" fontWeight={on ? "700" : "400"} fill={on ? "#fff" : "#9aa6c8"} textAnchor="middle">{o[0].split(" (")[0]}</text></g>); })}
+        {VLAB_OILT.slice(0, 5).map((t, k) => (<text key={"tt" + k} x="100" y={VLAB_OILY[k] + 3} fontSize="6.5" fill="#ffb27a" textAnchor="middle">{t}°C</text>))}
+        {/* کوره و نفت خام */}
+        <rect x="8" y="150" width="34" height="26" rx="3" fill="#3a2a22" stroke="#8b6b4a" /><text x="25" y="166" fontSize="6.5" fill="#ffb27a" textAnchor="middle">نفت خام</text>
+        <path d="M42,163 H54" stroke="#8b6b4a" strokeWidth="3" />
+        <rect x="54" y="142" width="40" height="40" rx="3" fill="#6a3a22" stroke="#a8602a" />
+        {[0, 1, 2].map((q) => <line key={q} x1="54" y1={152 + q * 10} x2="94" y2={152 + q * 10} stroke="#8a4a2a" strokeWidth="0.8" />)}
+        <path d="M58,150 h32 v8 h-32 v8 h32" fill="none" stroke="#ff9d1c" strokeWidth="2.2" />
+        {[62, 74, 86].map((x, q) => (<path key={"fl" + q} d={`M${x},182 q-5,-8 0,-14 q2,6 6,0 q4,7 0,14z`} fill="#ff9d1c"><animate attributeName="d" dur={`${0.5 + q * 0.12}s`} repeatCount="indefinite" values={`M${x},182 q-5,-8 0,-14 q2,6 6,0 q4,7 0,14z;M${x},182 q-6,-10 1,-17 q1,7 5,1 q5,9 -1,16z;M${x},182 q-5,-8 0,-14 q2,6 6,0 q4,7 0,14z`} /></path>))}
+        <path d="M94,158 H118" stroke="#ff9d9d" strokeWidth="3" /><text x="106" y="150" fontSize="6" fill="#ff9d9d" textAnchor="middle">بخار داغ</text>
+        <text x="74" y="194" fontSize="6.5" fill="#9aa6c8" textAnchor="middle">کوره (۳۵۰ تا ۴۰۰°C)</text>
+        <text x="150" y="203" fontSize="6.5" fill="#9aa6c8" textAnchor="middle">پایین داغ‌تر ← بالا خنک‌تر</text>
       </svg>
       <div className="vlab-readout" style={{ textAlign: "center" }}><b>{f[0]}</b> · {f[1]} · نقطه‌ی جوش {f[2]}°C · {f[3]}</div>
       <div className="vlab-controls"><div className="vlab-ctrl-col" style={{ flex: 1 }}>
         <label className="vlab-ctrl-label">برش انتخابی (از بالا به پایین): {f[0]}</label><VlabRange min="0" max="5" step="1" value={i} onChange={(e) => setI(+e.target.value)} />
       </div></div>
-      <div className="vlab-readout">{`نفت خام مخلوطی از صدها هیدروکربن است. آن را گرم می‌کنیم تا بیشترِ آن بخار شود و در برج تقطیر بالا برود. بخارها در هر ارتفاع که دمایشان به نقطه‌ی جوش برسد مایع می‌شوند. هیدروکربن‌های کوچک (نیروی بین‌مولکولی کم) در بالا و مولکول‌های بزرگ (نیروی زیاد، نقطه‌ی جوش بالا) در پایین جمع می‌شوند. این یک جداسازی فیزیکی است نه واکنش شیمیایی.`}</div>
+      <div className="vlab-readout">{`نفت خام مخلوطی از صدها هیدروکربن است. آن را در کوره گرم می‌کنیم تا بیشترِ آن بخار شود و به پایین برج تقطیر برسد. بخارها در برج بالا می‌روند و در هر ارتفاعی که دمای برج از نقطه‌ی جوششان کمتر شود، روی سینی‌ها مایع می‌شوند و از لوله‌ی کناری خارج می‌شوند. هیدروکربن‌های کوچک (نیروی بین‌مولکولی کم) در بالا و مولکول‌های بزرگ (نیروی زیاد، نقطه‌ی جوش بالا) در پایین جمع می‌شوند. این یک جداسازی فیزیکی است نه واکنش شیمیایی. دماها تقریبی‌اند.`}</div>
       <VlabFormulaCheck title="میانگین کربن برش" fa="n ≈ میانگین کران‌ها" en="avg carbon number" legend="نمایانگر طول زنجیر؛ بیشتر ⇒ نقطه‌ی جوش بالاتر." subst={`میانگین ${f[1]}`} answer={nC} unit="اتم کربن" decimals={0} />
       <VlabEverydayCard title="از نفت تا جاده" text="بنزین ماشین، نفت چراغ، گازوئیل کامیون و قیر جاده همه از یک نفت خام می‌آیند. پالایشگاه‌هایی مثل آبادان و تهران همین برج‌ها را دارند.">
         <rect x="40" y="6" width="22" height="58" rx="4" fill="#7d8bb5" /><rect x="70" y="20" width="18" height="44" rx="4" fill="#9aa6c8" />
@@ -38075,7 +38160,6 @@ function VlabOilTowerExperiment({ onReading }) {
     </div>
   );
 }
-
 /* ===== زیست) انقباض ماهیچه ===== */
 function VlabMuscleExperiment({ onReading }) {
   const [ct, setCt] = useState(0);

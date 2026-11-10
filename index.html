@@ -38466,29 +38466,76 @@ function VlabGasEqExperiment({ onReading }) {
 }
 
 /* ===== زیست) فاگوسیتوز ===== */
+function vlabPgBlob(cx, cy, R, t) { const pts = []; for (let i = 0; i < 72; i++) { const a = (i / 72) * 6.2832; const r = R + 2.4 * Math.sin(3 * a + t * 2) + 1.6 * Math.sin(5 * a - t * 1.5); pts.push((i ? "L" : "M") + (cx + r * Math.cos(a)).toFixed(1) + "," + (cy + r * Math.sin(a)).toFixed(1)); } return pts.join("") + "Z"; }
+function vlabPgRod(x, y, s, op, lig) { return (<g transform={`translate(${x} ${y}) scale(${s})`} opacity={op}><rect x="-15" y="-6.5" width="30" height="13" rx="6.5" fill="#d83a3a" stroke="#8e1f1f" strokeWidth="1" /><path d="M-9,-2 q4,-3 8,0 t8,0" fill="none" stroke="#ff9d9d" strokeOpacity="0.6" strokeWidth="0.8" />{lig && [-5, 0, 5].map((v, i) => <circle key={i} cx="-16" cy={v} r="1.6" fill="#ffd166" />)}</g>); }
 function VlabPhagoExperiment({ onReading }) {
-  const [st, setSt] = useState(0);
+  const [t, setT] = useState(0);
+  const [play, setPlay] = useState(false);
+  useEffect(() => { if (!play) return; const id = setInterval(() => setT((v) => (v >= 5 ? 0 : Math.min(5, v + 0.025))), 40); return () => clearInterval(id); }, [play]);
   const names = ["تشخیص و چسبیدن", "احاطه با پاهای کاذب", "بلعیده‌شدن (فاگوزوم)", "هضم با لیزوزوم", "نمایش آنتی‌ژن"];
-  const k = st / 4;
-  const mx = 100 + k * 0, bx = 215 - Math.min(1, st / 2) * 62;
+  const idx = Math.min(4, Math.floor(t)), e = Math.min(1, t - idx);
+  const CX = 125, CY = 92, R = 56, PY = 92;
   const fa = vlabFaN;
+  const lerp = (a, b, k) => a + (b - a) * k;
+  const ease = (k) => k * k * (3 - 2 * k);
+  // موقعیت‌ها
+  let bx = 270, bs = 1, bo = 1, px = null, pr = 18;
+  if (idx === 0) bx = lerp(270, 197, ease(e)); else if (idx === 1) bx = lerp(197, 187, e); else { bx = idx === 2 ? lerp(187, 152, ease(e)) : 152; px = bx; }
+  if (idx === 3) { bs = 1 - 0.7 * e; bo = 1 - e * 0.9; }
+  if (idx === 4) { bo = 0; px = 152; }
+  const arcPt = (ang) => [187 + 17 * Math.cos(ang), PY + 17 * Math.sin(ang)];
+  const arm = (dir) => { const a0 = Math.PI, a1 = Math.PI + dir * Math.PI * e; const p0 = arcPt(a0), p1 = arcPt(a1); return `M${p0[0].toFixed(1)},${p0[1].toFixed(1)} A17,17 0 0 ${dir > 0 ? 1 : 0} ${p1[0].toFixed(1)},${p1[1].toFixed(1)}`; };
+  const lys = [[96, 122], [100, 62], [122, 128]];
+  const surf = [-0.9, -0.62, -0.34].map((a) => [CX + (R + 1) * Math.cos(a), CY + (R + 1) * Math.sin(a), a]);
+  const fragOff = [[-6, -5], [5, -7], [0, 6], [-8, 4], [7, 5]];
+  const tOp = idx === 4 ? Math.max(0, Math.min(1, (e - 0.15) / 0.5)) : 0;
   return (
     <div className="vlab-exp">
-      <svg viewBox="0 0 320 170" className="vlab-svg" style={{ background: "#03060f", borderRadius: "10px" }}>
-        <ellipse cx="120" cy="86" rx="58" ry="50" fill="#4a5ea8" opacity="0.55" stroke="#9fb4ff" strokeWidth="2" />
-        <circle cx="110" cy="80" r="14" fill="#2a3566" /><text x="110" y="84" fontSize="7" fill="#cfd6ea" textAnchor="middle">هسته</text>
-        {st >= 1 && st < 2 && (<g><path d="M172,66 q14,12 0,24" fill="none" stroke="#9fb4ff" strokeWidth="5" strokeLinecap="round" /><path d="M172,102 q14,-12 0,-24" fill="none" stroke="#9fb4ff" strokeWidth="5" strokeLinecap="round" /></g>)}
-        {st < 2 ? (<g><circle cx={bx + 22} cy="86" r="14" fill="#d83a3a" /><text x={bx + 22} y="106" fontSize="8" fill="#ff9d9d" textAnchor="middle">باکتری</text></g>)
-          : st === 2 ? (<g><circle cx="150" cy="86" r="22" fill="none" stroke="#ffd166" strokeDasharray="3 2" /><circle cx="150" cy="86" r="13" fill="#d83a3a" /><text x="150" y="124" fontSize="8" fill="#ffd166" textAnchor="middle">فاگوزوم</text></g>)
-          : st === 3 ? (<g><circle cx="150" cy="86" r="22" fill="none" stroke="#ffd166" /><circle cx="150" cy="86" r="8" fill="#a54" /><circle cx="170" cy="70" r="7" fill="#5de0a0" /><text x="150" y="124" fontSize="8" fill="#5de0a0" textAnchor="middle">لیزوزوم + آنزیم</text></g>)
-            : (<g><path d="M172,60 l10,-10 M172,70 l16,-4" stroke="#ff9d1c" strokeWidth="3" /><circle cx="186" cy="48" r="5" fill="#ff9d1c" /><circle cx="196" cy="66" r="5" fill="#ff9d1c" /><text x="216" y="58" fontSize="8" fill="#ff9d1c" textAnchor="middle">تکه‌های آنتی‌ژن به سطح</text></g>)}
-        <text x="160" y="160" fontSize="10" fontWeight="700" fill="#e0a83e" textAnchor="middle">{names[st]}</text>
+      <svg viewBox="0 0 320 190" className="vlab-svg" style={{ background: "#07101f", borderRadius: "10px" }}>
+        <defs><radialGradient id="pgCell" cx="0.4" cy="0.35" r="0.8"><stop offset="0" stopColor="#a9b9f5" /><stop offset="1" stopColor="#4a5ea8" /></radialGradient></defs>
+        {[[26, 26, 0.6], [292, 160, 0.5], [40, 164, 0.4], [300, 100, 0.35]].map((c, i) => (<g key={"rb" + i} opacity={c[2]}><ellipse cx={c[0]} cy={c[1]} rx="12" ry="8" fill="#b83232" /><ellipse cx={c[0]} cy={c[1]} rx="5" ry="3" fill="#7a1f1f" /></g>))}
+        <path d={vlabPgBlob(CX, CY, R, t)} fill="url(#pgCell)" stroke="#9fb4ff" strokeWidth="2" />
+        <path d="M80,84 q6,-3 12,0 M80,89 q6,-3 12,0 M80,94 q6,-3 12,0" fill="none" stroke="#d8b4ff" strokeWidth="1.4" strokeLinecap="round" />
+        <path d="M98,88 q-6,5 0,10 q-6,5 0,10 q-6,5 0,10" fill="none" stroke="#c9d3f7" strokeOpacity="0.8" strokeWidth="1" />
+        {[[92, 112, 20], [138, 114, -30], [104, 60, 40], [146, 66, 10]].map((m, i) => (<g key={"m" + i} transform={`translate(${m[0]} ${m[1]}) rotate(${m[2]})`}><ellipse rx="7" ry="3.4" fill="#e0955a" stroke="#a8602a" strokeWidth="0.7" /><path d="M-4,-1.5 v3 M-1.5,-1.5 v3 M1,-1.5 v3 M3.5,-1.5 v3" stroke="#a8602a" strokeWidth="0.6" /></g>))}
+        <path d="M106,78 C100,68 116,62 128,68 C138,74 132,84 124,86 C128,94 122,106 110,104 C96,100 100,88 106,78Z" fill="#2d3a78" stroke="#1b2350" strokeWidth="1" />
+        <circle cx="116" cy="78" r="3.6" fill="#151b44" />
+        <text x="116" y="96" fontSize="6.5" fill="#cfd6ea" textAnchor="middle">هسته</text>
+        {/* گیرنده‌ها */}
+        {idx <= 1 && [-0.5, -0.25, 0, 0.25, 0.5].map((a, i) => { const x = CX + (R + 1) * Math.cos(a), y = CY + (R + 1) * Math.sin(a); return <path key={"rc" + i} d="M0,0 v-4 m0,0 l-2,-2 m2,2 l2,-2" transform={`translate(${x} ${y}) rotate(${(a * 180) / Math.PI + 90})`} stroke="#7fe0ff" strokeWidth="1.2" fill="none" strokeLinecap="round" />; })}
+        {/* لیزوزوم‌ها */}
+        {idx < 3 && lys.map((p, i) => { const k = idx === 2 ? ease(Math.max(0, (e - 0.3) / 0.7)) : 0; return <circle key={"ly" + i} cx={lerp(p[0], 152, k)} cy={lerp(p[1], PY, k)} r="3.4" fill="#5de0a0" stroke="#1d8a5a" strokeWidth="0.8" />; })}
+        {idx < 3 && <text x="96" y="134" fontSize="6.5" fill="#5de0a0" stroke="#07101f" strokeWidth="2" paintOrder="stroke" textAnchor="middle">لیزوزوم</text>}
+        {/* پاهای کاذب */}
+        {idx === 1 && (<g><path d={arm(1)} fill="none" stroke="#9fb4ff" strokeWidth="6" strokeLinecap="round" /><path d={arm(-1)} fill="none" stroke="#9fb4ff" strokeWidth="6" strokeLinecap="round" /><text x="205" y="62" fontSize="6.5" fill="#9fb4ff" textAnchor="middle">پاهای کاذب</text></g>)}
+        {/* باکتری */}
+        {idx <= 1 && vlabPgRod(bx, PY, 1, 1, true)}
+        {idx <= 1 && <text x={bx + 6} y={PY + 20} fontSize="7" fill="#ff9d9d" textAnchor="middle">باکتری</text>}
+        {idx === 0 && <path d={`M${bx + 15},${PY} q8,-4 16,0 t16,0`} fill="none" stroke="#d83a3a" strokeWidth="1" strokeOpacity="0.7" />}
+        {/* فاگوزوم */}
+        {idx >= 2 && idx <= 3 && (<g>
+          <circle cx={px} cy={PY} r={pr} fill={idx === 3 ? "#5de0a0" : "#ffffff"} fillOpacity={idx === 3 ? 0.18 + 0.12 * e : 0.1} stroke={idx === 3 ? "#5de0a0" : "#ffd166"} strokeWidth="2.2" />
+          {vlabPgRod(px, PY, bs, bo, false)}
+          {idx === 3 && e > 0.3 && fragOff.map((f, i) => (<circle key={"fr" + i} cx={px + f[0] * (0.5 + e)} cy={PY + f[1] * (0.5 + e)} r="1.8" fill="#ff9d1c" />))}
+          {idx === 3 && [[-10, 8], [9, -9], [11, 8]].map((g, i) => (<circle key={"lg" + i} cx={px + g[0]} cy={PY + g[1]} r="2.4" fill="#5de0a0" />))}
+          <text x={px} y="124" fontSize="7" fill={idx === 3 ? "#5de0a0" : "#ffd166"} stroke="#07101f" strokeWidth="2" paintOrder="stroke" textAnchor="middle">{idx === 3 ? "لیزوزوم + آنزیم‌ها" : "فاگوزوم"}</text>
+        </g>)}
+        {/* نمایش آنتی‌ژن */}
+        {idx === 4 && (<g>
+          <circle cx="152" cy={PY} r="7" fill="#6a5a3a" opacity={1 - e * 0.6} />
+          {surf.map((p, i) => { const k = ease(Math.min(1, e * 1.4)); const sx = lerp(152 + fragOff[i][0], p[0], k), sy = lerp(PY + fragOff[i][1], p[1], k); return (<g key={"s" + i}>{e > 0.6 && <path d="M0,0 v-5 m0,0 l-2.4,-2.4 m2.4,2.4 l2.4,-2.4" transform={`translate(${p[0]} ${p[1]}) rotate(${(p[2] * 180) / Math.PI + 90})`} stroke="#c9a0ff" strokeWidth="1.4" fill="none" strokeLinecap="round" />}<circle cx={sx + (e > 0.6 ? Math.cos(p[2]) * 6 * Math.min(1, (e - 0.6) / 0.4) : 0)} cy={sy + (e > 0.6 ? Math.sin(p[2]) * 6 * Math.min(1, (e - 0.6) / 0.4) : 0)} r="2.4" fill="#ff9d1c" stroke="#fff" strokeWidth="0.5" /></g>); })}
+          <g opacity={tOp}><circle cx="252" cy="42" r="22" fill="#e8a8c8" stroke="#ffd0e6" strokeWidth="1.5" /><circle cx="252" cy="42" r="13" fill="#a04a78" /><text x="252" y="76" fontSize="7" fill="#ffd0e6" textAnchor="middle">لنفوسیت T</text>
+            {surf.map((p, i) => (<path key={"rl" + i} d={`M${p[0] + Math.cos(p[2]) * 10},${p[1] + Math.sin(p[2]) * 10} L${236 + i * 3},${52 + i * 4}`} stroke="#ffd0e6" strokeDasharray="2 2" strokeWidth="0.8" fill="none" />))}</g>
+          <text x="205" y="112" fontSize="6.5" fill="#ff9d1c" stroke="#07101f" strokeWidth="2" paintOrder="stroke" textAnchor="middle">آنتی‌ژن روی غشا</text>
+        </g>)}
+        <text x="160" y="182" fontSize="10" fontWeight="700" fill="#e0a83e" textAnchor="middle">{names[idx]}</text>
       </svg>
-      <div className="vlab-readout" style={{ textAlign: "center" }}>مرحله‌ی {fa(st + 1)} از ۵: <b>{names[st]}</b></div>
+      <div className="vlab-readout" style={{ textAlign: "center" }}>مرحله‌ی {fa(idx + 1)} از ۵: <b>{names[idx]}</b></div>
       <div className="vlab-controls"><div className="vlab-ctrl-col" style={{ flex: 1 }}>
-        <label className="vlab-ctrl-label">مرحله: {fa(st + 1)}</label><VlabRange min="0" max="4" step="1" value={st} onChange={(e) => setSt(+e.target.value)} />
+        <label className="vlab-ctrl-label">پیشرفت: {fa(Math.round(t * 20))}٪</label><VlabRange min="0" max="5" step="0.01" value={t} onChange={(ev) => { setPlay(false); setT(+ev.target.value); }} />
+        <div className="vlab-btn-row"><button className="vlab-btn" onClick={() => { if (t >= 5) setT(0); setPlay((p) => !p); }}>{play ? "⏸ توقف" : "▶ پخش"}</button>{names.map((n, k) => (<button key={k} className="vlab-btn" style={k === idx ? { outline: "2px solid #e0a83e" } : null} onClick={() => { setPlay(false); setT(k + 0.75); }}>{fa(k + 1)}</button>))}</div>
       </div></div>
-      <div className="vlab-readout">{`گویچه‌های سفید درشت‌خوار (ماکروفاژ و نوتروفیل) میکروب را با گیرنده‌هایشان می‌شناسند، با پاهای کاذب دورش را می‌گیرند و آن را درون کیسه‌ای به نام فاگوزوم فرو می‌برند. لیزوزوم با آنزیم‌های گوارشی آن را هضم می‌کند. ماکروفاژ تکه‌هایی از آنتی‌ژن را به سطح می‌آورد و به لنفوسیت‌ها نشان می‌دهد تا ایمنی اختصاصی شروع شود.`}</div>
+      <div className="vlab-readout">{`گویچه‌های سفید درشت‌خوار (ماکروفاژ و نوتروفیل) میکروب را با گیرنده‌هایشان می‌شناسند و به آن می‌چسبند. با پاهای کاذب دورش را می‌گیرند و آن را درون کیسه‌ای به نام فاگوزوم فرو می‌برند. لیزوزوم‌ها با فاگوزوم یکی می‌شوند و آنزیم‌های گوارشی میکروب را هضم می‌کنند. ماکروفاژ تکه‌هایی از آنتی‌ژن را روی غشای خود به لنفوسیت T نشان می‌دهد تا ایمنی اختصاصی شروع شود. اندازه‌ها برای نمایش تغییر داده شده‌اند.`}</div>
       <VlabFormulaCheck title="تعداد مراحل" fa="مراحل فاگوسیتوز" en="steps" legend="از تشخیص تا نمایش آنتی‌ژن." subst="شمارش مراحل" answer={5} unit="مرحله" decimals={0} />
       <VlabEverydayCard title="چرک زخم" text="چرک بقایای نوتروفیل‌های مرده‌ای است که میکروب‌ها را بلعیده‌اند؛ نشانه‌ی مبارزه‌ی بدن با عفونت.">
         <circle cx="60" cy="38" r="22" fill="#e6d77a" opacity="0.8" />
@@ -38496,7 +38543,6 @@ function VlabPhagoExperiment({ onReading }) {
     </div>
   );
 }
-
 /* ===== زیست) گردش مواد در جانداران ===== */
 const VLAB_CIRC = [["هیدرا", "بدون دستگاه گردش؛ انتشار مستقیم", 0], ["کرم خاکی", "گردش بسته با ۵ جفت قلب لوله‌ای", 1], ["ملخ", "گردش باز؛ همولنف در حفره‌ی بدن", 2], ["ماهی", "بسته ساده؛ قلب دو حفره‌ای", 3], ["پرنده و پستاندار", "بسته مضاعف؛ قلب چهار حفره‌ای", 4]];
 function VlabCirculationExperiment({ onReading }) {

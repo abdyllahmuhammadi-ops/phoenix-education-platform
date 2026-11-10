@@ -38028,40 +38028,89 @@ function VlabMutationExperiment({ onReading }) {
 }
 
 /* ===== زمین‌شناسی) آب زیرزمینی و آبخوان ===== */
-const VLAB_SOIL = { sand: ["ماسه", 120], gravel: ["شن", 400], clay: ["رس", 0.2] };
+const VLAB_SOIL = {
+  gravel: { n: "شن", K: 300, por: 30, sy: 25, inf: 0.6, col: ["#9a8f84", "#b8ac9d", "#7e746a", "#a39686"] },
+  sand: { n: "ماسه", K: 30, por: 35, sy: 28, inf: 0.4, col: ["#e6c98a", "#d4b06a", "#f0dcaa", "#c99f55"] },
+  clay: { n: "رس", K: 0.01, por: 50, sy: 4, inf: 0.05, col: ["#a8644a", "#8c4d38", "#b97a5e", "#7a4130"] },
+};
+function vlabAqRand(i) { const x = Math.sin(i * 127.1 + 311.7) * 43758.5453; return x - Math.floor(x); }
 function VlabAquiferExperiment({ onReading }) {
   const [sk, setSk] = useState("sand");
   const [pump, setPump] = useState(30);
   const [rain, setRain] = useState(30);
-  const K = VLAB_SOIL[sk][1];
-  const rech = rain * 0.6;
-  const dd = Math.min(40, (pump * 12) / Math.sqrt(K + 1) / 2);
-  const wt = 60 + rech * 0.4 - 15 - dd * 0.0 ;
-  const wtC = Math.max(25, Math.min(95, 70 - rech * 0.4 + 12));
-  const level = Math.min(100, wtC + dd * 0.9);
-  const Q = (K * 1e-5 * 100 * 0.02) * 86400 * 0.001;
+  const S = VLAB_SOIL[sk];
+  const K = S.K;
   const fa = (v, d = 1) => vlabMFa(v, d);
-  const CX = 160;
-  let wtPath = ""; for (let i = 0; i <= 60; i++) { const x = 10 + (i / 60) * 300; const cone = dd * Math.exp(-Math.pow((x - CX) / 40, 2)); wtPath += (i ? "L" : "M") + x.toFixed(1) + "," + (wtC + 40 + cone).toFixed(1); }
-  const nearPump = pump > 70 && K < 10;
+  const GY = 44, BY = 176, XW = 108;
+  const wt0 = 86 - (rain / 100) * S.inf * 34;
+  const maxDraw = BY - 10 - wt0;
+  const swRaw = (0.95 * pump) / Math.pow(K, 0.33);
+  const sw = Math.min(maxDraw, swRaw);
+  const dry = swRaw >= maxDraw && pump > 0;
+  const R = 14 + 22 * Math.log10(K + 1);
+  const rw = 4;
+  const yWater = (x) => { const r = Math.abs(x - XW); if (r >= R) return wt0; return wt0 + sw * (Math.log(R / Math.max(r, rw)) / Math.log(R / rw)); };
+  let curve = ""; for (let x = 4; x <= 316; x += 3) curve += (x === 4 ? "M" : "L") + x + "," + yWater(x).toFixed(1);
+  const dur = Math.max(1.6, 14 - 4.5 * Math.log10(K + 1) - (K >= 100 ? 2 : 0)) * (K < 1 ? 5 : 1);
+  const IX = 262, IY = 100, IR = 40;
+  const grains = [];
+  if (sk === "gravel") { for (let i = 0; i < 14; i++) { const gx = IX - 34 + (i % 4) * 22 + (vlabAqRand(i) - 0.5) * 8 + (Math.floor(i / 4) % 2) * 10, gy = IY - 34 + Math.floor(i / 4) * 20 + (vlabAqRand(i + 9) - 0.5) * 6; grains.push(<ellipse key={"g" + i} cx={gx} cy={gy} rx={10 + vlabAqRand(i + 3) * 3} ry={8 + vlabAqRand(i + 5) * 3} transform={`rotate(${vlabAqRand(i + 7) * 60 - 30} ${gx} ${gy})`} fill={S.col[i % 4]} stroke="#3d352c" strokeWidth="0.8" />); } }
+  else if (sk === "sand") { for (let i = 0; i < 70; i++) { const gx = IX - 40 + (i % 10) * 8.6 + ((Math.floor(i / 10) % 2) * 4.3) + (vlabAqRand(i) - 0.5) * 1.6, gy = IY - 38 + Math.floor(i / 10) * 11.5 + (vlabAqRand(i + 4) - 0.5) * 1.6; grains.push(<circle key={"s" + i} cx={gx} cy={gy} r={3.4 + vlabAqRand(i + 2) * 1.3} fill={S.col[i % 4]} stroke="#8a6a30" strokeWidth="0.5" />); } }
+  else { for (let i = 0; i < 160; i++) { const gx = IX - 42 + (i % 20) * 4.3 + (vlabAqRand(i) - 0.5) * 1.2, gy = IY - 40 + Math.floor(i / 20) * 10 + (vlabAqRand(i + 6) - 0.5) * 1.6; grains.push(<line key={"c" + i} x1={gx - 2.6} y1={gy} x2={gx + 2.6} y2={gy + (vlabAqRand(i + 1) - 0.5) * 1.5} stroke={S.col[i % 4]} strokeWidth="2.3" strokeLinecap="round" />); } }
+  const nDots = 7;
+  const dots = Array.from({ length: nDots }, (_, k) => { const side = k % 2 ? 1 : -1, sx = XW + side * (R * (0.45 + 0.5 * vlabAqRand(k + 1))), sy = Math.min(BY - 6, yWater(sx) + 10 + vlabAqRand(k + 11) * (BY - 18 - yWater(sx))); const ey = Math.min(BY - 12, wt0 + sw + 14 + (k % 3) * 8); return { sx, sy, ey, k }; });
+  const nearDry = dry ? "چاه خشک شده است" : sw > maxDraw * 0.6 ? "افت زیاد؛ آبخوان در خطر" : "وضعیت پایدار";
+  const v = K * 0.02;
   return (
     <div className="vlab-exp">
-      <svg viewBox="0 0 320 190" className="vlab-svg" style={{ background: "#03060f", borderRadius: "10px" }}>
-        <rect x="10" y="40" width="300" height="140" fill="#8b6b4a" opacity="0.5" /><rect x="10" y="120" width="300" height="14" fill="#3a2a22" /><text x="70" y="130" fontSize="8" fill="#ffb27a" textAnchor="middle">لایه‌ی نفوذناپذیر</text>
-        <path d={wtPath + " L310,134 L10,134 Z"} fill="#5bb8ff" opacity="0.55" /><path d={wtPath} fill="none" stroke="#9fd4ff" strokeWidth="2" strokeDasharray="4 3" />
-        <rect x={CX - 5} y="30" width="10" height="100" fill="#cfd6ea" opacity="0.5" /><text x={CX} y="24" fontSize="8" fill="#ffd166" textAnchor="middle">چاه</text>
-        {Array.from({ length: Math.round(rain / 15) }, (_, i) => (<line key={i} x1={30 + i * 40} y1="8" x2={26 + i * 40} y2="28" stroke="#5bb8ff" strokeWidth="2" />))}
-        <text x="260" y="70" fontSize="9" fill="#9fd4ff" textAnchor="middle">سطح ایستابی</text><text x="160" y="170" fontSize="9" fill="#cfd6ea" textAnchor="middle">آبخوان: {VLAB_SOIL[sk][0]}</text>
+      <svg viewBox="0 0 320 214" className="vlab-svg" style={{ background: "#0d1a33", borderRadius: "10px" }}>
+        <defs>
+          <linearGradient id="aqSky" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stopColor="#5fa8dc" /><stop offset="1" stopColor="#cfe8f5" /></linearGradient>
+          <linearGradient id="aqWet" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stopColor="#5bb8ff" stopOpacity="0.55" /><stop offset="1" stopColor="#1f6fc0" stopOpacity="0.75" /></linearGradient>
+          <pattern id="aqPgravel" width="30" height="26" patternUnits="userSpaceOnUse"><rect width="30" height="26" fill="#6b6258" /><ellipse cx="8" cy="7" rx="7" ry="5.5" fill="#9a8f84" stroke="#3d352c" strokeWidth="0.7" /><ellipse cx="22" cy="9" rx="6" ry="5" fill="#b8ac9d" stroke="#3d352c" strokeWidth="0.7" /><ellipse cx="14" cy="19" rx="8" ry="5" fill="#7e746a" stroke="#3d352c" strokeWidth="0.7" /><ellipse cx="27" cy="21" rx="4" ry="3.5" fill="#a39686" stroke="#3d352c" strokeWidth="0.7" /></pattern>
+          <pattern id="aqPsand" width="9" height="9" patternUnits="userSpaceOnUse"><rect width="9" height="9" fill="#c99f55" /><circle cx="2.4" cy="2.4" r="1.6" fill="#e6c98a" /><circle cx="6.6" cy="3.6" r="1.4" fill="#f0dcaa" /><circle cx="3.6" cy="7" r="1.5" fill="#d4b06a" /><circle cx="7.4" cy="7.6" r="1.1" fill="#e6c98a" /></pattern>
+          <pattern id="aqPclay" width="8" height="5" patternUnits="userSpaceOnUse"><rect width="8" height="5" fill="#8c4d38" /><line x1="0.5" y1="1.2" x2="4.5" y2="1.2" stroke="#b97a5e" strokeWidth="1" /><line x1="3.5" y1="3.6" x2="7.6" y2="3.6" stroke="#a8644a" strokeWidth="1" /></pattern>
+          <clipPath id="aqLens"><circle cx={IX} cy={IY} r={IR} /></clipPath>
+          <clipPath id="aqSoil"><rect x="0" y={GY} width="320" height={BY - GY} /></clipPath>
+        </defs>
+        <rect x="0" y="0" width="320" height={GY} fill="url(#aqSky)" />
+        <circle cx="290" cy="18" r="9" fill="#ffe27a" />
+        <rect x="0" y={GY} width="320" height={BY - GY} fill={`url(#aqP${sk})`} />
+        <rect x="0" y={GY} width="320" height={wt0 - GY} fill="#fff" opacity="0.1" />
+        <g clipPath="url(#aqSoil)">
+          <path d={curve + ` L316,${BY} L4,${BY} Z`} fill="url(#aqWet)" />
+          <path d={curve} fill="none" stroke="#d6f0ff" strokeWidth="2" />
+        </g>
+        <rect x="0" y={BY} width="320" height={214 - BY} fill="#3a3f4d" /><text x="160" y={BY + 15} fontSize="8" fill="#c9cfe0" textAnchor="middle">سنگ بستر (نفوذناپذیر)</text>
+        <rect x="0" y={GY - 6} width="320" height="7" fill="#4f9a3a" /><rect x="0" y={GY - 6} width="320" height="3" fill="#7fc850" />
+        {Array.from({ length: Math.round(rain / 12) }, (_, i) => (<line key={"r" + i} x1={14 + i * 36} y1="6" x2={11 + i * 36} y2="20" stroke="#2f7fd0" strokeWidth="1.8" strokeLinecap="round"><animateTransform attributeName="transform" type="translate" from="0 0" to="-3 22" dur="0.8s" begin={(i * 0.11) + "s"} repeatCount="indefinite" /><animate attributeName="opacity" values="1;1;0" dur="0.8s" begin={(i * 0.11) + "s"} repeatCount="indefinite" /></line>))}
+        {sk === "clay" && rain > 40 ? <ellipse cx="230" cy={GY - 5} rx="26" ry="3" fill="#6bb6ee" opacity="0.9" /> : null}
+        {Array.from({ length: Math.round(rain / 25) }, (_, i) => (<path key={"i" + i} d={`M${200 + i * 28},${GY + 4} v${Math.max(6, S.inf * 50)}`} stroke="#9fd8ff" strokeWidth="1.6" strokeDasharray="3 3" markerEnd="none"><animate attributeName="stroke-dashoffset" from="6" to="0" dur={(sk === "clay" ? 4 : 0.9) + "s"} repeatCount="indefinite" /></path>))}
+        {dots.map((d) => (<circle key={"p" + d.k} r="2" fill="#f2fbff" stroke="#2f7fd0" strokeWidth="0.6"><animateMotion dur={dur + "s"} begin={"-" + ((d.k * dur) / nDots) + "s"} repeatCount="indefinite" path={`M${d.sx},${d.sy} Q${(d.sx + XW) / 2},${d.sy + 6} ${XW + (d.sx < XW ? -6 : 6)},${d.ey}`} /></circle>))}
+        <rect x={XW - 6} y="22" width="12" height={BY - 40} fill="#cfd6ea" fillOpacity="0.9" stroke="#59627f" />
+        <rect x={XW - 3.5} y={wt0 + sw} width="7" height={BY - 40 - (wt0 + sw) + 22 - 22 + 0} fill="#5bb8ff" fillOpacity={dry ? 0 : 0.85} />
+        {Array.from({ length: 8 }, (_, i) => (<line key={"sc" + i} x1={XW - 6} y1={BY - 60 + i * 6} x2={XW + 6} y2={BY - 60 + i * 6} stroke="#59627f" />))}
+        <rect x={XW - 12} y="10" width="24" height="14" rx="2" fill="#d83a3a" stroke="#fff" strokeWidth="0.8" /><text x={XW} y="20" fontSize="7" fill="#fff" textAnchor="middle">پمپ</text>
+        <circle cx={IX} cy={IY} r={IR} fill="#2f7fd0" />
+        <g clipPath="url(#aqLens)">{grains}</g>
+        <circle cx={IX} cy={IY} r={IR} fill="none" stroke="#fff" strokeWidth="2.2" />
+        <rect x={IX - IR - 2} y={IY + IR + 3} width={2 * IR + 4} height="12" rx="3" fill="#0d1a33" fillOpacity="0.8" />
+        <text x={IX} y={IY + IR + 12} fontSize="8" fill="#e9f4ff" textAnchor="middle">ذرّه‌ها و حفره‌ها: {S.n}</text>
+        <text x="182" y={wt0 - 5} fontSize="8" fill="#ffffff" textAnchor="middle">سطح ایستابی</text>
+        <text x="60" y={GY + 14} fontSize="7.5" fill="#fff" fillOpacity="0.9" textAnchor="middle">منطقه‌ی غیراشباع</text>
+        <text x="60" y={BY - 8} fontSize="7.5" fill="#fff" fillOpacity="0.95" textAnchor="middle">منطقه‌ی اشباع (آبخوان)</text>
+        <text x={XW + 38} y={Math.min(BY - 20, wt0 + sw * 0.5 + 16)} fontSize="7.5" fill="#fff" textAnchor="middle">مخروط افت</text>
+        {dry ? <g><rect x={XW + 18} y="8" width="50" height="16" rx="4" fill="#d83a3a" /><text x={XW + 43} y="19" fontSize="9" fontWeight="700" fill="#fff" textAnchor="middle">چاه خشک!</text></g> : null}
       </svg>
-      <div className="vlab-readout" style={{ textAlign: "center" }}>افت آب اطراف چاه ≈ <b>{fa(dd, 0)}</b> واحد {nearPump ? "· پمپاژ بیش از تغذیه؛ آبخوان در خطر خشک‌شدن" : ""}</div>
+      <div className="vlab-readout" style={{ textAlign: "center" }}><b>{S.n}</b>: K ≈ {fa(K, K < 1 ? 2 : 0)} متر در روز · تخلخل {vlabFaN(S.por)}٪ · آبدهی ویژه {vlabFaN(S.sy)}٪ · {nearDry}</div>
       <div className="vlab-controls"><div className="vlab-ctrl-col" style={{ flex: 1 }}>
-        <div className="vlab-btn-row">{Object.keys(VLAB_SOIL).map((k) => (<button key={k} className="vlab-btn" style={sk === k ? { outline: "2px solid #e0a83e" } : null} onClick={() => setSk(k)}>{VLAB_SOIL[k][0]}</button>))}</div>
+        <div className="vlab-btn-row">{Object.keys(VLAB_SOIL).map((k) => (<button key={k} className="vlab-btn" style={sk === k ? { outline: "2px solid #e0a83e" } : null} onClick={() => setSk(k)}>{VLAB_SOIL[k].n}</button>))}</div>
         <label className="vlab-ctrl-label">پمپاژ از چاه: {vlabFaN(pump)}٪</label><VlabRange min="0" max="100" step="5" value={pump} onChange={(e) => setPump(+e.target.value)} />
-        <label className="vlab-ctrl-label">بارش و تغذیه: {vlabFaN(rain)}٪</label><VlabRange min="0" max="100" step="5" value={rain} onChange={(e) => setRain(+e.target.value)} />
+        <label className="vlab-ctrl-label">بارش: {vlabFaN(rain)}٪</label><VlabRange min="0" max="100" step="5" value={rain} onChange={(e) => setRain(+e.target.value)} />
       </div></div>
-      <div className="vlab-readout">{`آب باران در خلل و فرج خاک و سنگ فرو می‌رود و آبخوان را پر می‌کند. سرعت جریان آب را نفوذپذیری (K) تعیین می‌کند: شن و ماسه آب را به‌خوبی عبور می‌دهند و رس تقریباً نه. با پمپاژ، سطح آب اطراف چاه به شکل قیف (مخروط افت) پایین می‌رود؛ اگر برداشت از تغذیه بیشتر شود، آبخوان فرومی‌ریزد و زمین فرونشست می‌کند (مانند دشت‌های ایران).`}</div>
-      <VlabFormulaCheck title="قانون دارسی" fa="Q = K · A · (Δh ÷ L)" en="Darcy's law" legend="K ضریب نفوذپذیری، A سطح مقطع، Δh ÷ L شیب هیدرولیکی." subst={`K = ${fa(K, 1)} (A و شیب ثابت)`} answer={K} unit="نسبی" decimals={1} />
-      <VlabEverydayCard title="فرونشست دشت‌ها" text="در بسیاری از دشت‌های ایران، برداشت بی‌رویه از چاه‌ها سطح آب را پایین آورده و زمین ده‌ها سانتی‌متر در سال فرونشست می‌کند. کنترل پمپاژ برای حفظ آبخوان لازم است.">
+      <div className="vlab-readout">{`این سه خاک با هم فرق بزرگ دارند. شن حفره‌های درشت و به‌هم‌پیوسته دارد: آب به‌سرعت می‌رود و می‌آید، مخروط افت پهن ولی کم‌عمق است و باران زود به آبخوان می‌رسد. ماسه حفره‌های ریزتر دارد و حالتی میانه. رس بیشترین تخلخل (فضای خالی) را دارد ولی حفره‌هایش بسیار ریز است؛ آب را نگه می‌دارد اما آزاد نمی‌کند. پس نفوذ باران کم است، آب روی سطح جمع می‌شود و با کمی پمپاژ چاه خشک می‌شود. تخلخل یعنی چقدر آب جا می‌گیرد و نفوذپذیری یعنی چقدر آسان جریان می‌یابد؛ این دو یکی نیستند.`}</div>
+      <VlabFormulaCheck title="سرعت جریان آب (دارسی)" fa="v = K × i" en="Darcy's law: v = K·i" legend="K ضریب نفوذپذیری (متر در روز) و i شیب هیدرولیکی؛ اینجا i = ۰٫۰۲." subst={`${fa(K, K < 1 ? 2 : 0)} × ۰٫۰۲`} answer={v} unit="متر در روز" decimals={K < 1 ? 4 : 1} />
+      <VlabEverydayCard title="فرونشست دشت‌ها" text="در بسیاری از دشت‌های ایران، برداشت بی‌رویه از چاه‌ها سطح آب را پایین آورده و زمین ده‌ها سانتی‌متر در سال فرونشست می‌کند. در زمین‌های رسی این افت سریع‌تر دیده می‌شود، چون رس آب را دیر پس می‌دهد.">
         <path d="M10,34 Q60,60 110,34" fill="none" stroke="#7d8bb5" strokeWidth="3" /><line x1="60" y1="10" x2="60" y2="56" stroke="#d83a3a" strokeDasharray="3 2" />
       </VlabEverydayCard>
     </div>

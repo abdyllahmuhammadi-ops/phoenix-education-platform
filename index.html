@@ -35932,7 +35932,17 @@ function VlabDigestionExperiment({ onReading }) {
         <path d="M146,112 L104,117" stroke="#e6c35a" strokeWidth="6" strokeLinecap="round" opacity="0.85" />
         <text x="76" y="84" fontSize="7" fill="#ffd9c8" textAnchor="middle">کبد</text>
         <text x="152" y="88" fontSize="7" fill="#ffb457" textAnchor="middle">معده</text>
-        <ellipse cx="110" cy="14" rx="14" ry="7" fill="#c0392b" opacity={op(0)} /><path d="M99,13 H121" stroke="#fff" strokeWidth="2" strokeLinecap="round" opacity={op(0)} />
+        <g opacity={op(0)}>
+          <ellipse cx="82" cy="33" rx="6" ry="4" fill="#e8b46a" /><ellipse cx="138" cy="33" rx="6" ry="4" fill="#e8b46a" />
+          <text x="156" y="36" fontSize="5.5" fill="#e8b46a" textAnchor="middle">غدد بزاقی</text>
+          <path d="M84,18 C91,7 102,9 110,12 C118,9 129,7 136,18 C128,33 92,33 84,18Z" fill="#d9546a" stroke="#a83a50" strokeWidth="0.8" />
+          <path d="M91,18 C98,13 104,15 110,16 C116,15 122,13 129,18 C122,28 98,28 91,18Z" fill="#4a0d1a" />
+          <ellipse cx="110" cy="24" rx="10" ry="3.6" fill="#e8707e" />
+          <path d="M95,17 C102,14.5 118,14.5 125,17 L123,21 C117,19 103,19 97,21Z" fill="#fffdf4" stroke="#d8d2c0" strokeWidth="0.4" />
+          <path d="M98,26 C104,28 116,28 122,26 L120,24 C114,25.4 106,25.4 100,24Z" fill="#fffdf4" />
+          <path d="M104,14.6 V20 M110,14.6 V20.2 M116,14.6 V20" stroke="#d8d2c0" strokeWidth="0.4" />
+          <path d="M92,18 C98,13 104,15 110,16 C116,15 122,13 128,18" fill="none" stroke="#a83a50" strokeWidth="0.5" />
+        </g>
         <path d={P(sub(1))} fill="none" stroke={VLAB_DG[1].c} strokeWidth="6" strokeLinecap="round" opacity={op(1)} />
         <path d={P(sub(2))} fill="none" stroke={VLAB_DG[2].c} strokeWidth="20" strokeLinecap="round" strokeLinejoin="round" opacity={op(2)} />
         <path d={P(sub(2))} fill="none" stroke="#fff" strokeOpacity="0.18" strokeWidth="6" strokeLinecap="round" opacity={op(2)} />

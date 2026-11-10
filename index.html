@@ -23404,6 +23404,42 @@ const VLAB_EXPERIMENTS = [
     intro: "چهار عدد A و B و C و D را عوض کن و ببین موج سینوسی چطور بلندتر، فشرده‌تر یا جابه‌جا می‌شود.",
     tools: ["دامنه", "دوره‌ی تناوب", "انتقال"],
   },
+  {
+    id: "exponential-function",
+    subject: "ریاضی",
+    level: "متوسطه دوم",
+    title: "تابع نمایی (رشد و کاهش)",
+    icon: "🦠",
+    intro: "پایه و مقدار اولیه را عوض کن و ببین چرا باکتری‌ها انفجاری زیاد می‌شوند و دارو در بدن نمایی کم می‌شود.",
+    tools: ["پایه‌ی b", "مقدار اولیه", "زمان دو برابر شدن"],
+  },
+  {
+    id: "derivative-graph",
+    subject: "ریاضی",
+    level: "متوسطه دوم",
+    title: "رسم نمودار با مشتق",
+    icon: "⛰️",
+    intro: "نمودار تابع و نمودار مشتقش را هم‌زمان ببین؛ بفهم کجا مشتق صفر است و کجا تابع قله یا دره دارد.",
+    tools: ["تابع و مشتق", "مماس", "نقاط بحرانی"],
+  },
+  {
+    id: "inscribed-angle",
+    subject: "ریاضی",
+    level: "متوسطه دوم",
+    title: "زاویه‌ها در دایره",
+    icon: "⭕",
+    intro: "نقطه‌ی P را روی دایره بچرخان و ببین زاویه‌ی محاطی همیشه نصف کمان روبه‌رو است.",
+    tools: ["زاویه‌ی مرکزی", "زاویه‌ی محاطی", "نیم‌دایره"],
+  },
+  {
+    id: "geometric-transform",
+    subject: "ریاضی",
+    level: "متوسطه دوم",
+    title: "تبدیل‌های هندسی (انتقال، دوران، بازتاب، تجانس)",
+    icon: "🔄",
+    intro: "مثلثی را جابه‌جا، بچرخان، قرینه و بزرگ کن و مختصات رأس‌ها را قبل و بعد ببین.",
+    tools: ["انتقال", "دوران", "بازتاب", "تجانس"],
+  },
 ];
 
 function vlabClamp(v, min, max) {
@@ -33209,6 +33245,219 @@ function VlabSineWaveExperiment({ onReading }) {
   );
 }
 
+/* ===== ریاضی ۱۲) تابع نمایی ===== */
+function VlabExponentialExperiment({ onReading }) {
+  const [a, setA] = useState(1);
+  const [b, setB] = useState(2);
+  const [x, setX] = useState(2);
+  const f = (t) => a * Math.pow(b, t);
+  const x0 = -3, x1 = 4, W = 296, H = 170, L = 12, T = 10, ymax = 20;
+  const X = (t) => L + ((t - x0) / (x1 - x0)) * W;
+  const Y = (v) => T + H - (Math.min(v, ymax * 1.2) / ymax) * H;
+  let path = ""; for (let i = 0; i <= 200; i++) { const t = x0 + (i / 200) * (x1 - x0); path += (i ? "L" : "M") + X(t).toFixed(1) + "," + Y(f(t)).toFixed(1); }
+  const fa = (v, d = 2) => vlabMFa(v, d);
+  const kind = b > 1 ? "رشد" : b < 1 ? "کاهش" : "ثابت";
+  const dbl = b > 1 ? Math.log(2) / Math.log(b) : b < 1 ? Math.log(0.5) / Math.log(b) : null;
+  const fx = f(x);
+  return (
+    <div className="vlab-exp">
+      <svg viewBox="0 0 320 210" className="vlab-svg" style={{ background: "#03060f", borderRadius: "10px" }}>
+        {[5, 10, 15, 20].map((v) => (<line key={v} x1={L} y1={Y(v)} x2={L + W} y2={Y(v)} stroke="#141c36" strokeWidth="1" />))}
+        <line x1={L} y1={Y(0)} x2={L + W} y2={Y(0)} stroke="#6a7aa8" strokeWidth="1" />
+        <line x1={X(0)} y1={T} x2={X(0)} y2={T + H} stroke="#6a7aa8" strokeWidth="1" />
+        <path d={path} fill="none" stroke="#ffd166" strokeWidth="2.4" />
+        <line x1={X(x)} y1={Y(0)} x2={X(x)} y2={Y(fx)} stroke="#ff6b6b" strokeWidth="1" strokeDasharray="3 3" />
+        <circle cx={X(x)} cy={Y(fx)} r="4.6" fill="#ff6b6b" stroke="#fff" strokeWidth="1.2" />
+        {[-3, -2, -1, 1, 2, 3, 4].map((v) => (<text key={v} x={X(v)} y={T + H + 12} fontSize="8" fill="#9aa6c8" textAnchor="middle" direction="ltr">{vlabMFa(v, 0)}</text>))}
+        <text x="70" y="22" fontSize="9" fill="#ffd166" textAnchor="middle" direction="ltr">y = {fa(a, 0)} × {fa(b, 1)}^x</text>
+        <text x="160" y="206" fontSize="8" fill="#9aa6c8" textAnchor="middle">x (مثلاً شمارش روزها)</text>
+      </svg>
+      <div className="vlab-readout" style={{ textAlign: "center" }}>تابع {kind}ی است · مقدار در x = {fa(x, 1)}: <b>{fa(fx)}</b></div>
+      <div className="vlab-controls"><div className="vlab-ctrl-col" style={{ flex: 1 }}>
+        <label className="vlab-ctrl-label">مقدار اولیه (a): {fa(a, 0)}</label>
+        <VlabRange min="1" max="5" step="1" value={a} onChange={(e) => setA(+e.target.value)} />
+        <label className="vlab-ctrl-label">پایه (b): {fa(b, 1)} — بزرگ‌تر از ۱ رشد، بین ۰ و ۱ کاهش</label>
+        <VlabRange min="0.3" max="3" step="0.1" value={b} onChange={(e) => setB(+e.target.value)} />
+        <label className="vlab-ctrl-label">نقطه‌ی x: {fa(x, 1)}</label>
+        <VlabRange min="-3" max="4" step="0.5" value={x} onChange={(e) => setX(+e.target.value)} />
+        <div className="vlab-btn-row"><button className="vlab-btn" onClick={() => { setA(1); setB(2); }}>باکتری (هر روز ۲ برابر)</button><button className="vlab-btn" onClick={() => { setA(5); setB(0.5); }}>نیمه‌عمر (هر بار نصف)</button></div>
+      </div></div>
+      <div className="vlab-readout">
+        {`در تابع نمایی x در توان است، نه در پایه؛ برای همین هر بار که x یکی زیاد می‌شود مقدار در b ضرب می‌شود. ${dbl ? (b > 1 ? `زمان دو برابر شدن حدود ${fa(dbl)} واحد است.` : `زمان نصف شدن حدود ${fa(dbl)} واحد است.`) : "چون b = ۱ است، نمودار خط افقی است."} نمودار هیچ‌وقت محور x را قطع نمی‌کند.`}
+      </div>
+      <VlabFormulaCheck title="مقدار تابع نمایی" fa="y = a × b به توان x" en="y = a · bˣ" legend="اول b^x را با ماشین‌حساب حساب کن، بعد در a ضرب کن." subst={`y = ${fa(a, 0)} × ${fa(b, 1)}^(${fa(x, 1)})`} answer={fx} unit="" decimals={2} />
+      <VlabEverydayCard title="رشد باکتری و نیمه‌عمر دارو" text="باکتری‌ای که هر ساعت دو برابر می‌شود، بعد از ۱۰ ساعت حدود هزار برابر شده است. برعکس، داروی بدن هر چند ساعت نصف می‌شود (نیمه‌عمر) و نمودارش نمایی نزولی است. هر دو با همین فرمول نوشته می‌شوند.">
+        <circle cx="22" cy="58" r="3.4" fill="#2e9e66" /><circle cx="40" cy="52" r="3.4" fill="#2e9e66" /><circle cx="46" cy="58" r="3.4" fill="#2e9e66" />
+        <path d="M60,70 Q90,66 108,10" fill="none" stroke="#e08a1c" strokeWidth="2.4" />
+        <path d="M6,74 H114" stroke="#999" strokeWidth="1" />
+      </VlabEverydayCard>
+    </div>
+  );
+}
+
+/* ===== ریاضی ۱۳) رسم نمودار با مشتق ===== */
+function VlabDerivativeGraphExperiment({ onReading }) {
+  const [fk, setFk] = useState("cube");
+  const [a, setA] = useState(-1.5);
+  const F = VLAB_TS_FUNCS[fk];
+  const x0 = F.x0, x1 = F.x1, W = 296, L = 12;
+  const dys = (() => { let lo = 1e9, hi = -1e9; for (let i = 0; i <= 60; i++) { const v = F.df(x0 + (i / 60) * (x1 - x0)); lo = Math.min(lo, v); hi = Math.max(hi, v); } return [Math.min(lo, -0.5), Math.max(hi, 0.5)]; })();
+  const X = (x) => L + ((x - x0) / (x1 - x0)) * W;
+  const Y1 = (y) => 10 + 80 - ((Math.max(F.y0, Math.min(F.y1, y)) - F.y0) / (F.y1 - F.y0)) * 80;
+  const Y2 = (y) => 112 + 70 - ((y - dys[0]) / (dys[1] - dys[0])) * 70;
+  const aa = Math.max(x0 + 0.1, Math.min(x1 - 0.1, a));
+  const m = F.df(aa), fa0 = F.f(aa);
+  let p1 = "", p2 = ""; for (let i = 0; i <= 160; i++) { const x = x0 + (i / 160) * (x1 - x0); p1 += (i ? "L" : "M") + X(x).toFixed(1) + "," + Y1(F.f(x)).toFixed(1); p2 += (i ? "L" : "M") + X(x).toFixed(1) + "," + Y2(F.df(x)).toFixed(1); }
+  const sx = 0.8; const ta = { x1: X(aa - sx), y1: Y1(fa0 - m * sx), x2: X(aa + sx), y2: Y1(fa0 + m * sx) };
+  const zeros = []; for (let i = 0; i < 400; i++) { const xa = x0 + (i / 400) * (x1 - x0), xb = x0 + ((i + 1) / 400) * (x1 - x0); if (F.df(xa) * F.df(xb) < 0) zeros.push((xa + xb) / 2); }
+  const state = Math.abs(m) < 0.06 ? "مماس افقی است: احتمالاً قله یا دره" : m > 0 ? "تابع صعودی است (مشتق مثبت)" : "تابع نزولی است (مشتق منفی)";
+  const fa = (v, d = 2) => vlabMFa(v, d);
+  return (
+    <div className="vlab-exp">
+      <svg viewBox="0 0 320 196" className="vlab-svg" style={{ background: "#03060f", borderRadius: "10px" }}>
+        <line x1={L} y1={Y1(0)} x2={L + W} y2={Y1(0)} stroke="#2a3558" strokeWidth="1" />
+        <path d={p1} fill="none" stroke="#9fb4ff" strokeWidth="2" />
+        <line x1={ta.x1} y1={ta.y1} x2={ta.x2} y2={ta.y2} stroke="#5de0a0" strokeWidth="1.8" />
+        <circle cx={X(aa)} cy={Y1(fa0)} r="4.4" fill="#ffd166" stroke="#fff" strokeWidth="1.2" />
+        <line x1={L} y1={Y2(0)} x2={L + W} y2={Y2(0)} stroke="#6a7aa8" strokeWidth="1" />
+        {zeros.map((z, i) => (<g key={i}><line x1={X(z)} y1="10" x2={X(z)} y2="182" stroke="#4a3a5a" strokeWidth="1" strokeDasharray="3 3" /><circle cx={X(z)} cy={Y2(0)} r="3.4" fill="#ff6b6b" /></g>))}
+        <path d={p2} fill="none" stroke="#ff9d1c" strokeWidth="2" />
+        <line x1={X(aa)} y1={Y2(0)} x2={X(aa)} y2={Y2(m)} stroke="#5de0a0" strokeWidth="1.2" />
+        <circle cx={X(aa)} cy={Y2(m)} r="4.4" fill="#5de0a0" stroke="#fff" strokeWidth="1.2" />
+        <text x="60" y="20" fontSize="9" fill="#9fb4ff" textAnchor="middle" direction="ltr">f(x) = {F.name}</text>
+        <text x="60" y="124" fontSize="9" fill="#ff9d1c" textAnchor="middle" direction="ltr">f′(x) = {F.dtxt}</text>
+      </svg>
+      <div className="vlab-readout" style={{ textAlign: "center" }}>f′({fa(aa, 1)}) = <b>{fa(m)}</b> — {state}</div>
+      <div className="vlab-controls"><div className="vlab-ctrl-col" style={{ flex: 1 }}>
+        <div className="vlab-btn-row">{Object.keys(VLAB_TS_FUNCS).map((k) => (<button key={k} className="vlab-btn" style={{ direction: "ltr", ...(fk === k ? { outline: "2px solid #e0a83e" } : {}) }} onClick={() => { setFk(k); setA(k === "cube" ? -1.5 : k === "exp" ? -1 : 1); }}>{VLAB_TS_FUNCS[k].name}</button>))}</div>
+        <label className="vlab-ctrl-label">نقطه‌ی x: {fa(aa, 1)}</label>
+        <VlabRange min={x0 + 0.1} max={x1 - 0.1} step="0.1" value={aa} onChange={(e) => setA(+e.target.value)} />
+      </div></div>
+      <div className="vlab-readout">
+        {`نمودار بالا تابع و نمودار پایین مشتق آن است؛ نقطه‌ی سبز در پایین همیشه ارتفاعی برابر شیب مماسِ بالا دارد. هر جا نمودار پایین از محور رد شود (نقطه‌ی قرمز)، مماس افقی است و تابع قله یا دره دارد. ${zeros.length ? `اینجا ${vlabFaN(zeros.length)} نقطه‌ی بحرانی هست.` : "این تابع نقطه‌ی بحرانی ندارد."}`}
+      </div>
+      <VlabFormulaCheck title="مقدار مشتق در نقطه" fa={`مشتقِ ${F.name} برابر ${F.dtxt} است`} en="m = f′(a)" legend="x را در مشتق بگذار (برای sin ماشین‌حساب را روی رادیان بگذار)." subst={F.fa(fa(aa, 1))} answer={m} unit="" decimals={2} />
+      <VlabEverydayCard title="بیشینه‌ی سود کارگاه" text="صاحب کارگاه می‌خواهد بداند تولید چند عدد بیشترین سود را می‌دهد. نمودار سود را رسم می‌کند و جایی که مشتق صفر می‌شود (مماس افقی) همان قله‌ی سود است.">
+        <path d="M8,66 Q40,66 56,16 Q72,-6 90,30 L112,66" fill="none" stroke="#2e7bd5" strokeWidth="2.4" />
+        <line x1="40" y1="16" x2="78" y2="16" stroke="#2e9e66" strokeWidth="2" />
+        <circle cx="59" cy="16" r="3.6" fill="#d83a3a" />
+        <path d="M6,74 H114" stroke="#999" strokeWidth="1" />
+      </VlabEverydayCard>
+    </div>
+  );
+}
+
+/* ===== ریاضی ۱۴) زاویه‌ها در دایره ===== */
+function VlabInscribedAngleExperiment({ onReading }) {
+  const [m, setM] = useState(100);
+  const [p, setP] = useState(250);
+  const R = 74, CX = 160, CY = 98;
+  const rad = (d) => (d * Math.PI) / 180;
+  const pt = (d) => [CX + R * Math.cos(rad(d)), CY - R * Math.sin(rad(d))];
+  const aD = 90 + m / 2, bD = 90 - m / 2;
+  const A = pt(aD), B = pt(bD), P = pt(p), O = [CX, CY];
+  const ang = (V, U, W) => { const a = [U[0] - V[0], U[1] - V[1]], b = [W[0] - V[0], W[1] - V[1]]; return (Math.acos((a[0] * b[0] + a[1] * b[1]) / (Math.hypot(...a) * Math.hypot(...b))) * 180) / Math.PI; };
+  const norm = (x) => ((x % 360) + 360) % 360;
+  const onArc = norm(p - bD) < m;
+  const insc = ang(P, A, B);
+  const central = m;
+  const fa = (v) => vlabMFa(v, Number.isInteger(Math.round(v * 10) / 10) ? 0 : 1);
+  const arcPath = `M${B[0]},${B[1]} A${R},${R} 0 ${m > 180 ? 1 : 0} 1 ${A[0]},${A[1]}`;
+  return (
+    <div className="vlab-exp">
+      <svg viewBox="0 0 320 196" className="vlab-svg" style={{ background: "#03060f", borderRadius: "10px" }}>
+        <circle cx={CX} cy={CY} r={R} fill="none" stroke="#6a7aa8" strokeWidth="1.4" />
+        <path d={arcPath} fill="none" stroke="#ffd166" strokeWidth="4" />
+        <line x1={O[0]} y1={O[1]} x2={A[0]} y2={A[1]} stroke="#ffd166" strokeWidth="1.4" />
+        <line x1={O[0]} y1={O[1]} x2={B[0]} y2={B[1]} stroke="#ffd166" strokeWidth="1.4" />
+        <line x1={P[0]} y1={P[1]} x2={A[0]} y2={A[1]} stroke="#5de0a0" strokeWidth="1.8" />
+        <line x1={P[0]} y1={P[1]} x2={B[0]} y2={B[1]} stroke="#5de0a0" strokeWidth="1.8" />
+        <circle cx={O[0]} cy={O[1]} r="2.6" fill="#fff" />
+        {[[A, "A"], [B, "B"], [P, "P"]].map(([q, t]) => (<g key={t}><circle cx={q[0]} cy={q[1]} r="4.4" fill={t === "P" ? "#5de0a0" : "#ffd166"} stroke="#fff" strokeWidth="1" /><text x={q[0] + (q[0] > CX ? 11 : -11)} y={q[1] + (q[1] > CY ? 12 : -5)} fontSize="10" fill="#fff" textAnchor="middle">{t}</text></g>))}
+              </svg>
+      <div className="vlab-readout" style={{ textAlign: "center" }}>
+        <span style={{ color: "#a07400" }}>زاویه‌ی مرکزی = {fa(central)}°</span>{" · "}<span style={{ color: "#1a9a63" }}>زاویه‌ی محاطی = {fa(insc)}°</span>
+      </div>
+      <div className="vlab-controls"><div className="vlab-ctrl-col" style={{ flex: 1 }}>
+        <label className="vlab-ctrl-label">اندازه‌ی کمان AB: {vlabFaN(m)}°</label>
+        <VlabRange min="20" max="340" step="5" value={m} onChange={(e) => setM(+e.target.value)} />
+        <label className="vlab-ctrl-label">جای نقطه‌ی P روی دایره: {vlabFaN(p)}°</label>
+        <VlabRange min="0" max="360" step="1" value={p} onChange={(e) => setP(+e.target.value)} />
+        <div className="vlab-btn-row"><button className="vlab-btn" onClick={() => setM(180)}>نیم‌دایره (کمان ۱۸۰°)</button></div>
+      </div></div>
+      <div className="vlab-readout">
+        {`وقتی P روی کمان بزرگ‌تر است، زاویه‌ی محاطی نصف کمان روبه‌رو است و با جابه‌جایی P تغییر نمی‌کند؛ ${onArc ? "ولی الان P روی خودِ کمان AB رفته و زاویه برابر ۱۸۰ منهای نصف کمان شده است." : "الان همین حالت است."} اگر کمان ۱۸۰ درجه باشد، زاویه‌ی محاطی همیشه ۹۰ درجه است.`}
+      </div>
+      <VlabFormulaCheck title="زاویه‌ی محاطی" fa="زاویه‌ی محاطی = نصف کمان روبه‌رو" en="∠APB = ½ · arc(AB)" legend="کمان AB را بر ۲ تقسیم کن؛ (P را روی کمان بزرگ‌تر نگه دار)." subst={`${fa(m)} ÷ ۲`} answer={m / 2} unit="درجه" decimals={1} />
+      <VlabEverydayCard title="جای ایستادن در استادیوم" text="تماشاگرانی که روی یک دایره‌ی دور زمین نشسته‌اند، یک دروازه را همه با یک زاویه‌ی ثابت می‌بینند. عکاس‌ها از همین ویژگی استفاده می‌کنند: هر جا روی کمانِ سبز بایستند، قاب یکسانی از دو تیرک می‌گیرند.">
+        <circle cx="60" cy="40" r="30" fill="none" stroke="#7d8bb5" strokeWidth="1.5" />
+        <circle cx="46" cy="14" r="3" fill="#e0a83e" /><circle cx="74" cy="14" r="3" fill="#e0a83e" />
+        <circle cx="60" cy="70" r="3.6" fill="#2e9e66" /><path d="M60,70 L46,14 M60,70 L74,14" stroke="#2e9e66" strokeWidth="1.2" fill="none" />
+      </VlabEverydayCard>
+    </div>
+  );
+}
+
+/* ===== ریاضی ۱۵) تبدیل‌های هندسی ===== */
+function VlabGeoTransformExperiment({ onReading }) {
+  const [mode, setMode] = useState("trans");
+  const [tx, setTx] = useState(3);
+  const [ty, setTy] = useState(2);
+  const [th, setTh] = useState(90);
+  const [ax, setAx] = useState("x");
+  const [k, setK] = useState(2);
+  const tri = [[1, 1], [4, 1], [2, 3]];
+  const rad = (d) => (d * Math.PI) / 180;
+  const img = (q) => {
+    if (mode === "trans") return [q[0] + tx, q[1] + ty];
+    if (mode === "rot") return [q[0] * Math.cos(rad(th)) - q[1] * Math.sin(rad(th)), q[0] * Math.sin(rad(th)) + q[1] * Math.cos(rad(th))];
+    if (mode === "ref") return ax === "x" ? [q[0], -q[1]] : ax === "y" ? [-q[0], q[1]] : [q[1], q[0]];
+    return [q[0] * k, q[1] * k];
+  };
+  const out = tri.map(img);
+  const S = 22, CX = 160, CY = 98;
+  const X = (v) => CX + v * S, Y = (v) => CY - v * S;
+  const poly = (pts) => pts.map((q) => `${X(q[0]).toFixed(1)},${Y(q[1]).toFixed(1)}`).join(" ");
+  const fa = (v, d = 2) => vlabMFa(v, Number.isInteger(Math.round(v * 100) / 100) ? 0 : d);
+  const names = ["A", "B", "C"];
+  const formula = mode === "trans" ? { t: "انتقال", fa: "(x، y) ← (x + a ، y + b)", sub: `x′ = ${fa(tri[0][0])} + ${fa(tx)}`, ans: out[0][0] } : mode === "rot" ? { t: "دوران حول مبدأ", fa: "x′ = x·cosθ − y·sinθ", sub: `x′ = ${fa(tri[0][0])}·cos(${vlabFaN(th)}°) − ${fa(tri[0][1])}·sin(${vlabFaN(th)}°)`, ans: out[0][0] } : mode === "ref" ? { t: "بازتاب", fa: ax === "x" ? "نسبت به محور x: (x، y) ← (x ، −y)" : ax === "y" ? "نسبت به محور y: (x، y) ← (−x ، y)" : "نسبت به خط y = x: (x، y) ← (y ، x)", sub: `x′ برای A(${fa(tri[0][0])}، ${fa(tri[0][1])})`, ans: out[0][0] } : { t: "تجانس (بزرگ‌نمایی)", fa: "(x، y) ← (k·x ، k·y)", sub: `x′ = ${fa(k)} × ${fa(tri[0][0])}`, ans: out[0][0] };
+  const area = (p) => Math.abs((p[1][0] - p[0][0]) * (p[2][1] - p[0][1]) - (p[2][0] - p[0][0]) * (p[1][1] - p[0][1])) / 2;
+  const Mb = (id, t) => (<button className="vlab-btn" style={mode === id ? { outline: "2px solid #e0a83e" } : null} onClick={() => setMode(id)}>{t}</button>);
+  return (
+    <div className="vlab-exp">
+      <svg viewBox="0 0 320 196" className="vlab-svg" style={{ background: "#03060f", borderRadius: "10px" }}>
+        {Array.from({ length: 15 }).map((_, i) => (<line key={"v" + i} x1={CX + (i - 7) * S} y1="0" x2={CX + (i - 7) * S} y2="196" stroke={i === 7 ? "#6a7aa8" : "#141c36"} strokeWidth="1" />))}
+        {Array.from({ length: 9 }).map((_, i) => (<line key={"h" + i} x1="0" y1={CY + (i - 4) * S} x2="320" y2={CY + (i - 4) * S} stroke={i === 4 ? "#6a7aa8" : "#141c36"} strokeWidth="1" />))}
+        {mode === "ref" && ax === "d" ? <line x1={X(-4)} y1={Y(-4)} x2={X(4)} y2={Y(4)} stroke="#ff6b6b" strokeWidth="1.2" strokeDasharray="4 3" /> : null}
+        <polygon points={poly(tri)} fill="#5bb8ff" fillOpacity="0.35" stroke="#5bb8ff" strokeWidth="1.8" />
+        <polygon points={poly(out)} fill="#ff9d1c" fillOpacity="0.35" stroke="#ff9d1c" strokeWidth="1.8" />
+        {tri.map((q, i) => (<text key={i} x={X(q[0]) - 6} y={Y(q[1]) + 12} fontSize="9" fill="#9fd0ff" textAnchor="middle" direction="ltr">{names[i]}</text>))}
+        {out.map((q, i) => (<text key={i} x={X(q[0]) + 8} y={Y(q[1]) - 4} fontSize="9" fill="#ffc27a" textAnchor="middle" direction="ltr">{names[i]}′</text>))}
+      </svg>
+      <table style={{ width: "100%", borderCollapse: "collapse", textAlign: "center", fontSize: 13, direction: "ltr" }}>
+        <tbody>{tri.map((q, i) => (<tr key={i}><td style={{ color: "#1e72c8", padding: 2 }}>{names[i]}({fa(q[0])}, {fa(q[1])})</td><td>→</td><td style={{ color: "#c77a00" }}>{names[i]}′({fa(out[i][0])}, {fa(out[i][1])})</td></tr>))}</tbody>
+      </table>
+      <div className="vlab-controls"><div className="vlab-ctrl-col" style={{ flex: 1 }}>
+        <div className="vlab-btn-row">{Mb("trans", "انتقال")}{Mb("rot", "دوران")}{Mb("ref", "بازتاب")}{Mb("dil", "تجانس")}</div>
+        {mode === "trans" ? (<div><label className="vlab-ctrl-label">انتقال افقی: {fa(tx)}</label><VlabRange min="-6" max="6" step="1" value={tx} onChange={(e) => setTx(+e.target.value)} /><label className="vlab-ctrl-label">انتقال عمودی: {fa(ty)}</label><VlabRange min="-4" max="4" step="1" value={ty} onChange={(e) => setTy(+e.target.value)} /></div>) : null}
+        {mode === "rot" ? (<div><label className="vlab-ctrl-label">زاویه‌ی دوران (خلاف عقربه‌ها): {vlabFaN(th)}°</label><VlabRange min="0" max="360" step="15" value={th} onChange={(e) => setTh(+e.target.value)} /></div>) : null}
+        {mode === "ref" ? (<div className="vlab-btn-row"><button className="vlab-btn" onClick={() => setAx("x")}>محور x</button><button className="vlab-btn" onClick={() => setAx("y")}>محور y</button><button className="vlab-btn" onClick={() => setAx("d")}>خط y = x</button></div>) : null}
+        {mode === "dil" ? (<div><label className="vlab-ctrl-label">ضریب تجانس k: {fa(k)}</label><VlabRange min="-2" max="3" step="0.5" value={k} onChange={(e) => setK(+e.target.value)} /></div>) : null}
+      </div></div>
+      <div className="vlab-readout">
+        {mode === "dil" ? `در تجانس شکل شبیه می‌ماند ولی اندازه عوض می‌شود: مساحت از ${fa(area(tri))} به ${fa(area(out))} رسید (ضریب k²). ` : `در ${formula.t} شکل و اندازه حفظ می‌شود: مساحت ${fa(area(tri))} تغییر نکرده (${fa(area(out))}). `}
+        {mode === "trans" ? "هر نقطه به یک اندازه و یک جهت می‌رود." : mode === "rot" ? "هر نقطه روی دایره‌ای به مرکز مبدأ می‌چرخد و فاصله‌اش تا مبدأ ثابت می‌ماند." : mode === "ref" ? "هر نقطه و تصویرش از محور بازتاب فاصله‌ی برابر دارند." : "k منفی شکل را وارونه می‌کند."}
+      </div>
+      <VlabFormulaCheck title={formula.t} fa={formula.fa} en="x′ = ?" legend="مختصات نقطه‌ی A را در رابطه بگذار؛ جوابِ x′ در جدول بالا هم دیده می‌شود." subst={formula.sub} answer={formula.ans} unit="" decimals={2} />
+      <VlabEverydayCard title="بازی تتریس و آینه" text="در تتریس قطعه را جابه‌جا (انتقال) و می‌چرخانی (دوران). تصویر خودت در آینه بازتاب است و عکسی که روی صفحه زوم می‌کنی تجانس. گوشی هر روز همین چهار تبدیل را روی تصویرها انجام می‌دهد.">
+        <rect x="14" y="14" width="18" height="18" fill="#5bb8ff" /><rect x="32" y="14" width="18" height="18" fill="#5bb8ff" /><rect x="32" y="32" width="18" height="18" fill="#5bb8ff" />
+        <path d="M60,40 H80" stroke="#e0a83e" strokeWidth="2" /><path d="M74,34 l8,6 l-8,6" stroke="#e0a83e" strokeWidth="2" fill="none" />
+        <rect x="88" y="30" width="14" height="14" fill="#ff9d1c" /><rect x="88" y="44" width="14" height="14" fill="#ff9d1c" /><rect x="102" y="44" width="14" height="14" fill="#ff9d1c" />
+      </VlabEverydayCard>
+    </div>
+  );
+}
+
 const VLAB_COMPONENTS = {
   lever: VlabLeverExperiment,
   pendulum: VlabPendulumExperiment,
@@ -33304,6 +33553,10 @@ const VLAB_COMPONENTS = {
   "counting-tree": VlabCountingTreeExperiment,
   "sequence-growth": VlabSequenceGrowthExperiment,
   "sine-wave": VlabSineWaveExperiment,
+  "exponential-function": VlabExponentialExperiment,
+  "derivative-graph": VlabDerivativeGraphExperiment,
+  "inscribed-angle": VlabInscribedAngleExperiment,
+  "geometric-transform": VlabGeoTransformExperiment,
 };
 
 function StudentVirtualLabView({ onBack, grade, studentCode, schoolCode }) {

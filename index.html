@@ -23539,6 +23539,51 @@ const VLAB_EXPERIMENTS = [
     intro: "نمودار تابع و وارونش را کنار هم ببین و بفهم چرا نسبت به خط y = x قرینه‌اند.",
     tools: ["چهار تابع", "نقطه و قرینه", "خط y = x"],
   },
+  {
+    id: "thales-theorem",
+    subject: "ریاضی",
+    level: "متوسطه دوم",
+    title: "قضیه‌ی تالس",
+    icon: "📐",
+    intro: "خطی موازی ضلع مثلث بکش و ببین دو ضلع دیگر به نسبت مساوی تقسیم می‌شوند.",
+    tools: ["مثلث", "خط موازی", "نسبت‌ها"],
+  },
+  {
+    id: "triangle-similarity",
+    subject: "ریاضی",
+    level: "متوسطه دوم",
+    title: "تشابه مثلث‌ها",
+    icon: "🔺",
+    intro: "مثلثی را بزرگ‌تر کن و بچرخان؛ ببین نسبت ضلع‌ها و محیط یکی است و نسبت مساحت‌ها مجذور آن.",
+    tools: ["ضریب تشابه", "چرخش", "نسبت مساحت"],
+  },
+  {
+    id: "right-triangle",
+    subject: "ریاضی",
+    level: "متوسطه دوم",
+    title: "مثلث قائم‌الزاویه (فیثاغورس و نسبت‌های مثلثاتی)",
+    icon: "📏",
+    intro: "ضلع‌های قائم را عوض کن و ببین مساحت مربع روی وتر برابر جمع دو مربع دیگر است؛ نسبت‌های مثلثاتی را هم بخوان.",
+    tools: ["مربع روی اضلاع", "وتر", "سینوس و کسینوس"],
+  },
+  {
+    id: "circle-equation",
+    subject: "ریاضی",
+    level: "متوسطه دوم",
+    title: "معادله‌ی دایره",
+    icon: "⭕",
+    intro: "مرکز و شعاع را عوض کن و معادله را ببین؛ نقطه‌ای را جابه‌جا کن و بفهم داخل، روی یا بیرون دایره است.",
+    tools: ["مرکز و شعاع", "معادله", "نقطه‌ی آزمون"],
+  },
+  {
+    id: "line-distance",
+    subject: "ریاضی",
+    level: "متوسطه دوم",
+    title: "خط و فاصله در صفحه",
+    icon: "↗️",
+    intro: "دو نقطه را جابه‌جا کن و فاصله، وسط، شیب و معادله‌ی خط گذرنده از آن‌ها را بخوان.",
+    tools: ["دو نقطه", "فاصله", "شیب"],
+  },
 ];
 
 function vlabClamp(v, min, max) {
@@ -34194,6 +34239,220 @@ function VlabInverseFunctionExperiment({ onReading }) {
   );
 }
 
+/* ===== ریاضی) قضیه‌ی تالس ===== */
+function VlabThalesExperiment({ onReading }) {
+  const [ad, setAd] = useState(4);
+  const AB = 10, AC = 8, BC = 12;
+  const A = [160, 24], B = [48, 168], C = [286, 168];
+  const t = ad / AB;
+  const D = [A[0] + (B[0] - A[0]) * t, A[1] + (B[1] - A[1]) * t], E = [A[0] + (C[0] - A[0]) * t, A[1] + (C[1] - A[1]) * t];
+  const AE = AC * t, DE = BC * t, DB = AB - ad, EC = AC - AE;
+  const fa = (v) => vlabMFa(v, Number.isInteger(Math.round(v * 100) / 100) ? 0 : 2);
+  const lab = (p, tx, dx, dy) => (<text x={p[0] + dx} y={p[1] + dy} fontSize="11" fontWeight="700" fill={tx === "A" ? "#ffd166" : "#fff"} textAnchor="middle" direction="ltr">{tx}</text>);
+  return (
+    <div className="vlab-exp">
+      <svg viewBox="0 0 320 196" className="vlab-svg" style={{ background: "#03060f", borderRadius: "10px" }}>
+        <polygon points={`${A} ${B} ${C}`} fill="#5bb8ff" fillOpacity="0.12" stroke="#5bb8ff" strokeWidth="1.8" />
+        <polygon points={`${A} ${D} ${E}`} fill="#ff9d1c" fillOpacity="0.28" stroke="#ff9d1c" strokeWidth="1.8" />
+        <line x1={D[0]} y1={D[1]} x2={E[0]} y2={E[1]} stroke="#5de0a0" strokeWidth="2.6" />
+        {[A, B, C, D, E].map((p, i) => (<circle key={i} cx={p[0]} cy={p[1]} r="3.4" fill="#fff" />))}
+        {lab(A, "A", 0, -8)}{lab(B, "B", -9, 12)}{lab(C, "C", 9, 12)}{lab(D, "D", -10, 4)}{lab(E, "E", 10, 4)}
+        <text x="160" y="188" fontSize="9" fill="#cfd6ea" textAnchor="middle">DE موازی BC است</text>
+      </svg>
+      <table style={{ width: "100%", textAlign: "center", fontSize: 13, borderCollapse: "collapse", direction: "ltr" }}><tbody>
+        <tr style={{ background: "#fff3df" }}><td>AD/AB = {fa(ad)}/{fa(AB)} = {vlabMFa(t, 2)}</td><td>AE/AC = {fa(AE)}/{fa(AC)} = {vlabMFa(AE / AC, 2)}</td><td>DE/BC = {fa(DE)}/{fa(BC)} = {vlabMFa(DE / BC, 2)}</td></tr>
+      </tbody></table>
+      <div className="vlab-controls"><div className="vlab-ctrl-col" style={{ flex: 1 }}>
+        <label className="vlab-ctrl-label">طول AD (روی ضلع AB به طول ۱۰): {fa(ad)}</label>
+        <VlabRange min="1" max="9" step="1" value={ad} onChange={(e) => setAd(+e.target.value)} />
+      </div></div>
+      <div className="vlab-readout">
+        {`هر خطی که موازی یک ضلع مثلث رسم شود، دو ضلع دیگر را به نسبت مساوی تقسیم می‌کند: AD÷DB = AE÷EC = ${vlabMFa(ad / DB, 2)}. اینجا AD = ${fa(ad)}، DB = ${fa(DB)}، AE = ${fa(AE)} و EC = ${fa(EC)} است و سه نسبت بالا همیشه برابرند.`}
+      </div>
+      <VlabFormulaCheck title="طول AE" fa="AE ÷ AC = AD ÷ AB ⟹ AE = AC × AD ÷ AB" en="AE = AC · AD / AB" legend="AC = ۸ و AB = ۱۰ است." subst={`AE = 8 × ${fa(ad)} ÷ 10`} answer={AE} unit="" decimals={2} />
+      <VlabFormulaCheck title="طول DE" fa="DE ÷ BC = AD ÷ AB ⟹ DE = BC × AD ÷ AB" en="DE = BC · AD / AB" legend="BC = ۱۲ است." subst={`DE = 12 × ${fa(ad)} ÷ 10`} answer={DE} unit="" decimals={2} />
+      <VlabEverydayCard title="اندازه‌گیری ارتفاع درخت" text="سایه‌ی یک چوب یک‌متری و سایه‌ی درخت دو مثلث موازی می‌سازند. با تالس نسبت چوب به سایه‌اش را در سایه‌ی درخت ضرب می‌کنی و ارتفاع درخت را بدون بالا رفتن حساب می‌کنی.">
+        <path d="M8,70 L108,70 L8,16z" fill="#bcd4f4" stroke="#7d8bb5" strokeWidth="1.4" /><path d="M8,70 L58,70 L8,43z" fill="#ff9d1c" fillOpacity="0.4" stroke="#c77a00" strokeWidth="1.2" />
+        <circle cx="10" cy="14" r="8" fill="#5a8a3a" />
+      </VlabEverydayCard>
+    </div>
+  );
+}
+
+/* ===== ریاضی) تشابه مثلث‌ها ===== */
+function VlabSimilarityExperiment({ onReading }) {
+  const [k, setK] = useState(1.5);
+  const [rot, setRot] = useState(20);
+  const T1 = [[0, 0], [4, 0], [0, 3]];
+  const rad = (rot * Math.PI) / 180;
+  const T2 = T1.map(([x, y]) => [k * (x * Math.cos(rad) - y * Math.sin(rad)), k * (x * Math.sin(rad) + y * Math.cos(rad))]);
+  const S = 14;
+  const P1 = T1.map(([x, y]) => [40 + x * S, 150 - y * S]), P2 = T2.map(([x, y]) => [172 + x * S, 150 - y * S]);
+  const sides = (T) => [Math.hypot(T[1][0] - T[0][0], T[1][1] - T[0][1]), Math.hypot(T[2][0] - T[1][0], T[2][1] - T[1][1]), Math.hypot(T[0][0] - T[2][0], T[0][1] - T[2][1])];
+  const s1 = sides(T1), s2 = sides(T2);
+  const area = (s) => (s[0] * s[2]) / 2;
+  const fa = (v, d = 2) => vlabMFa(v, Number.isInteger(Math.round(v * 100) / 100) ? 0 : d);
+  const names = ["a", "b", "c"];
+  return (
+    <div className="vlab-exp">
+      <svg viewBox="0 0 320 196" className="vlab-svg" style={{ background: "#03060f", borderRadius: "10px" }}>
+        <polygon points={P1.map((p) => p.join(",")).join(" ")} fill="#5bb8ff" fillOpacity="0.3" stroke="#5bb8ff" strokeWidth="1.8" />
+        <polygon points={P2.map((p) => p.join(",")).join(" ")} fill="#ff9d1c" fillOpacity="0.3" stroke="#ff9d1c" strokeWidth="1.8" />
+        <text x="70" y="188" fontSize="9" fill="#9fd0ff" textAnchor="middle">مثلث اول (۳ و ۴ و ۵)</text><text x="230" y="188" fontSize="9" fill="#ffc27a" textAnchor="middle">مثلث دوم (k برابر، چرخیده)</text>
+      </svg>
+      <table style={{ width: "100%", textAlign: "center", fontSize: 13, borderCollapse: "collapse", direction: "ltr" }}><tbody>
+        {[0, 1, 2].map((i) => (<tr key={i}><td style={{ color: "#1e72c8" }}>{fa(s1[i])}</td><td style={{ color: "#c77a00" }}>{fa(s2[i])}</td><td>نسبت = {fa(s2[i] / s1[i])}</td></tr>))}
+      </tbody></table>
+      <div className="vlab-controls"><div className="vlab-ctrl-col" style={{ flex: 1 }}>
+        <label className="vlab-ctrl-label">ضریب تشابه k: {fa(k, 1)}</label>
+        <VlabRange min="0.5" max="3" step="0.5" value={k} onChange={(e) => setK(+e.target.value)} />
+        <label className="vlab-ctrl-label">چرخش مثلث دوم: {vlabFaN(rot)}°</label>
+        <VlabRange min="0" max="180" step="10" value={rot} onChange={(e) => setRot(+e.target.value)} />
+      </div></div>
+      <div className="vlab-readout">
+        {`دو مثلث وقتی متشابه‌اند که زاویه‌هایشان برابر و ضلع‌های متناظرشان هم‌نسبت باشد؛ چرخیدن شکل را عوض نمی‌کند. نسبت ضلع‌ها ${fa(k, 1)}، نسبت محیط‌ها هم ${fa(k, 1)} و نسبت مساحت‌ها ${fa(k * k)} (مجذور نسبت تشابه) است. مساحت اول ${fa(area(s1))} و دوم ${fa(area(s2))} است.`}
+      </div>
+      <VlabFormulaCheck title="نسبت مساحت‌ها" fa="نسبت مساحت = (نسبت تشابه)²" en="S₂/S₁ = k²" legend="مساحت دو مثلث متشابه به نسبت مجذور اضلاع تغییر می‌کند." subst={`k² = ${fa(k, 1)}²`} answer={k * k} unit="" decimals={2} />
+      <VlabFormulaCheck title="محیط مثلث دوم" fa="محیط دوم = k × محیط اول" en="P₂ = k · P₁" legend="محیط مثلث اول ۳+۴+۵ = ۱۲ است." subst={`${fa(k, 1)} × 12`} answer={k * 12} unit="" decimals={1} />
+      <VlabEverydayCard title="نقشه و ماکت ساختمان" text="نقشه‌ی یک ساختمان با مقیاس ۱ به ۱۰۰ با خود ساختمان متشابه است: طول‌ها ۱۰۰ برابر و مساحت‌ها ۱۰٬۰۰۰ برابر می‌شوند. برای همین قیمت رنگ‌کاری به مساحت بستگی دارد نه به طول.">
+        <rect x="14" y="40" width="28" height="30" fill="#d9e2f2" stroke="#7d8bb5" /><path d="M10,40 L28,24 L46,40" fill="#d83a3a" opacity="0.7" /><rect x="58" y="18" width="52" height="52" fill="#d9e2f2" stroke="#7d8bb5" /><path d="M54,18 L84,-2 L114,18" fill="#d83a3a" opacity="0.7" />
+      </VlabEverydayCard>
+    </div>
+  );
+}
+
+/* ===== ریاضی) مثلث قائم‌الزاویه ===== */
+function VlabRightTriangleExperiment({ onReading }) {
+  const [a, setA] = useState(3);
+  const [b, setB] = useState(4);
+  const c = Math.hypot(a, b);
+  const S = Math.min(14, 120 / (Math.max(a, b) + c));
+  const O = [100, 118], P = [O[0] + b * S, O[1]], Q = [O[0], O[1] - a * S];
+  const angA = (Math.atan2(a, b) * 180) / Math.PI;
+  const fa = (v, d = 2) => vlabMFa(v, Number.isInteger(Math.round(v * 100) / 100) ? 0 : d);
+  const nx = a / c, ny = -b / c;
+  return (
+    <div className="vlab-exp">
+      <svg viewBox="0 0 320 200" className="vlab-svg" style={{ background: "#03060f", borderRadius: "10px" }}>
+        <rect x={O[0] - a * S} y={O[1] - a * S} width={a * S} height={a * S} fill="#ff6b6b" fillOpacity="0.3" stroke="#ff6b6b" />
+        <rect x={O[0]} y={O[1]} width={b * S} height={b * S} fill="#5bb8ff" fillOpacity="0.3" stroke="#5bb8ff" />
+        <polygon points={`${P} ${Q} ${Q[0] + nx * c * S} ${Q[1] + ny * c * S} ${P[0] + nx * c * S} ${P[1] + ny * c * S}`} fill="#5de0a0" fillOpacity="0.22" stroke="#5de0a0" />
+        <polygon points={`${O} ${P} ${Q}`} fill="#ffd166" fillOpacity="0.35" stroke="#ffd166" strokeWidth="2" />
+        <path d={`M${O[0] + 9},${O[1]} v-9 h-9`} fill="none" stroke="#fff" strokeWidth="1.2" transform={`translate(0,0)`} />
+        <text x={O[0] - a * S / 2} y={O[1] - a * S / 2 + 4} fontSize="10" fill="#fff" textAnchor="middle">a² = {fa(a * a)}</text>
+        <text x={O[0] + b * S / 2} y={O[1] + b * S / 2 + 4} fontSize="10" fill="#fff" textAnchor="middle">b² = {fa(b * b)}</text>
+      </svg>
+      <div className="vlab-readout" style={{ textAlign: "center" }}>a² + b² = {fa(a * a)} + {fa(b * b)} = <b>{fa(a * a + b * b)}</b> = c² ← c = <b>{fa(c)}</b></div>
+      <div className="vlab-controls"><div className="vlab-ctrl-col" style={{ flex: 1 }}>
+        <label className="vlab-ctrl-label">ضلع قائم a (عمودی): {fa(a, 1)}</label>
+        <VlabRange min="1" max="8" step="1" value={a} onChange={(e) => setA(+e.target.value)} />
+        <label className="vlab-ctrl-label">ضلع قائم b (افقی): {fa(b, 1)}</label>
+        <VlabRange min="1" max="8" step="1" value={b} onChange={(e) => setB(+e.target.value)} />
+      </div></div>
+      <div className="vlab-readout">
+        {`مجموع مساحت دو مربع روی ضلع‌های قائم (قرمز و آبی) همیشه با مساحت مربع روی وتر (سبز) برابر است. زاویه‌ی A روبه‌روی ضلع a است: sin A = ${fa(a / c, 3)}، cos A = ${fa(b / c, 3)}، tan A = ${fa(a / b, 3)} و خودِ زاویه ${fa(angA, 1)} درجه است.`}
+      </div>
+      <VlabFormulaCheck title="وتر (قضیه‌ی فیثاغورس)" fa="c = √(a² + b²)" en="c = sqrt(a² + b²)" legend="مجذور دو ضلع قائم را جمع کن و جذر بگیر." subst={`c = √(${fa(a, 1)}² + ${fa(b, 1)}²)`} answer={c} unit="" decimals={2} />
+      <VlabFormulaCheck title="سینوس زاویه‌ی A" fa="sin A = ضلع روبه‌رو ÷ وتر" en="sin A = a / c" legend="وتر را از بالا بردار." subst={`sin A = ${fa(a, 1)} ÷ ${fa(c)}`} answer={a / c} unit="" decimals={2} />
+      <VlabEverydayCard title="نردبان به دیوار" text="نردبانی به طول ۵ متر را ۳ متر دور از دیوار می‌گذاری. فیثاغورس می‌گوید ارتفاع رسیدن به دیوار √(۲۵−۹) = ۴ متر است. نجّارها و بنّاها با مثلث ۳-۴-۵ گوشه‌ی قائم می‌سازند.">
+        <path d="M10,70 L10,12 M10,70 L82,70" stroke="#999" strokeWidth="2" /><path d="M14,14 L72,70" stroke="#a37400" strokeWidth="4" /><path d="M10,60 h10 v10" fill="none" stroke="#d83a3a" strokeWidth="1.4" />
+      </VlabEverydayCard>
+    </div>
+  );
+}
+
+/* ===== ریاضی) معادله‌ی دایره ===== */
+function VlabCircleEquationExperiment({ onReading }) {
+  const [h, setH] = useState(1);
+  const [k, setK] = useState(1);
+  const [r, setR] = useState(3);
+  const [px, setPx] = useState(3);
+  const [py, setPy] = useState(2);
+  const S = 14, CX = 160, CY = 96;
+  const X = (v) => CX + v * S, Y = (v) => CY - v * S;
+  const dist = Math.hypot(px - h, py - k);
+  const rel = Math.abs(dist - r) < 0.05 ? "روی دایره" : dist < r ? "داخل دایره" : "بیرون دایره";
+  const fa = (v, d = 1) => vlabMFa(v, Number.isInteger(v) ? 0 : d);
+  const sg = (v) => (v >= 0 ? "−" : "+");
+  return (
+    <div className="vlab-exp">
+      <svg viewBox="0 0 320 196" className="vlab-svg" style={{ background: "#03060f", borderRadius: "10px" }}>
+        {Array.from({ length: 23 }).map((_, i) => (<line key={"v" + i} x1={CX + (i - 11) * S} y1="0" x2={CX + (i - 11) * S} y2="196" stroke={i === 11 ? "#6a7aa8" : "#141c36"} strokeWidth="1" />))}
+        {Array.from({ length: 15 }).map((_, i) => (<line key={"h" + i} x1="0" y1={CY + (i - 7) * S} x2="320" y2={CY + (i - 7) * S} stroke={i === 7 ? "#6a7aa8" : "#141c36"} strokeWidth="1" />))}
+        <circle cx={X(h)} cy={Y(k)} r={r * S} fill="#ffd166" fillOpacity="0.12" stroke="#ffd166" strokeWidth="2.2" />
+        <line x1={X(h)} y1={Y(k)} x2={X(h + r)} y2={Y(k)} stroke="#ff9d1c" strokeWidth="1.4" />
+        <circle cx={X(h)} cy={Y(k)} r="3.4" fill="#ff6b6b" />
+        <line x1={X(h)} y1={Y(k)} x2={X(px)} y2={Y(py)} stroke="#5de0a0" strokeWidth="1" strokeDasharray="3 3" />
+        <circle cx={X(px)} cy={Y(py)} r="4.6" fill={rel === "روی دایره" ? "#fff" : dist < r ? "#5de0a0" : "#ff6b6b"} stroke="#fff" strokeWidth="1.2" />
+        <text x="76" y="20" fontSize="9" fill="#ffd166" textAnchor="middle" direction="ltr">(x {sg(h)} {fa(Math.abs(h))})² + (y {sg(k)} {fa(Math.abs(k))})² = {fa(r * r)}</text>
+      </svg>
+      <div className="vlab-readout" style={{ textAlign: "center" }}>نقطه‌ی P({fa(px)}، {fa(py)}): فاصله تا مرکز {fa(dist, 2)} ← <b>{rel}</b></div>
+      <div className="vlab-controls"><div className="vlab-ctrl-col" style={{ flex: 1 }}>
+        <label className="vlab-ctrl-label">مرکز: x = {fa(h)}</label><VlabRange min="-6" max="6" step="1" value={h} onChange={(e) => setH(+e.target.value)} />
+        <label className="vlab-ctrl-label">مرکز: y = {fa(k)}</label><VlabRange min="-4" max="4" step="1" value={k} onChange={(e) => setK(+e.target.value)} />
+        <label className="vlab-ctrl-label">شعاع r: {fa(r)}</label><VlabRange min="1" max="5" step="1" value={r} onChange={(e) => setR(+e.target.value)} />
+        <label className="vlab-ctrl-label">نقطه‌ی P — x: {fa(px)}</label><VlabRange min="-8" max="8" step="1" value={px} onChange={(e) => setPx(+e.target.value)} />
+        <label className="vlab-ctrl-label">نقطه‌ی P — y: {fa(py)}</label><VlabRange min="-5" max="5" step="1" value={py} onChange={(e) => setPy(+e.target.value)} />
+      </div></div>
+      <div className="vlab-readout">
+        {`دایره مجموعه‌ی همه‌ی نقطه‌هایی است که فاصله‌شان تا مرکز برابر شعاع است؛ فاصله را با فیثاغورس می‌نویسیم و معادله‌ی (x − h)² + (y − k)² = r² پدید می‌آید. اگر فاصله‌ی P از مرکز کمتر از r باشد، P داخل دایره است.`}
+      </div>
+      <VlabFormulaCheck title="سمت راست معادله" fa="مجذور شعاع = r²" en="r² = ?" legend="سمت راست معادله‌ی دایره همیشه مجذور شعاع است." subst={`${fa(r)}²`} answer={r * r} unit="" decimals={1} />
+      <VlabFormulaCheck title="فاصله‌ی P تا مرکز" fa="d = √((x − h)² + (y − k)²)" en="d = sqrt((x−h)² + (y−k)²)" legend="با مقایسه‌ی d با r می‌فهمی P کجاست." subst={`d = √((${fa(px)} − ${fa(h)})² + (${fa(py)} − ${fa(k)})²)`} answer={dist} unit="" decimals={2} />
+      <VlabEverydayCard title="برد شبکه‌ی وای‌فای" text="دکل مخابرات یا مودم شعاع پوشش دارد. هر گوشی که فاصله‌اش تا دکل کمتر از شعاع باشد داخل دایره‌ی پوشش است و سیگنال دارد؛ همان نامعادله‌ی (x−h)² + (y−k)² ≤ r².">
+        <circle cx="60" cy="40" r="32" fill="#2e7bd5" fillOpacity="0.2" stroke="#2e7bd5" strokeWidth="1.6" /><rect x="56" y="32" width="8" height="16" fill="#555" /><circle cx="84" cy="30" r="3.4" fill="#2e9e66" /><circle cx="104" cy="60" r="3.4" fill="#d83a3a" />
+      </VlabEverydayCard>
+    </div>
+  );
+}
+
+/* ===== ریاضی) خط و فاصله در صفحه ===== */
+function VlabLineDistanceExperiment({ onReading }) {
+  const [x1, setX1] = useState(-3);
+  const [y1, setY1] = useState(-1);
+  const [x2, setX2] = useState(3);
+  const [y2, setY2] = useState(3);
+  const S = 16, CX = 160, CY = 96;
+  const X = (v) => CX + v * S, Y = (v) => CY - v * S;
+  const dx = x2 - x1, dy = y2 - y1;
+  const d = Math.hypot(dx, dy), m = dx === 0 ? null : dy / dx;
+  const mid = [(x1 + x2) / 2, (y1 + y2) / 2];
+  const cc = m === null ? null : y1 - m * x1;
+  const fa = (v, dd = 2) => vlabMFa(v, Number.isInteger(Math.round(v * 100) / 100) ? 0 : dd);
+  const eq = m === null ? `x = ${fa(x1)}` : `y = ${fa(m)}x ${cc < 0 ? "−" : "+"} ${fa(Math.abs(cc))}`;
+  const ext = (t) => [x1 + dx * t, y1 + dy * t];
+  const e0 = ext(-5), e1 = ext(5);
+  return (
+    <div className="vlab-exp">
+      <svg viewBox="0 0 320 196" className="vlab-svg" style={{ background: "#03060f", borderRadius: "10px" }}>
+        {Array.from({ length: 21 }).map((_, i) => (<line key={"v" + i} x1={CX + (i - 10) * S} y1="0" x2={CX + (i - 10) * S} y2="196" stroke={i === 10 ? "#6a7aa8" : "#141c36"} strokeWidth="1" />))}
+        {Array.from({ length: 13 }).map((_, i) => (<line key={"h" + i} x1="0" y1={CY + (i - 6) * S} x2="320" y2={CY + (i - 6) * S} stroke={i === 6 ? "#6a7aa8" : "#141c36"} strokeWidth="1" />))}
+        <line x1={X(e0[0])} y1={Y(e0[1])} x2={X(e1[0])} y2={Y(e1[1])} stroke="#4a5578" strokeWidth="1.4" strokeDasharray="5 3" />
+        <line x1={X(x1)} y1={Y(y1)} x2={X(x2)} y2={Y(y2)} stroke="#ffd166" strokeWidth="2.6" />
+        <line x1={X(x1)} y1={Y(y1)} x2={X(x2)} y2={Y(y1)} stroke="#5bb8ff" strokeWidth="1.2" strokeDasharray="3 3" /><line x1={X(x2)} y1={Y(y1)} x2={X(x2)} y2={Y(y2)} stroke="#ff9d1c" strokeWidth="1.2" strokeDasharray="3 3" />
+        <circle cx={X(x1)} cy={Y(y1)} r="4.6" fill="#ff6b6b" stroke="#fff" /><circle cx={X(x2)} cy={Y(y2)} r="4.6" fill="#5de0a0" stroke="#fff" /><circle cx={X(mid[0])} cy={Y(mid[1])} r="3.6" fill="#fff" />
+        <text x={X(x1) - 10} y={Y(y1) + 4} fontSize="10" fill="#ffb0b0" textAnchor="middle" direction="ltr">A</text><text x={X(x2) + 10} y={Y(y2) + 4} fontSize="10" fill="#a8f0cc" textAnchor="middle" direction="ltr">B</text>
+        <text x="80" y="20" fontSize="9" fill="#ffd166" textAnchor="middle" direction="ltr">{eq}</text>
+      </svg>
+      <div className="vlab-readout" style={{ textAlign: "center" }}>فاصله‌ی AB = <b>{fa(d)}</b> · وسط ({fa(mid[0])}، {fa(mid[1])}) · شیب {m === null ? "تعریف‌نشده (خط قائم)" : fa(m)}</div>
+      <div className="vlab-controls"><div className="vlab-ctrl-col" style={{ flex: 1 }}>
+        <label className="vlab-ctrl-label">A — x: {fa(x1)}</label><VlabRange min="-8" max="8" step="1" value={x1} onChange={(e) => setX1(+e.target.value)} />
+        <label className="vlab-ctrl-label">A — y: {fa(y1)}</label><VlabRange min="-5" max="5" step="1" value={y1} onChange={(e) => setY1(+e.target.value)} />
+        <label className="vlab-ctrl-label">B — x: {fa(x2)}</label><VlabRange min="-8" max="8" step="1" value={x2} onChange={(e) => setX2(+e.target.value)} />
+        <label className="vlab-ctrl-label">B — y: {fa(y2)}</label><VlabRange min="-5" max="5" step="1" value={y2} onChange={(e) => setY2(+e.target.value)} />
+      </div></div>
+      <div className="vlab-readout">
+        {`فاصله‌ی دو نقطه وتر مثلث قائمی است که اضلاعش تفاضل طول‌ها (آبی) و تفاضل عرض‌ها (نارنجی) است. شیب خط همان «تغییر عرض ÷ تغییر طول» است و وسط پاره‌خط میانگین مختصات دو سر است.`}
+      </div>
+      <VlabFormulaCheck title="فاصله‌ی دو نقطه" fa="d = √((x₂ − x₁)² + (y₂ − y₁)²)" en="d = sqrt(Δx² + Δy²)" legend="تفاضل طول‌ها و عرض‌ها را به توان ۲ برسان." subst={`d = √((${fa(x2)} − ${fa(x1)})² + (${fa(y2)} − ${fa(y1)})²)`} answer={d} unit="" decimals={2} />
+      {m !== null ? <VlabFormulaCheck title="شیب خط" fa="m = (y₂ − y₁) ÷ (x₂ − x₁)" en="m = Δy / Δx" legend="شیب مثبت یعنی خط از چپ به راست بالا می‌رود." subst={`m = (${fa(y2)} − ${fa(y1)}) ÷ (${fa(x2)} − ${fa(x1)})`} answer={m} unit="" decimals={2} /> : null}
+      <VlabEverydayCard title="مسیر پرواز و نقشه" text="خلبان و برنامه‌ی نقشه‌ی گوشی فاصله‌ی مستقیم دو شهر را با همین فرمول (روی نقشه‌ی مسطح) حساب می‌کنند و شیب جاده‌ی کوهستانی یعنی تغییر ارتفاع ÷ تغییر مسافت.">
+        <path d="M10,66 L108,20" stroke="#2e7bd5" strokeWidth="2.4" /><circle cx="10" cy="66" r="4" fill="#d83a3a" /><circle cx="108" cy="20" r="4" fill="#2e9e66" /><path d="M10,66 H108 V20" stroke="#999" strokeWidth="1" strokeDasharray="3 3" fill="none" />
+      </VlabEverydayCard>
+    </div>
+  );
+}
+
 const VLAB_COMPONENTS = {
   lever: VlabLeverExperiment,
   pendulum: VlabPendulumExperiment,
@@ -34304,6 +34563,11 @@ const VLAB_COMPONENTS = {
   "venn-diagram": VlabVennExperiment,
   "logarithm": VlabLogarithmExperiment,
   "inverse-function": VlabInverseFunctionExperiment,
+  "thales-theorem": VlabThalesExperiment,
+  "triangle-similarity": VlabSimilarityExperiment,
+  "right-triangle": VlabRightTriangleExperiment,
+  "circle-equation": VlabCircleEquationExperiment,
+  "line-distance": VlabLineDistanceExperiment,
 };
 
 function StudentVirtualLabView({ onBack, grade, studentCode, schoolCode }) {

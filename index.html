@@ -37042,28 +37042,58 @@ const VLAB_CD = { AUG: "Met", GCU: "Ala", AAC: "Asn", GUA: "Val", UGA: "پایا
 function VlabTranscriptionExperiment({ onReading }) {
   const [gk, setGk] = useState("g1");
   const [k, setK] = useState(6);
+  const [play, setPlay] = useState(false);
+  useEffect(() => { if (!play) return; const id = setInterval(() => setK((v) => (v >= 15 ? 0 : v + 1)), 700); return () => clearInterval(id); }, [play]);
   const mrna = VLAB_GN[gk][0].replace(/ /g, "").split("");
   const tmpl = mrna.map((x) => ({ A: "T", U: "A", G: "C", C: "G" }[x]));
+  const cod = VLAB_GN[gk][0].replace(/ /g, "").split("").map((x) => (x === "U" ? "T" : x));
   const col = { A: "#ff6b6b", T: "#ffd166", U: "#ff9d1c", G: "#5bb8ff", C: "#5de0a0" };
   const codons = VLAB_GN[gk][0].split(" ");
   const nd = Math.floor(k / 3);
   const fa = (v) => vlabFaN(v);
+  const X = (i) => 12 + i * 19.5;
+  const b0 = Math.max(0, k - 2), b1 = Math.min(14, k);
+  const open = (i) => k > 0 && i >= b0 && i <= b1 || (k === 0 && i === 0);
+  const yc = (i) => (open(i) ? 54 : 62), yt = (i) => (open(i) ? 100 : 90);
+  const ym = (j) => (j >= k - 2 ? 116 : 116 + Math.min(1, (k - 3 - j) / 4) * 26);
+  const pcx = X(Math.max(0, Math.min(14, k - 1)));
+  const pl = (arr) => arr.map((p, i) => (i ? "L" : "M") + p[0].toFixed(1) + "," + p[1].toFixed(1)).join("");
+  const Sq = ({ x, y, L, o }) => (<g opacity={o === undefined ? 1 : o}><rect x={x - 7} y={y - 7} width="14" height="14" rx="3" fill={col[L]} stroke="#03060f" strokeWidth="0.6" /><text x={x} y={y + 3.6} fontSize="9.5" fontWeight="700" fill="#03060f" textAnchor="middle" direction="ltr">{L}</text></g>);
+  const nxt = k < 15 ? mrna[k] : null;
   return (
     <div className="vlab-exp">
-      <svg viewBox="0 0 320 170" className="vlab-svg" style={{ background: "#03060f", borderRadius: "10px" }}>
-        <text x="160" y="12" fontSize="9" fill="#9aa6c8" textAnchor="middle">رشته‌ی الگوی DNA</text>
-        {tmpl.map((x, i) => (<g key={i}><rect x={8 + i * 20.5} y="18" width="18" height="18" rx="3" fill={col[x]} /><text x={17 + i * 20.5} y="31" fontSize="10" fontWeight="700" fill="#03060f" textAnchor="middle" direction="ltr">{x}</text>
-          {i < k && <><line x1={17 + i * 20.5} y1="36" x2={17 + i * 20.5} y2="52" stroke="#6a7aa8" strokeDasharray="2 2" /><rect x={8 + i * 20.5} y="52" width="18" height="18" rx="3" fill={col[mrna[i]]} /><text x={17 + i * 20.5} y="65" fontSize="10" fontWeight="700" fill="#03060f" textAnchor="middle" direction="ltr">{mrna[i]}</text></>}</g>))}
-        <text x="160" y="84" fontSize="9" fill="#9aa6c8" textAnchor="middle">mRNA ساخته‌شده (به‌جای T، حرف U)</text>
-        {codons.map((c, i) => (i < nd ? (<g key={i}><rect x={8 + i * 61.5} y="94" width="58" height="20" rx="4" fill="#1c2644" stroke="#ffd166" /><text x={37 + i * 61.5} y="108" fontSize="10" fill="#ffd166" textAnchor="middle" direction="ltr">{c}</text><text x={37 + i * 61.5} y="132" fontSize="10" fill="#5de0a0" textAnchor="middle" direction="ltr">{VLAB_CD[c]}</text></g>) : null))}
-        <text x="160" y="160" fontSize="9" fill="#9aa6c8" textAnchor="middle">هر سه باز (کدون) یک آمینواسید را مشخص می‌کند</text>
+      <svg viewBox="0 0 320 210" className="vlab-svg" style={{ background: "#050a18", borderRadius: "10px" }}>
+        <text x="160" y="11" fontSize="6.5" fill="#9aa6c8" textAnchor="middle">بالا: رشته‌ی رمزگذار · میانه: رشته‌ی الگو · پایین: mRNA تازه‌ساخته · آنزیم به سمت راست می‌رود</text>
+        <ellipse cx={pcx} cy="78" rx="28" ry="42" fill="#8a5cd6" fillOpacity="0.28" stroke="#b99cff" strokeWidth="1.4"><animate attributeName="ry" values="42;44;42" dur="1.4s" repeatCount="indefinite" /></ellipse>
+        <text x={pcx} y="32" fontSize="7" fontWeight="700" fill="#d9c8ff" textAnchor="middle" stroke="#050a18" strokeWidth="2" paintOrder="stroke">RNA پلیمراز</text>
+        {/* ستون فقرات */}
+        <path d={pl(mrna.map((_, i) => [X(i), yc(i) - 10]))} fill="none" stroke="#6a7aa8" strokeWidth="1.2" />
+        <path d={pl(mrna.map((_, i) => [X(i), yt(i) + 10]))} fill="none" stroke="#6a7aa8" strokeWidth="1.2" />
+        {k > 0 && <path d={pl(mrna.slice(0, k).map((_, j) => [X(j), ym(j) + 10]))} fill="none" stroke="#ff9d1c" strokeOpacity="0.7" strokeWidth="1.4" />}
+        {mrna.map((_, i) => {
+          const ch = cod[i], gc = ch === "G" || ch === "C";
+          return (<g key={i}>
+            {!open(i) && [-2, 0, 2].slice(gc ? 0 : 1).map((dx, q) => (<line key={q} x1={X(i) + dx * (gc ? 1.2 : 1.6)} y1={yc(i) + 7} x2={X(i) + dx * (gc ? 1.2 : 1.6)} y2={yt(i) - 7} stroke="#8a97c4" strokeWidth="0.8" />))}
+            <Sq x={X(i)} y={yc(i)} L={cod[i]} /><Sq x={X(i)} y={yt(i)} L={tmpl[i]} />
+            {i < k && (<g>{i >= k - 2 && <line x1={X(i)} y1={yt(i) + 7} x2={X(i)} y2={ym(i) - 7} stroke="#8a97c4" strokeWidth="0.8" strokeDasharray="1.5 1.5" />}<Sq x={X(i)} y={ym(i)} L={mrna[i]} /></g>)}
+          </g>);
+        })}
+        {nxt && (<g>
+          <g><circle r="7" fill={col[nxt]} stroke="#fff" strokeWidth="0.8" /><text y="3.4" fontSize="9" fontWeight="700" fill="#03060f" textAnchor="middle" direction="ltr">{nxt}</text><animateMotion dur="1.6s" repeatCount="indefinite" path={`M${X(k) + 40},150 Q${X(k) + 14},146 ${X(k)},124`} /></g>
+          <circle r="4.5" fill="#ffd166" opacity="0.7"><animateMotion dur="2.4s" repeatCount="indefinite" path={`M${X(k) + 70},146 q-14,-8 -26,2 t-24,-4`} /></circle>
+          <circle r="4.5" fill="#5bb8ff" opacity="0.7"><animateMotion dur="2.9s" repeatCount="indefinite" path={`M${X(k) + 90},126 q-12,10 -24,0 t-24,6`} /></circle>
+        </g>)}
+        <text x="6" y="36" fontSize="6.5" fill="#9aa6c8" direction="ltr">5′</text><text x="296" y="36" fontSize="6.5" fill="#9aa6c8" direction="ltr">3′</text>
+        <text x="6" y="106" fontSize="6.5" fill="#9aa6c8" direction="ltr">3′</text><text x="296" y="106" fontSize="6.5" fill="#9aa6c8" direction="ltr">5′</text>
+        {codons.map((c, i) => (i < nd ? (<g key={"cd" + i}><rect x={8 + i * 61.5} y="160" width="58" height="18" rx="4" fill="#1c2644" stroke="#ffd166" /><text x={37 + i * 61.5} y="173" fontSize="10" fill="#ffd166" textAnchor="middle" direction="ltr">{c}</text><text x={37 + i * 61.5} y="196" fontSize="9.5" fill="#5de0a0" textAnchor="middle" direction="ltr">{VLAB_CD[c]}</text></g>) : null))}
+        <text x="160" y="206" fontSize="6.5" fill="#9aa6c8" textAnchor="middle">هر سه باز (کدون) یک آمینواسید را مشخص می‌کند</text>
       </svg>
       <div className="vlab-readout" style={{ textAlign: "center" }}>{fa(k)} باز رونویسی شد ← {fa(nd)} کدون ← زنجیره: <span dir="ltr">{codons.slice(0, nd).map((c) => VLAB_CD[c]).join(" – ") || "—"}</span></div>
       <div className="vlab-controls"><div className="vlab-ctrl-col" style={{ flex: 1 }}>
-        <div className="vlab-btn-row">{Object.keys(VLAB_GN).map((g) => (<button key={g} className="vlab-btn" style={gk === g ? { outline: "2px solid #e0a83e" } : null} onClick={() => setGk(g)}>{VLAB_GN[g][1]}</button>))}</div>
-        <label className="vlab-ctrl-label">پیشرفت رونویسی: {fa(k)} باز</label><VlabRange min="0" max="15" step="1" value={k} onChange={(e) => setK(+e.target.value)} />
+        <div className="vlab-btn-row">{Object.keys(VLAB_GN).map((g) => (<button key={g} className="vlab-btn" style={gk === g ? { outline: "2px solid #e0a83e" } : null} onClick={() => setGk(g)}>{VLAB_GN[g][1]}</button>))}<button className="vlab-btn" onClick={() => { if (k >= 15) setK(0); setPlay((p) => !p); }}>{play ? "⏸ توقف" : "▶ پخش"}</button></div>
+        <label className="vlab-ctrl-label">پیشرفت رونویسی: {fa(k)} باز</label><VlabRange min="0" max="15" step="1" value={k} onChange={(e) => { setPlay(false); setK(+e.target.value); }} />
       </div></div>
-      <div className="vlab-readout">{`آنزیم RNA پلیمراز رشته‌ی الگو را می‌خواند و RNA مکمل می‌سازد: A با U، T با A، G با C و C با G جفت می‌شود. بعد رناتن (ریبوزوم) mRNA را سه‌تا‌سه‌تا می‌خواند و هر کدون یک آمینواسید می‌آورد؛ کدون‌های UAA و UGA پایان ترجمه‌اند.`}</div>
+      <div className="vlab-readout">{`آنزیم RNA پلیمراز DNA را باز می‌کند و رشته‌ی الگو را می‌خواند. نوکلئوتیدهای آزاد RNA مکمل آن را می‌آورند: A با U، T با A، G با C و C با G جفت می‌شود. mRNA ساخته‌شده از DNA جدا می‌شود و DNA دوباره بسته می‌شود. توالی mRNA مانند رشته‌ی رمزگذار است، فقط به‌جای T حرف U دارد. بعد رناتن (ریبوزوم) mRNA را سه‌تا‌سه‌تا می‌خواند و هر کدون یک آمینواسید می‌آورد؛ کدون‌های UAA و UGA پایان ترجمه‌اند.`}</div>
       <VlabFormulaCheck title="تعداد آمینواسید" fa="تعداد باز ÷ ۳" en="bases / 3" legend="هر ۳ باز یک آمینواسید (کدون)." subst={`${fa(k)} ÷ ۳`} answer={nd} unit="کدون کامل" decimals={0} />
       <VlabEverydayCard title="دستور آشپزی از کتاب بزرگ" text="DNA مانند کتاب مرجعی است که از کتابخانه خارج نمی‌شود؛ رونویسی یک برگه‌ی کپی (mRNA) از یک دستور می‌سازد و آن را به آشپزخانه (ریبوزوم) می‌برد.">
         <rect x="30" y="16" width="30" height="40" rx="3" fill="#7d8bb5" /><rect x="70" y="26" width="26" height="22" fill="#f4f1e6" stroke="#7d8bb5" />
@@ -37071,7 +37101,6 @@ function VlabTranscriptionExperiment({ onReading }) {
     </div>
   );
 }
-
 /* ===== ریاضی) جعبه با بیشینه حجم ===== */
 function VlabBoxVolumeExperiment({ onReading }) {
   const [Ls, setLs] = useState(24);

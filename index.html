@@ -37696,33 +37696,76 @@ function VlabNephronExperiment({ onReading }) {
 }
 
 /* ===== زمین‌شناسی) لایه‌های زمین ===== */
-const VLAB_EL = [[0, 35, "پوسته", "جامد، سنگ‌های سبک", "#8b6b4a"], [35, 2890, "گوشته", "جامد با جریان بسیار کند (خمیرسان)", "#d9742c"], [2890, 5150, "هسته‌ی بیرونی", "مایع (آهن و نیکل مذاب)", "#f2c94c"], [5150, 6371, "هسته‌ی درونی", "جامد (فشار بسیار زیاد)", "#fff2a8"]];
+const VLAB_EL = [
+  { n: "پوسته", a: 0, b: 35, st: "جامد", comp: "سنگ‌های سبک (گرانیت و بازالت)؛ قاره‌ای ۳۰ تا ۷۰ km، اقیانوسی ۵ تا ۱۰ km", col: "#7a5a3a" },
+  { n: "گوشته‌ی بالایی", a: 35, b: 660, st: "جامد، خمیرسان و بسیار کندجریان", comp: "سنگ‌های سنگین سیلیکاتی (پریدوتیت)؛ بخش بالایی آن با پوسته صفحات سنگ‌کره را می‌سازد", col: "#e0702a" },
+  { n: "گوشته‌ی زیرین", a: 660, b: 2890, st: "جامد (فشار بسیار زیاد)", comp: "سیلیکات‌های فشرده‌ی آهن و منیزیم؛ بیشترین حجم زمین", col: "#c2491f" },
+  { n: "هسته‌ی بیرونی", a: 2890, b: 5150, st: "مایع", comp: "آهن و نیکل مذاب؛ جریان آن میدان مغناطیسی زمین را می‌سازد", col: "#f2b632" },
+  { n: "هسته‌ی درونی", a: 5150, b: 6371, st: "جامد (با وجود دمای بسیار بالا)", comp: "آهن و نیکل جامد؛ فشار زیاد اجازه‌ی ذوب نمی‌دهد", col: "#fff2a8" },
+];
 function vlabEarthT(d) { const pts = [[0, 15], [35, 700], [100, 1300], [2890, 3700], [5150, 5000], [6371, 5400]]; for (let i = 1; i < pts.length; i++) if (d <= pts[i][0]) { const a = pts[i - 1], b = pts[i]; return a[1] + ((d - a[0]) / (b[0] - a[0])) * (b[1] - a[1]); } return 5400; }
 function vlabEarthP(d) { const pts = [[0, 0], [35, 1], [2890, 135], [5150, 330], [6371, 364]]; for (let i = 1; i < pts.length; i++) if (d <= pts[i][0]) { const a = pts[i - 1], b = pts[i]; return a[1] + ((d - a[0]) / (b[0] - a[0])) * (b[1] - a[1]); } return 364; }
+function vlabEarthRho(d) { const seg = d < 35 ? [0, 35, 2.7, 3.0] : d < 660 ? [35, 660, 3.4, 4.4] : d < 2890 ? [660, 2890, 4.4, 5.6] : d < 5150 ? [2890, 5150, 9.9, 12.2] : [5150, 6371, 12.8, 13.1]; return seg[2] + ((d - seg[0]) / (seg[1] - seg[0])) * (seg[3] - seg[2]); }
 function VlabEarthLayersExperiment({ onReading }) {
   const [d, setD] = useState(100);
-  const L = VLAB_EL.find((l) => d >= l[0] && d <= l[1]) || VLAB_EL[3];
-  const R = 6371, CX = 160, CY = 90, S = 78 / R;
+  const idx = Math.max(0, VLAB_EL.findIndex((l) => d >= l.a && d < l.b)); const li = d >= 6371 ? 4 : idx;
+  const L = VLAB_EL[li];
+  const R = 6371, CX = 96, CY = 104, RP = 86;
+  const rad = (dep) => (dep < 35 ? RP - (dep / 35) * 5 : (RP - 5) * (1 - (dep - 35) / (R - 35)));
   const fa = (v) => vlabFaN(Math.round(v));
+  const q = (r) => `M${CX},${CY} L${CX + r},${CY} A${r},${r} 0 0 0 ${CX},${CY - r} Z`;
+  const mr = rad(d), mx = CX + mr * Math.cos(Math.PI / 4), my = CY - mr * Math.sin(Math.PI / 4);
+  const ang = [0.3, 0.8, 1.25, 1.7, 2.2, 2.7, 3.3, 3.9, 4.5, 5.3, 5.9];
   return (
     <div className="vlab-exp">
-      <svg viewBox="0 0 320 180" className="vlab-svg" style={{ background: "#03060f", borderRadius: "10px" }}>
-        {[...VLAB_EL].map((l, i) => (<circle key={i} cx={CX} cy={CY} r={(R - l[0]) * S} fill={l[4]} />))}
-        <circle cx={CX} cy={CY} r={(R - d) * S} fill="none" stroke="#fff" strokeWidth="1.6" strokeDasharray="4 3" />
-        <line x1={CX} y1={CY} x2={CX} y2={CY - (R - d) * S} stroke="#fff" strokeWidth="1" /><circle cx={CX} cy={CY - (R - d) * S} r="4" fill="#fff" stroke="#ff6b6b" strokeWidth="2" />
-        <text x="260" y="40" fontSize="11" fontWeight="700" fill={L[4]} textAnchor="middle">{L[2]}</text>
-        <text x="260" y="58" fontSize="8" fill="#cfd6ea" textAnchor="middle">{L[3].split("،")[0]}</text>
-        <text x="60" y="40" fontSize="9" fill="#9aa6c8" textAnchor="middle">عمق {fa(d)} km</text>
-        <text x="160" y="176" fontSize="8" fill="#9aa6c8" textAnchor="middle">ضخامت پوسته کمتر از ۱٪ شعاع زمین است</text>
+      <svg viewBox="0 0 320 206" className="vlab-svg" style={{ background: "#050a18", borderRadius: "10px" }}>
+        <defs>
+          <radialGradient id="elOcean" cx="0.35" cy="0.32" r="0.8"><stop offset="0" stopColor="#6fc3ff" /><stop offset="0.6" stopColor="#2a7bd0" /><stop offset="1" stopColor="#0f3f86" /></radialGradient>
+          <radialGradient id="elGlow" cx="0.5" cy="0.5" r="0.5"><stop offset="0.85" stopColor="#6fc3ff" stopOpacity="0.35" /><stop offset="1" stopColor="#6fc3ff" stopOpacity="0" /></radialGradient>
+          <clipPath id="elKeep"><path d={`M0,0 L${CX},0 L${CX},${CY} L320,${CY} L320,206 L0,206 Z`} /></clipPath>
+          <clipPath id="elSph"><circle cx={CX} cy={CY} r={RP} /></clipPath>
+        </defs>
+        <circle cx={CX} cy={CY} r={RP + 7} fill="url(#elGlow)" />
+        <g clipPath="url(#elKeep)">
+          <circle cx={CX} cy={CY} r={RP} fill="url(#elOcean)" />
+          <g clipPath="url(#elSph)" fill="#4f9a3a" fillOpacity="0.95">
+            <path d={`M${CX - 70},${CY - 30} q18,-26 40,-14 q10,14 -4,26 q-8,16 -24,8 q-12,-6 -12,-20Z`} />
+            <path d={`M${CX - 50},${CY + 12} q14,-6 22,8 q4,26 -6,46 q-12,6 -16,-14 q-4,-24 0,-40Z`} />
+            <path d={`M${CX + 6},${CY + 24} q26,-8 40,6 q8,18 -10,30 q-26,6 -34,-12Z`} />
+            <path d={`M${CX - 18},${CY - 60} q22,-8 36,2 q4,12 -12,16 q-18,0 -24,-18Z`} />
+            <path d={`M${CX + 40},${CY + 70} q16,-6 24,4 q-6,10 -22,8Z`} />
+            <ellipse cx={CX} cy={CY - RP + 6} rx="30" ry="7" fill="#fff" />
+            <ellipse cx={CX + 10} cy={CY + RP - 6} rx="34" ry="7" fill="#fff" />
+          </g>
+          <circle cx={CX} cy={CY} r={RP} fill="none" stroke="#bfe6ff" strokeOpacity="0.6" />
+        </g>
+        <g>
+          {VLAB_EL.map((l, k) => { const r = rad(l.a); return <path key={"q" + k} d={q(r)} fill={l.col} stroke="#050a18" strokeWidth="0.8" />; })}
+          {VLAB_EL.map((l, k) => (<path key={"qs" + k} d={q(rad(l.a))} fill="none" stroke={k === li ? "#fff" : "none"} strokeWidth="2" strokeOpacity="0.9" />))}
+          <path d={q(rad(0))} fill="none" stroke="#fff" strokeOpacity="0.55" strokeWidth="0.8" />
+          <line x1={CX} y1={CY} x2={mx} y2={my} stroke="#fff" strokeDasharray="3 3" strokeWidth="1" />
+          <circle cx={mx} cy={my} r="4.2" fill="#fff" stroke="#ff4d4d" strokeWidth="2" />
+          <circle cx={CX} cy={CY} r="1.6" fill="#fff" />
+        </g>
+        <text x={CX} y="203" fontSize="6" fill="#9aa6c8" textAnchor="middle">پوسته کلفت‌تر کشیده شده (در واقع کمتر از ۱٪)</text>
+        {VLAB_EL.map((l, k) => (<g key={"lg" + k} onClick={() => setD(Math.floor((l.a + l.b) / 2))} style={{ cursor: "pointer" }}><rect x="204" y={10 + k * 17} width="112" height="15" rx="4" fill={k === li ? "#1c2b52" : "#0d1530"} stroke={k === li ? "#fff" : "none"} strokeWidth="1" /><circle cx="308" cy={17.5 + k * 17} r="4.5" fill={l.col} /><text x="254" y={20.5 + k * 17} fontSize="7.5" fontWeight={k === li ? "700" : "400"} fill="#fff" textAnchor="middle">{l.n}</text></g>))}
+        <rect x="204" y="100" width="112" height="86" rx="6" fill="#0d1530" />
+        <text x="260" y="114" fontSize="9" fontWeight="700" fill={L.col} textAnchor="middle">{L.n}</text>
+        <text x="260" y="128" fontSize="7" fill="#cfd6ea" textAnchor="middle">دما ≈ {fa(vlabEarthT(d))}°C</text>
+        <text x="260" y="140" fontSize="7" fill="#cfd6ea" textAnchor="middle">فشار ≈ {fa(vlabEarthP(d))} GPa</text>
+        <text x="260" y="152" fontSize="7" fill="#cfd6ea" textAnchor="middle">چگالی ≈ {vlabMFa(vlabEarthRho(d), 1)} g/cm³</text>
+        <text x="260" y="166" fontSize="7" fill="#ffd166" textAnchor="middle">{L.st.length > 26 ? L.st.slice(0, 26) : L.st}</text>
+        <text x="260" y="179" fontSize="6.5" fill="#9aa6c8" textAnchor="middle">عمق {fa(d)} km</text>
       </svg>
-      <div className="vlab-readout" style={{ textAlign: "center" }}>عمق {fa(d)} km: <b>{L[2]}</b> · دما ≈ {fa(vlabEarthT(d))}°C · فشار ≈ {fa(vlabEarthP(d))} GPa</div>
+      <div className="vlab-readout" style={{ textAlign: "center" }}>عمق {fa(d)} km: <b>{L.n}</b> · {L.st}</div>
       <div className="vlab-controls"><div className="vlab-ctrl-col" style={{ flex: 1 }}>
         <label className="vlab-ctrl-label">عمق از سطح زمین: {fa(d)} km</label><VlabRange min="0" max="6371" step="10" value={d} onChange={(e) => setD(+e.target.value)} />
-        <div className="vlab-btn-row">{[[10, "پوسته"], [1500, "گوشته"], [4000, "هسته‌ی بیرونی"], [6000, "هسته‌ی درونی"]].map(([q, n]) => (<button key={q} className="vlab-btn" onClick={() => setD(q)}>{n}</button>))}</div>
+        <div className="vlab-btn-row">{VLAB_EL.map((l, k) => (<button key={k} className="vlab-btn" style={k === li ? { outline: "2px solid #e0a83e" } : null} onClick={() => setD(Math.floor((l.a + l.b) / 2))}>{l.n}</button>))}</div>
       </div></div>
-      <div className="vlab-readout">{`لرزه‌نگاری (موج‌های زمین‌لرزه) ساختار درون زمین را نشان داده است: موج S از مایع نمی‌گذرد، پس هسته‌ی بیرونی مایع است. هرچه به مرکز می‌رویم، دما و فشار بیشتر می‌شود؛ هسته‌ی درونی با وجود دمای بالا به‌دلیل فشار بسیار زیاد جامد است. حرکت آهن مایع هسته‌ی بیرونی میدان مغناطیسی زمین را می‌سازد.`}</div>
+      <div className="vlab-readout">{`${L.n}: ${L.comp}. لرزه‌نگاری (موج‌های زمین‌لرزه) ساختار درون زمین را نشان داده است: موج S از مایع نمی‌گذرد و به همین دلیل می‌دانیم هسته‌ی بیرونی مایع است. هرچه به مرکز می‌رویم دما، فشار و چگالی بیشتر می‌شود. چگالی در مرز گوشته و هسته جهش بزرگی دارد (حدود ۵٫۶ به ۹٫۹). مقدارها تقریبی‌اند.`}</div>
       <VlabFormulaCheck title="فاصله تا مرکز زمین" fa="r = ۶۳۷۱ − عمق" en="r = R − depth" legend="شعاع زمین حدود ۶۳۷۱ کیلومتر است." subst={`${fa(6371)} − ${fa(d)}`} answer={R - d} unit="km" decimals={0} />
-      <VlabEverydayCard title="چرا کسی تا مرکز زمین نمی‌رود؟" text="عمیق‌ترین گمانه‌ی ساخته‌شده حدود ۱۲ کیلومتر است؛ یعنی کمتر از ۰٫۲٪ راه تا مرکز. دما و فشار پایین‌تر هر ابزاری را از کار می‌اندازد، پس همه‌ی دانستنی‌ها از موج‌های لرزه‌ای است.">
+      <VlabFormulaCheck title="سهم پوسته از شعاع زمین" fa="درصد = ضخامت پوسته ÷ شعاع × ۱۰۰" en="crust fraction" legend="ضخامت متوسط پوسته‌ی قاره‌ای را ۳۵ km بگیر." subst="۳۵ ÷ ۶۳۷۱ × ۱۰۰" answer={(35 / 6371) * 100} unit="٪" decimals={2} />
+      <VlabEverydayCard title="چرا کسی تا مرکز زمین نمی‌رود؟" text="عمیق‌ترین گمانه‌ی ساخته‌شده حدود ۱۲ کیلومتر است؛ یعنی کمتر از ۰٫۲٪ راه تا مرکز. دما و فشار پایین‌تر هر ابزاری را از کار می‌اندازد؛ پس همه‌ی دانسته‌های ما درباره‌ی درون زمین از موج‌های لرزه‌ای است.">
         <circle cx="60" cy="40" r="30" fill="#d9742c" /><circle cx="60" cy="40" r="14" fill="#f2c94c" /><circle cx="60" cy="40" r="6" fill="#fff2a8" />
       </VlabEverydayCard>
     </div>

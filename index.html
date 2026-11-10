@@ -34657,12 +34657,14 @@ function VlabTectonicQuakeExperiment({ onReading }) {
           <linearGradient id="tqSky" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stopColor="#16305e" /><stop offset="1" stopColor="#7fb2e0" /></linearGradient>
           <linearGradient id="tqMantle" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stopColor="#c0391b" /><stop offset="1" stopColor="#ff9d1c" /></linearGradient>
         </defs>
+{kind !== "trans" ? <g>
         <rect x="0" y="0" width="320" height="70" fill="url(#tqSky)" />
         <circle cx="285" cy="22" r="9" fill="#ffe27a" opacity="0.9" />
         <ellipse cx="60" cy="24" rx="20" ry="6" fill="#fff" opacity="0.35" /><ellipse cx="82" cy="20" rx="14" ry="5" fill="#fff" opacity="0.35" />
         <rect x="0" y="70" width="320" height="120" fill="#3a2d20" />
         <rect x="0" y="190" width="320" height="20" fill="url(#tqMantle)" />
         <text x="62" y="203" fontSize="8" fill="#fff3d6" textAnchor="middle">گوشته (داغ و نیمه‌مذاب)</text>
+        </g> : <rect x="0" y="0" width="320" height="210" fill="#2c3d1f" />}
         {(() => {
           const shk = wave >= 0 && wave < 1 ? Math.sin(wave * 110) * (1 - wave) * (Mg - 2) * 0.9 : 0;
           const plate = (x0, x1, dx, key, tone) => (
@@ -34684,12 +34686,33 @@ function VlabTectonicQuakeExperiment({ onReading }) {
           );
           const tree = (cx, k) => (<g key={k} transform={`translate(${cx + shk * 1.2},70) rotate(${-shk * 2},0,0)`}><rect x="-1.5" y="-12" width="3" height="12" fill="#6b4e2a" /><circle cx="0" cy="-16" r="7" fill="#3f8f3f" /></g>);
           const quakeFx = wave >= 0 && wave < 1;
+          if (kind === "trans") {
+            const tp = (x0, x1, dy, key, tone) => (
+              <g key={key} transform={`translate(${shk * 1.2},${dy + shk * 0.5})`}>
+                <rect x={x0} y="48" width={x1 - x0} height="142" fill={tone} />
+                {[0, 1, 2, 3].map((q) => (<rect key={q} x={x0 + 8 + (q % 2) * 70} y={56 + q * 6 + (q > 1 ? 70 : 0)} width="56" height="26" fill="#000" fillOpacity="0.08" />))}
+                <rect x={x0} y="116" width={x1 - x0} height="7" fill="#4a4a4a" />
+                <line x1={x0} y1="119.5" x2={x1} y2="119.5" stroke="#ffd166" strokeDasharray="6 4" strokeWidth="1.2" />
+                <rect x={x0 + (key === "L" ? 30 : 70)} y="70" width="18" height="14" fill="#e8d3a8" stroke="#6b4e2a" /><polygon points={`${x0 + (key === "L" ? 28 : 68)},70 ${x0 + (key === "L" ? 39 : 79)},62 ${x0 + (key === "L" ? 50 : 90)},70`} fill="#b5502d" />
+                <rect x={x0 + (key === "L" ? 90 : 20)} y="140" width="18" height="14" fill="#e8d3a8" stroke="#6b4e2a" /><polygon points={`${x0 + (key === "L" ? 88 : 18)},140 ${x0 + (key === "L" ? 99 : 29)},132 ${x0 + (key === "L" ? 110 : 40)},140`} fill="#b5502d" />
+                <text x={(x0 + x1) / 2} y="178" fontSize="9" fill="#fff" fillOpacity="0.8" textAnchor="middle">{key === "L" ? "صفحه‌ی ۱" : "صفحه‌ی ۲"}</text>
+              </g>);
+            return (
+              <g>
+                {tp(-30, 160, -off, "L", "#5f7f3a")}{tp(160, 350, off, "R", "#6f8f45")}
+                <path d="M60,60 v28 M60,60 l-5,7 M60,60 l5,7" stroke="#ff6b6b" strokeWidth="2.6" fill="none" transform="translate(0,0)" />
+                <path d="M260,170 v-28 M260,170 l-5,-7 M260,170 l5,-7" stroke="#ff6b6b" strokeWidth="2.6" fill="none" />
+                <text x="160" y="204" fontSize="8" fill="#e8f0d0" textAnchor="middle">نمای از بالا: جاده‌ی بریده‌شده نشانه‌ی لغزش است</text>
+                {quakeFx ? [0, 1, 2].map((q) => { const rr = Math.max(0, wave * 120 - q * 22); return rr > 0 ? <circle key={"e" + q} cx="160" cy="126" r={rr} fill="none" stroke="#ffd166" strokeWidth="1.4" opacity={Math.max(0, 1 - wave)} /> : null; }) : null}
+              </g>
+            );
+          }
           return (
             <g>
-              {plate(0, 160, L[0], "L", ["#a9895b", "#8a6b3a", "#5b4a33"])}
-              {plate(160, 320, L[1], "R", ["#b6955f", "#9a7a44", "#664f36"])}
+              {plate(-30, 160, L[0], "L", ["#a9895b", "#8a6b3a", "#5b4a33"])}
+              {plate(160, 350, L[1], "R", ["#b6955f", "#9a7a44", "#664f36"])}
               {house(60 + L[0], "h1")}{tree(100 + L[0], "t1")}{house(250 + L[1], "h2")}{tree(214 + L[1], "t2")}
-              {kind === "conv" && stress > 40 ? <polygon points="150,70 160,52 170,70" fill="#6b5a4a" opacity={Math.min(1, (stress - 40) / 40)} /> : null}
+              {kind === "conv" ? (() => { const hh = 4 + stress * 0.42; return (<g><polygon points={`${112},70 ${160},${70 - hh} ${208},70`} fill="#7a6a58" stroke="#4a3d30" /><polygon points={`${160 - 7},${70 - hh + 10} ${160},${70 - hh} ${160 + 7},${70 - hh + 10}`} fill="#fff" opacity={stress > 50 ? 0.9 : 0} /></g>); })() : null}
               {kind === "div" ? <rect x={160 - off} y="70" width={2 * off} height="120" fill="url(#tqMantle)" opacity="0.9" /> : null}
               {stress > 70 ? [0, 1, 2].map((q) => (<path key={q} d={`M${160 + (q - 1) * 6},70 l${3 - q * 2},${-5} M${160 + (q - 1) * 6 + 3},70 l${q * 2 - 2},${-4}`} stroke="#2b1c10" strokeWidth="1.2" />)) : null}
               {quakeFx ? [0, 1, 2].map((q) => { const rr = Math.max(0, wave * 40 - q * 9); return rr > 0 ? <ellipse key={"e" + q} cx="160" cy="70" rx={rr * 2} ry={rr * 0.45} fill="none" stroke="#fff" strokeWidth="1.2" opacity={Math.max(0, 1 - wave)} /> : null; }) : null}
@@ -34698,14 +34721,14 @@ function VlabTectonicQuakeExperiment({ onReading }) {
         })()}
         {kind === "conv" ? <g><path d="M40,100 l30,0" stroke="#ff6b6b" strokeWidth="3" /><path d="M64,94 l8,6 l-8,6" stroke="#ff6b6b" strokeWidth="2.4" fill="none" /><path d="M280,100 l-30,0" stroke="#ff6b6b" strokeWidth="3" /><path d="M256,94 l-8,6 l8,6" stroke="#ff6b6b" strokeWidth="2.4" fill="none" /></g> : null}
         {kind === "div" ? <g><path d="M120,100 l-30,0" stroke="#5de0a0" strokeWidth="3" /><path d="M96,94 l-8,6 l8,6" stroke="#5de0a0" strokeWidth="2.4" fill="none" /><path d="M200,100 l30,0" stroke="#5de0a0" strokeWidth="3" /><path d="M224,94 l8,6 l-8,6" stroke="#5de0a0" strokeWidth="2.4" fill="none" /></g> : null}
-        {kind === "trans" ? <g><circle cx="90" cy="100" r="9" fill="#0a1226" fillOpacity="0.6" stroke="#ffd166" strokeWidth="2" /><text x="90" y="104" fontSize="11" fill="#ffd166" textAnchor="middle">↑</text><circle cx="230" cy="100" r="9" fill="#0a1226" fillOpacity="0.6" stroke="#ffd166" strokeWidth="2" /><text x="230" y="104" fontSize="11" fill="#ffd166" textAnchor="middle">↓</text></g> : null}
+        
         <line x1="160" y1="70" x2="160" y2="190" stroke="#ff6b6b" strokeWidth="1.6" strokeDasharray="5 3" />
         <circle cx={fx} cy={fy} r="5" fill="#ff3b3b" stroke="#fff" strokeWidth="1.2" />
         {wave >= 0 ? [0, 1, 2].map((i) => { const r = Math.max(0, wave * 150 - i * 22); const a = Math.max(0, 1 - wave) * (0.3 + 0.7 * (Mg - 3) / 6); return r > 0 ? <circle key={i} cx={fx} cy={fy} r={r} fill="none" stroke="#ffd166" strokeWidth={1 + (Mg - 3) * 0.7} opacity={a} /> : null; }) : null}
         <text x="160" y="14" fontSize="10" fontWeight="700" fill="#fff" textAnchor="middle">{kinds[kind]}</text>
         <rect x="8" y="22" width="86" height="8" fill="#1b2442" rx="4" /><rect x="8" y="22" width={0.86 * stress} height="8" fill={stress > 75 ? "#ff6b6b" : "#ffd166"} rx="4" />
         <text x="51" y="42" fontSize="8" fill="#fff" textAnchor="middle">تنش انباشته</text>
-        <text x="160" y="182" fontSize="8" fill="#ffd166" textAnchor="middle">کانون زلزله (نقطه‌ی قرمز) روی گسل</text>
+        {kind !== "trans" ? <text x="160" y="182" fontSize="8" fill="#ffd166" textAnchor="middle">کانون زلزله (نقطه‌ی قرمز) روی گسل</text> : null}
       </svg>
       <div className="vlab-readout" style={{ textAlign: "center" }}>بزرگای زلزله {fa(Mg, 1)} · انرژی ≈ {sci(energy)} ژول</div>
       <div className="vlab-controls"><div className="vlab-ctrl-col" style={{ flex: 1 }}>

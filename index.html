@@ -23782,6 +23782,60 @@ const VLAB_EXPERIMENTS = [
     intro: "قدر مطلق را به‌عنوان فاصله روی محور ببین و معادله و نامعادله‌ی آن را حل کن.",
     tools: ["محور عددی", "فاصله", "جواب‌ها"],
   },
+  {
+    id: "concavity",
+    subject: "ریاضی",
+    level: "متوسطه",
+    title: "تقعر و نقطه‌ی عطف",
+    icon: "📉",
+    intro: "روی نمودار حرکت کن و ببین مشتق دوم تقعر و نقطه‌ی عطف را مشخص می‌کند.",
+    tools: ["نمودار", "خط مماس", "مشتق دوم"],
+  },
+  {
+    id: "ac-generator",
+    subject: "فیزیک",
+    level: "متوسطه",
+    title: "مولد جریان متناوب",
+    icon: "⚙️",
+    intro: "پیچه را در میدان مغناطیسی بچرخان و موج ولتاژ سینوسی را ببین.",
+    tools: ["آهنربا", "پیچه", "موج ولتاژ"],
+  },
+  {
+    id: "position-time",
+    subject: "فیزیک",
+    level: "متوسطه",
+    title: "نمودار مکان–زمان",
+    icon: "🚶",
+    intro: "حرکت جسم را روی خط و روی نمودار ببین و سرعت را از شیب بخوان.",
+    tools: ["جاده", "نمودار مکان–زمان", "شیب"],
+  },
+  {
+    id: "resonance",
+    subject: "فیزیک",
+    level: "متوسطه",
+    title: "تشدید",
+    icon: "🔔",
+    intro: "بسامد نیروی راننده را به بسامد طبیعی برسان و ببین دامنه چطور بزرگ می‌شود.",
+    tools: ["فنر و جرم", "منحنی پاسخ", "میرایی"],
+  },
+  {
+    id: "flame-test",
+    subject: "شیمی",
+    level: "متوسطه",
+    title: "آزمون شعله و رنگ یون‌ها",
+    icon: "🔥",
+    intro: "رنگ شعله‌ی یون‌های فلزی را ببین و در آزمون ناشناس یون را حدس بزن.",
+    tools: ["شعله", "یون‌های فلزی", "آزمون ناشناس"],
+  },
+  {
+    id: "blood-glucose",
+    subject: "زیست‌شناسی",
+    level: "متوسطه",
+    title: "قند خون و انسولین",
+    icon: "🩸",
+    intro: "منحنی قند خون و انسولین را پس از غذا در فرد سالم و در دیابت نوع ۱ و ۲ مقایسه کن.",
+    tools: ["منحنی قند", "انسولین", "نوع بیماری"],
+  },
 ];
 
 function vlabClamp(v, min, max) {
@@ -35605,6 +35659,250 @@ function VlabAbsoluteExperiment({ onReading }) {
   );
 }
 
+/* ===== ریاضی) تقعر و نقطه‌ی عطف ===== */
+function VlabConcavityExperiment({ onReading }) {
+  const [s, setS] = useState(0);
+  const [x0, setX0] = useState(-1.5);
+  const OX = 160, OY = 92, SX = 34, SY = 13;
+  const f = (x) => Math.pow(x - s, 3) - 3 * (x - s);
+  const f1 = (x) => 3 * Math.pow(x - s, 2) - 3;
+  const f2 = (x) => 6 * (x - s);
+  const seg = (xa, xb) => { let d = ""; for (let i = 0; i <= 60; i++) { const x = xa + ((xb - xa) * i) / 60, y = f(x); if (Math.abs(y) > 6.3) { d += ""; continue; } d += (d ? "L" : "M") + (OX + x * SX).toFixed(1) + "," + (OY - y * SY).toFixed(1); } return d; };
+  const up = f2(x0) > 0;
+  const ty = (x) => f(x0) + f1(x0) * (x - x0);
+  const fa = (v, d = 1) => vlabMFa(v, d);
+  return (
+    <div className="vlab-exp">
+      <svg viewBox="0 0 320 184" className="vlab-svg" style={{ background: "#03060f", borderRadius: "10px" }}>
+        <line x1="4" y1={OY} x2="316" y2={OY} stroke="#4a5578" /><line x1={OX} y1="4" x2={OX} y2="180" stroke="#4a5578" />
+        <path d={seg(-4.6, s)} fill="none" stroke="#ff6b6b" strokeWidth="2.6" /><path d={seg(s, 4.6)} fill="none" stroke="#5bb8ff" strokeWidth="2.6" />
+        <circle cx={OX + s * SX} cy={OY - f(s) * SY} r="5" fill="#ffd166" stroke="#fff" /><text x={OX + s * SX + 10} y={OY - f(s) * SY - 8} fontSize="8" fill="#ffd166">نقطه‌ی عطف</text>
+        <line x1={OX + (x0 - 1.6) * SX} y1={OY - ty(x0 - 1.6) * SY} x2={OX + (x0 + 1.6) * SX} y2={OY - ty(x0 + 1.6) * SY} stroke="#5de0a0" strokeWidth="1.6" />
+        <circle cx={OX + x0 * SX} cy={OY - f(x0) * SY} r="4.5" fill="#fff" stroke="#5de0a0" strokeWidth="2" />
+        <text x="70" y="14" fontSize="9" fill="#5bb8ff" textAnchor="middle">آبی: مقعر رو به بالا ∪</text><text x="70" y="26" fontSize="9" fill="#ff6b6b" textAnchor="middle">قرمز: مقعر رو به پایین ∩</text>
+      </svg>
+      <div className="vlab-readout" style={{ textAlign: "center" }}>در x = {fa(x0)}: f ″ = <b>{fa(f2(x0))}</b> ← نمودار {up ? "مقعر رو به بالا" : f2(x0) < 0 ? "مقعر رو به پایین" : "نقطه‌ی عطف"}</div>
+      <div className="vlab-controls"><div className="vlab-ctrl-col" style={{ flex: 1 }}>
+        <label className="vlab-ctrl-label">نقطه‌ی بررسی x: {fa(x0)}</label><VlabRange min="-3" max="3" step="0.1" value={x0} onChange={(e) => setX0(+e.target.value)} />
+        <label className="vlab-ctrl-label">جابه‌جایی نمودار: {fa(s)}</label><VlabRange min="-1.5" max="1.5" step="0.5" value={s} onChange={(e) => setS(+e.target.value)} />
+      </div></div>
+      <div className="vlab-readout">{`شیب خط مماس را ببین: در قسمت آبی شیب مماس با حرکت به راست زیاد می‌شود (f ″ مثبت) و نمودار بالای مماس‌هایش قرار دارد؛ در قسمت قرمز شیب کم می‌شود (f ″ منفی). نقطه‌ای که تقعر عوض می‌شود نقطه‌ی عطف است و در آن f ″ = ۰.`}</div>
+      <VlabFormulaCheck title="مشتق دوم" fa="f(x) = (x−s)³ − ۳(x−s) ⇒ f ″ = ۶(x − s)" en="f'' = 6(x−s)" legend="علامت f ″ تقعر را می‌گوید." subst={`f ″ = ۶ × (${fa(x0)} − ${fa(s)})`} answer={f2(x0)} unit="" decimals={1} />
+      <VlabEverydayCard title="جاده‌ی پرشیب" text="جاده‌ای که رو به بالا کم‌کم تندتر می‌شود مقعر رو به بالاست، و جاده‌ای که شیب را آرام می‌کند و به قله می‌رسد مقعر رو به پایین. جایی که حالت عوض می‌شود نقطه‌ی عطف است.">
+        <path d="M10,60 Q50,60 62,36 T114,10" fill="none" stroke="#7d8bb5" strokeWidth="3" />
+      </VlabEverydayCard>
+    </div>
+  );
+}
+
+/* ===== فیزیک) مولد جریان متناوب ===== */
+function VlabAcGeneratorExperiment({ onReading }) {
+  const [N, setN] = useState(100);
+  const [B, setB] = useState(0.5);
+  const [fq, setFq] = useState(10);
+  const [th, setTh] = useState(60);
+  const rad = (d) => (d * Math.PI) / 180;
+  const w = 2 * Math.PI * fq, Em = N * B * 0.01 * w;
+  const e = Em * Math.sin(rad(th));
+  const fa = (v, d = 1) => vlabMFa(v, d);
+  const GX = 170, GW = 140, GY = 90, GH = 60;
+  let wave = ""; for (let i = 0; i <= 72; i++) { const d = i * 5; wave += (i ? "L" : "M") + (GX + (d / 360) * GW).toFixed(1) + "," + (GY - GH * Math.sin(rad(d))).toFixed(1); }
+  const cw = 34 * Math.abs(Math.cos(rad(th)));
+  return (
+    <div className="vlab-exp">
+      <svg viewBox="0 0 320 180" className="vlab-svg" style={{ background: "#03060f", borderRadius: "10px" }}>
+        <rect x="14" y="36" width="30" height="100" fill="#d83a3a" opacity="0.75" /><text x="29" y="90" fontSize="14" fill="#fff" textAnchor="middle">N</text>
+        <rect x="116" y="36" width="30" height="100" fill="#2e7bd5" opacity="0.75" /><text x="131" y="90" fontSize="14" fill="#fff" textAnchor="middle">S</text>
+        {[50, 70, 90, 110, 130].map((y) => (<line key={y} x1="48" y1={y} x2="112" y2={y} stroke="#6a7aa8" strokeDasharray="3 3" />))}
+        <rect x={80 - cw / 2 - 2} y="52" width={cw + 4} height="70" fill="none" stroke="#ffd166" strokeWidth="3" rx="3" transform={`rotate(0 80 87)`} />
+        <path d={`M80,52 V24`} stroke="#9aa6c8" /><text x="80" y="18" fontSize="8" fill="#9aa6c8" textAnchor="middle">محور</text>
+        <text x="80" y="152" fontSize="9" fill="#ffd166" textAnchor="middle">زاویه‌ی پیچه: {vlabFaN(th)}°</text>
+        <line x1={GX} y1={GY} x2={GX + GW} y2={GY} stroke="#4a5578" /><line x1={GX} y1={GY - GH - 6} x2={GX} y2={GY + GH + 6} stroke="#4a5578" />
+        <path d={wave} fill="none" stroke="#5bb8ff" strokeWidth="2" /><circle cx={GX + (th / 360) * GW} cy={GY - GH * Math.sin(rad(th))} r="5" fill="#ffd166" stroke="#fff" />
+        <text x={GX + GW / 2} y="172" fontSize="8" fill="#9aa6c8" textAnchor="middle">زاویه‌ی چرخش (یک دور = ۳۶۰°)</text>
+      </svg>
+      <div className="vlab-readout" style={{ textAlign: "center" }}>ولتاژ لحظه‌ای <b>{fa(e)}</b> V · بیشینه‌ی ولتاژ {fa(Em)} V</div>
+      <div className="vlab-controls"><div className="vlab-ctrl-col" style={{ flex: 1 }}>
+        <label className="vlab-ctrl-label">زاویه‌ی لحظه‌ای: {vlabFaN(th)}°</label><VlabRange min="0" max="360" step="5" value={th} onChange={(ev) => setTh(+ev.target.value)} />
+        <label className="vlab-ctrl-label">تعداد دورهای پیچه: {vlabFaN(N)}</label><VlabRange min="10" max="300" step="10" value={N} onChange={(ev) => setN(+ev.target.value)} />
+        <label className="vlab-ctrl-label">میدان مغناطیسی: {fa(B)} T</label><VlabRange min="0.1" max="1" step="0.1" value={B} onChange={(ev) => setB(+ev.target.value)} />
+        <label className="vlab-ctrl-label">بسامد چرخش: {vlabFaN(fq)} Hz</label><VlabRange min="1" max="50" step="1" value={fq} onChange={(ev) => setFq(+ev.target.value)} />
+      </div></div>
+      <div className="vlab-readout">{`وقتی پیچه در میدان مغناطیسی می‌چرخد، شار مغناطیسی گذرنده از آن تغییر می‌کند و طبق قانون القای فاراده ولتاژ می‌سازد. ولتاژ مثل موج سینوسی بالا و پایین می‌رود؛ یعنی جریان متناوب است. دور بیشتر، میدان قوی‌تر یا چرخش سریع‌تر، بیشینه‌ی ولتاژ را زیاد می‌کند (سطح پیچه ۰٫۰۱ m² است).`}</div>
+      <VlabFormulaCheck title="بیشینه‌ی ولتاژ" fa="ε_max = N·B·A·ω،  ω = ۲πf" en="Em = NBAω" legend="A = ۰٫۰۱ m²؛ ولتاژ بر حسب ولت." subst={`ε = ${vlabFaN(N)} × ${fa(B)} × ۰٫۰۱ × ۲π × ${vlabFaN(fq)}`} answer={Em} unit="V" decimals={1} />
+      <VlabFormulaCheck title="ولتاژ مؤثر" fa="ε_eff = ε_max ÷ √۲" en="Erms = Em/√2" legend="ولتاژ مؤثر همان عددی است که ولتمتر نشان می‌دهد." subst={`${fa(Em)} ÷ ۱٫۴۱۴`} answer={Em / Math.SQRT2} unit="V" decimals={1} />
+      <VlabEverydayCard title="دینام دوچرخه" text="در دینام دوچرخه یک آهنربا کنار پیچه می‌چرخد. هرچه سریع‌تر رکاب بزنی، ولتاژ بیشتر و چراغ پرنورتر می‌شود. نیروگاه‌ها هم همین کار را با توربین انجام می‌دهند.">
+        <circle cx="46" cy="38" r="18" fill="none" stroke="#7d8bb5" strokeWidth="3" /><rect x="68" y="30" width="30" height="16" fill="#e0a83e" />
+      </VlabEverydayCard>
+    </div>
+  );
+}
+
+/* ===== فیزیک) نمودار مکان–زمان ===== */
+function VlabPositionTimeExperiment({ onReading }) {
+  const [v1, setV1] = useState(3);
+  const [v3, setV3] = useState(-2);
+  const [t, setT] = useState(3);
+  const x0 = 2;
+  const xAt = (tt) => tt <= 4 ? x0 + v1 * tt : tt <= 6 ? x0 + v1 * 4 : x0 + v1 * 4 + v3 * (tt - 6);
+  const seg = t <= 4 ? 1 : t <= 6 ? 2 : 3;
+  const vNow = seg === 1 ? v1 : seg === 2 ? 0 : v3;
+  const GX = 24, GW = 270, GY = 20, GH = 100, xmax = 18, xmin = -6;
+  const gx = (tt) => GX + (tt / 10) * GW, gy = (x) => GY + GH - ((x - xmin) / (xmax - xmin)) * GH;
+  const line = [[0, xAt(0)], [4, xAt(4)], [6, xAt(6)], [10, xAt(10)]].map((p, i) => (i ? "L" : "M") + gx(p[0]) + "," + gy(p[1])).join("");
+  const rx = (x) => 20 + ((x - xmin) / (xmax - xmin)) * 280;
+  const fa = (v, d = 1) => vlabMFa(v, Number.isInteger(v) ? 0 : d);
+  const x = xAt(t);
+  const dt = seg === 1 ? [0, 4] : seg === 2 ? [4, 6] : [6, 10];
+  return (
+    <div className="vlab-exp">
+      <svg viewBox="0 0 320 190" className="vlab-svg" style={{ background: "#03060f", borderRadius: "10px" }}>
+        <line x1={GX} y1={GY + GH} x2={GX + GW} y2={GY + GH} stroke="#4a5578" /><line x1={GX} y1={GY} x2={GX} y2={GY + GH} stroke="#4a5578" />
+        <line x1={GX} y1={gy(0)} x2={GX + GW} y2={gy(0)} stroke="#2a3558" strokeDasharray="3 3" /><text x={GX - 4} y={gy(0) + 3} fontSize="7" fill="#9aa6c8" textAnchor="end">۰</text>
+        <path d={line} fill="none" stroke="#5bb8ff" strokeWidth="2.4" />
+        <line x1={gx(dt[0])} y1={gy(xAt(dt[0]))} x2={gx(dt[1])} y2={gy(xAt(dt[1]))} stroke="#ffd166" strokeWidth="4" />
+        <circle cx={gx(t)} cy={gy(x)} r="5" fill="#ff6b6b" stroke="#fff" />
+        <text x={GX + GW / 2} y="136" fontSize="8" fill="#9aa6c8" textAnchor="middle">زمان (ثانیه)</text><text x="50" y="12" fontSize="8" fill="#9aa6c8" textAnchor="middle">مکان (متر)</text>
+        <line x1="20" y1="168" x2="300" y2="168" stroke="#6a7aa8" strokeWidth="2" /><circle cx={rx(x)} cy="160" r="8" fill="#ff6b6b" /><text x={rx(x)} y="184" fontSize="8" fill="#ffb3b3" textAnchor="middle">x = {fa(x)} m</text>
+      </svg>
+      <div className="vlab-readout" style={{ textAlign: "center" }}>{vlabFaN(t)} ثانیه: شیب = سرعت = <b>{fa(vNow)}</b> m/s {vNow === 0 ? "(ایستاده)" : vNow > 0 ? "(به جلو)" : "(به عقب)"}</div>
+      <div className="vlab-controls"><div className="vlab-ctrl-col" style={{ flex: 1 }}>
+        <label className="vlab-ctrl-label">زمان: {fa(t)} s</label><VlabRange min="0" max="10" step="0.5" value={t} onChange={(e) => setT(+e.target.value)} />
+        <label className="vlab-ctrl-label">سرعت در ۴ ثانیه‌ی اول: {fa(v1)} m/s</label><VlabRange min="-4" max="4" step="1" value={v1} onChange={(e) => setV1(+e.target.value)} />
+        <label className="vlab-ctrl-label">سرعت در ۴ ثانیه‌ی آخر: {fa(v3)} m/s</label><VlabRange min="-4" max="4" step="1" value={v3} onChange={(e) => setV3(+e.target.value)} />
+      </div></div>
+      <div className="vlab-readout">{`شیب نمودار مکان–زمان همان سرعت است: خط شیب‌دار رو به بالا یعنی حرکت به جلو، خط افقی یعنی ایستادن و خط رو به پایین یعنی برگشتن. تندی تغییر مکان هرچه بیشتر باشد خط تندتر می‌شود. جسم از مکان ۲ متر شروع می‌کند، ۴ ثانیه حرکت می‌کند، ۲ ثانیه می‌ایستد و ۴ ثانیه دیگر حرکت می‌کند.`}</div>
+      <VlabFormulaCheck title="سرعت از روی شیب" fa="v = Δx ÷ Δt" en="v = Δx/Δt" legend="Δx تغییر مکان در بازه‌ی زرد است." subst={`v = (${fa(xAt(dt[1]))} − ${fa(xAt(dt[0]))}) ÷ (${vlabFaN(dt[1])} − ${vlabFaN(dt[0])})`} answer={vNow} unit="m/s" decimals={1} />
+      <VlabEverydayCard title="مترو بین ایستگاه‌ها" text="نمودار مترو بین دو ایستگاه ابتدا شیب‌دار (حرکت)، سپس افقی (توقف در ایستگاه) و دوباره شیب‌دار است. از شیب هر قسمت می‌توان سرعت قطار را خواند.">
+        <path d="M10,60 L40,30 H60 L100,8" fill="none" stroke="#2e7bd5" strokeWidth="2.4" />
+      </VlabEverydayCard>
+    </div>
+  );
+}
+
+/* ===== فیزیک) تشدید ===== */
+function VlabResonanceExperiment({ onReading }) {
+  const [k, setK] = useState(200);
+  const [m, setM] = useState(0.5);
+  const [zeta, setZeta] = useState(0.1);
+  const [fd, setFd] = useState(2);
+  const f0 = Math.sqrt(k / m) / (2 * Math.PI);
+  const r = fd / f0;
+  const amp = (rr) => 1 / Math.sqrt(Math.pow(1 - rr * rr, 2) + Math.pow(2 * zeta * rr, 2));
+  const GX = 24, GW = 270, GY = 20, GH = 90, Amax = 1 / (2 * zeta);
+  const fmax = f0 * 2;
+  let curve = ""; for (let i = 0; i <= 100; i++) { const f = (i / 100) * fmax * 1; const rr = f / f0; curve += (i ? "L" : "M") + (GX + (f / fmax) * GW).toFixed(1) + "," + (GY + GH - Math.min(1, amp(rr) / Math.max(5, Amax)) * GH).toFixed(1); }
+  const peak = Math.max(5, Amax);
+  const A = amp(r);
+  const swing = Math.min(1, A / peak) * 40;
+  const fa = (v, d = 1) => vlabMFa(v, d);
+  return (
+    <div className="vlab-exp">
+      <svg viewBox="0 0 320 190" className="vlab-svg" style={{ background: "#03060f", borderRadius: "10px" }}>
+        <line x1={GX} y1={GY + GH} x2={GX + GW} y2={GY + GH} stroke="#4a5578" /><line x1={GX} y1={GY} x2={GX} y2={GY + GH} stroke="#4a5578" />
+        <path d={curve} fill="none" stroke="#5bb8ff" strokeWidth="2.2" />
+        <line x1={GX + (f0 / fmax) * GW} y1={GY} x2={GX + (f0 / fmax) * GW} y2={GY + GH} stroke="#5de0a0" strokeDasharray="4 3" /><text x={GX + (f0 / fmax) * GW} y={GY - 4} fontSize="8" fill="#5de0a0" textAnchor="middle">f₀ = {fa(f0)} Hz</text>
+        <circle cx={GX + (Math.min(fd, fmax) / fmax) * GW} cy={GY + GH - Math.min(1, A / peak) * GH} r="5" fill="#ffd166" stroke="#fff" />
+        <text x={GX + GW / 2} y="132" fontSize="8" fill="#9aa6c8" textAnchor="middle">بسامد نیروی راننده (Hz)</text>
+        <line x1="160" y1="150" x2="160" y2="160" stroke="#9aa6c8" strokeWidth="2" /><line x1="160" y1="160" x2="160" y2="170" stroke="#9aa6c8" />
+        <line x1="110" y1="162" x2="210" y2="162" stroke="#4a5578" strokeDasharray="2 3" /><rect x={160 - swing - 7} y="156" width="14" height="14" fill="#ff6b6b" rx="2" /><rect x={160 + swing - 7} y="156" width="14" height="14" fill="#ff6b6b" opacity="0.3" rx="2" />
+        <text x="160" y="186" fontSize="8" fill="#ffb3b3" textAnchor="middle">دامنه‌ی نوسان نسبی: {fa(A)} برابر</text>
+      </svg>
+      <div className="vlab-readout" style={{ textAlign: "center" }}>{r > 0.9 && r < 1.1 ? "نزدیک تشدید: دامنه خیلی بزرگ" : r < 0.9 ? "بسامد راننده کمتر از بسامد طبیعی" : "بسامد راننده بیشتر از بسامد طبیعی"} · f ÷ f₀ = {fa(r, 2)}</div>
+      <div className="vlab-controls"><div className="vlab-ctrl-col" style={{ flex: 1 }}>
+        <label className="vlab-ctrl-label">بسامد نیروی راننده: {fa(fd)} Hz</label><VlabRange min="0.2" max={fa(fmax, 1).replace("٫", ".")} step="0.1" value={fd} onChange={(e) => setFd(+e.target.value)} />
+        <label className="vlab-ctrl-label">سختی فنر: {vlabFaN(k)} N/m</label><VlabRange min="50" max="400" step="10" value={k} onChange={(e) => setK(+e.target.value)} />
+        <label className="vlab-ctrl-label">جرم: {fa(m)} kg</label><VlabRange min="0.2" max="2" step="0.1" value={m} onChange={(e) => setM(+e.target.value)} />
+        <label className="vlab-ctrl-label">میرایی (اصطکاک): {fa(zeta, 2)}</label><VlabRange min="0.05" max="0.5" step="0.05" value={zeta} onChange={(e) => setZeta(+e.target.value)} />
+      </div></div>
+      <div className="vlab-readout">{`هر دستگاه نوسان‌کننده بسامد طبیعی مخصوص خود را دارد. اگر نیروی خارجی با همین بسامد تکرار شود، انرژی هر دور روی دور قبل جمع می‌شود و دامنه خیلی بزرگ می‌شود؛ این تشدید است. میرایی بیشتر، قله را پایین‌تر و پهن‌تر می‌کند.`}</div>
+      <VlabFormulaCheck title="بسامد طبیعی" fa="f₀ = (۱ ÷ ۲π) √(k ÷ m)" en="f0 = 1/(2π)·sqrt(k/m)" legend="k بر حسب N/m و m بر حسب kg." subst={`f₀ = (۱ ÷ ۲π) × √(${vlabFaN(k)} ÷ ${fa(m)})`} answer={f0} unit="Hz" decimals={2} />
+      <VlabEverydayCard title="تاب‌بازی و پل" text="اگر درست با بسامد طبیعی تاب هل بدهی، با زور کمی تاب بالا می‌رود. پل‌ها را طوری می‌سازند که بسامد طبیعی‌شان با قدم‌های سربازان یا باد برابر نباشد تا تشدید رخ ندهد.">
+        <path d="M30,10 L50,60 M80,10 L60,60 M30,10 H80" fill="none" stroke="#7d8bb5" strokeWidth="2" /><rect x="40" y="58" width="30" height="6" fill="#e0a83e" />
+      </VlabEverydayCard>
+    </div>
+  );
+}
+
+/* ===== شیمی) آزمون شعله ===== */
+const VLAB_FL = [
+  { n: "سدیم", s: "Na⁺", c: "#ffb61e", t: "زرد پررنگ", l: 589, u: "چراغ‌های خیابانی بخار سدیم" },
+  { n: "پتاسیم", s: "K⁺", c: "#c58cff", t: "بنفش روشن", l: 766, u: "نمک‌های پتاسیم در آتش‌بازی بنفش" },
+  { n: "لیتیم", s: "Li⁺", c: "#ff3b5c", t: "قرمز ارغوانی", l: 671, u: "فشنگ‌های قرمز" },
+  { n: "کلسیم", s: "Ca²⁺", c: "#ff7a2b", t: "نارنجی‌قرمز", l: 622, u: "رنگ شعله‌ی خاکستر آهک" },
+  { n: "استرانسیم", s: "Sr²⁺", c: "#ff2a1a", t: "قرمز تند", l: 650, u: "مشعل‌های اضطراری" },
+  { n: "مس", s: "Cu²⁺", c: "#2ef5c8", t: "سبز مایل به آبی", l: 510, u: "آتش‌بازی سبز‌آبی" },
+  { n: "باریم", s: "Ba²⁺", c: "#9aff5a", t: "سبز زرد", l: 524, u: "آتش‌بازی سبز" },
+];
+function VlabFlameTestExperiment({ onReading }) {
+  const [i, setI] = useState(0);
+  const [unk, setUnk] = useState(null);
+  const [msg, setMsg] = useState("");
+  const shown = unk != null ? VLAB_FL[unk] : VLAB_FL[i];
+  const guess = (k) => { setMsg(k === unk ? "درست! یون " + VLAB_FL[k].n + " است." : "نه، دوباره از روی رنگ شعله فکر کن."); if (k === unk) setTimeout(() => setUnk(null), 1500); };
+  const Fl = shown;
+  return (
+    <div className="vlab-exp">
+      <svg viewBox="0 0 320 170" className="vlab-svg" style={{ background: "#03060f", borderRadius: "10px" }}>
+        <rect x="130" y="110" width="60" height="34" rx="4" fill="#7d8bb5" /><rect x="152" y="144" width="16" height="14" fill="#9aa6c8" />
+        <ellipse cx="160" cy="84" rx="22" ry="40" fill={Fl.c} opacity="0.92" /><ellipse cx="160" cy="94" rx="12" ry="24" fill="#fff" opacity="0.55" />
+        <ellipse cx="160" cy="84" rx="40" ry="52" fill={Fl.c} opacity="0.12" />
+        <text x="160" y="14" fontSize="11" fill={unk != null ? "#ffd166" : Fl.c} textAnchor="middle">{unk != null ? "نمونه‌ی ناشناس: چه یونی است؟" : Fl.n + " " + Fl.s}</text>
+        {unk == null && <text x="280" y="90" fontSize="9" fill="#cfd6ea" textAnchor="middle">{Fl.t}</text>}
+        {unk == null && <text x="40" y="90" fontSize="9" fill="#9aa6c8" textAnchor="middle" direction="ltr">≈ {Fl.l} nm</text>}
+      </svg>
+      <div className="vlab-readout" style={{ textAlign: "center" }}>{unk != null ? (msg || "رنگ شعله را ببین و یکی از یون‌ها را انتخاب کن") : `رنگ: ${Fl.t} · کاربرد: ${Fl.u}`}</div>
+      <div className="vlab-controls"><div className="vlab-ctrl-col" style={{ flex: 1 }}>
+        <div className="vlab-btn-row">{VLAB_FL.map((o, k) => (<button key={k} className="vlab-btn" style={(unk == null ? i === k : false) ? { outline: "2px solid #e0a83e" } : null} onClick={() => { if (unk == null) setI(k); else guess(k); }}>{o.n}</button>))}</div>
+        <div className="vlab-btn-row"><button className="vlab-btn" onClick={() => { setUnk(Math.floor(Math.random() * VLAB_FL.length)); setMsg(""); }}>آزمون: نمونه‌ی ناشناس</button>{unk != null && <button className="vlab-btn" onClick={() => setUnk(null)}>برگشت</button>}</div>
+      </div></div>
+      <div className="vlab-readout">{`وقتی ترکیب یک فلز را در شعله می‌گیریم، الکترون‌های یون انرژی می‌گیرند و با بازگشت به تراز پایین، نوری با رنگ مخصوص آن فلز می‌دهند. شیمی‌دان‌ها از این رنگ برای شناسایی سریع کاتیون‌ها استفاده می‌کنند. رنگ‌ها برای چند یون شبیه‌اند (مثلاً سدیم همیشه مزاحم است)؛ پس این آزمون نشانه است و نه اثبات.`}</div>
+      <VlabFormulaCheck title="انرژی نور" fa="E = ۱۲۴۰ ÷ λ" en="E(eV)=1240/λ(nm)" legend="هرچه طول موج کوتاه‌تر، انرژی بیشتر." subst={`E = ۱۲۴۰ ÷ ${vlabFaN(Fl.l)}`} answer={1240 / Fl.l} unit="eV" decimals={2} />
+      <VlabEverydayCard title="آتش‌بازی" text="رنگ آتش‌بازی از همین آزمون می‌آید: نمک استرانسیم قرمز، مس سبز‌آبی، سدیم زرد و باریم سبز می‌دهد. ترکیب نمک‌ها رنگ‌های میانی می‌سازد.">
+        <circle cx="60" cy="38" r="3" fill="#ffd166" /><path d="M60,38 l-30,-22 M60,38 l30,-22 M60,38 l-34,12 M60,38 l34,12 M60,38 l0,-30" stroke="#ff6b6b" strokeWidth="2" />
+      </VlabEverydayCard>
+    </div>
+  );
+}
+
+/* ===== زیست) قند خون و انسولین ===== */
+function VlabGlucoseExperiment({ onReading }) {
+  const [typ, setTyp] = useState("healthy");
+  const [carb, setCarb] = useState(75);
+  const par = { healthy: [0.02, 0.0035, "فرد سالم"], t1: [0, 0.0035, "دیابت نوع ۱ (انسولین ساخته نمی‌شود)"], t2: [0.02, 0.0007, "دیابت نوع ۲ (مقاومت به انسولین)"] }[typ];
+  const Gs = [], Is = []; let G = 90, I = 0;
+  for (let t = 0; t <= 240; t++) { Gs.push(G); Is.push(I); const Ra = carb * 0.075 * Math.exp(-t / 45); const dG = Ra - 0.0015 * (G - 90) - par[1] * I * (G - 50); const dI = par[0] * Math.max(0, G - 90) - 0.03 * I; G += dG; I += dI; }
+  const peak = Math.max(...Gs);
+  const GX = 30, GW = 280, GY = 20, GH = 120;
+  const gy = (v) => GY + GH - ((v - 60) / 260) * GH;
+  const gp = (arr, f) => arr.map((v, i) => (i ? "L" : "M") + (GX + (i / 240) * GW).toFixed(1) + "," + f(v).toFixed(1)).join("");
+  const maxI = Math.max(1, ...Is);
+  const fa = (v) => vlabFaN(Math.round(v));
+  return (
+    <div className="vlab-exp">
+      <svg viewBox="0 0 320 180" className="vlab-svg" style={{ background: "#03060f", borderRadius: "10px" }}>
+        <rect x={GX} y={gy(140)} width={GW} height={gy(70) - gy(140)} fill="#5de0a0" opacity="0.1" /><text x={GX + 70} y={gy(140) - 3} fontSize="7" fill="#5de0a0" textAnchor="middle">محدوده‌ی سالم ۷۰ تا ۱۴۰</text>
+        <line x1={GX} y1={GY + GH} x2={GX + GW} y2={GY + GH} stroke="#4a5578" /><line x1={GX} y1={GY} x2={GX} y2={GY + GH} stroke="#4a5578" />
+        <path d={gp(Is, (v) => GY + GH - (v / maxI) * 40)} fill="none" stroke="#ff9d1c" strokeWidth="1.6" strokeDasharray="4 3" />
+        <path d={gp(Gs, gy)} fill="none" stroke="#5bb8ff" strokeWidth="2.6" />
+        {[0, 60, 120, 180, 240].map((t) => (<text key={t} x={GX + (t / 240) * GW} y={GY + GH + 11} fontSize="7" fill="#9aa6c8" textAnchor="middle">{vlabFaN(t)}</text>))}
+        <text x={GX + GW / 2} y="172" fontSize="8" fill="#9aa6c8" textAnchor="middle">دقیقه پس از غذا</text>
+        <text x="270" y="16" fontSize="8" fill="#5bb8ff" textAnchor="middle">— قند خون</text><text x="270" y="28" fontSize="8" fill="#ff9d1c" textAnchor="middle">‑ ‑ انسولین</text>
+      </svg>
+      <div className="vlab-readout" style={{ textAlign: "center" }}>{par[2]}: بیشینه‌ی قند خون <b>{fa(peak)}</b> mg/dL · پس از ۳ ساعت {fa(Gs[180])}</div>
+      <div className="vlab-controls"><div className="vlab-ctrl-col" style={{ flex: 1 }}>
+        <div className="vlab-btn-row">{[["healthy", "سالم"], ["t1", "دیابت نوع ۱"], ["t2", "دیابت نوع ۲"]].map(([k, n]) => (<button key={k} className="vlab-btn" style={typ === k ? { outline: "2px solid #e0a83e" } : null} onClick={() => setTyp(k)}>{n}</button>))}</div>
+        <label className="vlab-ctrl-label">کربوهیدرات وعده: {vlabFaN(carb)} g</label><VlabRange min="20" max="120" step="5" value={carb} onChange={(e) => setCarb(+e.target.value)} />
+      </div></div>
+      <div className="vlab-readout">{`پس از غذا قند خون بالا می‌رود؛ لوزالمعده انسولین (هورمون) ترشح می‌کند تا سلول‌ها گلوکز را بگیرند و قند خون پایین بیاید. در دیابت نوع ۱ انسولین ساخته نمی‌شود و قند بالا می‌ماند؛ در نوع ۲ انسولین هست اما سلول‌ها کم‌پاسخ‌اند و قند دیرتر پایین می‌آید. (مدل ساده‌شده برای یادگیری، نه تشخیص.)`}</div>
+      <VlabFormulaCheck title="افزایش نسبت به پایه" fa="افزایش = بیشینه − ۹۰" en="Δ = peak − 90" legend="قند ناشتای سالم حدود ۹۰ mg/dL است." subst={`${fa(peak)} − ۹۰`} answer={peak - 90} unit="mg/dL" decimals={0} />
+      <VlabEverydayCard title="چرا بعد از شیرینی خواب‌آلود می‌شویم؟" text="جهش سریع قند خون و ترشح زیاد انسولین بعد از یک وعده‌ی شیرین باعث افت سریع قند می‌شود. غذاهای فیبردار قند را آهسته‌تر جذب می‌کنند و نمودار هموارتر می‌ماند.">
+        <rect x="30" y="20" width="38" height="46" rx="6" fill="#d8dde8" stroke="#7d8bb5" /><circle cx="49" cy="14" r="6" fill="#ffb3a1" />
+      </VlabEverydayCard>
+    </div>
+  );
+}
+
 const VLAB_COMPONENTS = {
   lever: VlabLeverExperiment,
   pendulum: VlabPendulumExperiment,
@@ -35742,6 +36040,12 @@ const VLAB_COMPONENTS = {
   "hess-law": VlabHessExperiment,
   "asymptote": VlabAsymptoteExperiment,
   "absolute-value": VlabAbsoluteExperiment,
+  "concavity": VlabConcavityExperiment,
+  "ac-generator": VlabAcGeneratorExperiment,
+  "position-time": VlabPositionTimeExperiment,
+  "resonance": VlabResonanceExperiment,
+  "flame-test": VlabFlameTestExperiment,
+  "blood-glucose": VlabGlucoseExperiment,
 };
 
 function StudentVirtualLabView({ onBack, grade, studentCode, schoolCode }) {

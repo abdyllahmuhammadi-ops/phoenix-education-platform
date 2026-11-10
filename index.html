@@ -23728,6 +23728,60 @@ const VLAB_EXPERIMENTS = [
     intro: "مسیر غذا را از دهان تا روده‌ی بزرگ دنبال کن و آنزیم‌ها، pH و کار هر بخش را ببین.",
     tools: ["لوله‌ی گوارش", "زمان", "آنزیم‌ها"],
   },
+  {
+    id: "bernoulli",
+    subject: "فیزیک",
+    level: "متوسطه",
+    title: "اصل برنولی",
+    icon: "💨",
+    intro: "شارش آب را در لوله‌ی باریک‌شونده تغییر بده و ببین تندی بیشتر و فشار کمتر می‌شود.",
+    tools: ["لوله", "فشارسنج", "شارش"],
+  },
+  {
+    id: "hardy-weinberg",
+    subject: "زیست‌شناسی",
+    level: "متوسطه",
+    title: "تعادل هاردی–وینبرگ",
+    icon: "🧬",
+    intro: "فراوانی الل‌ها را تنظیم کن، ژنوتیپ‌های جمعیت و ناقلان را ببین و رانش ژنی را در جمعیت کوچک شبیه‌سازی کن.",
+    tools: ["جمعیت", "ژنوتیپ‌ها", "نسل بعد"],
+  },
+  {
+    id: "electron-config",
+    subject: "شیمی",
+    level: "متوسطه",
+    title: "آرایش الکترونی",
+    icon: "🔋",
+    intro: "عدد اتمی ۱ تا ۳۶ را انتخاب کن و پر شدن زیرلایه‌ها را با ↑↓ ببین.",
+    tools: ["اوربیتال‌ها", "آرایش", "لایه‌ی ظرفیت"],
+  },
+  {
+    id: "hess-law",
+    subject: "شیمی",
+    level: "متوسطه",
+    title: "قانون هس",
+    icon: "🔥",
+    intro: "واکنش را یک‌مرحله‌ای و دومرحله‌ای ببین و نشان بده ΔH کل به مسیر بستگی ندارد.",
+    tools: ["نمودار انرژی", "مراحل", "ΔH کل"],
+  },
+  {
+    id: "asymptote",
+    subject: "ریاضی",
+    level: "متوسطه",
+    title: "مجانب",
+    icon: "📈",
+    intro: "ضریب‌های تابع کسری را تغییر بده و مجانب قائم و افقی آن را روی نمودار ببین.",
+    tools: ["نمودار تابع", "مجانب قائم", "مجانب افقی"],
+  },
+  {
+    id: "absolute-value",
+    subject: "ریاضی",
+    level: "متوسطه",
+    title: "قدر مطلق روی محور",
+    icon: "↔️",
+    intro: "قدر مطلق را به‌عنوان فاصله روی محور ببین و معادله و نامعادله‌ی آن را حل کن.",
+    tools: ["محور عددی", "فاصله", "جواب‌ها"],
+  },
 ];
 
 function vlabClamp(v, min, max) {
@@ -35324,6 +35378,233 @@ function VlabDigestionExperiment({ onReading }) {
   );
 }
 
+/* ===== فیزیک) اصل برنولی ===== */
+function VlabBernoulliExperiment({ onReading }) {
+  const [Q, setQ] = useState(1.5);
+  const [A2, setA2] = useState(10);
+  const A1 = 40, P1 = 120000, rho = 1000;
+  const v1 = (Q * 10) / A1, v2 = (Q * 10) / A2;
+  const P2 = P1 + 0.5 * rho * (v1 * v1 - v2 * v2);
+  const fa = (v, d = 1) => vlabMFa(v, d);
+  const hw = (A) => 8 + A * 0.7;
+  const hp = (P) => Math.max(4, Math.min(60, ((P - 100000) / 40000) * 50 + 6));
+  const xs = [30, 100, 140, 210, 280];
+  return (
+    <div className="vlab-exp">
+      <svg viewBox="0 0 320 180" className="vlab-svg" style={{ background: "#03060f", borderRadius: "10px" }}>
+        <path d={`M10,${110 - hw(A1)} L100,${110 - hw(A1)} L140,${110 - hw(A2)} L240,${110 - hw(A2)} L280,${110 - hw(A1)} L310,${110 - hw(A1)} L310,${110 + hw(A1)} L280,${110 + hw(A1)} L240,${110 + hw(A2)} L140,${110 + hw(A2)} L100,${110 + hw(A1)} L10,${110 + hw(A1)} Z`} fill="#5bb8ff" fillOpacity="0.28" stroke="#5bb8ff" strokeWidth="2" />
+        {[[50, v1, A1], [190, v2, A2]].map(([x, v, A], i) => (<g key={i}><line x1={x - 18} y1="110" x2={x + 14 + v * 5} y2="110" stroke="#ffd166" strokeWidth="3" /><path d={`M${x + 14 + v * 5},110 l-6,-5 v10 z`} fill="#ffd166" /><text x={x} y="148" fontSize="9" fill="#ffd166" textAnchor="middle">v = {fa(v)} m/s</text></g>))}
+        {[[50, P1, "P₁"], [190, P2, "P₂"]].map(([x, P, t]) => { const H = hp(P), top = 110 - hw(x < 100 ? A1 : A2); return (<g key={t}><rect x={x - 5} y={top - H} width="10" height={H} fill="#ff6b6b" opacity="0.85" /><text x={x} y={top - H - 4} fontSize="9" fill="#ffb3b3" textAnchor="middle" direction="ltr">{t} = {fa(P / 1000, 1)} kPa</text></g>); })}
+      </svg>
+      <div className="vlab-readout" style={{ textAlign: "center" }}>در قسمت باریک تندی <b>{fa(v2)}</b> m/s است و فشار <b>{fa(P2 / 1000)}</b> kPa (در قسمت پهن {fa(P1 / 1000, 0)} kPa)</div>
+      <div className="vlab-controls"><div className="vlab-ctrl-col" style={{ flex: 1 }}>
+        <label className="vlab-ctrl-label">شارش آب: {fa(Q)} لیتر بر ثانیه</label><VlabRange min="0.5" max="3" step="0.1" value={Q} onChange={(e) => setQ(+e.target.value)} />
+        <label className="vlab-ctrl-label">سطح مقطع قسمت باریک: {vlabFaN(A2)} cm²</label><VlabRange min="5" max="40" step="1" value={A2} onChange={(e) => setA2(+e.target.value)} />
+      </div></div>
+      <div className="vlab-readout">{`آب نمی‌تواند جمع یا کم شود، پس در قسمت باریک تندتر می‌رود (پیوستگی). افزایش تندی انرژی جنبشی را بیشتر می‌کند و این انرژی از افت فشار می‌آید؛ بنابراین هرجا شاره تندتر است، فشار کمتر است (اصل برنولی).`}</div>
+      <VlabFormulaCheck title="تندی در قسمت باریک" fa="v₂ = v₁ × A₁ ÷ A₂" en="A1v1 = A2v2" legend={`v₁ = ${fa(v1, 2)} m/s و A₁ = ۴۰ cm²`} subst={`v₂ = ${fa(v1, 2)} × ۴۰ ÷ ${vlabFaN(A2)}`} answer={v2} unit="m/s" decimals={2} />
+      <VlabFormulaCheck title="فشار در قسمت باریک" fa="P₂ = P₁ + ½ρ(v₁² − v₂²)" en="P2 = P1 + ρ(v1²−v2²)/2" legend="ρ آب = ۱۰۰۰ kg/m³؛ جواب بر حسب پاسکال." subst={`P₂ = ۱۲۰۰۰۰ + ½×۱۰۰۰×(${fa(v1, 2)}² − ${fa(v2, 2)}²)`} answer={P2} unit="Pa" decimals={0} />
+      <VlabEverydayCard title="بال هواپیما و پاشش اسپری" text="هوا روی بال سریع‌تر از زیر آن می‌گذرد؛ فشار بالا کمتر می‌شود و نیروی بالابر به‌وجود می‌آید. در سمپاش هم جریان تند هوا فشار را روی لوله‌ی مایع کم می‌کند و مایع بالا می‌آید.">
+        <path d="M10,48 Q60,20 112,46 Q60,56 10,48 Z" fill="#cfd6ea" stroke="#7d8bb5" strokeWidth="1.5" />
+      </VlabEverydayCard>
+    </div>
+  );
+}
+
+/* ===== زیست) تعادل هاردی–وینبرگ ===== */
+function VlabHardyWeinbergExperiment({ onReading }) {
+  const [p, setP] = useState(0.6);
+  const [N, setN] = useState(50);
+  const [hist, setHist] = useState([]);
+  const q = 1 - p;
+  const g = [p * p, 2 * p * q, q * q];
+  const next = () => { let k = 0; for (let i = 0; i < 2 * N; i++) if (Math.random() < p) k++; const np = Math.round((k / (2 * N)) * 100) / 100; setHist([...hist.slice(-19), p]); setP(Math.min(0.99, Math.max(0.01, np))); };
+  const fa = (v, d = 2) => vlabMFa(v, d);
+  const cols = ["#ff6b6b", "#ffd166", "#5bb8ff"];
+  const dots = []; let k = 0; const nn = [Math.round(g[0] * 100), Math.round(g[1] * 100), 100 - Math.round(g[0] * 100) - Math.round(g[1] * 100)];
+  nn.forEach((c, gi) => { for (let i = 0; i < c; i++) { dots.push(<circle key={k} cx={22 + (k % 20) * 14} cy={20 + Math.floor(k / 20) * 14} r="5" fill={cols[gi]} />); k++; } });
+  return (
+    <div className="vlab-exp">
+      <svg viewBox="0 0 320 190" className="vlab-svg" style={{ background: "#03060f", borderRadius: "10px" }}>
+        {dots}
+        {g.map((v, i) => (<g key={i}><rect x={50 + i * 80} y={170 - v * 70} width="42" height={v * 70} fill={cols[i]} rx="3" /><text x={71 + i * 80} y={165 - v * 70} fontSize="9" fill="#fff" textAnchor="middle">{fa(v)}</text><text x={71 + i * 80} y="183" fontSize="8" fill="#9aa6c8" textAnchor="middle" direction="ltr">{["AA", "Aa", "aa"][i]}</text></g>))}
+      </svg>
+      <div className="vlab-readout" style={{ textAlign: "center" }}>p (فراوانی A) = <b>{fa(p)}</b> · q (فراوانی a) = <b>{fa(q)}</b> · ناقلان Aa = <b>{fa(g[1] * 100, 0)}٪</b></div>
+      <div className="vlab-controls"><div className="vlab-ctrl-col" style={{ flex: 1 }}>
+        <label className="vlab-ctrl-label">فراوانی الل غالب A: {fa(p)}</label><VlabRange min="0.05" max="0.95" step="0.01" value={p} onChange={(e) => { setP(+e.target.value); setHist([]); }} />
+        <label className="vlab-ctrl-label">اندازه‌ی جمعیت: {vlabFaN(N)} نفر</label><VlabRange min="10" max="500" step="10" value={N} onChange={(e) => setN(+e.target.value)} />
+        <div className="vlab-btn-row"><button className="vlab-btn" onClick={next}>نسل بعد (آمیزش تصادفی)</button><button className="vlab-btn" onClick={() => { setP(0.6); setHist([]); }}>بازنشانی</button></div>
+      </div></div>
+      <div className="vlab-readout">{`اگر جمعیت بزرگ باشد، آمیزش تصادفی انجام شود و جهش، مهاجرت و انتخاب طبیعی نباشد، فراوانی الل‌ها نسل‌به‌نسل ثابت می‌ماند (تعادل). با کوچک‌کردن جمعیت و زدن «نسل بعد»، فراوانی‌ها به‌صورت تصادفی تغییر می‌کنند؛ این رانش ژنی است. ${hist.length ? "تعداد نسل‌های گذشته: " + vlabFaN(hist.length) + "." : ""}`}</div>
+      <VlabFormulaCheck title="فراوانی ناقلان" fa="۲pq" en="2pq" legend="p + q = ۱؛ ناقل یعنی ناهمخوان Aa." subst={`۲ × ${fa(p)} × ${fa(q)}`} answer={2 * p * q} unit="" decimals={2} />
+      <VlabFormulaCheck title="فراوانی افراد بیمار (aa)" fa="q²" en="q²" legend="بیماری مغلوب فقط در حالت aa دیده می‌شود." subst={`${fa(q)}²`} answer={q * q} unit="" decimals={3} />
+      <VlabEverydayCard title="ناقلان بیماری‌های نادر" text="اگر از هر ۱۰۰۰۰ نفر یک نفر بیمار مغلوب باشد، q = ۰٫۰۱ است و حدود ۲٪ جمعیت ناقل‌اند؛ یعنی ناقل‌ها بسیار بیشتر از بیمارها هستند، چون الل در افراد سالم پنهان می‌ماند.">
+        <circle cx="34" cy="38" r="9" fill="#ff6b6b" /><circle cx="60" cy="38" r="9" fill="#ffd166" /><circle cx="86" cy="38" r="9" fill="#ffd166" /><circle cx="112" cy="38" r="5" fill="#5bb8ff" />
+      </VlabEverydayCard>
+    </div>
+  );
+}
+
+/* ===== شیمی) آرایش الکترونی ===== */
+const VLAB_ORB = [["1s", 1], ["2s", 1], ["2p", 3], ["3s", 1], ["3p", 3], ["4s", 1], ["3d", 5], ["4p", 3]];
+const VLAB_SYM = ["H", "He", "Li", "Be", "B", "C", "N", "O", "F", "Ne", "Na", "Mg", "Al", "Si", "P", "S", "Cl", "Ar", "K", "Ca", "Sc", "Ti", "V", "Cr", "Mn", "Fe", "Co", "Ni", "Cu", "Zn", "Ga", "Ge", "As", "Se", "Br", "Kr"];
+function vlabConfig(Z) {
+  const e = {}; let left = Z;
+  VLAB_ORB.forEach(([n, b]) => { const c = Math.min(left, 2 * b); e[n] = c; left -= c; });
+  if (Z === 24) { e["4s"] = 1; e["3d"] = 5; }
+  if (Z === 29) { e["4s"] = 1; e["3d"] = 10; }
+  return e;
+}
+function VlabElectronConfigExperiment({ onReading }) {
+  const [Z, setZ] = useState(8);
+  const e = vlabConfig(Z);
+  const sup = (n) => String(n).replace(/\d/g, (d) => "⁰¹²³⁴⁵⁶⁷⁸⁹"[d]);
+  const order = ["1s", "2s", "2p", "3s", "3p", "4s", "3d", "4p"];
+  const str = order.filter((n) => e[n] > 0).map((n) => n + sup(e[n])).join(" ");
+  const shells = {}; order.forEach((n) => { shells[n[0]] = (shells[n[0]] || 0) + e[n]; });
+  const maxN = Math.max(...Object.keys(shells).filter((k) => shells[k] > 0).map(Number));
+  const val = Object.keys(shells).filter((k) => +k === maxN).reduce((a, k) => a + shells[k], 0);
+  const rows = [["4p", "3d", "4s"], ["3p", "3s"], ["2p", "2s"], ["1s"]];
+  const lvY = { "1s": 160, "2s": 130, "2p": 130, "3s": 100, "3p": 100, "3d": 70, "4s": 40, "4p": 40 };
+  const xs = { "1s": 140, "2s": 70, "2p": 160, "3s": 70, "3p": 160, "4s": 50, "3d": 130, "4p": 240 };
+  const box = (n, i, k) => { const c = e[n], b = VLAB_ORB.find((o) => o[0] === n)[1]; const up = c >= i + 1, dn = c > b + i; return (<g key={n + i}><rect x={xs[n] + i * 22 - (n === "3d" ? 0 : 0)} y={lvY[n] - 14} width="20" height="22" fill="none" stroke={up ? "#ffd166" : "#4a5578"} strokeWidth="1.5" rx="2" />{up && <text x={xs[n] + i * 22 + 7} y={lvY[n] + 2} fontSize="12" fill="#5bb8ff" textAnchor="middle">↑</text>}{dn && <text x={xs[n] + i * 22 + 13} y={lvY[n] + 2} fontSize="12" fill="#ff9d1c" textAnchor="middle">↓</text>}</g>); };
+  return (
+    <div className="vlab-exp">
+      <svg viewBox="0 0 320 188" className="vlab-svg" style={{ background: "#03060f", borderRadius: "10px" }}>
+        {order.map((n) => (<g key={n}>{Array.from({ length: VLAB_ORB.find((o) => o[0] === n)[1] }, (_, i) => box(n, i))}<text x={xs[n] - 6} y={lvY[n] + 2} fontSize="8" fill="#9aa6c8" textAnchor="end" direction="ltr">{n}</text></g>))}
+        <text x="280" y="140" fontSize="26" fontWeight="700" fill="#ffd166" textAnchor="middle" direction="ltr">{VLAB_SYM[Z - 1]}</text>
+        <text x="280" y="156" fontSize="8" fill="#9aa6c8" textAnchor="middle">Z = {vlabFaN(Z)}</text>
+        <text x="160" y="184" fontSize="9" fill="#cfd6ea" textAnchor="middle" direction="ltr">{str}</text>
+      </svg>
+      <div className="vlab-readout" style={{ textAlign: "center" }}>الکترون‌های لایه‌ی ظرفیت: <b>{vlabFaN(val)}</b>{Z === 24 || Z === 29 ? " · استثنا: نیم‌پر و پر بودن d پایدارتر است" : ""}</div>
+      <div className="vlab-controls"><div className="vlab-ctrl-col" style={{ flex: 1 }}>
+        <label className="vlab-ctrl-label">عدد اتمی: {vlabFaN(Z)} ({VLAB_SYM[Z - 1]})</label><VlabRange min="1" max="36" step="1" value={Z} onChange={(ev) => setZ(+ev.target.value)} />
+        <div className="vlab-btn-row">{[[2, "He"], [10, "Ne"], [18, "Ar"], [24, "Cr"], [29, "Cu"]].map(([z, n]) => (<button key={z} className="vlab-btn" style={{ direction: "ltr" }} onClick={() => setZ(z)}>{n}</button>))}</div>
+      </div></div>
+      <div className="vlab-readout">{`الکترون‌ها به ترتیب افزایش انرژی زیرلایه‌ها جا می‌گیرند: 1s، 2s، 2p، 3s، 3p، 4s، 3d، 4p. (توجه: 4s قبل از 3d پر می‌شود). در یک زیرلایه ابتدا هر اوربیتال یک الکترون (↑) می‌گیرد و بعد جفت می‌شود (قاعده‌ی هوند).`}</div>
+      <VlabFormulaCheck title="ظرفیت زیرلایه‌ها" fa="ظرفیت = ۲ × تعداد اوربیتال" en="s:2, p:6, d:10" legend="s یک اوربیتال، p سه، d پنج اوربیتال دارد." subst="۲ × ۵ (زیرلایه‌ی d)" answer={10} unit="الکترون" decimals={0} />
+      <VlabEverydayCard title="رنگ و مغناطیس" text="آهن و کبالت الکترون‌های جفت‌نشده‌ی d دارند و به آهنربا می‌چسبند. آرایش الکترونی دلیل رنگ‌های زیبای ترکیب‌های فلزات واسطه و رفتار مغناطیسی آن‌هاست.">
+        <path d="M26,50 v-26 a14,14 0 0 1 28,0 v26" fill="none" stroke="#d83a3a" strokeWidth="9" /><rect x="22" y="48" width="10" height="8" fill="#ddd" /><rect x="48" y="48" width="10" height="8" fill="#ddd" />
+      </VlabEverydayCard>
+    </div>
+  );
+}
+
+/* ===== شیمی) قانون هس ===== */
+const VLAB_HESS = {
+  co2: { name: "کربن → CO₂", a: "C + ½O₂ → CO", b: "CO + ½O₂ → CO₂", A: -110.5, B: -283.0, s: "C", m: "CO", e: "CO₂" },
+  h2o: { name: "هیدروژن → آب", a: "H₂ + ½O₂ → H₂O(g)", b: "H₂O(g) → H₂O(l)", A: -241.8, B: -44.0, s: "H₂", m: "H₂O(g)", e: "H₂O(l)" },
+  so3: { name: "گوگرد → SO₃", a: "S + O₂ → SO₂", b: "SO₂ + ½O₂ → SO₃", A: -296.8, B: -98.9, s: "S", m: "SO₂", e: "SO₃" },
+};
+function VlabHessExperiment({ onReading }) {
+  const [rk, setRk] = useState("co2");
+  const [n, setN] = useState(1);
+  const [route, setRoute] = useState(2);
+  const R = VLAB_HESS[rk];
+  const tot = (R.A + R.B) * n;
+  const fa = (v, d = 1) => vlabMFa(v, d);
+  const top = 30, sc = 120 / Math.abs(R.A + R.B);
+  const yA = top + 0, yM = top - R.A * sc * 0 + Math.abs(R.A) * sc, yE = top + Math.abs(R.A + R.B) * sc;
+  return (
+    <div className="vlab-exp">
+      <svg viewBox="0 0 320 190" className="vlab-svg" style={{ background: "#03060f", borderRadius: "10px" }}>
+        <line x1="70" y1={yA} x2="150" y2={yA} stroke="#ffd166" strokeWidth="3" /><text x="60" y={yA + 4} fontSize="11" fill="#ffd166" textAnchor="end" direction="ltr">{R.s}</text>
+        {route === 2 && <><line x1="170" y1={yM} x2="240" y2={yM} stroke="#5bb8ff" strokeWidth="3" /><text x="250" y={yM + 4} fontSize="11" fill="#5bb8ff" direction="ltr">{R.m}</text>
+          <line x1="130" y1={yA + 4} x2="190" y2={yM - 4} stroke="#ff9d1c" strokeWidth="2" /><text x="130" y={(yA + yM) / 2 + 12} fontSize="9" fill="#ff9d1c" textAnchor="middle">ΔH₁ = {fa(R.A * n)}</text>
+          <line x1="215" y1={yM + 4} x2="215" y2={yE - 4} stroke="#ff6b6b" strokeWidth="2" /><text x="268" y={(yM + yE) / 2 + 6} fontSize="9" fill="#ff6b6b" textAnchor="middle">ΔH₂ = {fa(R.B * n)}</text></>}
+        <line x1="100" y1={yE} x2="260" y2={yE} stroke="#5de0a0" strokeWidth="3" /><text x="276" y={yE + 4} fontSize="11" fill="#5de0a0" direction="ltr">{R.e}</text>
+        {route === 1 && <><line x1="95" y1={yA + 4} x2="95" y2={yE - 4} stroke="#5de0a0" strokeWidth="2.4" strokeDasharray="5 3" /><text x="60" y={(yA + yE) / 2} fontSize="9" fill="#5de0a0" textAnchor="middle">ΔH = {fa(tot)}</text></>}
+        <text x="160" y="186" fontSize="9" fill="#9aa6c8" textAnchor="middle">مسیر مستقیم یا دومرحله‌ای؛ سطح انرژی پایانی یکی است</text>
+      </svg>
+      <div className="vlab-readout" style={{ textAlign: "center" }}>ΔH کل = <b>{fa(tot)}</b> kJ (ثابت، مستقل از مسیر)</div>
+      <div className="vlab-controls"><div className="vlab-ctrl-col" style={{ flex: 1 }}>
+        <div className="vlab-btn-row">{Object.keys(VLAB_HESS).map((k) => (<button key={k} className="vlab-btn" style={rk === k ? { outline: "2px solid #e0a83e" } : null} onClick={() => setRk(k)}>{VLAB_HESS[k].name}</button>))}</div>
+        <div className="vlab-btn-row"><button className="vlab-btn" style={route === 2 ? { outline: "2px solid #e0a83e" } : null} onClick={() => setRoute(2)}>دو مرحله‌ای</button><button className="vlab-btn" style={route === 1 ? { outline: "2px solid #e0a83e" } : null} onClick={() => setRoute(1)}>یک مرحله‌ای</button></div>
+        <label className="vlab-ctrl-label">مقدار واکنش‌دهنده: {vlabFaN(n)} مول</label><VlabRange min="1" max="3" step="1" value={n} onChange={(e) => setN(+e.target.value)} />
+      </div></div>
+      <div className="vlab-readout">{`آنتالپی تابع حالت است؛ یعنی فقط به حالت آغاز و پایان بستگی دارد. پس گرمای واکنشی که اندازه‌گیری مستقیم آن دشوار است (مثل سوختن ناقص کربن) را می‌توان از جمع واکنش‌های دیگر به‌دست آورد. ${R.a}: ${fa(R.A)} kJ؛ ${R.b}: ${fa(R.B)} kJ.`}</div>
+      <VlabFormulaCheck title="جمع مراحل" fa="ΔH = ΔH₁ + ΔH₂" en="Hess law" legend="ضریب مول‌ها را در هر مرحله ضرب کن." subst={`ΔH = ${vlabFaN(n)}×(${fa(R.A)}) + ${vlabFaN(n)}×(${fa(R.B)})`} answer={tot} unit="kJ" decimals={1} />
+      <VlabEverydayCard title="کالری غذا" text="گرمای سوختن غذا را در گرماسنج می‌سنجند؛ بدن قند را در چندین مرحله می‌سوزاند اما مجموع انرژی آزاد‌شده همان مقدار سوختن مستقیم است، طبق قانون هس.">
+        <path d="M40,60 q-18,-4 -16,-24 q6,10 14,6 q-6,-14 6,-30 q4,14 16,22 q8,18 -20,26z" fill="#ff9d1c" />
+      </VlabEverydayCard>
+    </div>
+  );
+}
+
+/* ===== ریاضی) مجانب ===== */
+function VlabAsymptoteExperiment({ onReading }) {
+  const [a, setA] = useState(2);
+  const [b, setB] = useState(1);
+  const [c, setC] = useState(1);
+  const W = 320, H = 176, OX = 160, OY = 88, S = 22;
+  const f = (x) => (a * x + b) / (x - c);
+  const pts = (x0, x1) => { let d = ""; let started = false; for (let i = 0; i <= 120; i++) { const x = x0 + ((x1 - x0) * i) / 120, y = f(x); if (Math.abs(y) > 4.2) { started = false; continue; } d += (started ? "L" : "M") + (OX + x * S).toFixed(1) + "," + (OY - y * S).toFixed(1); started = true; } return d; };
+  const fa = (v) => vlabMFa(v, Number.isInteger(v) ? 0 : 1);
+  const lim = (x) => vlabMFa(f(x), 1);
+  const degenerate = Math.abs(a * c + b) < 1e-9;
+  return (
+    <div className="vlab-exp">
+      <svg viewBox="0 0 320 176" className="vlab-svg" style={{ background: "#03060f", borderRadius: "10px" }}>
+        <line x1="4" y1={OY} x2="316" y2={OY} stroke="#4a5578" /><line x1={OX} y1="4" x2={OX} y2="172" stroke="#4a5578" />
+        <line x1={OX + c * S} y1="4" x2={OX + c * S} y2="172" stroke="#ff6b6b" strokeDasharray="5 3" /><line x1="4" y1={OY - a * S} x2="316" y2={OY - a * S} stroke="#5de0a0" strokeDasharray="5 3" />
+        <path d={pts(-7.2, c - 0.02)} fill="none" stroke="#5bb8ff" strokeWidth="2.4" /><path d={pts(c + 0.02, 7.2)} fill="none" stroke="#5bb8ff" strokeWidth="2.4" />
+        <text x={OX + c * S + 5} y="14" fontSize="9" fill="#ff6b6b" direction="ltr">x = {c}</text><text x="8" y={OY - a * S - 4} fontSize="9" fill="#5de0a0" direction="ltr">y = {a}</text>
+      </svg>
+      <div className="vlab-readout" style={{ textAlign: "center" }}>تابع f(x) = ({vlabFaN(a)}x {b >= 0 ? "+" : "−"} {vlabFaN(Math.abs(b))}) ÷ (x {c >= 0 ? "−" : "+"} {vlabFaN(Math.abs(c))}){degenerate ? " ← ساده می‌شود (مجانب ندارد)" : ""}</div>
+      <div className="vlab-controls"><div className="vlab-ctrl-col" style={{ flex: 1 }}>
+        <label className="vlab-ctrl-label">a (ضریب x در صورت): {vlabFaN(a)}</label><VlabRange min="-3" max="3" step="1" value={a} onChange={(e) => setA(+e.target.value)} />
+        <label className="vlab-ctrl-label">b (عدد ثابت صورت): {vlabFaN(b)}</label><VlabRange min="-4" max="4" step="1" value={b} onChange={(e) => setB(+e.target.value)} />
+        <label className="vlab-ctrl-label">c (ریشه‌ی مخرج): {vlabFaN(c)}</label><VlabRange min="-4" max="4" step="1" value={c} onChange={(e) => setC(+e.target.value)} />
+      </div></div>
+      <div className="vlab-readout">{`مجانب خطی است که نمودار بی‌نهایت به آن نزدیک می‌شود ولی هرگز آن را قطع نمی‌کند (در مجانب قائم) یا فقط در بی‌نهایت به آن می‌رسد (مجانب افقی). x = ${c} را بگذاری مخرج صفر می‌شود، پس مجانب قائم است. وقتی x خیلی بزرگ شود، f(x) به ${a} نزدیک می‌شود؛ f(۱۰۰) = ${lim(100)} و f(۱۰۰۰) = ${lim(1000)}.`}</div>
+      <VlabFormulaCheck title="مجانب افقی" fa="y = ضریب x در صورت ÷ ضریب x در مخرج" en="y = a/1" legend="مخرج x − c است و ضریب x آن ۱ است." subst={`y = ${vlabFaN(a)} ÷ ۱`} answer={a} unit="" decimals={0} />
+      <VlabEverydayCard title="اشباع و سقف" text="سرعت دویدن، رشد یک گیاه یا اثر دارو اغلب مثل مجانب افقی اند: ابتدا سریع زیاد می‌شوند و بعد به یک سقف نزدیک می‌شوند که هرگز از آن رد نمی‌شود.">
+        <path d="M14,64 Q30,18 112,14" fill="none" stroke="#2e7bd5" strokeWidth="2.4" /><line x1="10" y1="14" x2="116" y2="14" stroke="#d83a3a" strokeDasharray="4 3" />
+      </VlabEverydayCard>
+    </div>
+  );
+}
+
+/* ===== ریاضی) قدر مطلق روی محور ===== */
+function VlabAbsoluteExperiment({ onReading }) {
+  const [a, setA] = useState(2);
+  const [r, setR] = useState(3);
+  const [x, setX] = useState(-3);
+  const [mode, setMode] = useState("eq");
+  const X = (v) => 20 + ((v + 10) / 20) * 280;
+  const d = Math.abs(x - a);
+  const lo = a - r, hi = a + r;
+  const fa = (v) => vlabFaN(v).replace("-", "−");
+  const inset = mode === "lt" ? [[Math.max(-10, lo), Math.min(10, hi)]] : mode === "gt" ? [[-10, Math.max(-10, lo)], [Math.min(10, hi), 10]] : [];
+  const text = mode === "eq" ? `|x − ${a >= 0 ? a : "(" + a + ")"}| = ${r} ⇒ x = ${lo} یا x = ${hi}` : mode === "lt" ? `|x − ${a >= 0 ? a : "(" + a + ")"}| < ${r} ⇒ ${lo} < x < ${hi}` : `|x − ${a >= 0 ? a : "(" + a + ")"}| > ${r} ⇒ x < ${lo} یا x > ${hi}`;
+  return (
+    <div className="vlab-exp">
+      <svg viewBox="0 0 320 150" className="vlab-svg" style={{ background: "#03060f", borderRadius: "10px" }}>
+        <line x1="20" y1="80" x2="300" y2="80" stroke="#6a7aa8" strokeWidth="1.6" />
+        {Array.from({ length: 21 }, (_, i) => i - 10).map((v) => (<g key={v}><line x1={X(v)} y1="76" x2={X(v)} y2="84" stroke="#6a7aa8" /><text x={X(v)} y="96" fontSize="7" fill="#9aa6c8" textAnchor="middle" direction="ltr">{v}</text></g>))}
+        {inset.map(([p, q], i) => (<line key={i} x1={X(p)} y1="80" x2={X(q)} y2="80" stroke="#5de0a0" strokeWidth="6" strokeLinecap="round" opacity="0.8" />))}
+        {mode === "eq" && [lo, hi].map((v, i) => (<circle key={i} cx={X(v)} cy="80" r="5" fill="#5de0a0" stroke="#fff" />))}
+        {mode !== "eq" && [lo, hi].map((v, i) => (<circle key={i} cx={X(v)} cy="80" r="5" fill="#03060f" stroke="#5de0a0" strokeWidth="2" />))}
+        <circle cx={X(a)} cy="80" r="5" fill="#ffd166" /><text x={X(a)} y="64" fontSize="9" fill="#ffd166" textAnchor="middle" direction="ltr">a = {a}</text>
+        <circle cx={X(x)} cy="80" r="5" fill="#ff6b6b" stroke="#fff" /><text x={X(x)} y="116" fontSize="9" fill="#ff6b6b" textAnchor="middle" direction="ltr">x = {x}</text>
+        <path d={`M${X(Math.min(a, x))},104 H${X(Math.max(a, x))}`} stroke="#ff9d1c" strokeWidth="2" /><text x={(X(a) + X(x)) / 2} y="134" fontSize="9" fill="#ff9d1c" textAnchor="middle">فاصله = {vlabFaN(d)}</text>
+      </svg>
+      <div className="vlab-readout" style={{ textAlign: "center" }} dir="ltr">{text}</div>
+      <div className="vlab-controls"><div className="vlab-ctrl-col" style={{ flex: 1 }}>
+        <div className="vlab-btn-row">{[["eq", "= (مساوی)"], ["lt", "< (کوچک‌تر)"], ["gt", "> (بزرگ‌تر)"]].map(([k, n]) => (<button key={k} className="vlab-btn" style={mode === k ? { outline: "2px solid #e0a83e" } : null} onClick={() => setMode(k)}>{n}</button>))}</div>
+        <label className="vlab-ctrl-label">مرکز a: {fa(a)}</label><VlabRange min="-6" max="6" step="1" value={a} onChange={(e) => setA(+e.target.value)} />
+        <label className="vlab-ctrl-label">شعاع r: {vlabFaN(r)}</label><VlabRange min="1" max="6" step="1" value={r} onChange={(e) => setR(+e.target.value)} />
+        <label className="vlab-ctrl-label">نقطه‌ی x: {fa(x)}</label><VlabRange min="-10" max="10" step="1" value={x} onChange={(e) => setX(+e.target.value)} />
+      </div></div>
+      <div className="vlab-readout">{`|x − a| یعنی فاصله‌ی x تا a روی محور. پس |x − a| = r یعنی دو نقطه به فاصله‌ی r از a (a − r و a + r)، |x − a| < r یعنی نقطه‌هایی نزدیک‌تر از r (بازه‌ی میان آن دو) و |x − a| > r یعنی دورتر از r (بیرون آن دو).`}</div>
+      <VlabFormulaCheck title="فاصله‌ی x تا a" fa="|x − a|" en="|x−a|" legend="فاصله هیچ‌گاه منفی نیست." subst={`|${fa(x)} − (${fa(a)})|`} answer={d} unit="" decimals={0} />
+      <VlabEverydayCard title="خطای مجاز در ساخت" text="مهندس می‌گوید طول قطعه ۵۰ میلی‌متر با خطای ۰٫۲ مجاز است؛ یعنی |x − ۵۰| ≤ ۰٫۲ و قطعه‌ی بین ۴۹٫۸ تا ۵۰٫۲ سالم است.">
+        <line x1="14" y1="40" x2="112" y2="40" stroke="#7d8bb5" strokeWidth="2" /><line x1="50" y1="30" x2="50" y2="50" stroke="#d83a3a" strokeWidth="3" /><line x1="76" y1="30" x2="76" y2="50" stroke="#d83a3a" strokeWidth="3" />
+      </VlabEverydayCard>
+    </div>
+  );
+}
+
 const VLAB_COMPONENTS = {
   lever: VlabLeverExperiment,
   pendulum: VlabPendulumExperiment,
@@ -35455,6 +35736,12 @@ const VLAB_COMPONENTS = {
   "caliper-micrometer": VlabCaliperExperiment,
   "calorimeter": VlabCalorimeterExperiment,
   "digestion-tube": VlabDigestionExperiment,
+  "bernoulli": VlabBernoulliExperiment,
+  "hardy-weinberg": VlabHardyWeinbergExperiment,
+  "electron-config": VlabElectronConfigExperiment,
+  "hess-law": VlabHessExperiment,
+  "asymptote": VlabAsymptoteExperiment,
+  "absolute-value": VlabAbsoluteExperiment,
 };
 
 function StudentVirtualLabView({ onBack, grade, studentCode, schoolCode }) {

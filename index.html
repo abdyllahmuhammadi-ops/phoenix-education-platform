@@ -23890,6 +23890,60 @@ const VLAB_EXPERIMENTS = [
     intro: "سختی، رنگ خط‌خش و جلای کانی‌ها را بسنج و آن‌ها را بشناس.",
     tools: ["نمونه‌ی کانی", "خراش با ابزار", "خط‌خش"],
   },
+  {
+    id: "modular-clock",
+    subject: "ریاضی",
+    level: "متوسطه",
+    title: "بخش‌پذیری و باقی‌مانده (ساعت هم‌نهشتی)",
+    icon: "🕒",
+    intro: "عددها را روی ساعت چندخانه‌ای بگذار و باقی‌مانده و هم‌نهشتی را ببین.",
+    tools: ["ساعت", "باقی‌مانده", "هم‌نهشتی"],
+  },
+  {
+    id: "matrix-transform",
+    subject: "ریاضی",
+    level: "متوسطه",
+    title: "ماتریس و تبدیل صفحه",
+    icon: "🔲",
+    intro: "درایه‌های ماتریس ۲×۲ را عوض کن و ببین شکل می‌چرخد، می‌کشد یا وارونه می‌شود.",
+    tools: ["ماتریس ۲×۲", "شکل تبدیل‌شده", "دترمینان"],
+  },
+  {
+    id: "wave-interference",
+    subject: "فیزیک",
+    level: "متوسطه",
+    title: "پراش و تداخل موج",
+    icon: "🌊",
+    intro: "دو چشمه‌ی موج را تنظیم کن و تداخل سازنده و ویرانگر را روی صفحه ببین.",
+    tools: ["دو چشمه", "الگوی موج", "اختلاف راه"],
+  },
+  {
+    id: "dc-motor",
+    subject: "فیزیک",
+    level: "متوسطه",
+    title: "موتور الکتریکی ساده",
+    icon: "⚙️",
+    intro: "جریان، میدان و دور پیچه را عوض کن و گشتاور موتور را ببین.",
+    tools: ["آهنربا", "پیچه", "گشتاور"],
+  },
+  {
+    id: "dna-replication",
+    subject: "زیست‌شناسی",
+    level: "متوسطه",
+    title: "همانندسازی DNA",
+    icon: "🧬",
+    intro: "جفت‌شدن بازهای مکمل را قدم‌به‌قدم ببین و نیمه‌حفاظتی‌بودن همانندسازی را بفهم.",
+    tools: ["رشته‌ی الگو", "بازهای مکمل", "دورهای همانندسازی"],
+  },
+  {
+    id: "transcription",
+    subject: "زیست‌شناسی",
+    level: "متوسطه",
+    title: "رونویسی و ساخت mRNA",
+    icon: "📜",
+    intro: "از روی رشته‌ی الگوی DNA، mRNA بساز و ببین کدون‌ها چه آمینواسیدی را می‌آورند.",
+    tools: ["DNA", "mRNA", "کدون‌ها"],
+  },
 ];
 
 function vlabClamp(v, min, max) {
@@ -36186,6 +36240,240 @@ function VlabMineralExperiment({ onReading }) {
   );
 }
 
+/* ===== ریاضی) بخش‌پذیری و باقی‌مانده (ساعت هم‌نهشتی) ===== */
+function VlabModularClockExperiment({ onReading }) {
+  const [m, setM] = useState(7);
+  const [a, setA] = useState(23);
+  const [b, setB] = useState(9);
+  const q = Math.floor(a / m), r = a % m, rb = b % m;
+  const rad = (i) => (i / m) * 2 * Math.PI - Math.PI / 2;
+  const CX = 100, CY = 88, R = 64;
+  const pt = (i, rr = R) => [CX + rr * Math.cos(rad(i)), CY + rr * Math.sin(rad(i))];
+  const cong = r === rb;
+  const fa = (v) => vlabFaN(v);
+  const sum = (a + b) % m;
+  return (
+    <div className="vlab-exp">
+      <svg viewBox="0 0 320 176" className="vlab-svg" style={{ background: "#03060f", borderRadius: "10px" }}>
+        <circle cx={CX} cy={CY} r={R + 10} fill="none" stroke="#4a5578" />
+        {Array.from({ length: m }, (_, i) => { const p = pt(i); return (<g key={i}><circle cx={p[0]} cy={p[1]} r="11" fill={i === r ? "#ffd166" : i === rb ? "#5bb8ff" : "#1c2644"} stroke="#6a7aa8" /><text x={p[0]} y={p[1] + 4} fontSize="11" fill={i === r ? "#03060f" : "#fff"} textAnchor="middle">{fa(i)}</text></g>); })}
+        <line x1={CX} y1={CY} x2={pt(r, R - 16)[0]} y2={pt(r, R - 16)[1]} stroke="#ffd166" strokeWidth="3" /><circle cx={CX} cy={CY} r="4" fill="#ffd166" />
+        <text x="250" y="40" fontSize="11" fill="#ffd166" textAnchor="middle">{fa(a)} = {fa(m)} × {fa(q)} + {fa(r)}</text>
+        <text x="250" y="62" fontSize="10" fill="#cfd6ea" textAnchor="middle">خارج‌قسمت {fa(q)}، باقی‌مانده {fa(r)}</text>
+        <text x="250" y="96" fontSize="10" fill="#5bb8ff" textAnchor="middle">{fa(b)} ← باقی‌مانده {fa(rb)}</text>
+        <text x="250" y="124" fontSize="11" fontWeight="700" fill={cong ? "#5de0a0" : "#ff9d9d"} textAnchor="middle">{cong ? "هم‌نهشت‌اند ✓" : "هم‌نهشت نیستند"}</text>
+      </svg>
+      <div className="vlab-readout" style={{ textAlign: "center" }}>روی ساعتِ {fa(m)}ساعته: {fa(a)} می‌شود <b>{fa(r)}</b> · مجموع {fa(a)} + {fa(b)} روی ساعت می‌شود {fa(sum)}</div>
+      <div className="vlab-controls"><div className="vlab-ctrl-col" style={{ flex: 1 }}>
+        <label className="vlab-ctrl-label">تعداد خانه‌های ساعت (مقسوم‌علیه): {fa(m)}</label><VlabRange min="2" max="12" step="1" value={m} onChange={(e) => setM(+e.target.value)} />
+        <label className="vlab-ctrl-label">عدد اول a: {fa(a)}</label><VlabRange min="0" max="100" step="1" value={a} onChange={(e) => setA(+e.target.value)} />
+        <label className="vlab-ctrl-label">عدد دوم b: {fa(b)}</label><VlabRange min="0" max="100" step="1" value={b} onChange={(e) => setB(+e.target.value)} />
+      </div></div>
+      <div className="vlab-readout">{`هر عدد را بر m تقسیم کن؛ باقی‌مانده همان خانه‌ی ساعت است. دو عدد وقتی روی یک خانه می‌افتند هم‌نهشت‌اند (a ≡ b)، یعنی تفاضلشان بر m بخش‌پذیر است. مثلاً اگر ساعت ۲ است، پس از ۱۰۰ ساعت چه ساعتی است؟ باقی‌مانده‌ی تقسیم بر ۱۲ را بساب.`}</div>
+      <VlabFormulaCheck title="باقی‌مانده" fa="a = m × q + r،  ۰ ≤ r < m" en="r = a mod m" legend="q خارج‌قسمت است." subst={`${fa(a)} − ${fa(m)} × ${fa(q)}`} answer={r} unit="" decimals={0} />
+      <VlabEverydayCard title="ساعت و روزهای هفته" text="۳۰ روز بعد از شنبه چه روزی است؟ چون هفته ۷ روز است، باقی‌مانده‌ی ۳۰ بر ۷ برابر ۲ است؛ یعنی دو روز جلوتر: دوشنبه. کدهای ملی و شماره‌ی کارت هم با باقی‌مانده بررسی می‌شوند.">
+        <circle cx="60" cy="38" r="28" fill="#d8dde8" stroke="#7d8bb5" strokeWidth="3" /><path d="M60,38 V20 M60,38 l14,8" stroke="#333" strokeWidth="3" />
+      </VlabEverydayCard>
+    </div>
+  );
+}
+
+/* ===== ریاضی) ماتریس و تبدیل صفحه ===== */
+function VlabMatrixTransformExperiment({ onReading }) {
+  const [M, setM] = useState([1, 0, 0, 1]);
+  const [a, b, c, d] = M;
+  const set = (i) => (e) => { const n = [...M]; n[i] = +e.target.value; setM(n); };
+  const S = 38, OX = 160, OY = 94;
+  const T = (p) => [a * p[0] + b * p[1], c * p[0] + d * p[1]];
+  const sc = (p) => [OX + p[0] * S, OY - p[1] * S];
+  const sq = [[0, 0], [1, 0], [1, 1], [0, 1]], F = [[0, 0], [0.4, 0], [0.4, 1.4], [0.9, 1.4], [0.9, 1.8], [0.4, 1.8], [0.4, 2.2], [1.2, 2.2], [1.2, 2.6], [0, 2.6]].map((p) => [p[0] * 0.5, p[1] * 0.5]);
+  const poly = (pts) => pts.map((p) => sc(p).join(",")).join(" ");
+  const det = a * d - b * c;
+  const px = 1, py = 2;
+  const img = T([px, py]);
+  const fa = (v) => vlabMFa(v, Number.isInteger(v) ? 0 : 1);
+  const presets = [["همانی", [1, 0, 0, 1]], ["دوران ۹۰°", [0, -1, 1, 0]], ["بازتاب (محور x)", [1, 0, 0, -1]], ["بزرگ‌کردن ×۲", [2, 0, 0, 2]], ["برش", [1, 1, 0, 1]]];
+  return (
+    <div className="vlab-exp">
+      <svg viewBox="0 0 320 188" className="vlab-svg" style={{ background: "#03060f", borderRadius: "10px" }}>
+        {Array.from({ length: 9 }, (_, i) => i - 4).map((i) => (<g key={i}><line x1={OX + i * S} y1="4" x2={OX + i * S} y2="184" stroke="#161f3a" /><line x1="4" y1={OY - i * S} x2="316" y2={OY - i * S} stroke="#161f3a" /></g>))}
+        <line x1="4" y1={OY} x2="316" y2={OY} stroke="#4a5578" /><line x1={OX} y1="4" x2={OX} y2="184" stroke="#4a5578" />
+        <polygon points={poly(sq)} fill="#5bb8ff" fillOpacity="0.15" stroke="#5bb8ff" strokeDasharray="3 3" /><polygon points={poly(F)} fill="none" stroke="#5bb8ff" strokeWidth="1.4" strokeDasharray="3 3" />
+        <polygon points={poly(sq.map(T))} fill="#ffd166" fillOpacity="0.25" stroke="#ffd166" strokeWidth="2" /><polygon points={poly(F.map(T))} fill="#ff9d1c" fillOpacity="0.6" stroke="#ff9d1c" strokeWidth="1.6" />
+        <line x1={OX} y1={OY} x2={sc(T([1, 0]))[0]} y2={sc(T([1, 0]))[1]} stroke="#5de0a0" strokeWidth="2.6" /><line x1={OX} y1={OY} x2={sc(T([0, 1]))[0]} y2={sc(T([0, 1]))[1]} stroke="#ff6b6b" strokeWidth="2.6" />
+        <circle cx={sc(img)[0]} cy={sc(img)[1]} r="4" fill="#fff" />
+      </svg>
+      <div className="vlab-readout" style={{ textAlign: "center" }}>مساحت مربع واحد × <b>{fa(Math.abs(det))}</b>{det < 0 ? " (جهت وارونه شد)" : ""} · دترمینان = {fa(det)} · نقطه‌ی (۱، ۲) ← ({fa(img[0])}، {fa(img[1])})</div>
+      <div className="vlab-controls"><div className="vlab-ctrl-col" style={{ flex: 1 }}>
+        <div className="vlab-btn-row">{presets.map(([n, v]) => (<button key={n} className="vlab-btn" onClick={() => setM(v)}>{n}</button>))}</div>
+        {[["a", 0], ["b", 1], ["c", 2], ["d", 3]].map(([n, i]) => (<React.Fragment key={n}><label className="vlab-ctrl-label" style={{ direction: "ltr" }}>{n}: {fa(M[i])}</label><VlabRange min="-2" max="2" step="0.5" value={M[i]} onChange={set(i)} /></React.Fragment>))}
+      </div></div>
+      <div className="vlab-readout">{`ماتریس ۲×۲ هر نقطه‌ی صفحه را به نقطه‌ی دیگری می‌برد. ستون اول (a، c) محل رفتن بردار پایه‌ی افقی (سبز) و ستون دوم (b، d) محل رفتن بردار پایه‌ی عمودی (قرمز) است؛ همه‌ی شکل با همین دو بردار می‌چرخد، می‌کشد یا وارونه می‌شود. دترمینان نسبت تغییر مساحت است.`}</div>
+      <VlabFormulaCheck title="دترمینان" fa="det = a·d − b·c" en="det = ad − bc" legend="مقدار مطلق آن ضریب تغییر مساحت است." subst={`${fa(a)}×${fa(d)} − ${fa(b)}×${fa(c)}`} answer={det} unit="" decimals={1} />
+      <VlabFormulaCheck title="تصویر نقطه‌ی (۱، ۲): مختص x" fa="x′ = a·x + b·y" en="x' = ax + by" legend="" subst={`${fa(a)}×۱ + ${fa(b)}×۲`} answer={img[0]} unit="" decimals={1} />
+      <VlabEverydayCard title="گرافیک و بازی" text="هر بار که عکسی را در گوشی می‌چرخانی یا بزرگ می‌کنی، رایانه ماتریسی را روی همه‌ی نقطه‌های عکس اعمال می‌کند. بازی‌های سه‌بعدی میلیون‌ها بار در ثانیه همین کار را می‌کنند.">
+        <rect x="20" y="16" width="26" height="26" fill="#2e7bd5" opacity="0.5" /><path d="M60,42 L96,30 L84,58 Z" fill="#e0a83e" />
+      </VlabEverydayCard>
+    </div>
+  );
+}
+
+/* ===== فیزیک) تداخل موج دو چشمه ===== */
+function VlabInterferenceExperiment({ onReading }) {
+  const [lam, setLam] = useState(30);
+  const [dd, setDd] = useState(90);
+  const [py, setPy] = useState(40);
+  const k = (2 * Math.PI) / lam;
+  const X1 = 40, Y1 = 94 - dd / 2, Y2 = 94 + dd / 2;
+  const cells = [];
+  for (let i = 0; i < 70; i++) for (let j = 0; j < 45; j++) { const x = 40 + i * 4, y = 4 + j * 4; const r1 = Math.hypot(x - X1, y - Y1), r2 = Math.hypot(x - X1, y - Y2); const v = (Math.cos(k * r1) + Math.cos(k * r2)) / 2; cells.push(<rect key={i + "-" + j} x={x} y={y} width="4.2" height="4.2" fill={v > 0 ? "#5bb8ff" : "#ff6b6b"} opacity={Math.abs(v) * 0.85 + 0.05} />); }
+  const P = [300, 94 - 80 + (py / 100) * 160];
+  const r1 = Math.hypot(P[0] - X1, P[1] - Y1), r2 = Math.hypot(P[0] - X1, P[1] - Y2);
+  const delta = Math.abs(r1 - r2), n = delta / lam;
+  const near = Math.abs(n - Math.round(n)), nearH = Math.abs(n - Math.floor(n) - 0.5);
+  const kind = near < 0.12 ? "سازنده (روشن)" : nearH < 0.12 ? "ویرانگر (تاریک)" : "میانه";
+  const fa = (v, d = 1) => vlabMFa(v, d);
+  return (
+    <div className="vlab-exp">
+      <svg viewBox="0 0 320 188" className="vlab-svg" style={{ background: "#03060f", borderRadius: "10px" }}>
+        {cells}
+        <circle cx={X1} cy={Y1} r="5" fill="#ffd166" stroke="#fff" /><circle cx={X1} cy={Y2} r="5" fill="#ffd166" stroke="#fff" />
+        <line x1={X1} y1={Y1} x2={P[0]} y2={P[1]} stroke="#fff" strokeWidth="0.8" strokeDasharray="3 2" /><line x1={X1} y1={Y2} x2={P[0]} y2={P[1]} stroke="#fff" strokeWidth="0.8" strokeDasharray="3 2" />
+        <circle cx={P[0]} cy={P[1]} r="5" fill="#5de0a0" stroke="#fff" />
+      </svg>
+      <div className="vlab-readout" style={{ textAlign: "center" }}>اختلاف راه Δ = {fa(delta)} = <b>{fa(n, 2)}</b> λ ← تداخل <b>{kind}</b></div>
+      <div className="vlab-controls"><div className="vlab-ctrl-col" style={{ flex: 1 }}>
+        <label className="vlab-ctrl-label">طول موج: {vlabFaN(lam)}</label><VlabRange min="15" max="50" step="1" value={lam} onChange={(e) => setLam(+e.target.value)} />
+        <label className="vlab-ctrl-label">فاصله‌ی دو چشمه: {vlabFaN(dd)}</label><VlabRange min="30" max="140" step="5" value={dd} onChange={(e) => setDd(+e.target.value)} />
+        <label className="vlab-ctrl-label">جای نقطه‌ی سبز روی پرده</label><VlabRange min="0" max="100" step="1" value={py} onChange={(e) => setPy(+e.target.value)} />
+      </div></div>
+      <div className="vlab-readout">{`دو موج هم‌فاز که به هم می‌رسند جمع می‌شوند: اگر اختلاف راهشان مضرب درست طول موج باشد، قله بر قله می‌افتد و تقویت می‌شوند (روشن)؛ اگر مضرب نیم‌صحیح باشد، قله بر دره می‌افتد و یکدیگر را خنثی می‌کنند (تاریک). فاصله‌ی چشمه‌ها هرچه بیشتر یا طول موج کمتر باشد، خط‌های روشن بیشتر می‌شوند.`}</div>
+      <VlabFormulaCheck title="تداخل سازنده" fa="Δ = m·λ  (m = ۰، ۱، ۲، …)" en="path difference = mλ" legend="اگر Δ ÷ λ عدد درست شد تداخل سازنده است." subst={`Δ ÷ λ = ${fa(delta)} ÷ ${vlabFaN(lam)}`} answer={n} unit="" decimals={2} />
+      <VlabEverydayCard title="رنگ حباب صابون و ضبط صدا" text="رنگ‌های حباب صابون از تداخل نور بازتابیده از دو سطح لایه‌ی نازک می‌آید. هدفون‌های حذف نویز صدای مخالف نویز می‌سازند تا ویرانگر شود و نویز را خاموش کند.">
+        <circle cx="60" cy="38" r="26" fill="none" stroke="#cf9bff" strokeWidth="2" /><circle cx="60" cy="38" r="20" fill="none" stroke="#5de0a0" strokeWidth="2" />
+      </VlabEverydayCard>
+    </div>
+  );
+}
+
+/* ===== فیزیک) موتور الکتریکی ساده ===== */
+function VlabDcMotorExperiment({ onReading }) {
+  const [N, setN] = useState(50);
+  const [B, setB] = useState(0.4);
+  const [I, setI] = useState(2);
+  const [ph, setPh] = useState(30);
+  const rad = (d) => (d * Math.PI) / 180;
+  const A = 0.002;
+  const cosv = Math.cos(rad(ph));
+  const tau = N * B * I * A * Math.abs(cosv);
+  const maxTau = N * B * I * A;
+  const dir = cosv >= 0 ? 1 : -1;
+  const CX = 160, CY = 86, L = 44;
+  const p1 = [CX - L * Math.cos(rad(ph - 90 + 90)), CY];
+  const x1 = CX + L * Math.sin(rad(ph)), y1 = CY - L * Math.cos(rad(ph)) * 0.0;
+  const ax = L * Math.cos(rad(ph)), ay = L * Math.sin(rad(ph));
+  const ax2 = CX + ax, ay2 = CY - ay, bx2 = CX - ax, by2 = CY + ay;
+  const fa = (v, d = 2) => vlabMFa(v, d);
+  return (
+    <div className="vlab-exp">
+      <svg viewBox="0 0 320 180" className="vlab-svg" style={{ background: "#03060f", borderRadius: "10px" }}>
+        <rect x="10" y="40" width="40" height="92" fill="#d83a3a" opacity="0.8" /><text x="30" y="92" fontSize="14" fill="#fff" textAnchor="middle">N</text>
+        <rect x="270" y="40" width="40" height="92" fill="#2e7bd5" opacity="0.8" /><text x="290" y="92" fontSize="14" fill="#fff" textAnchor="middle">S</text>
+        {[56, 76, 96, 116].map((y) => (<line key={y} x1="56" y1={y} x2="264" y2={y} stroke="#4a5578" strokeDasharray="4 4" />))}
+        <line x1={bx2} y1={by2} x2={ax2} y2={ay2} stroke="#ffd166" strokeWidth="6" strokeLinecap="round" />
+        <circle cx={CX} cy={CY} r="4" fill="#9aa6c8" />
+        <line x1={ax2} y1={ay2} x2={ax2} y2={ay2 - (I * 6 + 6) * dir} stroke="#5de0a0" strokeWidth="3" /><text x={ax2 + 10} y={ay2 - 8} fontSize="8" fill="#5de0a0">F</text>
+        <line x1={bx2} y1={by2} x2={bx2} y2={by2 + (I * 6 + 6) * dir} stroke="#5de0a0" strokeWidth="3" /><text x={bx2 - 10} y={by2 + 12} fontSize="8" fill="#5de0a0">F</text>
+        <text x="160" y="170" fontSize="9" fill="#9aa6c8" textAnchor="middle">نمای کنار از پیچه (خط زرد)</text>
+        <text x="160" y="20" fontSize="10" fill="#ffd166" textAnchor="middle">{Math.abs(cosv) < 0.15 ? "نقطه‌ی مرده؛ کموتاتور جهت جریان را عوض می‌کند" : "گشتاور بر پیچه"}</text>
+      </svg>
+      <div className="vlab-readout" style={{ textAlign: "center" }}>گشتاور = <b>{fa(tau, 3)}</b> N·m (بیشینه {fa(maxTau, 3)})</div>
+      <div className="vlab-controls"><div className="vlab-ctrl-col" style={{ flex: 1 }}>
+        <label className="vlab-ctrl-label">زاویه‌ی پیچه: {vlabFaN(ph)}°</label><VlabRange min="-90" max="90" step="5" value={ph} onChange={(e) => setPh(+e.target.value)} />
+        <label className="vlab-ctrl-label">تعداد دور: {vlabFaN(N)}</label><VlabRange min="10" max="200" step="10" value={N} onChange={(e) => setN(+e.target.value)} />
+        <label className="vlab-ctrl-label">میدان مغناطیسی: {fa(B, 1)} T</label><VlabRange min="0.1" max="1" step="0.1" value={B} onChange={(e) => setB(+e.target.value)} />
+        <label className="vlab-ctrl-label">جریان: {fa(I, 1)} A</label><VlabRange min="0.5" max="5" step="0.5" value={I} onChange={(e) => setI(+e.target.value)} />
+      </div></div>
+      <div className="vlab-readout">{`وقتی در سیم حامل جریان در میدان مغناطیسی قرار گیرد به آن نیرو وارد می‌شود. دو ضلع پیچه نیروهای مخالف دارند و پیچه می‌چرخد. وقتی صفحه‌ی پیچه بر میدان عمود شود، گشتاور صفر است و موتور می‌ایستد؛ کموتاتور درست در همین لحظه جهت جریان را عوض می‌کند تا چرخش ادامه یابد.`}</div>
+      <VlabFormulaCheck title="گشتاور بر پیچه" fa="τ = N·B·I·A·cos φ" en="τ = NBIA cos φ" legend="A = ۰٫۰۰۲ m² مساحت پیچه؛ φ زاویه‌ی صفحه با میدان." subst={`τ = ${vlabFaN(N)} × ${fa(B, 1)} × ${fa(I, 1)} × ۰٫۰۰۲ × cos ${vlabFaN(ph)}°`} answer={N * B * I * A * cosv} unit="N·m" decimals={3} />
+      <VlabEverydayCard title="در همه جا" text="مته‌ی برقی، پنکه، ماشین لباس‌شویی و ماشین‌های برقی با موتور الکتریکی کار می‌کنند. افزایش جریان، میدان یا تعداد دور، نیرو را زیاد می‌کند.">
+        <circle cx="60" cy="38" r="22" fill="none" stroke="#7d8bb5" strokeWidth="3" /><path d="M60,38 L60,22 M60,38 L74,46 M60,38 L46,46" stroke="#e0a83e" strokeWidth="4" />
+      </VlabEverydayCard>
+    </div>
+  );
+}
+
+/* ===== زیست) همانندسازی DNA ===== */
+function VlabReplicationExperiment({ onReading }) {
+  const seq = "ATGGCTAACGTA".split("");
+  const comp = { A: "T", T: "A", G: "C", C: "G" };
+  const [k, setK] = useState(6);
+  const [rounds, setRounds] = useState(2);
+  const col = { A: "#ff6b6b", T: "#ffd166", G: "#5bb8ff", C: "#5de0a0" };
+  const fa = (v) => vlabFaN(v);
+  const mol = Math.pow(2, rounds);
+  const gc = seq.slice(0, k).filter((x) => x === "G" || x === "C").length;
+  return (
+    <div className="vlab-exp">
+      <svg viewBox="0 0 320 170" className="vlab-svg" style={{ background: "#03060f", borderRadius: "10px" }}>
+        <text x="160" y="14" fontSize="9" fill="#9aa6c8" textAnchor="middle">رشته‌ی الگو (قدیمی)</text>
+        {seq.map((x, i) => (<g key={i}><rect x={14 + i * 24} y="22" width="22" height="22" rx="4" fill={col[x]} /><text x={25 + i * 24} y="38" fontSize="12" fontWeight="700" fill="#03060f" textAnchor="middle" direction="ltr">{x}</text>
+          {i < k && <><line x1={25 + i * 24} y1="44" x2={25 + i * 24} y2="64" stroke="#6a7aa8" strokeDasharray="2 2" /><rect x={14 + i * 24} y="64" width="22" height="22" rx="4" fill={col[comp[x]]} /><text x={25 + i * 24} y="80" fontSize="12" fontWeight="700" fill="#03060f" textAnchor="middle" direction="ltr">{comp[x]}</text></>}</g>))}
+        <text x="160" y="100" fontSize="9" fill="#9aa6c8" textAnchor="middle">رشته‌ی جدید (ساخته‌شده با جفت‌شدن مکمل)</text>
+        {Array.from({ length: Math.min(rounds, 4) === 0 ? 0 : mol }, (_, i) => (<g key={i}><rect x={10 + i * (300 / mol)} y="112" width={300 / mol - 4} height="12" fill={i < 2 ? "#ff9d1c" : "#5bb8ff"} opacity="0.7" rx="3" /><rect x={10 + i * (300 / mol)} y="126" width={300 / mol - 4} height="12" fill={i === 0 || i === 1 ? "#5bb8ff" : "#5bb8ff"} opacity="0.7" rx="3" /></g>))}
+        <text x="160" y="160" fontSize="9" fill="#ffd166" textAnchor="middle">پس از {fa(rounds)} دور: {fa(mol)} مولکول DNA، فقط ۲ تا رشته‌ی قدیمی دارند</text>
+      </svg>
+      <div className="vlab-readout" style={{ textAlign: "center" }}>{fa(k)} باز از {fa(12)} باز کپی شده · C و G جفت‌شده‌ها: {fa(gc)}</div>
+      <div className="vlab-controls"><div className="vlab-ctrl-col" style={{ flex: 1 }}>
+        <label className="vlab-ctrl-label">پیشرفت همانندسازی: {fa(k)} باز</label><VlabRange min="0" max="12" step="1" value={k} onChange={(e) => setK(+e.target.value)} />
+        <label className="vlab-ctrl-label">تعداد دورهای همانندسازی: {fa(rounds)}</label><VlabRange min="1" max="4" step="1" value={rounds} onChange={(e) => setRounds(+e.target.value)} />
+      </div></div>
+      <div className="vlab-readout">{`دو رشته‌ی DNA از هم باز می‌شوند و هر رشته الگویی برای ساخت رشته‌ی مکمل است: A با T و G با C جفت می‌شود. چون هر مولکول جدید یک رشته‌ی قدیمی و یک رشته‌ی نو دارد، همانندسازی نیمه‌حفاظتی است (آزمایش مزلسون و استال). پس از چند دور، فقط دو مولکول رشته‌ی قدیمی دارند.`}</div>
+      <VlabFormulaCheck title="تعداد مولکول‌ها" fa="۲ⁿ" en="2^n" legend="n تعداد دورهاست." subst={`۲^${fa(rounds)}`} answer={mol} unit="مولکول" decimals={0} />
+      <VlabFormulaCheck title="سهم مولکول‌های دارای رشته‌ی قدیمی" fa="۲ ÷ ۲ⁿ" en="2/2^n" legend="دو رشته‌ی قدیمی همیشه ثابت‌اند." subst={`۲ ÷ ${fa(mol)}`} answer={2 / mol} unit="" decimals={3} />
+      <VlabEverydayCard title="تقسیم سلول و ترمیم زخم" text="هر سلول پیش از تقسیم DNA‌اش را کپی می‌کند تا هر سلول دختر یک نسخه‌ی کامل داشته باشد. رشد زخم و ترمیم پوست هم به همین کپی‌های بی‌شمار وابسته است.">
+        <circle cx="40" cy="38" r="18" fill="none" stroke="#7d8bb5" strokeWidth="2" /><circle cx="84" cy="38" r="18" fill="none" stroke="#7d8bb5" strokeWidth="2" /><path d="M58,38 h8" stroke="#5de0a0" strokeWidth="2" />
+      </VlabEverydayCard>
+    </div>
+  );
+}
+
+/* ===== زیست) رونویسی ===== */
+const VLAB_GN = { g1: ["AUG GCU AAC GUA UGA", "ژن ۱"], g2: ["AUG UUU AAA GGC UAA", "ژن ۲"], g3: ["AUG CCU GAA UGG UAA", "ژن ۳"] };
+const VLAB_CD = { AUG: "Met", GCU: "Ala", AAC: "Asn", GUA: "Val", UGA: "پایان", UUU: "Phe", AAA: "Lys", GGC: "Gly", UAA: "پایان", CCU: "Pro", GAA: "Glu", UGG: "Trp" };
+function VlabTranscriptionExperiment({ onReading }) {
+  const [gk, setGk] = useState("g1");
+  const [k, setK] = useState(6);
+  const mrna = VLAB_GN[gk][0].replace(/ /g, "").split("");
+  const tmpl = mrna.map((x) => ({ A: "T", U: "A", G: "C", C: "G" }[x]));
+  const col = { A: "#ff6b6b", T: "#ffd166", U: "#ff9d1c", G: "#5bb8ff", C: "#5de0a0" };
+  const codons = VLAB_GN[gk][0].split(" ");
+  const nd = Math.floor(k / 3);
+  const fa = (v) => vlabFaN(v);
+  return (
+    <div className="vlab-exp">
+      <svg viewBox="0 0 320 170" className="vlab-svg" style={{ background: "#03060f", borderRadius: "10px" }}>
+        <text x="160" y="12" fontSize="9" fill="#9aa6c8" textAnchor="middle">رشته‌ی الگوی DNA</text>
+        {tmpl.map((x, i) => (<g key={i}><rect x={8 + i * 20.5} y="18" width="18" height="18" rx="3" fill={col[x]} /><text x={17 + i * 20.5} y="31" fontSize="10" fontWeight="700" fill="#03060f" textAnchor="middle" direction="ltr">{x}</text>
+          {i < k && <><line x1={17 + i * 20.5} y1="36" x2={17 + i * 20.5} y2="52" stroke="#6a7aa8" strokeDasharray="2 2" /><rect x={8 + i * 20.5} y="52" width="18" height="18" rx="3" fill={col[mrna[i]]} /><text x={17 + i * 20.5} y="65" fontSize="10" fontWeight="700" fill="#03060f" textAnchor="middle" direction="ltr">{mrna[i]}</text></>}</g>))}
+        <text x="160" y="84" fontSize="9" fill="#9aa6c8" textAnchor="middle">mRNA ساخته‌شده (به‌جای T، حرف U)</text>
+        {codons.map((c, i) => (i < nd ? (<g key={i}><rect x={8 + i * 61.5} y="94" width="58" height="20" rx="4" fill="#1c2644" stroke="#ffd166" /><text x={37 + i * 61.5} y="108" fontSize="10" fill="#ffd166" textAnchor="middle" direction="ltr">{c}</text><text x={37 + i * 61.5} y="132" fontSize="10" fill="#5de0a0" textAnchor="middle" direction="ltr">{VLAB_CD[c]}</text></g>) : null))}
+        <text x="160" y="160" fontSize="9" fill="#9aa6c8" textAnchor="middle">هر سه باز (کدون) یک آمینواسید را مشخص می‌کند</text>
+      </svg>
+      <div className="vlab-readout" style={{ textAlign: "center" }}>{fa(k)} باز رونویسی شد ← {fa(nd)} کدون ← زنجیره: <span dir="ltr">{codons.slice(0, nd).map((c) => VLAB_CD[c]).join(" – ") || "—"}</span></div>
+      <div className="vlab-controls"><div className="vlab-ctrl-col" style={{ flex: 1 }}>
+        <div className="vlab-btn-row">{Object.keys(VLAB_GN).map((g) => (<button key={g} className="vlab-btn" style={gk === g ? { outline: "2px solid #e0a83e" } : null} onClick={() => setGk(g)}>{VLAB_GN[g][1]}</button>))}</div>
+        <label className="vlab-ctrl-label">پیشرفت رونویسی: {fa(k)} باز</label><VlabRange min="0" max="15" step="1" value={k} onChange={(e) => setK(+e.target.value)} />
+      </div></div>
+      <div className="vlab-readout">{`آنزیم RNA پلیمراز رشته‌ی الگو را می‌خواند و RNA مکمل می‌سازد: A با U، T با A، G با C و C با G جفت می‌شود. بعد رناتن (ریبوزوم) mRNA را سه‌تا‌سه‌تا می‌خواند و هر کدون یک آمینواسید می‌آورد؛ کدون‌های UAA و UGA پایان ترجمه‌اند.`}</div>
+      <VlabFormulaCheck title="تعداد آمینواسید" fa="تعداد باز ÷ ۳" en="bases / 3" legend="هر ۳ باز یک آمینواسید (کدون)." subst={`${fa(k)} ÷ ۳`} answer={nd} unit="کدون کامل" decimals={0} />
+      <VlabEverydayCard title="دستور آشپزی از کتاب بزرگ" text="DNA مانند کتاب مرجعی است که از کتابخانه خارج نمی‌شود؛ رونویسی یک برگه‌ی کپی (mRNA) از یک دستور می‌سازد و آن را به آشپزخانه (ریبوزوم) می‌برد.">
+        <rect x="30" y="16" width="30" height="40" rx="3" fill="#7d8bb5" /><rect x="70" y="26" width="26" height="22" fill="#f4f1e6" stroke="#7d8bb5" />
+      </VlabEverydayCard>
+    </div>
+  );
+}
+
 const VLAB_COMPONENTS = {
   lever: VlabLeverExperiment,
   pendulum: VlabPendulumExperiment,
@@ -36335,6 +36623,12 @@ const VLAB_COMPONENTS = {
   "thermometer": VlabThermometerExperiment,
   "water-cycle": VlabWaterCycleExperiment,
   "mineral-id": VlabMineralExperiment,
+  "modular-clock": VlabModularClockExperiment,
+  "matrix-transform": VlabMatrixTransformExperiment,
+  "wave-interference": VlabInterferenceExperiment,
+  "dc-motor": VlabDcMotorExperiment,
+  "dna-replication": VlabReplicationExperiment,
+  "transcription": VlabTranscriptionExperiment,
 };
 
 function StudentVirtualLabView({ onBack, grade, studentCode, schoolCode }) {

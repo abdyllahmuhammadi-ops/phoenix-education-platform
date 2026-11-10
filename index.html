@@ -24124,6 +24124,96 @@ const VLAB_EXPERIMENTS = [
     intro: "به عمق زمین برو و لایه، دما و فشار را ببین.",
     tools: ["مقطع زمین", "عمق", "دما و فشار"],
   },
+  {
+    id: "solid-net",
+    subject: "ریاضی",
+    level: "متوسطه",
+    title: "برش و گسترده‌ی حجم‌ها",
+    icon: "📦",
+    intro: "گسترده‌ی مکعب‌مستطیل، استوانه و مخروط را ببین و مساحت و حجم را از روی آن‌ها حساب کن.",
+    tools: ["گسترده", "ابعاد", "مساحت و حجم"],
+  },
+  {
+    id: "esterification",
+    subject: "شیمی",
+    level: "متوسطه",
+    title: "استری شدن",
+    icon: "🍍",
+    intro: "اسید و الکل را انتخاب کن و استر، بوی آن و بازده تعادل را ببین.",
+    tools: ["اسید", "الکل", "استر"],
+  },
+  {
+    id: "antibody-antigen",
+    subject: "زیست‌شناسی",
+    level: "متوسطه",
+    title: "پادتن و آنتی‌ژن",
+    icon: "🛡️",
+    intro: "جور شدن شکل پادتن با آنتی‌ژن و پاسخ اول و دوم ایمنی (واکسن) را ببین.",
+    tools: ["پادتن", "آنتی‌ژن", "نمودار پاسخ"],
+  },
+  {
+    id: "oil-tower",
+    subject: "شیمی",
+    level: "متوسطه",
+    title: "برج تقطیر نفت",
+    icon: "🛢️",
+    intro: "برش‌های نفت را از بالا تا پایین برج ببین و کاربرد هر کدام را بشناس.",
+    tools: ["برج تقطیر", "برش‌ها", "نقطه‌ی جوش"],
+  },
+  {
+    id: "muscle-contraction",
+    subject: "زیست‌شناسی",
+    level: "متوسطه",
+    title: "انقباض ماهیچه",
+    icon: "💪",
+    intro: "لغزش رشته‌های اکتین و میوزین را در ساروکومر ببین و نقش ATP را بررسی کن.",
+    tools: ["ساروکومر", "اکتین و میوزین", "ATP"],
+  },
+  {
+    id: "menstrual-cycle",
+    subject: "زیست‌شناسی",
+    level: "متوسطه",
+    title: "چرخه‌ی قاعدگی و هورمون‌ها",
+    icon: "🗓️",
+    intro: "هورمون‌های FSH، LH، استروژن و پروژسترون را در طول ۲۸ روز دنبال کن.",
+    tools: ["نمودار هورمون‌ها", "روز چرخه", "مراحل"],
+  },
+  {
+    id: "lac-operon",
+    subject: "زیست‌شناسی",
+    level: "متوسطه",
+    title: "اپرون لاکتوز",
+    icon: "🧫",
+    intro: "حضور لاکتوز و گلوکز را تغییر بده و ببین ژن‌های اپرون چه زمانی روشن می‌شوند.",
+    tools: ["مهارکننده", "اپراتور", "ژن‌های lac"],
+  },
+  {
+    id: "mutation",
+    subject: "زیست‌شناسی",
+    level: "متوسطه",
+    title: "جهش",
+    icon: "🧬",
+    intro: "جهش جانشینی، درج و حذف را در یک ژن بزن و اثر آن بر پروتئین را ببین.",
+    tools: ["DNA", "نوع جهش", "پروتئین"],
+  },
+  {
+    id: "aquifer",
+    subject: "زمین‌شناسی",
+    level: "متوسطه",
+    title: "آب زیرزمینی و آبخوان",
+    icon: "🚰",
+    intro: "پمپاژ و بارش را تنظیم کن و سطح آب زیرزمینی و مخروط افت را ببین.",
+    tools: ["آبخوان", "چاه", "سطح ایستابی"],
+  },
+  {
+    id: "slope-stability",
+    subject: "زمین‌شناسی",
+    level: "متوسطه",
+    title: "پایداری شیب و لغزش",
+    icon: "⛰️",
+    intro: "زاویه‌ی شیب و باران را تغییر بده و ببین چه زمانی توده‌ی خاک می‌لغزد.",
+    tools: ["شیب", "اصطکاک", "ضریب اطمینان"],
+  },
 ];
 
 function vlabClamp(v, min, max) {
@@ -37363,6 +37453,387 @@ function VlabEarthLayersExperiment({ onReading }) {
   );
 }
 
+/* ===== ریاضی) برش و گسترده‌ی حجم‌ها ===== */
+function VlabSolidNetExperiment({ onReading }) {
+  const [sk, setSk] = useState("box");
+  const [a, setA] = useState(4);
+  const [b, setB] = useState(3);
+  const [c, setC] = useState(2);
+  const fa = (v, d = 1) => vlabMFa(v, Number.isInteger(v) ? 0 : d);
+  let net, sa, vol, formS, formV, substS, substV;
+  const PI = Math.PI;
+  if (sk === "box") {
+    const s = Math.min(14, 120 / (2 * b + a), 125 / (2 * c + 2 * b)), X0 = 70, Y0 = 8;
+    const rect = (x, y, w, h, col, k) => <rect key={k} x={X0 + x * s} y={Y0 + y * s} width={w * s} height={h * s} fill={col} fillOpacity="0.45" stroke="#fff" strokeWidth="0.8" />;
+    net = (<g>{rect(b, 0, a, c, "#5bb8ff", 1)}{rect(0, c, b, b > 0 ? a : 0, "#ffd166", 2).props && null}
+      {rect(0, c, b, c, "#ffd166", 3)}{rect(b, c, a, b, "#5de0a0", 4)}{rect(b + a, c, b, c, "#ffd166", 5)}{rect(b, c + b, a, c, "#5bb8ff", 6)}{rect(b, 2 * c + b, a, b, "#5de0a0", 7)}</g>);
+    sa = 2 * (a * b + a * c + b * c); vol = a * b * c;
+    formS = "S = ۲(ab + ac + bc)"; formV = "V = a·b·c"; substS = `۲(${a}×${b} + ${a}×${c} + ${b}×${c})`; substV = `${a} × ${b} × ${c}`;
+  } else if (sk === "cyl") {
+    const r = a / 2, h = c, circ = 2 * PI * r, s = Math.min(150 / circ, 110 / (h + 4 * r)), X0 = 20, Y0 = 16;
+    net = (<g><rect x={X0 + 0} y={Y0 + 2 * r * s} width={circ * s} height={h * s} fill="#5bb8ff" fillOpacity="0.45" stroke="#fff" /><circle cx={X0 + (circ * s) / 2} cy={Y0 + r * s} r={r * s} fill="#ffd166" fillOpacity="0.5" stroke="#fff" /><circle cx={X0 + (circ * s) / 2} cy={Y0 + 2 * r * s + h * s + r * s} r={r * s} fill="#ffd166" fillOpacity="0.5" stroke="#fff" /></g>);
+    sa = 2 * PI * r * (r + h); vol = PI * r * r * h;
+    formS = "S = ۲πr(r + h)"; formV = "V = πr²h"; substS = `۲π×${fa(r)}×(${fa(r)} + ${h})`; substV = `π × ${fa(r)}² × ${h}`;
+  } else {
+    const r = a / 2, h = c, l = Math.hypot(r, h), th = (r / l) * 2 * PI, s = Math.min(1, 120 / (l + 2 * r)) * 1, S = Math.min(14, 90 / l);
+    const Cx = 110, Cy = 30;
+    const p0 = [Cx + l * S * Math.sin(-th / 2), Cy + l * S * Math.cos(th / 2)], p1 = [Cx + l * S * Math.sin(th / 2), Cy + l * S * Math.cos(th / 2)];
+    net = (<g><path d={`M${Cx},${Cy} L${p0} A${l * S},${l * S} 0 ${th > PI ? 1 : 0} 0 ${p1} Z`} fill="#5bb8ff" fillOpacity="0.45" stroke="#fff" /><circle cx={Cx + 120} cy={Cy + 60} r={r * S} fill="#ffd166" fillOpacity="0.5" stroke="#fff" /></g>);
+    sa = PI * r * (r + l); vol = (PI * r * r * h) / 3;
+    formS = "S = πr(r + l)،  l = √(r² + h²)"; formV = "V = ⅓πr²h"; substS = `π×${fa(r)}×(${fa(r)} + ${fa(l, 2)})`; substV = `⅓ × π × ${fa(r)}² × ${h}`;
+  }
+  return (
+    <div className="vlab-exp">
+      <svg viewBox="0 0 320 176" className="vlab-svg" style={{ background: "#03060f", borderRadius: "10px" }}>
+        {net}<text x="160" y="170" fontSize="9" fill="#9aa6c8" textAnchor="middle">گسترده‌ی {sk === "box" ? "مکعب‌مستطیل" : sk === "cyl" ? "استوانه" : "مخروط"} (برش و باز کردن سطح)</text>
+      </svg>
+      <div className="vlab-readout" style={{ textAlign: "center" }}>مساحت کل <b>{fa(sa, 1)}</b> · حجم <b>{fa(vol, 1)}</b> (واحدها: سانتی‌متر)</div>
+      <div className="vlab-controls"><div className="vlab-ctrl-col" style={{ flex: 1 }}>
+        <div className="vlab-btn-row">{[["box", "مکعب‌مستطیل"], ["cyl", "استوانه"], ["cone", "مخروط"]].map(([k, n]) => (<button key={k} className="vlab-btn" style={sk === k ? { outline: "2px solid #e0a83e" } : null} onClick={() => setSk(k)}>{n}</button>))}</div>
+        <label className="vlab-ctrl-label">{sk === "box" ? "طول a" : "قطر قاعده"}: {vlabFaN(a)}</label><VlabRange min="2" max="8" step="1" value={a} onChange={(e) => setA(+e.target.value)} />
+        {sk === "box" && <><label className="vlab-ctrl-label">عرض b: {vlabFaN(b)}</label><VlabRange min="2" max="8" step="1" value={b} onChange={(e) => setB(+e.target.value)} /></>}
+        <label className="vlab-ctrl-label">{sk === "box" ? "ارتفاع c" : "ارتفاع h"}: {vlabFaN(c)}</label><VlabRange min="2" max="8" step="1" value={c} onChange={(e) => setC(+e.target.value)} />
+      </div></div>
+      <div className="vlab-readout">{`گسترده‌ی هر جسم، سطح بیرونی آن است که روی صفحه باز شده؛ مساحت کل برابر مساحت همین گسترده است. استوانه یک مستطیل و دو دایره می‌شود (طول مستطیل = محیط قاعده)، و مخروط یک قطاع دایره (شعاع = شیب l) و یک دایره.`}</div>
+      <VlabFormulaCheck title="مساحت کل" fa={formS} en="surface area" legend="مساحت گسترده را جمع می‌کنیم." subst={substS} answer={sa} unit="cm²" decimals={1} />
+      <VlabFormulaCheck title="حجم" fa={formV} en="volume" legend="" subst={substV} answer={vol} unit="cm³" decimals={1} />
+      <VlabEverydayCard title="الگوی جعبه و قیف" text="کارخانه‌ی بسته‌بندی جعبه را از یک ورق تخت می‌برد و تا می‌کند. قیف را هم از یک قطاع دایره می‌سازند: اگر زاویه‌ی قطاع بزرگ‌تر شود، قیف باریک‌تر و بلندتر می‌شود.">
+        <path d="M20,56 L50,56 L50,26 L20,26 Z M50,26 L50,10 L80,10 L80,26" fill="#c46b3a" opacity="0.7" stroke="#fff" />
+      </VlabEverydayCard>
+    </div>
+  );
+}
+
+/* ===== شیمی) استری شدن ===== */
+const VLAB_ESAC = { A: ["اتانوئیک اسید (استیک)", "اتانوات", "CH₃COOH"], F: ["متانوئیک اسید (فورمیک)", "متانوات", "HCOOH"] };
+const VLAB_ESAL = { M: ["متانول", "متیل", "CH₃OH", "بوی چسب و حلال"], E: ["اتانول", "اتیل", "CH₃CH₂OH", "بوی میوه (آناناس)"], P: ["پروپانول", "پروپیل", "CH₃CH₂CH₂OH", "بوی گلابی"] };
+function VlabEsterExperiment({ onReading }) {
+  const [ac, setAc] = useState("A");
+  const [al, setAl] = useState("E");
+  const [n, setN] = useState(1);
+  const K = 4;
+  const qa = 1 - K, qb = K * (1 + n) + 0, qc = -K * n; // (K-1)... solve K(1-x)(n-x)=x²
+  const A = K - 1, B = -K * (1 + n), Cc = K * n;
+  const x = (-B - Math.sqrt(B * B - 4 * A * Cc)) / (2 * A);
+  const name = VLAB_ESAL[al][1] + " " + VLAB_ESAC[ac][1];
+  const fa = (v, d = 2) => vlabMFa(v, d);
+  const mx = Math.max(1, n, x);
+  const bar = (v, X, col, nm) => (<g key={nm}><rect x={X} y={140 - (v / mx) * 90} width="36" height={(v / mx) * 90} fill={col} rx="3" /><text x={X + 18} y={134 - (v / mx) * 90} fontSize="9" fill="#fff" textAnchor="middle">{fa(v)}</text><text x={X + 18} y="154" fontSize="8" fill="#cfd6ea" textAnchor="middle">{nm}</text></g>);
+  return (
+    <div className="vlab-exp">
+      <svg viewBox="0 0 320 170" className="vlab-svg" style={{ background: "#03060f", borderRadius: "10px" }}>
+        <text x="160" y="16" fontSize="10" fill="#ffd166" textAnchor="middle" direction="ltr">{VLAB_ESAC[ac][2]} + {VLAB_ESAL[al][2]} ⇌ ester + H₂O</text>
+        {bar(1 - x, 20, "#ff9d1c", "اسید")}{bar(n - x, 66, "#5bb8ff", "الکل")}<text x="124" y="100" fontSize="22" fill="#ffd166" textAnchor="middle">⇌</text>{bar(x, 150, "#5de0a0", "استر")}{bar(x, 196, "#9fd4ff", "آب")}
+        <text x="270" y="60" fontSize="10" fill="#5de0a0" textAnchor="middle">{name}</text><text x="270" y="78" fontSize="8" fill="#cfd6ea" textAnchor="middle">{VLAB_ESAL[al][3]}</text>
+      </svg>
+      <div className="vlab-readout" style={{ textAlign: "center" }}>بازده استر = <b>{fa(x * 100, 0)}٪</b> از اسید (در تعادل با K = ۴)</div>
+      <div className="vlab-controls"><div className="vlab-ctrl-col" style={{ flex: 1 }}>
+        <div className="vlab-btn-row">{Object.keys(VLAB_ESAC).map((k) => (<button key={k} className="vlab-btn" style={ac === k ? { outline: "2px solid #e0a83e" } : null} onClick={() => setAc(k)}>{VLAB_ESAC[k][0].split(" ")[0]}</button>))}{Object.keys(VLAB_ESAL).map((k) => (<button key={k} className="vlab-btn" style={al === k ? { outline: "2px solid #2e7bd5" } : null} onClick={() => setAl(k)}>{VLAB_ESAL[k][0]}</button>))}</div>
+        <label className="vlab-ctrl-label">مقدار الکل (مول، نسبت به ۱ مول اسید): {fa(n, 1)}</label><VlabRange min="1" max="6" step="0.5" value={n} onChange={(e) => setN(+e.target.value)} />
+      </div></div>
+      <div className="vlab-readout">{`اسید کربوکسیلیک با الکل (با کاتالیزگر اسید) ترکیبی به نام استر و آب می‌دهد. این واکنش تعادلی است؛ برای بالابردن بازده، یکی از واکنش‌دهنده‌ها را زیاد می‌کنیم یا آب را از محیط خارج می‌کنیم (اصل لوشاتلیه). استرها بوی خوش میوه‌ها و گل‌ها را می‌سازند. نام استر: نام گروه الکلی + نام اسید (مثلاً ${name}).`}</div>
+      <VlabFormulaCheck title="ثابت تعادل" fa="K = [استر][آب] ÷ ([اسید][الکل])" en="K = x²/((1−x)(n−x))" legend="با x مول استر و n مول الکل (حجم ثابت است و حذف می‌شود)." subst={`K = ${fa(x)}² ÷ ((۱−${fa(x)}) × (${fa(n, 1)}−${fa(x)}))`} answer={(x * x) / ((1 - x) * (n - x))} unit="" decimals={2} />
+      <VlabEverydayCard title="عطر و طعم مصنوعی" text="طعم آناناس، موز یا سیب در شیرینی‌ها و نوشابه‌ها استرهای ساده‌ای‌اند که کارخانه از اسید و الکل می‌سازد؛ مولکول‌هایی مشابه همان‌ها که در میوه‌ی طبیعی هست.">
+        <circle cx="60" cy="40" r="22" fill="#e0a83e" /><path d="M60,18 L54,6 M60,18 L66,6" stroke="#6b8f4e" strokeWidth="3" />
+      </VlabEverydayCard>
+    </div>
+  );
+}
+
+/* ===== زیست) پادتن و آنتی‌ژن ===== */
+function VlabAntibodyExperiment({ onReading }) {
+  const [ag, setAg] = useState(0);
+  const [ab, setAb] = useState(0);
+  const [day, setDay] = useState(14);
+  const [second, setSecond] = useState(false);
+  const shapes = ["△", "□", "○"], cols = ["#ff9d1c", "#5bb8ff", "#5de0a0"];
+  const match = ag === ab;
+  const titer = (d, off, peak) => d < off ? 0 : peak * (1 - Math.exp(-(d - off) / 4)) * Math.exp(-Math.max(0, d - off - 14) / 25);
+  const pri = (d) => titer(d, 5, 20), sec = (d) => d < 30 ? pri(d) : d < 32 ? pri(d) : titer(d - 30, 1, 100) + pri(d) * 0.2;
+  const GX = 190, GW = 120, GY = 20, GH = 90;
+  const cv = (f) => Array.from({ length: 61 }, (_, i) => { const d = i; return (i ? "L" : "M") + (GX + (d / 60) * GW).toFixed(1) + "," + (GY + GH - Math.min(1, f(d) / 100) * GH).toFixed(1); }).join("");
+  const fa = (v) => vlabFaN(v);
+  return (
+    <div className="vlab-exp">
+      <svg viewBox="0 0 320 176" className="vlab-svg" style={{ background: "#03060f", borderRadius: "10px" }}>
+        <path d="M60,100 V70 L36,40 M60,70 L84,40" fill="none" stroke={cols[ab]} strokeWidth="6" strokeLinecap="round" /><text x="60" y="118" fontSize="9" fill="#cfd6ea" textAnchor="middle">پادتن</text>
+        <text x="30" y="36" fontSize="18" fill={cols[ab]} textAnchor="middle">{shapes[ab]}</text><text x="90" y="36" fontSize="18" fill={cols[ab]} textAnchor="middle">{shapes[ab]}</text>
+        <text x={match ? 60 : 130} y={match ? 26 : 36} fontSize="20" fill={cols[ag]} textAnchor="middle">{shapes[ag]}</text>
+        <text x="85" y="152" fontSize="9" fontWeight="700" fill={match ? "#5de0a0" : "#ff9d9d"} textAnchor="middle">{match ? "جور شد؛ آنتی‌ژن خنثی می‌شود" : "جور نیست؛ پادتن نمی‌چسبد"}</text>
+        <line x1={GX} y1={GY + GH} x2={GX + GW} y2={GY + GH} stroke="#4a5578" /><line x1={GX} y1={GY} x2={GX} y2={GY + GH} stroke="#4a5578" />
+        <path d={cv(pri)} fill="none" stroke="#ff9d1c" strokeWidth="2" />{second && <path d={cv((d) => (d < 30 ? pri(d) : sec(d)))} fill="none" stroke="#5de0a0" strokeWidth="2" />}
+        <line x1={GX + (day / 60) * GW} y1={GY} x2={GX + (day / 60) * GW} y2={GY + GH} stroke="#ffd166" strokeDasharray="3 3" />
+        {second && <text x={GX + (30 / 60) * GW} y={GY - 4} fontSize="8" fill="#5de0a0" textAnchor="middle">مواجهه‌ی دوم</text>}
+        <text x={GX + GW / 2} y="128" fontSize="8" fill="#9aa6c8" textAnchor="middle">روز</text>
+      </svg>
+      <div className="vlab-readout" style={{ textAlign: "center" }}>روز {fa(day)}: غلظت پادتن {vlabFaN(Math.round((second && day >= 30 ? sec(day) : pri(day))))} (واحد قراردادی)</div>
+      <div className="vlab-controls"><div className="vlab-ctrl-col" style={{ flex: 1 }}>
+        <label className="vlab-ctrl-label">شکل آنتی‌ژن: {shapes[ag]}</label><VlabRange min="0" max="2" step="1" value={ag} onChange={(e) => setAg(+e.target.value)} />
+        <label className="vlab-ctrl-label">پادتن ساخته‌شده: {shapes[ab]}</label><VlabRange min="0" max="2" step="1" value={ab} onChange={(e) => setAb(+e.target.value)} />
+        <label className="vlab-ctrl-label">روز: {fa(day)}</label><VlabRange min="0" max="60" step="1" value={day} onChange={(e) => setDay(+e.target.value)} />
+        <div className="vlab-btn-row"><button className="vlab-btn" style={second ? { outline: "2px solid #e0a83e" } : null} onClick={() => setSecond(!second)}>{second ? "مواجهه‌ی دوم (بعد از واکسن): روشن" : "مواجهه‌ی دوم را نشان بده"}</button></div>
+      </div></div>
+      <div className="vlab-readout">{`هر پادتن (آنتی‌بادی) شکلی دارد که فقط با یک آنتی‌ژن جفت می‌شود، مثل کلید و قفل. در اولین مواجهه پاسخ کند و ضعیف است ولی سلول‌های خاطره‌ای می‌مانند؛ در مواجهه‌ی دوم (یا پس از واکسن) پاسخ بسیار سریع‌تر و قوی‌تر می‌شود. واکسن همین مواجهه‌ی اول را بی‌خطر می‌سازد.`}</div>
+      <VlabFormulaCheck title="نسبت پاسخ دوم به اول" fa="قله‌ی دوم ÷ قله‌ی اول" en="secondary/primary" legend="قله‌ی پاسخ نخست ۲۰ و پاسخ دوم ۱۰۰ واحد است." subst="۱۰۰ ÷ ۲۰" answer={5} unit="برابر" decimals={0} />
+      <VlabEverydayCard title="چرا واکسن‌ها یادآور دارند؟" text="دُز دوم واکسن یک «مواجهه‌ی دوم» است که پاسخ خاطره‌ای را تقویت می‌کند و باعث می‌شود پادتن‌ها بیشتر و ماندگارتر باشند.">
+        <rect x="26" y="26" width="64" height="12" rx="4" fill="#d8dde8" stroke="#7d8bb5" /><rect x="90" y="30" width="22" height="4" fill="#7d8bb5" />
+      </VlabEverydayCard>
+    </div>
+  );
+}
+
+/* ===== شیمی) برج تقطیر نفت ===== */
+const VLAB_OIL = [["گاز (متان تا بوتان)", "C₁–C₄", "زیر ۴۰", "گاز مایع، سوخت پخت‌وپز", "#9fd4ff"], ["بنزین", "C₅–C₁₂", "۴۰ تا ۲۰۰", "سوخت خودرو", "#ffd166"], ["نفت سفید", "C₁₀–C₁₆", "۱۷۵ تا ۲۷۵", "سوخت هواپیما و چراغ", "#ff9d1c"], ["گازوئیل", "C₁₅–C₂₀", "۲۵۰ تا ۳۵۰", "سوخت کامیون", "#d9742c"], ["روغن موتور", "C₂₀–C₇₀", "۳۵۰ تا ۵۰۰", "روان‌کننده، موم", "#8b6b4a"], ["قیر (ته‌مانده)", "بیش از C₇₀", "بالای ۵۰۰", "آسفالت جاده", "#3a2a22"]];
+function VlabOilTowerExperiment({ onReading }) {
+  const [i, setI] = useState(1);
+  const f = VLAB_OIL[i];
+  const nC = [3, 8, 13, 18, 35, 80][i];
+  return (
+    <div className="vlab-exp">
+      <svg viewBox="0 0 320 188" className="vlab-svg" style={{ background: "#03060f", borderRadius: "10px" }}>
+        <rect x="100" y="10" width="70" height="170" rx="8" fill="#1c2644" stroke="#6a7aa8" strokeWidth="2" />
+        {VLAB_OIL.map((o, k) => (<g key={k}><line x1="100" y1={22 + k * 26} x2="170" y2={22 + k * 26} stroke={o[4]} strokeWidth={k === i ? 4 : 1.5} /><line x1="170" y1={22 + k * 26} x2="198" y2={22 + k * 26} stroke={o[4]} strokeWidth={k === i ? 4 : 1.5} /><text x="244" y={26 + k * 26} fontSize="8" fill={k === i ? "#fff" : "#9aa6c8"} textAnchor="middle" onClick={() => setI(k)} style={{ cursor: "pointer" }}>{o[0].split(" ")[0]}</text></g>))}
+        <rect x="30" y="160" width="50" height="14" fill="#8b6b4a" /><text x="55" y="154" fontSize="8" fill="#ffb27a" textAnchor="middle">نفت خام داغ</text><path d="M80,167 H100" stroke="#ffb27a" strokeWidth="3" />
+        <text x="135" y="185" fontSize="7" fill="#9aa6c8" textAnchor="middle">پایین داغ‌تر ← بالا خنک‌تر</text>
+      </svg>
+      <div className="vlab-readout" style={{ textAlign: "center" }}><b>{f[0]}</b> · {f[1]} · نقطه‌ی جوش {f[2]}°C · {f[3]}</div>
+      <div className="vlab-controls"><div className="vlab-ctrl-col" style={{ flex: 1 }}>
+        <label className="vlab-ctrl-label">برش انتخابی (از بالا به پایین): {f[0]}</label><VlabRange min="0" max="5" step="1" value={i} onChange={(e) => setI(+e.target.value)} />
+      </div></div>
+      <div className="vlab-readout">{`نفت خام مخلوطی از صدها هیدروکربن است. آن را گرم می‌کنیم تا بیشترِ آن بخار شود و در برج تقطیر بالا برود. بخارها در هر ارتفاع که دمایشان به نقطه‌ی جوش برسد مایع می‌شوند. هیدروکربن‌های کوچک (نیروی بین‌مولکولی کم) در بالا و مولکول‌های بزرگ (نیروی زیاد، نقطه‌ی جوش بالا) در پایین جمع می‌شوند. این یک جداسازی فیزیکی است نه واکنش شیمیایی.`}</div>
+      <VlabFormulaCheck title="میانگین کربن برش" fa="n ≈ میانگین کران‌ها" en="avg carbon number" legend="نمایانگر طول زنجیر؛ بیشتر ⇒ نقطه‌ی جوش بالاتر." subst={`میانگین ${f[1]}`} answer={nC} unit="اتم کربن" decimals={0} />
+      <VlabEverydayCard title="از نفت تا جاده" text="بنزین ماشین، نفت چراغ، گازوئیل کامیون و قیر جاده همه از یک نفت خام می‌آیند. پالایشگاه‌هایی مثل آبادان و تهران همین برج‌ها را دارند.">
+        <rect x="40" y="6" width="22" height="58" rx="4" fill="#7d8bb5" /><rect x="70" y="20" width="18" height="44" rx="4" fill="#9aa6c8" />
+      </VlabEverydayCard>
+    </div>
+  );
+}
+
+/* ===== زیست) انقباض ماهیچه ===== */
+function VlabMuscleExperiment({ onReading }) {
+  const [ct, setCt] = useState(0);
+  const [atp, setAtp] = useState(true);
+  const eff = atp ? ct : Math.min(ct, 0);
+  const L = 2.2 - (eff / 100) * 0.6;
+  const W = 240, X0 = 40, sc = W / 2.2 / 1.2;
+  const half = (L / 2) * sc;
+  const thin = (side) => { const els = []; for (let r = 0; r < 3; r++) { const y = 50 + r * 24; els.push(<line key={side + r} x1={160 + side * (half + 4)} y1={y} x2={160 + side * 8} y2={y} stroke="#5bb8ff" strokeWidth="3" />); } return els; };
+  const thinS = []; [-1, 1].forEach((s) => { for (let r = 0; r < 3; r++) { const y = 50 + r * 24; thinS.push(<line key={s + "-" + r} x1={160 + s * half * 0.98} y1={y} x2={160 + s * (half * 0.98 - 70 * 0 - (half * 0.98 > 70 ? 0 : 0) - 78)} y2={y} stroke="#5bb8ff" strokeWidth="3" />); } });
+  const fa = (v, d = 2) => vlabMFa(v, d);
+  const my = 36 + 0; const mw = 74;
+  return (
+    <div className="vlab-exp">
+      <svg viewBox="0 0 320 170" className="vlab-svg" style={{ background: "#03060f", borderRadius: "10px" }}>
+        <line x1={160 - half} y1="30" x2={160 - half} y2="130" stroke="#ff6b6b" strokeWidth="3" /><line x1={160 + half} y1="30" x2={160 + half} y2="130" stroke="#ff6b6b" strokeWidth="3" />
+        {[0, 1, 2].map((r) => (<g key={r}><line x1={160 - half} y1={50 + r * 24} x2={160 - half + half * 1.0 - 4 - (1 - eff / 100) * 0} y2={50 + r * 24} stroke="#5bb8ff" strokeWidth="3" strokeOpacity="0.0" />
+          <line x1={160 - half} y1={50 + r * 24} x2={160 - half + (half * 1.15) * 0.85} y2={50 + r * 24} stroke="#5bb8ff" strokeWidth="3" />
+          <line x1={160 + half} y1={50 + r * 24} x2={160 + half - (half * 1.15) * 0.85} y2={50 + r * 24} stroke="#5bb8ff" strokeWidth="3" />
+          <rect x={160 - 46} y={44 + r * 24} width="92" height="12" rx="6" fill="#ff9d1c" opacity="0.9" /></g>))}
+        <text x="160" y="22" fontSize="9" fill="#ff9d9d" textAnchor="middle">خط Z — ‌ساروکومر ‌— خط Z</text>
+        <text x="160" y="150" fontSize="9" fill="#ff9d1c" textAnchor="middle">میوزین (نارنجی)</text><text x="60" y="150" fontSize="9" fill="#5bb8ff" textAnchor="middle">اکتین (آبی)</text>
+        <text x="160" y="166" fontSize="9" fill={atp ? "#5de0a0" : "#ff6b6b"} textAnchor="middle">{atp ? "ATP و یون Ca²⁺ حاضرند" : "بدون ATP: سر میوزین جدا نمی‌شود (سفتی مرگ)"}</text>
+      </svg>
+      <div className="vlab-readout" style={{ textAlign: "center" }}>طول ساروکومر <b>{fa(L)}</b> میکرومتر · کوتاه‌شدن {fa((1 - L / 2.2) * 100, 0)}٪</div>
+      <div className="vlab-controls"><div className="vlab-ctrl-col" style={{ flex: 1 }}>
+        <label className="vlab-ctrl-label">شدت انقباض: {vlabFaN(ct)}٪</label><VlabRange min="0" max="100" step="5" value={ct} onChange={(e) => setCt(+e.target.value)} />
+        <div className="vlab-btn-row"><button className="vlab-btn" style={atp ? { outline: "2px solid #e0a83e" } : null} onClick={() => setAtp(true)}>ATP هست</button><button className="vlab-btn" style={!atp ? { outline: "2px solid #e0a83e" } : null} onClick={() => setAtp(false)}>ATP نیست</button></div>
+      </div></div>
+      <div className="vlab-readout">{`ماهیچه از ساروکومرها ساخته شده است. با پیام عصبی، یون کلسیم آزاد می‌شود و سر مولکول‌های میوزین به اکتین می‌چسبند و با مصرف ATP آن را به‌سوی مرکز می‌کشند؛ رشته‌ها روی هم می‌لغزند و ساروکومر کوتاه می‌شود (نظریه‌ی لغزش رشته‌ها)، ولی خود رشته‌ها کوتاه نمی‌شوند. بدون ATP سر میوزین رها نمی‌شود.`}</div>
+      <VlabFormulaCheck title="کوتاه‌شدن ساروکومر" fa="درصد = (۲٫۲ − L) ÷ ۲٫۲ × ۱۰۰" en="shortening%" legend="طول آرام ساروکومر ۲٫۲ µm است." subst={`(۲٫۲ − ${fa(L)}) ÷ ۲٫۲ × ۱۰۰`} answer={((2.2 - L) / 2.2) * 100} unit="٪" decimals={1} />
+      <VlabEverydayCard title="گرفتگی و سفتی ماهیچه" text="در گرفتگی ماهیچه، انقباض بی‌اجازه ادامه می‌یابد. بعد از مرگ نیز ATP تمام می‌شود و سر میوزین‌ها رها نمی‌شوند؛ این سفتی نعشی است.">
+        <rect x="14" y="26" width="92" height="22" rx="11" fill="#c0554a" /><path d="M20,37 H100" stroke="#ffb3a1" strokeWidth="3" strokeDasharray="6 3" />
+      </VlabEverydayCard>
+    </div>
+  );
+}
+
+/* ===== زیست) چرخه‌ی قاعدگی و هورمون‌ها ===== */
+function VlabMenstrualExperiment({ onReading }) {
+  const [day, setDay] = useState(14);
+  const g = (d, c, w, h) => h * Math.exp(-Math.pow((d - c) / w, 2));
+  const H = {
+    FSH: (d) => 30 + g(d, 4, 4, 30) + g(d, 14, 1.5, 25) + g(d, 24, 3, 8), LH: (d) => 15 + g(d, 14, 1.2, 85),
+    E: (d) => 20 + g(d, 13, 3, 70) + g(d, 21, 3, 35), P: (d) => 5 + g(d, 21, 4, 85) - g(d, 28, 1.4, 0),
+  };
+  const GX = 24, GW = 280, GY = 14, GH = 100;
+  const cv = (f, col, nm) => { let d = ""; for (let i = 0; i <= 56; i++) { const x = (i / 56) * 28; d += (i ? "L" : "M") + (GX + (x / 28) * GW).toFixed(1) + "," + (GY + GH - Math.min(100, f(x)) / 100 * GH).toFixed(1); } return <path key={nm} d={d} fill="none" stroke={col} strokeWidth="2" />; };
+  const phase = day <= 5 ? "قاعدگی (ریزش دیواره‌ی رحم)" : day < 14 ? "فولیکولی (رشد فولیکول و دیواره‌ی رحم)" : day <= 15 ? "تخمک‌گذاری" : "لوتئال (جسم زرد، آمادگی رحم)";
+  return (
+    <div className="vlab-exp">
+      <svg viewBox="0 0 320 176" className="vlab-svg" style={{ background: "#03060f", borderRadius: "10px" }}>
+        <line x1={GX} y1={GY + GH} x2={GX + GW} y2={GY + GH} stroke="#4a5578" />
+        {cv(H.FSH, "#5bb8ff", "f")}{cv(H.LH, "#ffd166", "l")}{cv(H.E, "#ff9d9d", "e")}{cv(H.P, "#5de0a0", "p")}
+        <line x1={GX + (day / 28) * GW} y1={GY} x2={GX + (day / 28) * GW} y2={GY + GH} stroke="#fff" strokeDasharray="3 3" />
+        {[0, 7, 14, 21, 28].map((d) => (<text key={d} x={GX + (d / 28) * GW} y={GY + GH + 11} fontSize="8" fill="#9aa6c8" textAnchor="middle">{vlabFaN(d)}</text>))}
+        <text x="60" y="162" fontSize="8" fill="#5bb8ff" textAnchor="middle">FSH</text><text x="120" y="162" fontSize="8" fill="#ffd166" textAnchor="middle">LH</text><text x="180" y="162" fontSize="8" fill="#ff9d9d" textAnchor="middle">استروژن</text><text x="250" y="162" fontSize="8" fill="#5de0a0" textAnchor="middle">پروژسترون</text>
+        <text x="160" y="150" fontSize="8" fill="#9aa6c8" textAnchor="middle">روز چرخه</text>
+      </svg>
+      <div className="vlab-readout" style={{ textAlign: "center" }}>روز {vlabFaN(day)}: <b>{phase}</b></div>
+      <div className="vlab-controls"><div className="vlab-ctrl-col" style={{ flex: 1 }}>
+        <label className="vlab-ctrl-label">روز چرخه: {vlabFaN(day)}</label><VlabRange min="1" max="28" step="1" value={day} onChange={(e) => setDay(+e.target.value)} />
+      </div></div>
+      <div className="vlab-readout">{`چرخه‌ی ۲۸ روزه با هورمون‌های هیپوفیز (FSH و LH) و تخمدان (استروژن و پروژسترون) تنظیم می‌شود. FSH رشد فولیکول را شروع می‌کند، استروژن دیواره‌ی رحم را ضخیم می‌کند و جهش ناگهانی LH در روز ۱۴ تخمک‌گذاری را برمی‌انگیزد. جسم زرد پروژسترون می‌سازد؛ اگر بارداری نشود، سطح هورمون‌ها می‌افتد و قاعدگی شروع می‌شود (بازخورد منفی و مثبت).`}</div>
+      <VlabFormulaCheck title="روز تخمک‌گذاری" fa="تخمک‌گذاری ≈ طول چرخه ÷ ۲" en="ovulation ≈ day 14" legend="جهش LH تقریباً ۲۴ تا ۳۶ ساعت قبل از آن است." subst="۲۸ ÷ ۲" answer={14} unit="" decimals={0} />
+      <VlabEverydayCard title="چرا قرص جلوگیری اثر دارد؟" text="قرص‌های هورمونی سطح استروژن و پروژسترون را ثابت نگه می‌دارند، پس جهش LH رخ نمی‌دهد و تخمک‌گذاری انجام نمی‌شود. این یعنی آگاهی از چرخه، پایه‌ی بسیاری از درمان‌هاست.">
+        <circle cx="60" cy="38" r="22" fill="#ff9d9d" opacity="0.8" /><circle cx="60" cy="38" r="8" fill="#fff" />
+      </VlabEverydayCard>
+    </div>
+  );
+}
+
+/* ===== زیست) اپرون لاکتوز ===== */
+function VlabLacOperonExperiment({ onReading }) {
+  const [lac, setLac] = useState(false);
+  const [glu, setGlu] = useState(true);
+  const rep = !lac;
+  const tr = lac ? (glu ? 12 : 100) : 0;
+  const fa = (v) => vlabFaN(v);
+  return (
+    <div className="vlab-exp">
+      <svg viewBox="0 0 320 176" className="vlab-svg" style={{ background: "#03060f", borderRadius: "10px" }}>
+        <rect x="14" y="108" width="292" height="8" fill="#4a5578" />
+        {[["مهارکننده", 20, 38, "#9aa6c8"], ["پیشبر", 70, 38, "#5bb8ff"], ["اپراتور", 118, 30, "#ff6b6b"], ["lacZ", 160, 48, "#ffd166"], ["lacY", 214, 40, "#ff9d1c"], ["lacA", 260, 40, "#5de0a0"]].map(([n, x, w, c], i) => (<g key={i}><rect x={x} y="96" width={w} height="14" fill={c} opacity="0.85" rx="2" /><text x={x + w / 2} y="130" fontSize="7" fill="#cfd6ea" textAnchor="middle" direction="ltr">{n}</text></g>))}
+        {rep ? (<g><ellipse cx="133" cy="76" rx="18" ry="14" fill="#9aa6c8" stroke="#fff" /><text x="133" y="79" fontSize="8" fill="#03060f" textAnchor="middle">مهار</text><path d="M133,90 V96" stroke="#fff" /><text x="190" y="64" fontSize="9" fill="#ff9d9d" textAnchor="middle">RNA پلیمراز مسدود</text></g>)
+          : (<g><ellipse cx="60" cy="68" rx="18" ry="14" fill="#9aa6c8" opacity="0.6" /><circle cx="78" cy="62" r="6" fill="#ffd166" /><text x="60" y="48" fontSize="8" fill="#ffd166" textAnchor="middle">لاکتوز مهار را بر می‌دارد</text><path d="M86,86 Q150,60 220,86" fill="none" stroke="#5de0a0" strokeWidth={tr > 50 ? 4 : 1.5} /><text x="190" y="60" fontSize="9" fill="#5de0a0" textAnchor="middle">رونویسی {tr > 50 ? "زیاد" : "کم"}</text></g>)}
+        <rect x="30" y="148" width={(tr / 100) * 260} height="12" fill="#5de0a0" /><text x="160" y="170" fontSize="8" fill="#9aa6c8" textAnchor="middle">سطح آنزیم‌های مصرف لاکتوز: {fa(tr)}٪</text>
+      </svg>
+      <div className="vlab-readout" style={{ textAlign: "center" }}>{lac ? (glu ? "لاکتوز هست ولی گلوکز هم هست: باکتری ترجیح می‌دهد گلوکز بخورد (رونویسی کم)" : "لاکتوز هست و گلوکز نیست: ژن‌ها فعال و آنزیم‌ها زیاد") : "لاکتوز نیست: مهارکننده روی اپراتور است و ژن‌ها خاموش"}</div>
+      <div className="vlab-controls"><div className="vlab-ctrl-col" style={{ flex: 1 }}>
+        <div className="vlab-btn-row"><button className="vlab-btn" style={lac ? { outline: "2px solid #e0a83e" } : null} onClick={() => setLac(!lac)}>لاکتوز {lac ? "هست" : "نیست"}</button><button className="vlab-btn" style={glu ? { outline: "2px solid #2e7bd5" } : null} onClick={() => setGlu(!glu)}>گلوکز {glu ? "هست" : "نیست"}</button></div>
+      </div></div>
+      <div className="vlab-readout">{`باکتری فقط وقتی آنزیم‌های مصرف لاکتوز را می‌سازد که لازم باشند. وقتی لاکتوز نیست، پروتئین مهارکننده به اپراتور می‌چسبد و رونویسی نمی‌شود. لاکتوز به مهارکننده می‌چسبد، آن را از اپراتور جدا می‌کند و RNA پلیمراز ژن‌ها را رونویسی می‌کند. وجود گلوکز (منبع بهتر) رونویسی را کاهش می‌دهد؛ یک تنظیم دوگانه و اقتصادی.`}</div>
+      <VlabFormulaCheck title="سطح رونویسی" fa="فقط وقتی لاکتوز هست و گلوکز نیست حداکثر است" en="lac operon logic" legend="مدل ساده‌شده‌ی درصدی." subst={`لاکتوز ${lac ? "هست" : "نیست"}، گلوکز ${glu ? "هست" : "نیست"}`} answer={tr} unit="٪" decimals={0} />
+      <VlabEverydayCard title="اقتصاد سلول" text="مثل خاموش‌کردن چراغ اتاق خالی: سلول ژن‌هایی را که لازم نیست خاموش می‌کند تا انرژی و ماده هدر نرود. همین تنظیم در همه‌ی سلول‌های بدن ما هم هست.">
+        <circle cx="60" cy="30" r="14" fill="#ffd166" /><path d="M60,44 V60" stroke="#7d8bb5" strokeWidth="4" />
+      </VlabEverydayCard>
+    </div>
+  );
+}
+
+/* ===== زیست) جهش ===== */
+const VLAB_MUTAA = "FFLLSSSSYY**CC*WLLLLPPPPHHQQRRRRIIIMTTTTNNKKSSRRVVVVAAAADDEEGGGG";
+function vlabTr(dna) { const rna = dna.replace(/T/g, "U"); const idx = (c) => "UCAG".indexOf(c); const out = []; for (let i = 0; i + 2 < rna.length; i += 3) { const a = VLAB_MUTAA[idx(rna[i]) * 16 + idx(rna[i + 1]) * 4 + idx(rna[i + 2])]; out.push(a); if (a === "*") break; } return out; }
+function VlabMutationExperiment({ onReading }) {
+  const base = "ATGGCTAACGTATGGAAATAA";
+  const [typ, setTyp] = useState("sub");
+  const [pos, setPos] = useState(5);
+  const [nb, setNb] = useState("A");
+  let mut = base;
+  if (typ === "sub") mut = base.slice(0, pos) + nb + base.slice(pos + 1);
+  else if (typ === "ins") mut = base.slice(0, pos) + nb + base.slice(pos);
+  else mut = base.slice(0, pos) + base.slice(pos + 1);
+  const p0 = vlabTr(base), p1 = vlabTr(mut);
+  const same = p0.join("") === p1.join("");
+  const effect = typ !== "sub" ? "جهش جابه‌جایی چارچوب (تغییر همه‌ی کدون‌های بعدی)" : same ? "جهش خاموش (آمینواسید عوض نشد)" : p1.length < p0.length && p1.join("").length < p0.join("").length ? "جهش بی‌معنا (زود پایان‌دادن)" : "جهش دگرمعنا (آمینواسید دیگر)";
+  const fa = (v) => vlabFaN(v);
+  const row = (s, y, col) => s.split("").map((c, i) => (<text key={i} x={14 + i * 14.2} y={y} fontSize="11" fontWeight="700" fill={col(i)} textAnchor="middle" direction="ltr">{c}</text>));
+  const diff = (i) => (typ === "sub" ? i === pos : typ === "ins" ? i === pos : false);
+  return (
+    <div className="vlab-exp">
+      <svg viewBox="0 0 320 150" className="vlab-svg" style={{ background: "#03060f", borderRadius: "10px" }}>
+        <text x="160" y="14" fontSize="8" fill="#9aa6c8" textAnchor="middle">DNA اولیه</text>{row(base, 30, () => "#5bb8ff")}
+        <text x="160" y="52" fontSize="8" fill="#9aa6c8" textAnchor="middle">DNA جهش‌یافته</text>{row(mut, 68, (i) => (diff(i) ? "#ff6b6b" : "#ffd166"))}
+        <text x="160" y="92" fontSize="8" fill="#9aa6c8" textAnchor="middle">پروتئین اولیه ← جهش‌یافته</text>
+        <text x="160" y="110" fontSize="11" fill="#5bb8ff" textAnchor="middle" direction="ltr">{p0.join(" – ")}</text><text x="160" y="130" fontSize="11" fill={same ? "#5de0a0" : "#ff9d9d"} textAnchor="middle" direction="ltr">{p1.join(" – ") || "—"}</text>
+      </svg>
+      <div className="vlab-readout" style={{ textAlign: "center" }}><b>{effect}</b></div>
+      <div className="vlab-controls"><div className="vlab-ctrl-col" style={{ flex: 1 }}>
+        <div className="vlab-btn-row">{[["sub", "جانشینی"], ["ins", "درج"], ["del", "حذف"]].map(([k, n]) => (<button key={k} className="vlab-btn" style={typ === k ? { outline: "2px solid #e0a83e" } : null} onClick={() => setTyp(k)}>{n}</button>))}</div>
+        <label className="vlab-ctrl-label">جای جهش: باز {fa(pos + 1)}</label><VlabRange min="0" max={base.length - 2} step="1" value={pos} onChange={(e) => setPos(+e.target.value)} />
+        {typ !== "del" && <div className="vlab-btn-row">{["A", "T", "G", "C"].map((q) => (<button key={q} className="vlab-btn" style={nb === q ? { outline: "2px solid #2e7bd5" } : null} onClick={() => setNb(q)}>{q}</button>))}</div>}
+      </div></div>
+      <div className="vlab-readout">{`جهش تغییر در توالی DNA است. جانشینی ممکن است بی‌اثر (خاموش)، تغییر یک آمینواسید (دگرمعنا) یا ایجاد کدون پایان (بی‌معنا) باشد. درج یا حذف یک باز، چارچوب خواندن را از آن نقطه جابه‌جا و پروتئین را به‌کلی عوض می‌کند. حرف‌ها تک‌حرفی‌اند: M متیونین، * پایان، و ...`}</div>
+      <VlabFormulaCheck title="طول زنجیره‌ی پروتئین" fa="تعداد آمینواسید تا کدون پایان" en="length" legend="کدون پایان آمینواسید ندارد." subst={`${fa(p1.filter((a) => a !== "*").length)} آمینواسید`} answer={p1.filter((a) => a !== "*").length} unit="آمینواسید" decimals={0} />
+      <VlabEverydayCard title="کم‌خونی داسی‌شکل" text="در بیماری داسی‌شکل فقط یک باز در ژن هموگلوبین عوض شده (جانشینی) و یک آمینواسید تغییر کرده؛ همین گویچه‌های قرمز را داسی می‌کند. جهش‌ها منشأ تنوع و بیماری‌اند.">
+        <circle cx="38" cy="38" r="18" fill="#c0554a" /><path d="M72,22 Q96,38 72,58 Q84,38 72,22" fill="#c0554a" />
+      </VlabEverydayCard>
+    </div>
+  );
+}
+
+/* ===== زمین‌شناسی) آب زیرزمینی و آبخوان ===== */
+const VLAB_SOIL = { sand: ["ماسه", 120], gravel: ["شن", 400], clay: ["رس", 0.2] };
+function VlabAquiferExperiment({ onReading }) {
+  const [sk, setSk] = useState("sand");
+  const [pump, setPump] = useState(30);
+  const [rain, setRain] = useState(30);
+  const K = VLAB_SOIL[sk][1];
+  const rech = rain * 0.6;
+  const dd = Math.min(40, (pump * 12) / Math.sqrt(K + 1) / 2);
+  const wt = 60 + rech * 0.4 - 15 - dd * 0.0 ;
+  const wtC = Math.max(25, Math.min(95, 70 - rech * 0.4 + 12));
+  const level = Math.min(100, wtC + dd * 0.9);
+  const Q = (K * 1e-5 * 100 * 0.02) * 86400 * 0.001;
+  const fa = (v, d = 1) => vlabMFa(v, d);
+  const CX = 160;
+  let wtPath = ""; for (let i = 0; i <= 60; i++) { const x = 10 + (i / 60) * 300; const cone = dd * Math.exp(-Math.pow((x - CX) / 40, 2)); wtPath += (i ? "L" : "M") + x.toFixed(1) + "," + (wtC + 40 + cone).toFixed(1); }
+  const nearPump = pump > 70 && K < 10;
+  return (
+    <div className="vlab-exp">
+      <svg viewBox="0 0 320 190" className="vlab-svg" style={{ background: "#03060f", borderRadius: "10px" }}>
+        <rect x="10" y="40" width="300" height="140" fill="#8b6b4a" opacity="0.5" /><rect x="10" y="120" width="300" height="14" fill="#3a2a22" /><text x="70" y="130" fontSize="8" fill="#ffb27a" textAnchor="middle">لایه‌ی نفوذناپذیر</text>
+        <path d={wtPath + " L310,134 L10,134 Z"} fill="#5bb8ff" opacity="0.55" /><path d={wtPath} fill="none" stroke="#9fd4ff" strokeWidth="2" strokeDasharray="4 3" />
+        <rect x={CX - 5} y="30" width="10" height="100" fill="#cfd6ea" opacity="0.5" /><text x={CX} y="24" fontSize="8" fill="#ffd166" textAnchor="middle">چاه</text>
+        {Array.from({ length: Math.round(rain / 15) }, (_, i) => (<line key={i} x1={30 + i * 40} y1="8" x2={26 + i * 40} y2="28" stroke="#5bb8ff" strokeWidth="2" />))}
+        <text x="260" y="70" fontSize="9" fill="#9fd4ff" textAnchor="middle">سطح ایستابی</text><text x="160" y="170" fontSize="9" fill="#cfd6ea" textAnchor="middle">آبخوان: {VLAB_SOIL[sk][0]}</text>
+      </svg>
+      <div className="vlab-readout" style={{ textAlign: "center" }}>افت آب اطراف چاه ≈ <b>{fa(dd, 0)}</b> واحد {nearPump ? "· پمپاژ بیش از تغذیه؛ آبخوان در خطر خشک‌شدن" : ""}</div>
+      <div className="vlab-controls"><div className="vlab-ctrl-col" style={{ flex: 1 }}>
+        <div className="vlab-btn-row">{Object.keys(VLAB_SOIL).map((k) => (<button key={k} className="vlab-btn" style={sk === k ? { outline: "2px solid #e0a83e" } : null} onClick={() => setSk(k)}>{VLAB_SOIL[k][0]}</button>))}</div>
+        <label className="vlab-ctrl-label">پمپاژ از چاه: {vlabFaN(pump)}٪</label><VlabRange min="0" max="100" step="5" value={pump} onChange={(e) => setPump(+e.target.value)} />
+        <label className="vlab-ctrl-label">بارش و تغذیه: {vlabFaN(rain)}٪</label><VlabRange min="0" max="100" step="5" value={rain} onChange={(e) => setRain(+e.target.value)} />
+      </div></div>
+      <div className="vlab-readout">{`آب باران در خلل و فرج خاک و سنگ فرو می‌رود و آبخوان را پر می‌کند. سرعت جریان آب را نفوذپذیری (K) تعیین می‌کند: شن و ماسه آب را به‌خوبی عبور می‌دهند و رس تقریباً نه. با پمپاژ، سطح آب اطراف چاه به شکل قیف (مخروط افت) پایین می‌رود؛ اگر برداشت از تغذیه بیشتر شود، آبخوان فرومی‌ریزد و زمین فرونشست می‌کند (مانند دشت‌های ایران).`}</div>
+      <VlabFormulaCheck title="قانون دارسی" fa="Q = K · A · (Δh ÷ L)" en="Darcy's law" legend="K ضریب نفوذپذیری، A سطح مقطع، Δh ÷ L شیب هیدرولیکی." subst={`K = ${fa(K, 1)} (A و شیب ثابت)`} answer={K} unit="نسبی" decimals={1} />
+      <VlabEverydayCard title="فرونشست دشت‌ها" text="در بسیاری از دشت‌های ایران، برداشت بی‌رویه از چاه‌ها سطح آب را پایین آورده و زمین ده‌ها سانتی‌متر در سال فرونشست می‌کند. کنترل پمپاژ برای حفظ آبخوان لازم است.">
+        <path d="M10,34 Q60,60 110,34" fill="none" stroke="#7d8bb5" strokeWidth="3" /><line x1="60" y1="10" x2="60" y2="56" stroke="#d83a3a" strokeDasharray="3 2" />
+      </VlabEverydayCard>
+    </div>
+  );
+}
+
+/* ===== زمین‌شناسی) پایداری شیب و لغزش ===== */
+const VLAB_SL = { sand: ["ماسه‌ی خشک", 35], clay: ["رس", 22], gravel: ["شن", 40] };
+function VlabSlopeExperiment({ onReading }) {
+  const [sk, setSk] = useState("sand");
+  const [th, setTh] = useState(25);
+  const [rain, setRain] = useState(0);
+  const phi = VLAB_SL[sk][1] * (1 - rain / 100 * 0.5);
+  const rad = (d) => (d * Math.PI) / 180;
+  const FS = Math.tan(rad(phi)) / Math.tan(rad(th));
+  const slides = FS < 1;
+  const fa = (v, d = 2) => vlabMFa(v, d);
+  const Bx = 90, By = 140, Lx = 220;
+  const Tx = Bx + Lx * Math.cos(rad(th)), Ty = By - Lx * Math.sin(rad(th));
+  const mx = Bx + 110 * Math.cos(rad(th)) + (slides ? 30 : 0) * Math.cos(rad(th)), my = By - 110 * Math.sin(rad(th)) - (slides ? 30 : 0) * -0;
+  const px = slides ? mx + 26 * Math.cos(rad(th)) : mx, py = slides ? my + 26 * Math.sin(rad(th)) : my;
+  return (
+    <div className="vlab-exp">
+      <svg viewBox="0 0 320 170" className="vlab-svg" style={{ background: "#03060f", borderRadius: "10px" }}>
+        {Array.from({ length: Math.round(rain / 20) }, (_, i) => (<line key={i} x1={40 + i * 50} y1="6" x2={34 + i * 50} y2="26" stroke="#5bb8ff" strokeWidth="2" />))}
+        <polygon points={`${Bx},${By} ${Tx},${Ty} ${Tx},${By}`} fill="#8b6b4a" opacity={1 - rain / 250} />
+        <line x1={Bx} y1={By} x2={Tx} y2={Ty} stroke="#d9742c" strokeWidth="3" /><line x1="10" y1={By} x2="310" y2={By} stroke="#6a7aa8" />
+        <g transform={`translate(${px} ${py}) rotate(${-th})`}><rect x="-14" y="-22" width="28" height="22" fill={slides ? "#ff6b6b" : "#5de0a0"} stroke="#fff" /></g>
+        <path d={`M${Bx + 40},${By} A40,40 0 0 0 ${Bx + 40 * Math.cos(rad(th))},${By - 40 * Math.sin(rad(th))}`} fill="none" stroke="#ffd166" /><text x={Bx + 54} y={By - 8} fontSize="9" fill="#ffd166">{vlabFaN(th)}°</text>
+        <text x="236" y="40" fontSize="11" fontWeight="700" fill={slides ? "#ff6b6b" : "#5de0a0"} textAnchor="middle">{slides ? "لغزش!" : "پایدار"}</text>
+        <text x="236" y="58" fontSize="9" fill="#cfd6ea" textAnchor="middle">FS = {fa(FS)}</text>
+        <text x="236" y="76" fontSize="8" fill="#9aa6c8" textAnchor="middle">زاویه‌ی اصطکاک {fa(phi, 0)}°</text>
+      </svg>
+      <div className="vlab-readout" style={{ textAlign: "center" }}>ضریب اطمینان FS = <b>{fa(FS)}</b> ← {slides ? "ناپایدار (احتمال لغزش)" : FS < 1.3 ? "پایدار ولی نزدیک مرز" : "پایدار"}</div>
+      <div className="vlab-controls"><div className="vlab-ctrl-col" style={{ flex: 1 }}>
+        <div className="vlab-btn-row">{Object.keys(VLAB_SL).map((k) => (<button key={k} className="vlab-btn" style={sk === k ? { outline: "2px solid #e0a83e" } : null} onClick={() => setSk(k)}>{VLAB_SL[k][0]}</button>))}</div>
+        <label className="vlab-ctrl-label">زاویه‌ی شیب: {vlabFaN(th)}°</label><VlabRange min="5" max="60" step="1" value={th} onChange={(e) => setTh(+e.target.value)} />
+        <label className="vlab-ctrl-label">اشباع از آب باران: {vlabFaN(rain)}٪</label><VlabRange min="0" max="100" step="10" value={rain} onChange={(e) => setRain(+e.target.value)} />
+      </div></div>
+      <div className="vlab-readout">{`نیروی وزن توده را به‌سمت پایین می‌کشد و اصطکاک داخلی خاک نگهش می‌دارد. اگر زاویه‌ی شیب از زاویه‌ی اصطکاک بیشتر شود، لغزش رخ می‌دهد. آب باران خاک را سنگین و لغزنده می‌کند و اصطکاک را کم می‌کند؛ به همین دلیل بیشتر رانش‌ها پس از بارش‌های شدید رخ می‌دهند.`}</div>
+      <VlabFormulaCheck title="ضریب اطمینان" fa="FS = tan φ ÷ tan θ" en="FS = tanφ/tanθ" legend="φ زاویه‌ی اصطکاک و θ زاویه‌ی شیب؛ FS < ۱ یعنی لغزش." subst={`FS = tan ${fa(phi, 0)}° ÷ tan ${vlabFaN(th)}°`} answer={FS} unit="" decimals={2} />
+      <VlabEverydayCard title="رانش جاده‌ی هراز و چالوس" text="کوه‌های شمال با شیب تند و بارش زیاد مستعد رانش‌اند. مهندسان با شیب‌بندی، زهکشی و گیاه‌کاری ضریب اطمینان را بالا می‌برند.">
+        <polygon points="10,64 110,12 110,64" fill="#8b6b4a" /><rect x="52" y="28" width="22" height="14" fill="#d83a3a" transform="rotate(-28 63 35)" />
+      </VlabEverydayCard>
+    </div>
+  );
+}
+
 const VLAB_COMPONENTS = {
   lever: VlabLeverExperiment,
   pendulum: VlabPendulumExperiment,
@@ -37538,6 +38009,16 @@ const VLAB_COMPONENTS = {
   "ionic-crystal": VlabIonicCrystalExperiment,
   "nephron": VlabNephronExperiment,
   "earth-layers": VlabEarthLayersExperiment,
+  "solid-net": VlabSolidNetExperiment,
+  "esterification": VlabEsterExperiment,
+  "antibody-antigen": VlabAntibodyExperiment,
+  "oil-tower": VlabOilTowerExperiment,
+  "muscle-contraction": VlabMuscleExperiment,
+  "menstrual-cycle": VlabMenstrualExperiment,
+  "lac-operon": VlabLacOperonExperiment,
+  "mutation": VlabMutationExperiment,
+  "aquifer": VlabAquiferExperiment,
+  "slope-stability": VlabSlopeExperiment,
 };
 
 function StudentVirtualLabView({ onBack, grade, studentCode, schoolCode }) {

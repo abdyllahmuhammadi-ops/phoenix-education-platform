@@ -36587,9 +36587,9 @@ function VlabWaterCycleExperiment({ onReading }) {
         <rect x="0" y="0" width="320" height="200" fill="url(#wcSky)" />
         {(() => {
           const H = 40 + mh * 1.0, SL = 150, PX = 225;
-          const prof = (x) => { const g = (c, sg, h) => h * Math.exp(-Math.pow((x - c) / sg, 2)); return Math.max(g(PX, 38, 1), g(168, 18, 0.5), g(278, 24, 0.5), g(110, 22, 0.1)); };
+          const prof = (x) => { const g = (c, sg, h) => h * Math.exp(-Math.pow((x - c) / sg, 2)); return Math.max(g(PX, 40, 1), g(278, 24, 0.5), g(110, 22, 0.1)); };
           const jag = (x) => Math.sin(x * 1.7) * 2.2 + Math.sin(x * 4.3 + 1) * 1.6 + Math.sin(x * 0.9) * 1.8;
-          const ridge = []; for (let x = 100; x <= 320; x += 5) ridge.push([x, Math.min(SL, SL - H * prof(x) + (x > 108 ? jag(x) * (0.3 + H / 140) : 0))]);
+          const ridge = []; for (let x = 100; x <= 320; x += 5) ridge.push([x, Math.min(SL, SL - H * prof(x) + (x > PX ? jag(x) * (0.3 + H / 140) : 0))]);
           ridge[0][1] = SL;
           const yAt = (x) => { for (let k = 0; k < ridge.length - 1; k++) { const [x0, y0] = ridge[k], [x1, y1] = ridge[k + 1]; if (x >= x0 && x <= x1) return y0 + ((y1 - y0) * (x - x0)) / (x1 - x0); } return SL; };
           const peakY = Math.min(...ridge.map((p) => p[1]));
@@ -36605,7 +36605,7 @@ function VlabWaterCycleExperiment({ onReading }) {
           const vd = Math.max(1.2, 3.4 - sun / 40), rd = Math.max(0.6, 1.1 - P * 0.08);
           const cloudDark = Math.min(1, 0.7 + P * 0.06);
           const rays = Array.from({ length: 8 }, (_, k) => { const an = (k * Math.PI) / 4, r0 = 12 + sun / 14, r1 = r0 + 4 + sun / 16; return <line key={k} x1={34 + Math.cos(an) * r0} y1={28 + Math.sin(an) * r0} x2={34 + Math.cos(an) * r1} y2={28 + Math.sin(an) * r1} stroke="#ffd166" strokeWidth="1.6" />; });
-          const riverPts = [...Array.from({ length: 9 }, (_, k) => 200 - k * 10).map((x) => [x, yAt(x) + 3]), [104, SL + 1]];
+          const riverPts = []; { let yy = -1e9; [...Array.from({ length: 9 }, (_, k) => 200 - k * 10), 104].forEach((x) => { yy = Math.max(yy, x === 104 ? SL + 1 : yAt(x) + 3); riverPts.push([x, yy]); }); }
           return (
             <g>
               <circle cx="34" cy="28" r={9 + sun / 16} fill="#ffe27a" />{rays}

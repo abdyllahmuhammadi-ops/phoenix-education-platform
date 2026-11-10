@@ -23629,6 +23629,51 @@ const VLAB_EXPERIMENTS = [
     intro: "صفحه‌ی برش را کج کن و ببین از مخروط یکی از چهار منحنی دایره، بیضی، سهمی یا هذلولی بیرون می‌آید.",
     tools: ["مخروط دوتایی", "صفحه‌ی برش", "خروج از مرکز"],
   },
+  {
+    id: "potential-field",
+    subject: "فیزیک",
+    level: "متوسطه دوم",
+    title: "پتانسیل الکتریکی و سطوح هم‌پتانسیل",
+    icon: "⚡",
+    intro: "دو بار الکتریکی را تغییر بده و نوارهای هم‌پتانسیل و پتانسیل یک نقطه را ببین.",
+    tools: ["دو بار", "سطوح هم‌پتانسیل", "ولت‌سنج"],
+  },
+  {
+    id: "heat-engine",
+    subject: "فیزیک",
+    level: "متوسطه دوم",
+    title: "چرخه و ماشین گرمایی",
+    icon: "🔥",
+    intro: "دمای دو منبع را تغییر بده و ببین از هر گرمای گرفته‌شده چقدر کار مفید به‌دست می‌آید.",
+    tools: ["منبع گرم و سرد", "بازده کارنو", "نمودار شارش گرما"],
+  },
+  {
+    id: "atomic-spectrum",
+    subject: "فیزیک",
+    level: "متوسطه دوم",
+    title: "طیف‌نمای اتمی هیدروژن",
+    icon: "🌈",
+    intro: "فرود الکترون بین ترازهای انرژی را انتخاب کن و رنگ و طول موج فوتون را ببین.",
+    tools: ["ترازهای انرژی", "طیف خطی", "طول موج"],
+  },
+  {
+    id: "periodic-radius",
+    subject: "شیمی",
+    level: "متوسطه دوم",
+    title: "جدول تناوبی و شعاع اتمی",
+    icon: "⚛️",
+    intro: "روند شعاع اتمی را در دوره‌ها و گروه‌ها ببین و دلیلش را از بار مؤثر هسته و شمار لایه‌ها بفهم.",
+    tools: ["دوره‌ها", "گروه‌ها", "شعاع اتمی"],
+  },
+  {
+    id: "le-chatelier",
+    subject: "شیمی",
+    level: "متوسطه دوم",
+    title: "تعادل و اصل لوشاتلیه",
+    icon: "⚖️",
+    intro: "دما، حجم و مقدار گاز را تغییر بده و ببین تعادل NO₂ ⇌ N₂O₄ به کدام سو می‌رود.",
+    tools: ["ظرف گاز", "نمودار مول‌ها", "ثابت تعادل"],
+  },
 ];
 
 function vlabClamp(v, min, max) {
@@ -34728,6 +34773,217 @@ function VlabConeSectionExperiment({ onReading }) {
   );
 }
 
+/* ===== فیزیک) پتانسیل و سطوح هم‌پتانسیل ===== */
+function VlabPotentialExperiment({ onReading }) {
+  const [q1, setQ1] = useState(4);
+  const [q2, setQ2] = useState(-4);
+  const [px, setPx] = useState(50);
+  const W = 320, H = 150, X1 = 90, X2 = 230, Y0 = 75;
+  const Vat = (x, y) => { const r1 = Math.max(4, Math.hypot(x - X1, y - Y0)) / 4, r2 = Math.max(4, Math.hypot(x - X2, y - Y0)) / 4; return 900 * (q1 / r1 + q2 / r2); };
+  const step = 150, cells = [];
+  for (let i = 0; i < 40; i++) for (let j = 0; j < 19; j++) { const x = 4 + i * 8, y = 4 + j * 8; const v = Vat(x + 4, y + 4); const b = Math.floor(v / step); cells.push(<rect key={i + "-" + j} x={x} y={y} width="8" height="8" fill={v >= 0 ? "#ff6b6b" : "#5bb8ff"} opacity={b % 2 === 0 ? 0.34 : 0.12} />); }
+  const tx = 20 + (px / 100) * 280, ty = Y0;
+  const r1 = Math.abs(tx - X1) / 4, r2 = Math.abs(tx - X2) / 4;
+  const v1 = r1 < 0.5 ? 0 : 900 * q1 / r1, v2 = r2 < 0.5 ? 0 : 900 * q2 / r2, vt = v1 + v2;
+  const fa = (v, d = 0) => vlabMFa(v, d);
+  return (
+    <div className="vlab-exp">
+      <svg viewBox="0 0 320 156" className="vlab-svg" style={{ background: "#03060f", borderRadius: "10px" }}>
+        {cells}
+        <circle cx={X1} cy={Y0} r="9" fill={q1 >= 0 ? "#ff6b6b" : "#5bb8ff"} stroke="#fff" /><text x={X1} y={Y0 + 3} fontSize="9" fill="#fff" textAnchor="middle" direction="ltr">{q1 >= 0 ? "+" : "−"}</text>
+        <circle cx={X2} cy={Y0} r="9" fill={q2 >= 0 ? "#ff6b6b" : "#5bb8ff"} stroke="#fff" /><text x={X2} y={Y0 + 3} fontSize="9" fill="#fff" textAnchor="middle" direction="ltr">{q2 >= 0 ? "+" : "−"}</text>
+        <circle cx={tx} cy={ty - 26} r="5" fill="#ffd166" stroke="#fff" /><line x1={tx} y1={ty - 21} x2={tx} y2={ty} stroke="#ffd166" strokeDasharray="2 2" />
+        <text x="160" y="150" fontSize="8" fill="#9aa6c8" textAnchor="middle">نوارهای تیره و روشن = سطوح هم‌پتانسیل (هر ۱۵۰ ولت)</text>
+      </svg>
+      <div className="vlab-readout" style={{ textAlign: "center" }}>پتانسیل در نقطه‌ی زرد: <b>{fa(vt)}</b> ولت</div>
+      <div className="vlab-controls"><div className="vlab-ctrl-col" style={{ flex: 1 }}>
+        <label className="vlab-ctrl-label">بار چپ: {fa(q1)} نانوکولن</label><VlabRange min="-8" max="8" step="1" value={q1} onChange={(e) => setQ1(+e.target.value)} />
+        <label className="vlab-ctrl-label">بار راست: {fa(q2)} نانوکولن</label><VlabRange min="-8" max="8" step="1" value={q2} onChange={(e) => setQ2(+e.target.value)} />
+        <label className="vlab-ctrl-label">جای نقطه‌ی زرد</label><VlabRange min="0" max="100" step="1" value={px} onChange={(e) => setPx(+e.target.value)} />
+      </div></div>
+      <div className="vlab-readout">
+        {`پتانسیل یک عدد است (نه بردار): پتانسیل هر بار جداگانه حساب و جمع جبری می‌شود. روی هر سطح هم‌پتانسیل کار نیروی میدان صفر است و خطوط میدان همیشه بر آن عمودند. وقتی دو بار هم‌نام باشند، سطوح دور هر دو بسته می‌شوند؛ در دو بار ناهم‌نام، میانشان سطحی با پتانسیل صفر هست.`}
+      </div>
+      <VlabFormulaCheck title="پتانسیل بار اول" fa="V = k·q ÷ r" en="V = kq / r" legend="k = ۹×۱۰⁹؛ بار به نانوکولن و فاصله به سانتی‌متر باشد، ضریب ۹۰۰ به‌دست می‌آید." subst={`V = ۹۰۰ × ${fa(q1)} ÷ ${fa(r1, 1)}`} answer={v1} unit="ولت" decimals={0} />
+      <VlabEverydayCard title="باتری و ولتاژ پریز" text="ولت همان اختلاف پتانسیل است. دو سر باتری ۱٫۵ ولت یعنی هر کولن بار با رفتن از یک سر به سر دیگر ۱٫۵ ژول انرژی می‌گیرد یا می‌دهد.">
+        <rect x="30" y="22" width="56" height="36" rx="5" fill="#d8dde8" stroke="#7d8bb5" /><rect x="86" y="32" width="8" height="16" fill="#9aa6c8" /><text x="58" y="45" fontSize="12" fill="#333" textAnchor="middle">۱٫۵ V</text>
+      </VlabEverydayCard>
+    </div>
+  );
+}
+
+/* ===== فیزیک) چرخه و ماشین گرمایی ===== */
+function VlabHeatEngineExperiment({ onReading }) {
+  const [Th, setTh] = useState(600);
+  const [Tc, setTc] = useState(300);
+  const [Qh, setQh] = useState(1000);
+  const Tcc = Math.min(Tc, Th - 50);
+  const eta = 1 - Tcc / Th, W = eta * Qh, Qc = Qh - W;
+  const fa = (v, d = 0) => vlabMFa(v, d);
+  const wd = (Q) => 6 + (Q / 2000) * 34;
+  return (
+    <div className="vlab-exp">
+      <svg viewBox="0 0 320 190" className="vlab-svg" style={{ background: "#03060f", borderRadius: "10px" }}>
+        <rect x="70" y="6" width="180" height="26" rx="6" fill="#ff6b6b" opacity="0.8" /><text x="160" y="23" fontSize="11" fill="#fff" textAnchor="middle">منبع گرم {fa(Th)} کلوین</text>
+        <rect x="70" y="158" width="180" height="26" rx="6" fill="#5bb8ff" opacity="0.8" /><text x="160" y="175" fontSize="11" fill="#03060f" textAnchor="middle">منبع سرد {fa(Tcc)} کلوین</text>
+        <rect x={160 - wd(Qh) / 2} y="32" width={wd(Qh)} height="40" fill="#ff9d1c" opacity="0.85" /><text x={160 + wd(Qh) / 2 + 34} y="56" fontSize="9" fill="#ffd166" textAnchor="middle">Qh = {fa(Qh)}</text>
+        <circle cx="160" cy="95" r="26" fill="#1c2644" stroke="#e0a83e" strokeWidth="2" /><text x="160" y="99" fontSize="10" fill="#fff" textAnchor="middle">موتور</text>
+        <rect x={160 - wd(Qc) / 2} y="121" width={wd(Qc)} height="37" fill="#5bb8ff" opacity="0.85" /><text x={160 + wd(Qc) / 2 + 34} y="144" fontSize="9" fill="#9fd4ff" textAnchor="middle">Qc = {fa(Qc)}</text>
+        <rect x="186" y="90" width={Math.max(2, W / 2000 * 100)} height="10" fill="#5de0a0" /><text x={226 + W / 2000 * 100} y="99" fontSize="9" fill="#5de0a0" textAnchor="middle">W = {fa(W)}</text>
+      </svg>
+      <div className="vlab-readout" style={{ textAlign: "center" }}>بازده بیشینه (کارنو) = <b>{fa(eta * 100, 1)}٪</b> · کار مفید {fa(W)} ژول</div>
+      <div className="vlab-controls"><div className="vlab-ctrl-col" style={{ flex: 1 }}>
+        <label className="vlab-ctrl-label">دمای منبع گرم: {fa(Th)} K</label><VlabRange min="400" max="1000" step="20" value={Th} onChange={(e) => setTh(+e.target.value)} />
+        <label className="vlab-ctrl-label">دمای منبع سرد: {fa(Tcc)} K</label><VlabRange min="250" max="500" step="10" value={Tc} onChange={(e) => setTc(+e.target.value)} />
+        <label className="vlab-ctrl-label">گرمای گرفته‌شده در هر چرخه: {fa(Qh)} J</label><VlabRange min="200" max="2000" step="100" value={Qh} onChange={(e) => setQh(+e.target.value)} />
+      </div></div>
+      <div className="vlab-readout">
+        {`ماشین گرمایی گرمای Qh را از منبع گرم می‌گیرد، بخشی را به کار W تبدیل می‌کند و ناچار باقی (Qc) را به منبع سرد می‌دهد؛ پس بازده هرگز ۱۰۰٪ نمی‌شود. برای بازده بیشتر باید اختلاف دمای دو منبع بیشتر باشد.`}
+      </div>
+      <VlabFormulaCheck title="بازده کارنو" fa="η = ۱ − Tc ÷ Th" en="η = 1 − Tc / Th" legend="دماها را به کلوین بگذار؛ جواب بین صفر و یک است." subst={`η = 1 − ${fa(Tcc)} ÷ ${fa(Th)}`} answer={eta} unit="" decimals={2} />
+      <VlabFormulaCheck title="کار مفید" fa="W = η × Qh" en="W = η·Qh" legend="" subst={`W = ${fa(eta, 2)} × ${fa(Qh)}`} answer={W} unit="ژول" decimals={0} />
+      <VlabEverydayCard title="موتور خودرو" text="در موتور بنزینی بیش از نیمی از گرمای سوخت به‌صورت گرما از اگزوز و رادیاتور هدر می‌رود؛ بازده واقعی حدود ۲۵ تا ۳۵٪ است، نه ۱۰۰٪.">
+        <rect x="20" y="30" width="60" height="30" rx="6" fill="#7d8bb5" /><path d="M80,44 h22" stroke="#999" strokeWidth="6" /><circle cx="108" cy="44" r="5" fill="#bbb" opacity="0.6" />
+      </VlabEverydayCard>
+    </div>
+  );
+}
+
+/* ===== فیزیک) طیف‌نمای اتمی هیدروژن ===== */
+function vlabWlRgb(l) {
+  let r = 0, g = 0, b = 0;
+  if (l >= 380 && l < 440) { r = -(l - 440) / 60; b = 1; } else if (l < 490) { g = (l - 440) / 50; b = 1; } else if (l < 510) { g = 1; b = -(l - 510) / 20; } else if (l < 580) { r = (l - 510) / 70; g = 1; } else if (l < 645) { r = 1; g = -(l - 645) / 65; } else if (l <= 750) { r = 1; }
+  return l >= 380 && l <= 750 ? `rgb(${Math.round(r * 255)},${Math.round(g * 255)},${Math.round(b * 255)})` : "#888";
+}
+function VlabSpectrumExperiment({ onReading }) {
+  const [nl, setNl] = useState(2);
+  const [nu, setNu] = useState(3);
+  const up = Math.max(nu, nl + 1);
+  const wl = (a, b) => 1e9 / (1.097e7 * (1 / (a * a) - 1 / (b * b)));
+  const lam = wl(nl, up);
+  const E = (n) => -13.6 / (n * n);
+  const dE = E(up) - E(nl);
+  const fa = (v, d = 0) => vlabMFa(v, d);
+  const lines = []; for (let u = nl + 1; u <= 7; u++) lines.push([u, wl(nl, u)]);
+  const SX = (l) => 20 + ((l - 80) / (1300 - 80)) * 280;
+  const lvY = (n) => 160 - (13.6 - Math.abs(E(n))) / 13.6 * 120;
+  return (
+    <div className="vlab-exp">
+      <svg viewBox="0 0 320 214" className="vlab-svg" style={{ background: "#03060f", borderRadius: "10px" }}>
+        {[1, 2, 3, 4, 5, 6].map((n) => (<g key={n}><line x1="30" y1={lvY(n)} x2="140" y2={lvY(n)} stroke={n === nl || n === up ? "#ffd166" : "#4a5578"} strokeWidth={n === nl || n === up ? 2 : 1} />{(n === 1 || n === nl || n === up) && <text x="24" y={lvY(n) + 3} fontSize="8" fill="#ffd166" textAnchor="end">n={vlabFaN(n)}</text>}</g>))}
+        <line x1="85" y1={lvY(up)} x2="85" y2={lvY(nl) - 2} stroke={vlabWlRgb(lam)} strokeWidth="3" /><path d={`M80,${lvY(nl) - 8} L85,${lvY(nl) - 1} L90,${lvY(nl) - 8}`} fill="none" stroke={vlabWlRgb(lam)} strokeWidth="2" />
+        <path d={`M150,${lvY(up)} q14,${(lvY(nl) - lvY(up)) / 2} 0,${lvY(nl) - lvY(up)}`} fill="none" stroke={vlabWlRgb(lam)} strokeWidth="2" opacity="0" />
+        <rect x="20" y="176" width="280" height="14" fill="#000" stroke="#2a3558" />
+        {lines.map(([u, l]) => (<line key={u} x1={SX(l)} y1="176" x2={SX(l)} y2="190" stroke={vlabWlRgb(l)} strokeWidth={u === up ? 3 : 1.4} />))}
+        <text x="160" y="205" fontSize="8" fill="#9aa6c8" textAnchor="middle" direction="ltr">λ (nm) — {nl === 1 ? "Lyman (UV)" : nl === 2 ? "Balmer (visible)" : nl === 3 ? "Paschen (IR)" : "IR"}</text>
+        <circle cx="230" cy="70" r="30" fill={vlabWlRgb(lam)} opacity={lam >= 380 && lam <= 750 ? 0.9 : 0.25} /><text x="230" y="74" fontSize="9" fill="#03060f" textAnchor="middle">{lam >= 380 && lam <= 750 ? "مرئی" : lam < 380 ? "فرابنفش" : "فروسرخ"}</text>
+      </svg>
+      <div className="vlab-readout" style={{ textAlign: "center" }}>فرود الکترون از n = {vlabFaN(up)} به n = {vlabFaN(nl)} ← λ = <b>{fa(lam, 1)}</b> نانومتر · انرژی فوتون {fa(dE, 2)} eV</div>
+      <div className="vlab-controls"><div className="vlab-ctrl-col" style={{ flex: 1 }}>
+        <label className="vlab-ctrl-label">تراز پایین: {vlabFaN(nl)}</label><VlabRange min="1" max="4" step="1" value={nl} onChange={(e) => setNl(+e.target.value)} />
+        <label className="vlab-ctrl-label">تراز بالا: {vlabFaN(up)}</label><VlabRange min="2" max="7" step="1" value={nu} onChange={(e) => setNu(+e.target.value)} />
+      </div></div>
+      <div className="vlab-readout">
+        {`هر اتم فقط ترازهای انرژی معین دارد؛ وقتی الکترون به تراز پایین‌تر می‌افتد، فوتونی به اندازه‌ی اختلاف انرژی دو تراز می‌دهد. به همین دلیل طیف هیدروژن چند خط جدا (نه نوار پیوسته) است و مثل اثر انگشت اتم عمل می‌کند. خطوط تراز ۲ (بالمر) تنها آن‌هایی‌اند که در نور مرئی دیده می‌شوند.`}
+      </div>
+      <VlabFormulaCheck title="انرژی فوتون" fa="ΔE = ۱۳٫۶ × (۱/nپایین² − ۱/nبالا²)" en="ΔE = 13.6·(1/nl² − 1/nu²) eV" legend="انرژی به الکترون‌ولت است." subst={`ΔE = 13.6 × (1/${vlabFaN(nl)}² − 1/${vlabFaN(up)}²)`} answer={13.6 * (1 / (nl * nl) - 1 / (up * up))} unit="eV" decimals={2} />
+      <VlabFormulaCheck title="طول موج" fa="λ = ۱۲۴۰ ÷ ΔE" en="λ(nm) = 1240 / ΔE(eV)" legend="ثابت ۱۲۴۰ eV·nm است." subst={`λ = 1240 ÷ ${fa(13.6 * (1 / (nl * nl) - 1 / (up * up)), 2)}`} answer={1240 / (13.6 * (1 / (nl * nl) - 1 / (up * up)))} unit="نانومتر" decimals={0} />
+      <VlabEverydayCard title="رنگ آتش‌بازی" text="هر فلز رنگ خط‌های خود را دارد: سدیم زرد، مس سبز‌آبی، استرانسیم قرمز. شیمی‌دان‌ها و ستاره‌شناسان از همین خطوط جنس ستاره‌ها را می‌خوانند.">
+        <circle cx="60" cy="40" r="4" fill="#ffd166" /><path d="M60,40 l-22,-16 M60,40 l22,-16 M60,40 l-24,10 M60,40 l24,10" stroke="#e0a83e" strokeWidth="2" />
+      </VlabEverydayCard>
+    </div>
+  );
+}
+
+/* ===== شیمی) جدول تناوبی و شعاع اتمی ===== */
+const VLAB_PR = {
+  p2: { name: "دوره‌ی دوم", el: [["Li", 3, 152], ["Be", 4, 112], ["B", 5, 85], ["C", 6, 77], ["N", 7, 75], ["O", 8, 73], ["F", 9, 71]], core: 2, why: "در یک دوره، شمار لایه‌ها ثابت و بار مؤثر هسته بیشتر می‌شود؛ هسته الکترون‌ها را محکم‌تر می‌کشد و شعاع کم می‌شود." },
+  p3: { name: "دوره‌ی سوم", el: [["Na", 11, 186], ["Mg", 12, 160], ["Al", 13, 143], ["Si", 14, 118], ["P", 15, 110], ["S", 16, 103], ["Cl", 17, 99]], core: 10, why: "در یک دوره، شمار لایه‌ها ثابت و بار مؤثر هسته بیشتر می‌شود؛ هسته الکترون‌ها را محکم‌تر می‌کشد و شعاع کم می‌شود." },
+  g1: { name: "گروه ۱", el: [["Li", 3, 152], ["Na", 11, 186], ["K", 19, 227], ["Rb", 37, 248], ["Cs", 55, 265]], core: 0, why: "در یک گروه، با پایین رفتن هر دوره یک لایه‌ی الکترونی جدید اضافه می‌شود و شعاع زیاد می‌شود." },
+  g17: { name: "گروه ۱۷", el: [["F", 9, 71], ["Cl", 17, 99], ["Br", 35, 114], ["I", 53, 133]], core: 0, why: "در یک گروه، با پایین رفتن هر دوره یک لایه‌ی الکترونی جدید اضافه می‌شود و شعاع زیاد می‌شود." },
+};
+function VlabPeriodicRadiusExperiment({ onReading }) {
+  const [mk, setMk] = useState("p2");
+  const [idx, setIdx] = useState(0);
+  const M = VLAB_PR[mk];
+  const i = Math.min(idx, M.el.length - 1);
+  const sel = M.el[i];
+  const fa = (v) => vlabFaN(v);
+  const n = M.el.length, gap = 300 / n;
+  const sc = (300 / n / 2 - 3) / Math.max(...M.el.map((e) => e[2]));
+  const zeff = sel[1] - (mk[0] === "p" ? (mk === "p2" ? 2 : 10) : 0);
+  return (
+    <div className="vlab-exp">
+      <svg viewBox="0 0 320 170" className="vlab-svg" style={{ background: "#03060f", borderRadius: "10px" }}>
+        {M.el.map((e, k) => (<g key={e[0]} onClick={() => setIdx(k)} style={{ cursor: "pointer" }}>
+          <circle cx={10 + gap * (k + 0.5)} cy="75" r={e[2] * sc} fill={k === i ? "#ffd166" : "#5bb8ff"} fillOpacity={k === i ? 0.7 : 0.35} stroke={k === i ? "#fff" : "#5bb8ff"} strokeWidth="1.5" />
+          <text x={10 + gap * (k + 0.5)} y="79" fontSize="11" fontWeight="700" fill="#fff" textAnchor="middle" direction="ltr">{e[0]}</text>
+          <text x={10 + gap * (k + 0.5)} y="150" fontSize="8" fill="#9aa6c8" textAnchor="middle">{fa(e[1])}</text>
+        </g>))}
+        <text x="160" y="164" fontSize="8" fill="#9aa6c8" textAnchor="middle">عدد اتمی (Z)</text>
+        <path d="M30,14 H290" stroke="#ff9d1c" strokeWidth="1.2" markerEnd="url(#ar)" /><text x="160" y="11" fontSize="9" fill="#ff9d1c" textAnchor="middle">{mk[0] === "p" ? "شعاع کم می‌شود ←" : "شعاع زیاد می‌شود ←"}</text>
+      </svg>
+      <div className="vlab-readout" style={{ textAlign: "center" }}>{sel[0]}: شعاع اتمی ≈ <b>{fa(sel[2])}</b> پیکومتر</div>
+      <div className="vlab-controls"><div className="vlab-ctrl-col" style={{ flex: 1 }}>
+        <div className="vlab-btn-row">{Object.keys(VLAB_PR).map((k) => (<button key={k} className="vlab-btn" style={mk === k ? { outline: "2px solid #e0a83e" } : null} onClick={() => { setMk(k); setIdx(0); }}>{VLAB_PR[k].name}</button>))}</div>
+        <label className="vlab-ctrl-label">عنصر انتخاب‌شده: {sel[0]}</label><VlabRange min="0" max={n - 1} step="1" value={i} onChange={(e) => setIdx(+e.target.value)} />
+      </div></div>
+      <div className="vlab-readout">{M.why}</div>
+      {mk[0] === "p" && <VlabFormulaCheck title="بار مؤثر هسته" fa="Z_eff ≈ Z − (الکترون‌های لایه‌های درونی)" en="Zeff ≈ Z − core" legend="الکترون‌های درونی بار هسته را پنهان می‌کنند." subst={`Z_eff = ${fa(sel[1])} − ${fa(M.core)}`} answer={zeff} unit="" decimals={0} />}
+      {mk[0] === "g" && <VlabFormulaCheck title="شمار لایه‌های الکترونی" fa="شماره‌ی دوره = شمار لایه‌ها" en="n = period" legend="هر ردیف پایین‌تر یک لایه‌ی بیشتر." subst={`${sel[0]}`} answer={[0, 0].length * 0 + ({ Li: 2, Na: 3, K: 4, Rb: 5, Cs: 6, F: 2, Cl: 3, Br: 4, I: 5 }[sel[0]])} unit="" decimals={0} />}
+      <VlabEverydayCard title="چرا سدیم‌ها واکنش‌پذیرند؟" text="اتم‌های بزرگ‌تر گروه ۱ الکترون آخر را سست‌تر نگه می‌دارند؛ پس سزیم در آب بسیار تندتر از لیتیم واکنش می‌دهد.">
+        <circle cx="40" cy="40" r="10" fill="#9fd4ff" /><circle cx="86" cy="40" r="26" fill="#ffb3a1" opacity="0.8" />
+      </VlabEverydayCard>
+    </div>
+  );
+}
+
+/* ===== شیمی) تعادل و اصل لوشاتلیه ===== */
+function vlabEq(m, V, T) {
+  const K = Math.exp((57000 / 8.314) * (1 / T - 1 / 298));
+  const bq = (4 * K * m + V), b = (bq - Math.sqrt(bq * bq - 16 * K * K * m * m)) / (8 * K);
+  return { K, a: m - 2 * b, b };
+}
+function VlabLeChatelierExperiment({ onReading }) {
+  const [T, setT] = useState(298);
+  const [V, setV] = useState(2);
+  const [m, setM] = useState(2);
+  const ref = vlabEq(2, 2, 298);
+  const cur = vlabEq(m, V, T);
+  const fa = (v, d = 2) => vlabMFa(v, d);
+  const dir = cur.b / (m / 2) > ref.b / 1 + 0.003 ? "چپ‌به‌راست (بیشتر N₂O₄)" : cur.b / (m / 2) < ref.b / 1 - 0.003 ? "راست‌به‌چپ (بیشتر NO₂)" : "بدون تغییر";
+  const fracB = cur.b * 2 / m, refB = ref.b * 2 / 2;
+  const shift = fracB > refB + 0.004 ? "به سمت N₂O₄ (بی‌رنگ)" : fracB < refB - 0.004 ? "به سمت NO₂ (قهوه‌ای)" : "همان تعادل مرجع";
+  const brown = Math.min(1, (cur.a / V) / 1.2);
+  const mx = 2;
+  return (
+    <div className="vlab-exp">
+      <svg viewBox="0 0 320 170" className="vlab-svg" style={{ background: "#03060f", borderRadius: "10px" }}>
+        <rect x="20" y={150 - 20 - V * 22} width="100" height={V * 22 + 20} rx="8" fill={`rgba(176,86,20,${0.15 + brown * 0.75})`} stroke="#9aa6c8" strokeWidth="2" />
+        <text x="70" y="164" fontSize="9" fill="#9aa6c8" textAnchor="middle">2NO₂ ⇌ N₂O₄ + گرما</text>
+        <line x1="150" y1="140" x2="300" y2="140" stroke="#4a5578" />
+        <rect x="170" y={140 - (cur.a / mx) * 100} width="44" height={(cur.a / mx) * 100} fill="#c46b3a" /><text x="192" y="153" fontSize="9" fill="#ffb27a" textAnchor="middle" direction="ltr">NO₂</text><text x="192" y={136 - (cur.a / mx) * 100} fontSize="9" fill="#fff" textAnchor="middle">{fa(cur.a)}</text>
+        <rect x="240" y={140 - (cur.b / mx) * 100} width="44" height={(cur.b / mx) * 100} fill="#9fd4ff" /><text x="262" y="153" fontSize="9" fill="#9fd4ff" textAnchor="middle" direction="ltr">N₂O₄</text><text x="262" y={136 - (cur.b / mx) * 100} fontSize="9" fill="#fff" textAnchor="middle">{fa(cur.b)}</text>
+        <text x="225" y="14" fontSize="9" fill="#ffd166" textAnchor="middle">مول‌ها در تعادل</text>
+      </svg>
+      <div className="vlab-readout" style={{ textAlign: "center" }}>نسبت به حالت مرجع، تعادل جابه‌جا شد: <b>{shift}</b></div>
+      <div className="vlab-controls"><div className="vlab-ctrl-col" style={{ flex: 1 }}>
+        <label className="vlab-ctrl-label">دما: {fa(T, 0)} K</label><VlabRange min="250" max="400" step="5" value={T} onChange={(e) => setT(+e.target.value)} />
+        <label className="vlab-ctrl-label">حجم ظرف: {fa(V, 1)} L</label><VlabRange min="1" max="4" step="0.5" value={V} onChange={(e) => setV(+e.target.value)} />
+        <label className="vlab-ctrl-label">مقدار کل نیتروژن (بر حسب NO₂): {fa(m, 1)} mol</label><VlabRange min="1" max="3" step="0.5" value={m} onChange={(e) => setM(+e.target.value)} />
+        <div className="vlab-btn-row"><button className="vlab-btn" onClick={() => { setT(298); setV(2); setM(2); }}>بازگشت به مرجع</button></div>
+      </div></div>
+      <div className="vlab-readout">
+        {`اصل لوشاتلیه: وقتی تعادلی را مختل کنیم، سامانه طوری جابه‌جا می‌شود که اثر آشفتگی کم شود. واکنش رفت گرماده است؛ پس گرما دادن تعادل را به سمت NO₂ می‌برد. کوچک‌کردن حجم فشار را زیاد می‌کند و تعادل به سمت مول کمتر (N₂O₄) می‌رود. رنگ قهوه‌ای ظرف، غلظت NO₂ را نشان می‌دهد.`}
+      </div>
+      <VlabFormulaCheck title="ثابت تعادل" fa="K = [N₂O₄] ÷ [NO₂]²" en="K = [N₂O₄]/[NO₂]²" legend="غلظت = مول ÷ حجم؛ K فقط با دما عوض می‌شود." subst={`K = (${fa(cur.b)}÷${fa(V, 1)}) ÷ (${fa(cur.a)}÷${fa(V, 1)})²`} answer={(cur.b / V) / Math.pow(cur.a / V, 2)} unit="" decimals={2} />
+      <VlabEverydayCard title="نوشابه‌ی گازدار" text="در بطری بسته CO₂ در تعادل با نوشابه است. وقتی در را باز کنی، فشار کم می‌شود و تعادل به سمت گاز می‌رود: حباب‌ها بالا می‌آیند. در نوشابه‌ی گرم هم حباب بیشتر می‌شود.">
+        <rect x="42" y="18" width="30" height="56" rx="6" fill="#7a4a2a" opacity="0.8" /><circle cx="52" cy="30" r="2" fill="#fff" /><circle cx="62" cy="40" r="2" fill="#fff" /><circle cx="56" cy="52" r="2" fill="#fff" />
+      </VlabEverydayCard>
+    </div>
+  );
+}
+
 const VLAB_COMPONENTS = {
   lever: VlabLeverExperiment,
   pendulum: VlabPendulumExperiment,
@@ -34848,6 +35104,11 @@ const VLAB_COMPONENTS = {
   "pattern-sequence": VlabPatternSequenceExperiment,
   "sampling": VlabSamplingExperiment,
   "cone-section": VlabConeSectionExperiment,
+  "potential-field": VlabPotentialExperiment,
+  "heat-engine": VlabHeatEngineExperiment,
+  "atomic-spectrum": VlabSpectrumExperiment,
+  "periodic-radius": VlabPeriodicRadiusExperiment,
+  "le-chatelier": VlabLeChatelierExperiment,
 };
 
 function StudentVirtualLabView({ onBack, grade, studentCode, schoolCode }) {

@@ -23440,6 +23440,33 @@ const VLAB_EXPERIMENTS = [
     intro: "مثلثی را جابه‌جا، بچرخان، قرینه و بزرگ کن و مختصات رأس‌ها را قبل و بعد ببین.",
     tools: ["انتقال", "دوران", "بازتاب", "تجانس"],
   },
+  {
+    id: "electric-field",
+    subject: "فیزیک",
+    level: "متوسطه دوم",
+    title: "میدان الکتریکی",
+    icon: "⚡",
+    intro: "دو بار الکتریکی را مثبت یا منفی کن و فلش‌های میدان را ببین؛ بعد نقطه‌ی آزمون را جابه‌جا کن و میدان همان نقطه را بخوان.",
+    tools: ["دو بار", "فلش‌های میدان", "نقطه‌ی آزمون"],
+  },
+  {
+    id: "piston-pv",
+    subject: "فیزیک",
+    level: "متوسطه دوم",
+    title: "پیستون و نمودار P–V",
+    icon: "🔧",
+    intro: "دما و حجم گاز را عوض کن؛ مولکول‌ها و منحنی فشار–حجم را هم‌زمان ببین و کار انبساط را به‌صورت سطح زیر منحنی بخوان.",
+    tools: ["پیستون", "نمودار P–V", "همدما"],
+  },
+  {
+    id: "lorentz-force",
+    subject: "فیزیک",
+    level: "متوسطه دوم",
+    title: "نیروی لورنتس (چرخش ذره در میدان مغناطیسی)",
+    icon: "🧲",
+    intro: "الکترون یا پروتون را در میدان مغناطیسی بفرست و ببین چرا روی دایره می‌چرخد و شعاعش به چه چیزی بستگی دارد.",
+    tools: ["الکترون و پروتون", "میدان مغناطیسی", "شعاع مدار"],
+  },
 ];
 
 function vlabClamp(v, min, max) {
@@ -33458,6 +33485,202 @@ function VlabGeoTransformExperiment({ onReading }) {
   );
 }
 
+/* ===== فیزیک ۱) میدان الکتریکی ===== */
+function VlabElectricFieldExperiment({ onReading }) {
+  const [q1, setQ1] = useState(3);
+  const [q2, setQ2] = useState(-3);
+  const [px, setPx] = useState(0.2);
+  const [py, setPy] = useState(0.25);
+  const K = 9e9, SC = 0.0033; // متر به ازای هر نقطه‌ی تصویر → 1 px = 0.003 m
+  const S = 300;           // px per metre (0.5 m ≈ 150px)
+  const CX = 160, CY = 100;
+  const ch = [{ x: -0.3, y: 0, q: q1 }, { x: 0.3, y: 0, q: q2 }];
+  const Ef = (x, y) => { let ex = 0, ey = 0; ch.forEach((c) => { const dx = x - c.x, dy = y - c.y, r2 = dx * dx + dy * dy + 1e-6, r = Math.sqrt(r2); const e = (K * c.q * 1e-6) / r2; ex += (e * dx) / r; ey += (e * dy) / r; }); return [ex, ey]; };
+  const arrows = [];
+  for (let i = -7; i <= 7; i++) for (let j = -4; j <= 4; j++) { const x = i * 0.075, y = j * 0.075; if (ch.some((c) => Math.hypot(x - c.x, y - c.y) < 0.05)) continue; const [ex, ey] = Ef(x, y); const m = Math.hypot(ex, ey); if (m < 1) continue; const len = Math.min(16, 5 + 3 * Math.log10(m / 1e4 + 1) * 3); arrows.push({ x, y, ex: ex / m, ey: ey / m, len, m }); }
+  const [ex, ey] = Ef(px, py);
+  const E = Math.hypot(ex, ey);
+  const r1 = Math.hypot(px - ch[0].x, py - ch[0].y);
+  const E1 = (K * Math.abs(q1) * 1e-6) / (r1 * r1);
+  const kN = (v) => vlabMFa(v / 1000, v / 1000 >= 100 ? 0 : 1);
+  const col = (q) => (q > 0 ? "#ff5b5b" : q < 0 ? "#5ba8ff" : "#888");
+  const sx = (x) => CX + x * S, sy = (y) => CY - y * S;
+  const fa = (v) => vlabMFa(v, 0);
+  const ang = (Math.atan2(ey, ex) * 180) / Math.PI;
+  return (
+    <div className="vlab-exp">
+      <svg viewBox="0 0 320 200" className="vlab-svg" style={{ background: "#03060f", borderRadius: "10px" }}>
+        {arrows.map((a, i) => { const x0 = sx(a.x), y0 = sy(a.y), x1 = x0 + a.ex * a.len, y1 = y0 - a.ey * a.len; const hx = -a.ex * 3, hy = a.ey * 3; return (<g key={i} opacity="0.75"><line x1={x0} y1={y0} x2={x1} y2={y1} stroke="#9fb4ff" strokeWidth="1" /><path d={`M${x1},${y1} l${hx - a.ey * -2.2},${hy + a.ex * 2.2 * -1} M${x1},${y1} l${hx + a.ey * -2.2},${hy - a.ex * 2.2 * -1}`} stroke="#9fb4ff" strokeWidth="1" fill="none" /></g>); })}
+        {ch.map((c, i) => (<g key={i}><circle cx={sx(c.x)} cy={sy(c.y)} r="9" fill={col(c.q)} stroke="#fff" strokeWidth="1.4" /><text x={sx(c.x)} y={sy(c.y) + 3.5} fontSize="11" fontWeight="700" fill="#fff" textAnchor="middle">{c.q > 0 ? "+" : c.q < 0 ? "−" : "۰"}</text></g>))}
+        <line x1={sx(px)} y1={sy(py)} x2={sx(px) + (ex / E) * 30} y2={sy(py) - (ey / E) * 30} stroke="#5de0a0" strokeWidth="2.4" />
+        <circle cx={sx(px)} cy={sy(py)} r="4.6" fill="#ffd166" stroke="#fff" strokeWidth="1.2" />
+        <line x1={sx(px)} y1={sy(py)} x2={sx(ch[0].x)} y2={sy(ch[0].y)} stroke="#ffd166" strokeWidth="0.8" strokeDasharray="3 3" />
+      </svg>
+      <div className="vlab-readout" style={{ textAlign: "center" }}>میدان کل در نقطه‌ی زرد: <b>{kN(E)}</b> کیلونیوتن بر کولن، به‌سمت {vlabFaN(Math.round(ang))}° نسبت به راست</div>
+      <div className="vlab-controls"><div className="vlab-ctrl-col" style={{ flex: 1 }}>
+        <label className="vlab-ctrl-label">بار چپ (میکروکولن): {vlabMFa(q1, 0)}</label>
+        <VlabRange min="-5" max="5" step="1" value={q1} onChange={(e) => setQ1(+e.target.value)} />
+        <label className="vlab-ctrl-label">بار راست (میکروکولن): {vlabMFa(q2, 0)}</label>
+        <VlabRange min="-5" max="5" step="1" value={q2} onChange={(e) => setQ2(+e.target.value)} />
+        <label className="vlab-ctrl-label">نقطه‌ی آزمون: افقی {vlabMFa(px, 2)} متر</label>
+        <VlabRange min="-0.5" max="0.5" step="0.05" value={px} onChange={(e) => setPx(+e.target.value)} />
+        <label className="vlab-ctrl-label">نقطه‌ی آزمون: عمودی {vlabMFa(py, 2)} متر</label>
+        <VlabRange min="-0.3" max="0.3" step="0.05" value={py} onChange={(e) => setPy(+e.target.value)} />
+        <div className="vlab-btn-row"><button className="vlab-btn" onClick={() => { setQ1(3); setQ2(-3); }}>دوقطبی (+ و −)</button><button className="vlab-btn" onClick={() => { setQ1(3); setQ2(3); }}>دو بار هم‌نام</button></div>
+      </div></div>
+      <div className="vlab-readout">
+        {`میدان الکتریکی نشان می‌دهد یک بار مثبت آزمون در هر نقطه چه نیرویی حس می‌کند: از بار مثبت دور و به‌سمت بار منفی. فلش‌ها جهت میدان‌اند و هرچه بلندتر، میدان قوی‌تر. میدان کل جمع برداری میدان هر بار است؛ سهم بار چپ به‌تنهایی ${kN(E1)} کیلونیوتن بر کولن است.`}
+      </div>
+      <VlabFormulaCheck title="میدان بار نقطه‌ای چپ" fa="E = k × |q| ÷ r²" en="E = k·|q| / r²" legend={`k = ۹×۱۰⁹ ؛ q را به کولن بگذار (۱ میکروکولن = ۱۰⁻⁶ کولن)؛ فاصله ${vlabMFa(r1, 2)} متر. جواب را بر حسب کیلونیوتن بر کولن بنویس.`} subst={`E = 9×10⁹ × ${vlabMFa(Math.abs(q1), 0)}×10⁻⁶ ÷ ${vlabMFa(r1, 2)}²`} answer={E1 / 1000} unit="kN/C" decimals={1} />
+      <VlabEverydayCard title="رعدوبرق و دستگاه فتوکپی" text="ابر طوفانی بار الکتریکی زیادی جمع می‌کند و میدان بین ابر و زمین آن‌قدر قوی می‌شود که هوا رسانا می‌شود: رعدوبرق. در دستگاه فتوکپی هم میدان الکتریکی ذره‌های پودر را فقط روی جاهای موردنظر کاغذ می‌نشاند.">
+        <path d="M20,10 q16,-12 36,-2 q22,-8 32,8 q-4,8 -22,8 H30 q-14,-2 -10,-14z" fill="#9aa6c8" />
+        <path d="M60,28 l-8,16 h10 l-8,18" stroke="#ffd166" strokeWidth="3" fill="none" />
+        <path d="M6,72 H114" stroke="#999" strokeWidth="2" />
+      </VlabEverydayCard>
+    </div>
+  );
+}
+
+/* ===== فیزیک ۲) پیستون و نمودار P–V ===== */
+function VlabPistonPVExperiment({ onReading }) {
+  const [T, setT] = useState(300);
+  const [V, setV] = useState(2);
+  const [, tick] = useState(0);
+  const ps = React.useRef(null);
+  if (!ps.current) { const rng = vlabAmRng(7); ps.current = Array.from({ length: 16 }, () => ({ x: rng(), y: rng(), a: rng() * 6.28 })); }
+  const raf = React.useRef(0), last = React.useRef(0);
+  const st = React.useRef({ T, V });
+  st.current = { T, V };
+  useEffect(() => {
+    const loop = (now) => {
+      const dt = Math.min(0.05, (now - (last.current || now)) / 1000); last.current = now;
+      const sp = 0.5 * Math.sqrt(st.current.T / 300);
+      ps.current.forEach((p) => { p.x += Math.cos(p.a) * sp * dt; p.y += Math.sin(p.a) * sp * dt; if (p.x < 0) { p.x = 0; p.a = Math.PI - p.a; } if (p.x > 1) { p.x = 1; p.a = Math.PI - p.a; } if (p.y < 0) { p.y = 0; p.a = -p.a; } if (p.y > 1) { p.y = 1; p.a = -p.a; } });
+      tick((n) => (n + 1) % 1e6);
+      raf.current = requestAnimationFrame(loop);
+    };
+    raf.current = requestAnimationFrame(loop);
+    return () => cancelAnimationFrame(raf.current);
+  }, []);
+  const n = 0.1, R = 8.314;
+  const P = (n * R * T) / V; // kPa
+  const W = n * R * T * Math.log(V / 1);
+  const fa = (v, d = 1) => vlabMFa(v, d);
+  const BX = 20, BY = 40, BW = 110, BH = 120;
+  const h = (V / 5) * BH;
+  const GX = 180, GY = 20, GW = 128, GH = 150;
+  const Xv = (v) => GX + ((v - 0.5) / 4.5) * GW, Yp = (p) => GY + GH - (Math.min(p, 1300) / 1300) * GH;
+  const iso = (t) => { let d = ""; for (let i = 0; i <= 50; i++) { const v = 0.5 + (i / 50) * 4.5; d += (i ? "L" : "M") + Xv(v).toFixed(1) + "," + Yp((n * R * t) / v).toFixed(1); } return d; };
+  const area = (() => { let d = `M${Xv(1)},${Yp(0)}`; for (let i = 0; i <= 30; i++) { const v = 1 + (i / 30) * (V - 1); d += `L${Xv(v).toFixed(1)},${Yp((n * R * T) / v).toFixed(1)}`; } return d + `L${Xv(V)},${Yp(0)}Z`; })();
+  const tcol = `hsl(${Math.round(240 - ((T - 200) / 400) * 240)},80%,60%)`;
+  return (
+    <div className="vlab-exp">
+      <svg viewBox="0 0 320 200" className="vlab-svg" style={{ background: "#03060f", borderRadius: "10px" }}>
+        <rect x={BX} y={BY + BH - h} width={BW} height={h} fill="#0f1a3a" stroke="#8aa0d0" strokeWidth="2" />
+        <rect x={BX - 2} y={BY + BH - h - 8} width={BW + 4} height="8" fill="#b9c2d8" stroke="#fff" strokeWidth="1" />
+        <line x1={BX + BW / 2} y1={BY + BH - h - 8} x2={BX + BW / 2} y2="18" stroke="#b9c2d8" strokeWidth="4" />
+        <rect x={BX + BW / 2 - 14} y="10" width="28" height="8" fill="#d9a441" />
+        <path d={`M${BX},${BY} V${BY + BH} H${BX + BW} V${BY}`} fill="none" stroke="#8aa0d0" strokeWidth="2.4" />
+        {ps.current.map((p, i) => (<circle key={i} cx={BX + 4 + p.x * (BW - 8)} cy={BY + BH - 4 - p.y * (h - 8)} r="3.2" fill={tcol} />))}
+        <text x={BX + BW / 2} y="188" fontSize="9" fill="#cfd6ea" textAnchor="middle">گاز: {fa(T, 0)} کلوین، حجم {fa(V)} لیتر</text>
+        <line x1={GX} y1={GY + GH} x2={GX + GW} y2={GY + GH} stroke="#6a7aa8" strokeWidth="1" /><line x1={GX} y1={GY} x2={GX} y2={GY + GH} stroke="#6a7aa8" strokeWidth="1" />
+        <path d={area} fill="#ffd166" opacity="0.22" />
+        {[200, 400, 600].map((t) => (<path key={t} d={iso(t)} fill="none" stroke="#2a3558" strokeWidth="1" />))}
+        <path d={iso(T)} fill="none" stroke={tcol} strokeWidth="2.2" />
+        <circle cx={Xv(V)} cy={Yp(P)} r="4.6" fill="#fff" stroke={tcol} strokeWidth="2" />
+        <text x={GX + GW / 2} y={GY + GH + 14} fontSize="8" fill="#9aa6c8" textAnchor="middle">حجم (لیتر)</text>
+        <text x={GX + 6} y={GY + 8} fontSize="8" fill="#9aa6c8" textAnchor="start">فشار (کیلوپاسکال)</text>
+      </svg>
+      <div className="vlab-readout" style={{ textAlign: "center" }}>فشار = <b>{fa(P)}</b> کیلوپاسکال · کار انبساط همدما از ۱ لیتر = {fa(W, 0)} ژول</div>
+      <div className="vlab-controls"><div className="vlab-ctrl-col" style={{ flex: 1 }}>
+        <label className="vlab-ctrl-label">دما: {fa(T, 0)} کلوین</label>
+        <VlabRange min="200" max="600" step="10" value={T} onChange={(e) => setT(+e.target.value)} />
+        <label className="vlab-ctrl-label">حجم (جای پیستون): {fa(V)} لیتر</label>
+        <VlabRange min="0.5" max="5" step="0.1" value={V} onChange={(e) => setV(+e.target.value)} />
+      </div></div>
+      <div className="vlab-readout">
+        {`مولکول‌ها هرچه داغ‌تر، تندتر؛ و هرچه حجم کمتر، برخوردشان به دیواره بیشتر و فشار بالاتر. منحنی روی نمودار «همدما» است (دمای ثابت): P × V ثابت می‌ماند. سطح زرد زیر منحنی همان کار انجام‌شده توسط گاز است (دمای ۲۰۰، ۴۰۰ و ۶۰۰ کلوین با خط‌های کم‌رنگ نشان داده شده).`}
+      </div>
+      <VlabFormulaCheck title="معادله‌ی گاز کامل" fa="فشار = n × R × T ÷ V" en="P = nRT / V" legend="n = ۰٫۱ مول، R = ۸٫۳۱۴ ژول بر مول‌کلوین؛ حجم را به لیتر بگذار تا جواب کیلوپاسکال شود." subst={`P = 0.1 × 8.314 × ${fa(T, 0)} ÷ ${fa(V)}`} answer={P} unit="kPa" decimals={1} />
+      <VlabFormulaCheck title="کار انبساط همدما" fa="کار = n × R × T × ln(حجم نهایی ÷ حجم اولیه)" en="W = nRT·ln(V₂/V₁)" legend="حجم اولیه ۱ لیتر است؛ ln را روی ماشین‌حساب بگیر." subst={`W = 0.1 × 8.314 × ${fa(T, 0)} × ln(${fa(V)} ÷ 1)`} answer={W} unit="ژول" decimals={0} />
+      <VlabEverydayCard title="تلمبه‌ی دوچرخه" text="وقتی دسته‌ی تلمبه را فشار می‌دهی، حجم هوا کم می‌شود و فشارش بالا می‌رود؛ برای همین انتهای تلمبه داغ می‌شود و لاستیک پر می‌شود. موتور بنزینی هم با همین رفت‌وبرگشت پیستون کار می‌کند.">
+        <rect x="46" y="16" width="14" height="52" fill="#d9e2f2" stroke="#7d8bb5" strokeWidth="1.5" />
+        <rect x="40" y="38" width="26" height="6" fill="#444" /><line x1="53" y1="38" x2="53" y2="6" stroke="#444" strokeWidth="3" />
+        <path d="M60,64 q30,0 34,-14" fill="none" stroke="#444" strokeWidth="2.4" /><circle cx="96" cy="44" r="12" fill="none" stroke="#2e7bd5" strokeWidth="4" />
+      </VlabEverydayCard>
+    </div>
+  );
+}
+
+/* ===== فیزیک ۳) نیروی لورنتس ===== */
+function VlabLorentzExperiment({ onReading }) {
+  const [part, setPart] = useState("e");
+  const [vv, setVv] = useState(2);
+  const [Bm, setBm] = useState(2);
+  const [ph, setPh] = useState(0);
+  const raf = React.useRef(0), last = React.useRef(0);
+  useEffect(() => {
+    const loop = (now) => { const dt = Math.min(0.05, (now - (last.current || now)) / 1000); last.current = now; setPh((p) => (p + dt * 1.6) % (2 * Math.PI)); raf.current = requestAnimationFrame(loop); };
+    raf.current = requestAnimationFrame(loop);
+    return () => cancelAnimationFrame(raf.current);
+  }, []);
+  const P = { e: { name: "الکترون", m: 9.109e-31, q: -1.602e-19, vu: 1e6, unit: "×۱۰⁶ m/s", pxcm: 36, vmax: 4 }, p: { name: "پروتون", m: 1.673e-27, q: 1.602e-19, vu: 1e3, unit: "×۱۰³ m/s", pxcm: 24, vmax: 3 } }[part];
+  const v = vv * P.vu, B = Bm * 1e-3;
+  const r = (P.m * v) / (Math.abs(P.q) * B);
+  const rcm = r * 100;
+  const Tper = (2 * Math.PI * P.m) / (Math.abs(P.q) * B);
+  const F = Math.abs(P.q) * v * B;
+  const rp = Math.min(80, rcm * P.pxcm);
+  const dir = P.q > 0 ? 1 : -1; // مثبت: خلاف عقربه (مرکز بالا)
+  const CX = 160, CY = 70 + 0;
+  const cy = CY - dir * 0; // مرکز دایره
+  const cx0 = 160, cy0 = 96 - dir * 0;
+  // نقطه‌ی شروع پایین دایره؛ مرکز بالا برای مثبت، پایین برای منفی
+  const cenY = P.q > 0 ? 150 - rp : 50 + rp;
+  const th = ph * dir * -1;
+  const bx = cx0 + rp * Math.sin(th + 0) * 1, by = cenY + (P.q > 0 ? 1 : -1) * rp * Math.cos(th);
+  const px = cx0 + rp * Math.sin(ph);
+  const py = P.q > 0 ? cenY + rp * Math.cos(ph) : cenY - rp * Math.cos(ph);
+  const tang = P.q > 0 ? [Math.cos(ph), Math.sin(ph) * -1 * -1] : [Math.cos(ph), Math.sin(ph)];
+  const fx = cx0 - px, fy = cenY - py, fl = Math.hypot(fx, fy) || 1;
+  const sp = (a, bb) => vlabMFa(a, bb);
+  const crosses = [];
+  for (let i = 0; i < 6; i++) for (let j = 0; j < 4; j++) crosses.push([30 + i * 52, 22 + j * 48]);
+  const fa = (x, d = 2) => vlabMFa(x, d);
+  return (
+    <div className="vlab-exp">
+      <svg viewBox="0 0 320 200" className="vlab-svg" style={{ background: "#03060f", borderRadius: "10px" }}>
+        {crosses.map((c, i) => (<g key={i} opacity="0.5"><circle cx={c[0]} cy={c[1]} r="5" fill="none" stroke="#5ba8ff" strokeWidth="1" /><path d={`M${c[0] - 3.2},${c[1] - 3.2} L${c[0] + 3.2},${c[1] + 3.2} M${c[0] - 3.2},${c[1] + 3.2} L${c[0] + 3.2},${c[1] - 3.2}`} stroke="#5ba8ff" strokeWidth="1" /></g>))}
+        <circle cx={cx0} cy={cenY} r={rp} fill="none" stroke="#ffd166" strokeWidth="1" strokeDasharray="4 3" />
+        <circle cx={cx0} cy={cenY} r="2.4" fill="#ffd166" />
+        <circle cx={px} cy={py} r="6" fill={P.q > 0 ? "#ff5b5b" : "#5ba8ff"} stroke="#fff" strokeWidth="1.4" />
+        <text x={px} y={py + 3.4} fontSize="9" fontWeight="700" fill="#fff" textAnchor="middle">{P.q > 0 ? "+" : "−"}</text>
+        <line x1={px} y1={py} x2={px + (fx / fl) * 30} y2={py + (fy / fl) * 30} stroke="#5de0a0" strokeWidth="2.4" />
+        <text x={px + (fx / fl) * 42} y={py + (fy / fl) * 42 + 3} fontSize="9" fill="#5de0a0" textAnchor="middle" direction="ltr">F</text>
+        <line x1="24" y1="190" x2={24 + P.pxcm} y2="190" stroke="#fff" strokeWidth="2" /><text x={24 + P.pxcm / 2} y="184" fontSize="8" fill="#cfd6ea" textAnchor="middle">۱ cm</text>
+        <text x="296" y="190" fontSize="8" fill="#5ba8ff" textAnchor="middle">B (به داخل صفحه)</text>
+      </svg>
+      <div className="vlab-readout" style={{ textAlign: "center" }}>شعاع مدار <b>{fa(rcm)}</b> سانتی‌متر · نیرو {part === "e" ? vlabMFa(F * 1e15, 1) + " فمتونیوتن" : vlabMFa(F * 1e18, 1) + " آتونیوتن"}</div>
+      <div className="vlab-controls"><div className="vlab-ctrl-col" style={{ flex: 1 }}>
+        <div className="vlab-btn-row"><button className="vlab-btn" style={part === "e" ? { outline: "2px solid #e0a83e" } : null} onClick={() => { setPart("e"); setVv(2); }}>الکترون (−)</button><button className="vlab-btn" style={part === "p" ? { outline: "2px solid #e0a83e" } : null} onClick={() => { setPart("p"); setVv(2); }}>پروتون (+)</button></div>
+        <label className="vlab-ctrl-label">سرعت: {fa(vv, 0)} {P.unit}</label>
+        <VlabRange min="1" max={P.vmax} step="1" value={vv} onChange={(e) => setVv(+e.target.value)} />
+        <label className="vlab-ctrl-label">میدان مغناطیسی: {fa(Bm, 1)} میلی‌تسلا</label>
+        <VlabRange min="1" max="3" step="0.5" value={Bm} onChange={(e) => setBm(+e.target.value)} />
+      </div></div>
+      <div className="vlab-readout">
+        {`نیرو همیشه بر سرعت عمود است؛ پس سرعتِ ذره عوض نمی‌شود، فقط جهتش می‌چرخد و ذره روی دایره می‌رود. پروتون و الکترون در جهت‌های مخالف می‌چرخند. نیروی سبز به‌سمت مرکز دایره است. زمان یک دور ${fa(Tper * 1e9, 1)} نانوثانیه است و به سرعت بستگی ندارد.`}
+      </div>
+      <VlabFormulaCheck title="شعاع مدار" fa="شعاع = جرم × سرعت ÷ (بار × میدان)" en="r = m·v / (|q|·B)" legend={`جرم ${P.name} ${part === "e" ? "۹٫۱۰۹×۱۰⁻³¹" : "۱٫۶۷۳×۱۰⁻²⁷"} کیلوگرم و بار ۱٫۶۰۲×۱۰⁻¹⁹ کولن است؛ جواب را بر حسب سانتی‌متر بنویس.`} subst={`r = ${part === "e" ? "9.109×10⁻³¹" : "1.673×10⁻²⁷"} × ${vv}×${part === "e" ? "10⁶" : "10³"} ÷ (1.602×10⁻¹⁹ × ${Bm}×10⁻³)`} answer={rcm} unit="cm" decimals={2} />
+      <VlabEverydayCard title="تلویزیون قدیمی و شفق قطبی" text="در تلویزیون‌های لامپ‌دار، میدان مغناطیسی پرتو الکترون‌ها را خم می‌کند تا روی همه‌ی صفحه بچرخد. شفق قطبی هم برخورد ذرات باردار خورشیدی است که میدان مغناطیسی زمین آن‌ها را به‌سمت قطب‌ها می‌پیچاند.">
+        <ellipse cx="60" cy="42" rx="40" ry="26" fill="none" stroke="#4a5578" strokeWidth="2" />
+        <path d="M24,14 q36,24 72,0" stroke="#2e9e66" strokeWidth="4" fill="none" opacity="0.7" /><path d="M24,70 q36,-24 72,0" stroke="#7b4fd6" strokeWidth="4" fill="none" opacity="0.7" />
+        <circle cx="60" cy="42" r="6" fill="#2e7bd5" />
+      </VlabEverydayCard>
+    </div>
+  );
+}
+
 const VLAB_COMPONENTS = {
   lever: VlabLeverExperiment,
   pendulum: VlabPendulumExperiment,
@@ -33557,6 +33780,9 @@ const VLAB_COMPONENTS = {
   "derivative-graph": VlabDerivativeGraphExperiment,
   "inscribed-angle": VlabInscribedAngleExperiment,
   "geometric-transform": VlabGeoTransformExperiment,
+  "electric-field": VlabElectricFieldExperiment,
+  "piston-pv": VlabPistonPVExperiment,
+  "lorentz-force": VlabLorentzExperiment,
 };
 
 function StudentVirtualLabView({ onBack, grade, studentCode, schoolCode }) {

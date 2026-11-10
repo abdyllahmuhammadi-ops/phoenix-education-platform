@@ -37351,24 +37351,55 @@ const VLAB_LW = {
   "O₂": { v: 12, at: [["O", 126, 88, [140, 220]], ["O", 194, 88, [40, 320]]], bd: [[0, 1, 2]] },
   "HCl": { v: 8, at: [["H", 120, 88, []], ["Cl", 196, 88, [90, 0, 270]]], bd: [[0, 1, 1]] },
 };
+const VLAB_LWB = {
+  "H₂O": { a: [["O", 0, 0, 0], ["H", 0.76, -0.59, 0], ["H", -0.76, -0.59, 0]], b: [[0, 1, 1], [0, 2, 1]], n: "خمیده", ang: "H–O–H ≈ ۱۰۴٫۵°" },
+  "CO₂": { a: [["C", 0, 0, 0], ["O", 1.16, 0, 0], ["O", -1.16, 0, 0]], b: [[0, 1, 2], [0, 2, 2]], n: "خطی", ang: "O=C=O = ۱۸۰°" },
+  "NH₃": { a: [["N", 0, 0.2, 0], ["H", 0.95, -0.34, 0], ["H", -0.475, -0.34, 0.823], ["H", -0.475, -0.34, -0.823]], b: [[0, 1, 1], [0, 2, 1], [0, 3, 1]], n: "هرمی", ang: "H–N–H ≈ ۱۰۷°" },
+  "CH₄": { a: [["C", 0, 0, 0], ["H", 0.63, 0.63, 0.63], ["H", 0.63, -0.63, -0.63], ["H", -0.63, 0.63, -0.63], ["H", -0.63, -0.63, 0.63]], b: [[0, 1, 1], [0, 2, 1], [0, 3, 1], [0, 4, 1]], n: "چهاروجهی", ang: "H–C–H ≈ ۱۰۹٫۵°" },
+  "N₂": { a: [["N", 0.55, 0, 0], ["N", -0.55, 0, 0]], b: [[0, 1, 3]], n: "خطی", ang: "N≡N" },
+  "O₂": { a: [["O", 0.6, 0, 0], ["O", -0.6, 0, 0]], b: [[0, 1, 2]], n: "خطی", ang: "O=O" },
+  "HCl": { a: [["H", -0.64, 0, 0], ["Cl", 0.64, 0, 0]], b: [[0, 1, 1]], n: "خطی", ang: "H–Cl" },
+};
+const VLAB_LWC = { H: ["#f4f4f4", 7], C: ["#6a6a6a", 11], N: ["#4a6bff", 11], O: ["#ff4a4a", 11], Cl: ["#3fd05a", 14] };
 function VlabLewisExperiment({ onReading }) {
   const [mk, setMk] = useState("H₂O");
-  const M = VLAB_LW[mk];
+  const [ang, setAng] = useState(30);
+  const [auto, setAuto] = useState(true);
+  useEffect(() => { if (!auto) return; const id = setInterval(() => setAng((a) => (a + 1.5) % 360), 50); return () => clearInterval(id); }, [auto]);
+  const M = VLAB_LW[mk], B = VLAB_LWB[mk];
   const nb = M.bd.reduce((s, b) => s + b[2], 0), nl = M.at.reduce((s, a) => s + a[3].length, 0);
   const rad = (d) => (d * Math.PI) / 180;
+  const ecol = (s) => (s === "H" ? "#9fd4ff" : s === "O" ? "#ff6b6b" : s === "N" ? "#7a9bff" : s === "C" ? "#cfd6ea" : "#5de0a0");
+  const cnt = M.at.map((a, i) => 2 * M.bd.reduce((t, b) => t + (b[0] === i || b[1] === i ? b[2] : 0), 0) + 2 * a[3].length);
+  const ca = Math.cos(rad(ang)), sa = Math.sin(rad(ang)), SC = 36;
+  const pr = B.a.map(([s, x, y, z]) => { const x1 = x * ca + z * sa, z1 = -x * sa + z * ca, y2 = y * Math.cos(0.35) - z1 * Math.sin(0.35), z2 = y * Math.sin(0.35) + z1 * Math.cos(0.35); return { s, x: 246 + x1 * SC, y: 84 - y2 * SC, z: z2 }; });
   return (
     <div className="vlab-exp">
-      <svg viewBox="0 0 320 170" className="vlab-svg" style={{ background: "#03060f", borderRadius: "10px" }}>
-        {M.bd.map(([i, j, o], k) => { const A = M.at[i], B = M.at[j], dx = B[1] - A[1], dy = B[2] - A[2], L = Math.hypot(dx, dy), nx = -dy / L, ny = dx / L; return Array.from({ length: o }, (_, q) => { const off = (q - (o - 1) / 2) * 6; return <line key={k + "-" + q} x1={A[1] + (dx / L) * 14 + nx * off} y1={A[2] + (dy / L) * 14 + ny * off} x2={B[1] - (dx / L) * 14 + nx * off} y2={B[2] - (dy / L) * 14 + ny * off} stroke="#ffd166" strokeWidth="2.6" />; }); })}
-        {M.at.map(([s, x, y, lp], i) => (<g key={i}><text x={x} y={y + 6} fontSize="20" fontWeight="700" fill={s === "H" ? "#9fd4ff" : s === "O" ? "#ff6b6b" : s === "N" ? "#5bb8ff" : s === "C" ? "#cfd6ea" : "#5de0a0"} textAnchor="middle" direction="ltr">{s}</text>
-          {lp.map((a, k) => [-7, 7].map((o, q) => (<circle key={k + "-" + q} cx={x + 20 * Math.cos(rad(a)) + 5 * Math.sin(rad(a)) * (o > 0 ? 1 : -1)} cy={y + 2 - 20 * Math.sin(rad(a)) + 5 * Math.cos(rad(a)) * (o > 0 ? 1 : -1)} r="2.3" fill="#5de0a0" />)))}</g>))}
-        <text x="160" y="164" fontSize="9" fill="#9aa6c8" textAnchor="middle">خط = جفت پیوندی · دو نقطه = جفت ناپیوندی</text>
+      <svg viewBox="0 0 320 214" className="vlab-svg" style={{ background: "#050a18", borderRadius: "10px" }}>
+        <defs><radialGradient id="lwB" cx="0.35" cy="0.3" r="0.8"><stop offset="0" stopColor="#fff" stopOpacity="0.9" /><stop offset="1" stopColor="#fff" stopOpacity="0" /></radialGradient></defs>
+        <text x="100" y="14" fontSize="7" fill="#cfd6ea" textAnchor="middle">ساختار لوویس</text>
+        <text x="246" y="14" fontSize="7" fill="#cfd6ea" textAnchor="middle">مدل سه‌بعدی واقعی</text>
+        <line x1="196" y1="22" x2="196" y2="140" stroke="#1c2b52" />
+        <g transform="translate(-14 16) scale(0.74)">
+          {M.at.map(([s], i) => (<circle key={"o" + i} cx={M.at[i][1]} cy={M.at[i][2] + 2} r={s === "H" ? 20 : 30} fill="none" stroke={ecol(s)} strokeOpacity="0.45" strokeDasharray="3 3" strokeWidth="1.2" />))}
+          {M.bd.map(([i, j, o], k) => { const A = M.at[i], Bq = M.at[j], dx = Bq[1] - A[1], dy = Bq[2] - A[2], L = Math.hypot(dx, dy), nx = -dy / L, ny = dx / L; return Array.from({ length: o }, (_, q) => { const off = (q - (o - 1) / 2) * 6; return <line key={k + "-" + q} x1={A[1] + (dx / L) * 14 + nx * off} y1={A[2] + (dy / L) * 14 + ny * off} x2={Bq[1] - (dx / L) * 14 + nx * off} y2={Bq[2] - (dy / L) * 14 + ny * off} stroke="#ffd166" strokeWidth="2.8" strokeLinecap="round"><animate attributeName="opacity" values="1;0.65;1" dur="2.2s" repeatCount="indefinite" /></line>; }); })}
+          {M.at.map(([s, x, y, lp], i) => (<g key={i}><text x={x} y={y + 6} fontSize="20" fontWeight="700" fill={ecol(s)} textAnchor="middle" direction="ltr">{s}</text>
+            {lp.map((a, k) => [-7, 7].map((o, q) => (<circle key={k + "-" + q} cx={x + 21 * Math.cos(rad(a)) + 5 * Math.sin(rad(a)) * (o > 0 ? 1 : -1)} cy={y + 2 - 21 * Math.sin(rad(a)) + 5 * Math.cos(rad(a)) * (o > 0 ? 1 : -1)} r="3" fill="#5de0a0"><animate attributeName="opacity" values="1;0.5;1" dur="2.6s" repeatCount="indefinite" /></circle>)))}</g>))}
+        </g>
+        {/* مدل سه‌بعدی */}
+        {B.b.map(([i, j, o], k) => (<g key={"bd" + k}>{Array.from({ length: o }, (_, q) => (<line key={q} x1={pr[i].x} y1={pr[i].y + (q - (o - 1) / 2) * 4} x2={pr[j].x} y2={pr[j].y + (q - (o - 1) / 2) * 4} stroke="#b8c2e0" strokeWidth={o > 1 ? 2 : 4} strokeLinecap="round" />))}</g>))}
+        {[...pr].sort((a, b) => b.z - a.z).map((n, q) => { const c = VLAB_LWC[n.s]; return (<g key={q}><circle cx={n.x} cy={n.y} r={c[1]} fill={c[0]} stroke="#050a18" strokeWidth="0.8" /><circle cx={n.x} cy={n.y} r={c[1]} fill="url(#lwB)" /></g>); })}
+        <text x="246" y="132" fontSize="8" fontWeight="700" fill="#ffd166" textAnchor="middle">{B.n}</text>
+        <text x="246" y="144" fontSize="7" fill="#9aa6c8" textAnchor="middle" direction="ltr">{B.ang}</text>
+        <text x="160" y="168" fontSize="7" fill="#9aa6c8" textAnchor="middle">خط = جفت پیوندی · دو نقطه = جفت ناپیوندی · دایره‌ی خط‌چین = آرایش هشتایی (برای H دوتایی)</text>
+        <text x="160" y="184" fontSize="8" fill="#cfd6ea" textAnchor="middle" direction="ltr">{M.at.map((a, i) => `${a[0]}: ${cnt[i]} e⁻ ✓`).join("   ")}</text>
+        <text x="160" y="200" fontSize="7.5" fill="#5de0a0" textAnchor="middle">الکترون‌های هر اتم (مشترک + ناپیوندی) به هشت یا برای هیدروژن به دو رسیده است</text>
       </svg>
       <div className="vlab-readout" style={{ textAlign: "center" }}>{mk}: {vlabFaN(nb)} جفت پیوندی + {vlabFaN(nl)} جفت ناپیوندی ← {vlabFaN(2 * (nb + nl))} الکترون ظرفیتی</div>
       <div className="vlab-controls"><div className="vlab-ctrl-col" style={{ flex: 1 }}>
-        <div className="vlab-btn-row">{Object.keys(VLAB_LW).map((k) => (<button key={k} className="vlab-btn" style={{ direction: "ltr", ...(mk === k ? { outline: "2px solid #e0a83e" } : {}) }} onClick={() => setMk(k)}>{k}</button>))}</div>
+        <div className="vlab-btn-row">{Object.keys(VLAB_LW).map((k) => (<button key={k} className="vlab-btn" style={{ direction: "ltr", ...(mk === k ? { outline: "2px solid #e0a83e" } : {}) }} onClick={() => setMk(k)}>{k}</button>))}<button className="vlab-btn" onClick={() => setAuto((a) => !a)}>{auto ? "⏸ توقف چرخش" : "▶ چرخش"}</button></div>
       </div></div>
-      <div className="vlab-readout">{`ساختار لوویس نشان می‌دهد هر اتم چگونه الکترون‌های ظرفیتی‌اش را برای رسیدن به آرایش هشتایی (برای هیدروژن دوتایی) به اشتراک می‌گذارد. گام‌ها: ۱) شمارش کل الکترون‌های ظرفیتی، ۲) رسم پیوندهای ساده بین اتم‌ها، ۳) افزودن جفت‌های ناپیوندی تا هشتایی کامل شود، ۴) اگر کم آمد پیوند دوگانه یا سه‌گانه بساز.`}</div>
+      <div className="vlab-readout">{`ساختار لوویس نشان می‌دهد هر اتم چگونه الکترون‌های ظرفیتی‌اش را برای رسیدن به آرایش هشتایی (برای هیدروژن دوتایی) به اشتراک می‌گذارد. گام‌ها: ۱) شمارش کل الکترون‌های ظرفیتی، ۲) رسم پیوندهای ساده بین اتم‌ها، ۳) افزودن جفت‌های ناپیوندی تا هشتایی کامل شود، ۴) اگر کم آمد پیوند دوگانه یا سه‌گانه بساز. شکل واقعی مولکول را دافعه‌ی جفت‌های الکترونی (جفت‌های پیوندی و ناپیوندی) مشخص می‌کند؛ برای همین آب خمیده و متان چهاروجهی است.`}</div>
       <VlabFormulaCheck title="کل الکترون‌های ظرفیتی" fa="الکترون‌ها = ۲ × (پیوندها + جفت‌های ناپیوندی)" en="valence = 2(bonds + lone pairs)" legend="پیوند دوگانه دو پیوند و سه‌گانه سه پیوند حساب می‌شود." subst={`۲ × (${vlabFaN(nb)} + ${vlabFaN(nl)})`} answer={2 * (nb + nl)} unit="" decimals={0} />
       <VlabEverydayCard title="چرا آب خمیده است؟" text="دو جفت ناپیوندی روی اکسیژن آب پیوندها را از هم دور می‌کنند و مولکول را خمیده می‌سازند؛ همین ساختار ویژگی‌های آب مثل حل‌کردن نمک را ممکن می‌کند.">
         <circle cx="60" cy="24" r="12" fill="#ff6b6b" /><circle cx="30" cy="54" r="8" fill="#9fd4ff" /><circle cx="90" cy="54" r="8" fill="#9fd4ff" />
@@ -37376,7 +37407,6 @@ function VlabLewisExperiment({ onReading }) {
     </div>
   );
 }
-
 /* ===== شیمی) استوکیومتری ===== */
 function VlabStoichExperiment({ onReading }) {
   const [gH, setGH] = useState(8);
@@ -37658,27 +37688,49 @@ function VlabInscribedPolygonExperiment({ onReading }) {
 function VlabSoapExperiment({ onReading }) {
   const [soap, setSoap] = useState(10);
   const [wash, setWash] = useState(0);
-  const R = 30, CX = 160, CY = 88;
+  const R = 30, CX = 170, CY0 = 100;
   const n = Math.min(soap, 18);
-  const lifted = wash / 100;
+  const lifted = n >= 18 ? wash / 100 : 0;
   const fa = (v) => vlabFaN(v);
+  const ox = lifted * 100, oy = -lifted * 50, CY = CY0;
+  const blob = (() => { const p = []; for (let i = 0; i < 40; i++) { const a = (i / 40) * 6.2832, r = R + 2.2 * Math.sin(3 * a) + 1.4 * Math.sin(5 * a + 1); p.push((i ? "L" : "M") + (CX + r * Math.cos(a)).toFixed(1) + "," + (CY + r * Math.sin(a)).toFixed(1)); } return p.join("") + "Z"; })();
+  const mol = (a, key, op = 1) => { const c = Math.cos(a), s = Math.sin(a), pt = (r, w) => [CX + r * c - s * w, CY + r * s + c * w]; const pts = [pt(R - 8, 0), pt(R - 3, 2.2), pt(R + 2, -2.2), pt(R + 8, 2.2), pt(R + 12, 0)]; const h = pt(R + 17, 0), na = pt(R + 26, 3); return (<g key={key} opacity={op}><path d={pts.map((p, i) => (i ? "L" : "M") + p[0].toFixed(1) + "," + p[1].toFixed(1)).join("")} fill="none" stroke="#ff9d1c" strokeWidth="1.8" strokeLinecap="round" /><circle cx={h[0]} cy={h[1]} r="4.4" fill="#5bb8ff" stroke="#fff" strokeWidth="0.8" /><text x={h[0]} y={h[1] + 2.6} fontSize="6.5" fontWeight="700" fill="#03060f" textAnchor="middle">−</text><circle cx={na[0]} cy={na[1]} r="1.7" fill="#cfd6ea" opacity="0.8" /></g>); };
+  const free = Math.max(0, soap - 18);
+  const approach = n < 18 ? Math.min(3, 18 - n) : 0;
+  const wm = [[30, 70], [60, 120], [250, 40], [285, 90], [300, 60], [40, 40], [90, 60], [240, 110], [120, 30], [215, 30], [275, 125], [20, 105]];
   return (
     <div className="vlab-exp">
-      <svg viewBox="0 0 320 176" className="vlab-svg" style={{ background: "#03060f", borderRadius: "10px" }}>
-        <rect x="0" y="0" width="320" height="176" fill="#5bb8ff" opacity="0.12" />
-        <g transform={`translate(${lifted * 140},0)`} opacity={1 - lifted * 0.4}>
-          <circle cx={CX} cy={CY} r={R} fill="#e0a83e" opacity="0.8" /><text x={CX} y={CY + 4} fontSize="9" fill="#03060f" textAnchor="middle">چربی</text>
-          {Array.from({ length: n }, (_, i) => { const a = (i / 18) * 2 * Math.PI; const cx = CX, cy = CY; const x0 = cx + R * Math.cos(a), y0 = cy + R * Math.sin(a); const x1 = cx + (R + 24) * Math.cos(a), y1 = cy + (R + 24) * Math.sin(a); return (<g key={i}><line x1={x0} y1={y0} x2={x1} y2={y1} stroke="#ff9d1c" strokeWidth="3" /><line x1={x0} y1={y0} x2={cx + (R - 2) * Math.cos(a)} y2={cy + (R - 2) * Math.sin(a)} stroke="#ff9d1c" strokeWidth="3" /><circle cx={x1} cy={y1} r="4" fill="#5bb8ff" stroke="#fff" /></g>); })}
+      <svg viewBox="0 0 320 196" className="vlab-svg" style={{ background: "#050a18", borderRadius: "10px" }}>
+        <defs><linearGradient id="spW" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stopColor="#1a4f8a" stopOpacity="0.5" /><stop offset="1" stopColor="#0d2b52" stopOpacity="0.6" /></linearGradient></defs>
+        <rect x="0" y="0" width="320" height="150" fill="url(#spW)" />
+        {wm.map((p, i) => (<g key={"w" + i} opacity="0.6"><g><path d={`M${p[0] - 4},${p[1] - 2} L${p[0]},${p[1] + 2} L${p[0] + 4},${p[1] - 2}`} fill="none" stroke="#7fc4ff" strokeWidth="1.4" strokeLinecap="round" /><animateTransform attributeName="transform" type="translate" values={`0 0;${(i % 3) * 2 - 2} ${(i % 2) * 3 - 1};0 0`} dur={`${3 + (i % 4)}s`} repeatCount="indefinite" /></g></g>))}
+        {/* پارچه / ظرف */}
+        <rect x="0" y="146" width="320" height="50" fill="#d8d2c0" /><path d="M0,150 q10,-6 20,0 t20,0 t20,0 t20,0 t20,0 t20,0 t20,0 t20,0 t20,0 t20,0 t20,0 t20,0 t20,0 t20,0 t20,0 t20,0" fill="none" stroke="#b8b09a" strokeWidth="2" />
+        <path d="M0,162 q10,-6 20,0 t20,0 t20,0 t20,0 t20,0 t20,0 t20,0 t20,0 t20,0 t20,0 t20,0 t20,0 t20,0 t20,0 t20,0 t20,0" fill="none" stroke="#b8b09a" strokeWidth="2" />
+        <text x="40" y="186" fontSize="7.5" fill="#6a6450" textAnchor="middle">سطح لباس / ظرف</text>
+        {/* چربی + صابون */}
+        <g transform={`translate(${ox} ${oy})`}>
+          <path d={blob} fill="#e0a83e" stroke="#a87a1e" strokeWidth="1.2" /><ellipse cx={CX - 8} cy={CY - 10} rx="12" ry="7" fill="#fff" opacity="0.25" />
+          <text x={CX} y={CY + 3} fontSize="8" fill="#3a2a08" textAnchor="middle">چربی</text>
+          {Array.from({ length: n }, (_, i) => mol((i / 18) * 2 * Math.PI + 0.2, "m" + i))}
+          {Array.from({ length: approach }, (_, q) => { const a = ((n + q) / 18) * 2 * Math.PI + 0.2; return (<g key={"ap" + q} opacity="0.85"><g>{mol(a, "ap")}<animateTransform attributeName="transform" type="translate" values={`${Math.cos(a) * 40} ${Math.sin(a) * 40};0 0;0 0`} keyTimes="0;0.7;1" dur={`${3 + q * 0.6}s`} repeatCount="indefinite" /></g></g>); })}
         </g>
-        <text x="40" y="22" fontSize="8" fill="#5bb8ff" textAnchor="middle">● سر آب‌دوست</text><text x="40" y="36" fontSize="8" fill="#ff9d1c" textAnchor="middle">— دم چربی‌دوست</text>
-        <text x="160" y="170" fontSize="9" fill="#cfd6ea" textAnchor="middle">{n >= 18 ? "ذره‌ی چربی کاملاً پوشیده شد (میسل)؛ با آب شسته می‌شود" : "هنوز بخشی از چربی بی‌پوشش است"}</text>
+        {lifted > 0 && <text x={CX + ox} y={CY + oy + R + 40} fontSize="8" fill="#5de0a0" textAnchor="middle">میسل با آب می‌رود</text>}
+        {free > 0 && Array.from({ length: Math.min(6, free) }, (_, q) => (<g key={"fr" + q}><path d={`M${40 + q * 40},${30 + (q % 2) * 30} l8,-4 l4,6`} fill="none" stroke="#ff9d1c" strokeWidth="1.6" strokeLinecap="round" /><circle cx={40 + q * 40 + 14} cy={30 + (q % 2) * 30 + 2} r="3.6" fill="#5bb8ff" stroke="#fff" strokeWidth="0.6" /><animateTransform attributeName="transform" type="translate" values={`0 0;${6 - q} ${q % 2 ? -5 : 5};0 0`} dur={`${3 + q * 0.4}s`} repeatCount="indefinite" /></g>))}
+        {/* مولکول بزرگ‌نمایی */}
+        <rect x="8" y="8" width="96" height="42" rx="6" fill="#0d1530" stroke="#2a3a66" />
+        <path d="M56,28 l5,-4 l5,4 l5,-4 l5,4 l5,-4 l5,4" fill="none" stroke="#ff9d1c" strokeWidth="2" strokeLinecap="round" transform="translate(-30 4)" />
+        <circle cx="26" cy="28" r="6" fill="#5bb8ff" stroke="#fff" strokeWidth="0.8" /><text x="26" y="31" fontSize="9" fontWeight="700" fill="#03060f" textAnchor="middle">−</text>
+        <text x="56" y="18" fontSize="6.5" fill="#cfd6ea" textAnchor="middle">مولکول صابون</text>
+        <text x="26" y="44" fontSize="5.5" fill="#5bb8ff" textAnchor="middle">سر آب‌دوست</text><text x="78" y="44" fontSize="5.5" fill="#ff9d1c" textAnchor="middle">دم چربی‌دوست</text>
+        <text x="160" y="193" fontSize="8" fill="#3a3626" textAnchor="middle" stroke="#d8d2c0" strokeWidth="2" paintOrder="stroke">{n >= 18 ? "ذره‌ی چربی کاملاً پوشیده شد (میسل)؛ با آب شسته می‌شود" : "هنوز بخشی از چربی بی‌پوشش است"}</text>
       </svg>
       <div className="vlab-readout" style={{ textAlign: "center" }}>مولکول‌های صابون روی ذره‌ی چربی: <b>{fa(n)}</b> از ۱۸</div>
       <div className="vlab-controls"><div className="vlab-ctrl-col" style={{ flex: 1 }}>
-        <label className="vlab-ctrl-label">مقدار صابون: {fa(soap)}</label><VlabRange min="0" max="20" step="1" value={soap} onChange={(e) => setSoap(+e.target.value)} />
+        <label className="vlab-ctrl-label">مقدار صابون: {fa(soap)}</label><VlabRange min="0" max="24" step="1" value={soap} onChange={(e) => setSoap(+e.target.value)} />
         <label className="vlab-ctrl-label">آب‌کشی: {fa(wash)}٪</label><VlabRange min="0" max="100" step="10" value={n >= 18 ? wash : 0} onChange={(e) => setWash(+e.target.value)} />
       </div></div>
-      <div className="vlab-readout">{`مولکول صابون یک سر قطبی (آب‌دوست، همان گروه کربوکسیلات) و یک دم بلند ناقطبی (چربی‌دوست) دارد. دم‌ها در چربی فرو می‌روند و سرها به‌سوی آب می‌مانند؛ چربی در توپ‌هایی به نام میسل پوشیده می‌شود که در آب پراکنده می‌شوند و با آب‌کشی می‌روند. چربی و آب یکدیگر را حل نمی‌کنند چون یکی ناقطبی و دیگری قطبی است.`}</div>
+      <div className="vlab-readout">{`مولکول صابون یک سر قطبی (آب‌دوست، همان گروه کربوکسیلات) و یک دم بلند ناقطبی (چربی‌دوست) دارد. دم‌ها در چربی فرو می‌روند و سرها به‌سوی آب می‌مانند؛ چربی در توپ‌هایی به نام میسل پوشیده می‌شود که در آب پراکنده می‌شوند و با آب‌کشی می‌روند. چربی و آب یکدیگر را حل نمی‌کنند چون یکی ناقطبی و دیگری قطبی است. تعداد مولکول‌ها برای نمایش ساده شده است.`}</div>
       <VlabFormulaCheck title="درصد پوشش چربی" fa="پوشش = تعداد مولکول ÷ ۱۸ × ۱۰۰" en="coverage" legend="با ۱۸ مولکول سطح ذره‌ی چربی کامل پوشیده می‌شود." subst={`${fa(n)} ÷ ۱۸ × ۱۰۰`} answer={(n / 18) * 100} unit="٪" decimals={0} />
       <VlabEverydayCard title="ظرف‌شویی" text="چرا ظرف چرب را با آب تنها نمی‌شویم؟ چربی ناقطبی در آب قطبی حل نمی‌شود. چند قطره مایع ظرف‌شویی میسل می‌سازد و چربی را با آب می‌برد.">
         <rect x="26" y="30" width="60" height="30" rx="6" fill="#cfd6ea" /><circle cx="46" cy="22" r="5" fill="#9fd4ff" opacity="0.8" /><circle cx="64" cy="16" r="4" fill="#9fd4ff" opacity="0.8" />
@@ -37686,7 +37738,6 @@ function VlabSoapExperiment({ onReading }) {
     </div>
   );
 }
-
 /* ===== شیمی) میدان الکتریکی و مولکول آب ===== */
 function VlabWaterDipoleExperiment({ onReading }) {
   const [E, setE] = useState(3);
@@ -38028,31 +38079,63 @@ function VlabSolidNetExperiment({ onReading }) {
 /* ===== شیمی) استری شدن ===== */
 const VLAB_ESAC = { A: ["اتانوئیک اسید (استیک)", "اتانوات", "CH₃COOH"], F: ["متانوئیک اسید (فورمیک)", "متانوات", "HCOOH"] };
 const VLAB_ESAL = { M: ["متانول", "متیل", "CH₃OH", "بوی چسب و حلال"], E: ["اتانول", "اتیل", "CH₃CH₂OH", "بوی میوه (آناناس)"], P: ["پروپانول", "پروپیل", "CH₃CH₂CH₂OH", "بوی گلابی"] };
+function vlabEsMol(seq, ci, hl, ox, oy, pre) {
+  const par = ci % 2 === 1 ? 0 : 1;
+  const P = seq.map((a, i) => [ox + i * 14, oy + ((i + par) % 2 === 1 ? 0 : 8)]);
+  const els = [];
+  P.slice(1).forEach((p, i) => els.push(<line key={pre + "b" + i} x1={P[i][0]} y1={P[i][1]} x2={p[0]} y2={p[1]} stroke="#cfd6ea" strokeWidth="1.8" strokeLinecap="round" />));
+  if (ci >= 0) { const c = P[ci]; [-1.6, 1.6].forEach((d, q) => els.push(<line key={pre + "d" + q} x1={c[0] + d} y1={c[1]} x2={c[0] + d} y2={c[1] - 12} stroke="#cfd6ea" strokeWidth="1.8" />)); els.push(<text key={pre + "dO"} x={c[0]} y={c[1] - 15} fontSize="8.5" fontWeight="700" fill="#ff6b6b" textAnchor="middle">O</text>); }
+  seq.forEach((a, i) => { const p = P[i]; if (a.s === "C") els.push(<circle key={pre + "c" + i} cx={p[0]} cy={p[1]} r="1.6" fill="#8a97c4" />); else { const hlt = hl && hl[i]; els.push(<g key={pre + "o" + i}>{hlt && <circle cx={p[0] + (a.l ? 3 : 0)} cy={p[1]} r="9" fill={hlt} opacity="0.3" />}<text x={p[0] + (a.l ? 3 : 0)} y={p[1] + 3} fontSize="9" fontWeight="700" fill="#ff6b6b" textAnchor="middle" direction="ltr">{a.l || "O"}</text></g>); } });
+  return <g key={pre}>{els}</g>;
+}
 function VlabEsterExperiment({ onReading }) {
   const [ac, setAc] = useState("A");
   const [al, setAl] = useState("E");
   const [n, setN] = useState(1);
   const K = 4;
-  const qa = 1 - K, qb = K * (1 + n) + 0, qc = -K * n; // (K-1)... solve K(1-x)(n-x)=x²
   const A = K - 1, B = -K * (1 + n), Cc = K * n;
   const x = (-B - Math.sqrt(B * B - 4 * A * Cc)) / (2 * A);
   const name = VLAB_ESAL[al][1] + " " + VLAB_ESAC[ac][1];
   const fa = (v, d = 2) => vlabMFa(v, d);
   const mx = Math.max(1, n, x);
-  const bar = (v, X, col, nm) => (<g key={nm}><rect x={X} y={140 - (v / mx) * 90} width="36" height={(v / mx) * 90} fill={col} rx="3" /><text x={X + 18} y={134 - (v / mx) * 90} fontSize="9" fill="#fff" textAnchor="middle">{fa(v)}</text><text x={X + 18} y="154" fontSize="8" fill="#cfd6ea" textAnchor="middle">{nm}</text></g>);
+  const C = { s: "C" }, O = { s: "O" }, OH = { s: "O", l: "OH" };
+  const rAc = ac === "A" ? [C, C] : [C], nAc = ac === "A" ? 1 : 0;
+  const nC = { M: 1, E: 2, P: 3 }[al];
+  const alk = Array.from({ length: nC }, () => C);
+  const acid = [...rAc, OH], alcohol = [...alk, OH], ester = [...rAc, O, ...alk];
+  const BASE = 188, HH = 52;
+  const bar = (v, X, col, nm) => (<g key={nm}><rect x={X} y={BASE - (v / mx) * HH} width="36" height={(v / mx) * HH} fill={col} rx="3" /><text x={X + 18} y={BASE - 4 - (v / mx) * HH} fontSize="8.5" fill="#fff" textAnchor="middle">{fa(v)}</text><text x={X + 18} y={BASE + 11} fontSize="8" fill="#cfd6ea" textAnchor="middle">{nm}</text></g>);
   return (
     <div className="vlab-exp">
-      <svg viewBox="0 0 320 170" className="vlab-svg" style={{ background: "#03060f", borderRadius: "10px" }}>
-        <text x="160" y="16" fontSize="10" fill="#ffd166" textAnchor="middle" direction="ltr">{VLAB_ESAC[ac][2]} + {VLAB_ESAL[al][2]} ⇌ ester + H₂O</text>
-        {bar(1 - x, 20, "#ff9d1c", "اسید")}{bar(n - x, 66, "#5bb8ff", "الکل")}<text x="124" y="100" fontSize="22" fill="#ffd166" textAnchor="middle">⇌</text>{bar(x, 150, "#5de0a0", "استر")}{bar(x, 196, "#9fd4ff", "آب")}
-        <text x="270" y="60" fontSize="10" fill="#5de0a0" textAnchor="middle">{name}</text><text x="270" y="78" fontSize="8" fill="#cfd6ea" textAnchor="middle">{VLAB_ESAL[al][3]}</text>
+      <svg viewBox="0 0 320 214" className="vlab-svg" style={{ background: "#050a18", borderRadius: "10px" }}>
+        <text x="160" y="12" fontSize="9" fill="#ffd166" textAnchor="middle" direction="ltr">{VLAB_ESAC[ac][2]} + {VLAB_ESAL[al][2]} ⇌ ester + H₂O</text>
+        {/* واکنش‌دهنده‌ها */}
+        {vlabEsMol(acid, nAc + 0, { [acid.length - 1]: "#ffd166" }, 16, 36, "ac")}
+        <text x="100" y="42" fontSize="12" fill="#cfd6ea" textAnchor="middle">+</text>
+        {vlabEsMol(alcohol, -1, { [alcohol.length - 1]: "#5bb8ff" }, 116, 36, "al")}
+        <text x="52" y="62" fontSize="6.5" fill="#ff9d1c" textAnchor="middle">اسید</text><text x="148" y="62" fontSize="6.5" fill="#5bb8ff" textAnchor="middle">الکل</text>
+        {/* پیکان */}
+        <text x="160" y="76" fontSize="16" fill="#ffd166" textAnchor="middle" transform="rotate(90 160 70)">⇌</text>
+        <text x="190" y="72" fontSize="6.5" fill="#9aa6c8" textAnchor="start" />
+        <text x="214" y="73" fontSize="6.5" fill="#9aa6c8" textAnchor="middle">کاتالیزگر: H⁺ + گرما</text>
+        {/* فراورده‌ها */}
+        {vlabEsMol(ester, nAc + 0, { [rAc.length]: "#5bb8ff" }, 16, 104, "es")}
+        <text x="108" y="112" fontSize="12" fill="#cfd6ea" textAnchor="middle">+</text>
+        <g><line x1="140" y1="112" x2="150" y2="106" stroke="#cfd6ea" strokeWidth="1.8" /><line x1="150" y1="106" x2="160" y2="112" stroke="#cfd6ea" strokeWidth="1.8" /><circle cx="150" cy="106" r="7" fill="#ffd166" opacity="0.3" /><text x="150" y="109" fontSize="9" fontWeight="700" fill="#ff6b6b" textAnchor="middle">O</text><text x="140" y="118" fontSize="7.5" fill="#9fd4ff" textAnchor="middle">H</text><text x="160" y="118" fontSize="7.5" fill="#9fd4ff" textAnchor="middle">H</text></g>
+        <text x="52" y="128" fontSize="6.5" fill="#5de0a0" textAnchor="middle">استر</text><text x="150" y="128" fontSize="6.5" fill="#9fd4ff" textAnchor="middle">آب</text>
+        <text x="266" y="30" fontSize="9" fontWeight="700" fill="#5de0a0" textAnchor="middle">{name}</text><text x="266" y="44" fontSize="7" fill="#cfd6ea" textAnchor="middle">{VLAB_ESAL[al][3]}</text>
+        <rect x="204" y="86" width="108" height="40" rx="6" fill="#0d1530" /><text x="258" y="100" fontSize="6.5" fill="#9aa6c8" textAnchor="middle">بازده استر در تعادل</text><text x="258" y="119" fontSize="14" fontWeight="700" fill="#5de0a0" textAnchor="middle">{fa(x * 100, 0)}٪</text>
+        {/* ستون‌ها */}
+        <line x1="10" y1={BASE} x2="310" y2={BASE} stroke="#3a4a78" />
+        {bar(1 - x, 22, "#ff9d1c", "اسید")}{bar(n - x, 70, "#5bb8ff", "الکل")}<text x="132" y={BASE - 20} fontSize="20" fill="#ffd166" textAnchor="middle">⇌</text>{bar(x, 160, "#5de0a0", "استر")}{bar(x, 208, "#9fd4ff", "آب")}
+        <text x="270" y="170" fontSize="6.5" fill="#9aa6c8" textAnchor="middle">مول‌ها در تعادل</text>
       </svg>
       <div className="vlab-readout" style={{ textAlign: "center" }}>بازده استر = <b>{fa(x * 100, 0)}٪</b> از اسید (در تعادل با K = ۴)</div>
       <div className="vlab-controls"><div className="vlab-ctrl-col" style={{ flex: 1 }}>
         <div className="vlab-btn-row">{Object.keys(VLAB_ESAC).map((k) => (<button key={k} className="vlab-btn" style={ac === k ? { outline: "2px solid #e0a83e" } : null} onClick={() => setAc(k)}>{VLAB_ESAC[k][0].split(" ")[0]}</button>))}{Object.keys(VLAB_ESAL).map((k) => (<button key={k} className="vlab-btn" style={al === k ? { outline: "2px solid #2e7bd5" } : null} onClick={() => setAl(k)}>{VLAB_ESAL[k][0]}</button>))}</div>
         <label className="vlab-ctrl-label">مقدار الکل (مول، نسبت به ۱ مول اسید): {fa(n, 1)}</label><VlabRange min="1" max="6" step="0.5" value={n} onChange={(e) => setN(+e.target.value)} />
       </div></div>
-      <div className="vlab-readout">{`اسید کربوکسیلیک با الکل (با کاتالیزگر اسید) ترکیبی به نام استر و آب می‌دهد. این واکنش تعادلی است؛ برای بالابردن بازده، یکی از واکنش‌دهنده‌ها را زیاد می‌کنیم یا آب را از محیط خارج می‌کنیم (اصل لوشاتلیه). استرها بوی خوش میوه‌ها و گل‌ها را می‌سازند. نام استر: نام گروه الکلی + نام اسید (مثلاً ${name}).`}</div>
+      <div className="vlab-readout">{`اسید کربوکسیلیک با الکل (با کاتالیزگر اسید) ترکیبی به نام استر و آب می‌دهد. در شکل، گروه OH اسید (زرد) با هیدروژن الکل آب می‌سازد و بقیه‌ی دو مولکول از طریق اکسیژن الکل (آبی) به هم وصل می‌شوند و استر را می‌سازند. این واکنش تعادلی است؛ برای بالابردن بازده، یکی از واکنش‌دهنده‌ها را زیاد می‌کنیم یا آب را از محیط خارج می‌کنیم (اصل لوشاتلیه). استرها بوی خوش میوه‌ها و گل‌ها را می‌سازند. نام استر: نام گروه الکلی + نام اسید (مثلاً ${name}).`}</div>
       <VlabFormulaCheck title="ثابت تعادل" fa="K = [استر][آب] ÷ ([اسید][الکل])" en="K = x²/((1−x)(n−x))" legend="با x مول استر و n مول الکل (حجم ثابت است و حذف می‌شود)." subst={`K = ${fa(x)}² ÷ ((۱−${fa(x)}) × (${fa(n, 1)}−${fa(x)}))`} answer={(x * x) / ((1 - x) * (n - x))} unit="" decimals={2} />
       <VlabEverydayCard title="عطر و طعم مصنوعی" text="طعم آناناس، موز یا سیب در شیرینی‌ها و نوشابه‌ها استرهای ساده‌ای‌اند که کارخانه از اسید و الکل می‌سازد؛ مولکول‌هایی مشابه همان‌ها که در میوه‌ی طبیعی هست.">
         <circle cx="60" cy="40" r="22" fill="#e0a83e" /><path d="M60,18 L54,6 M60,18 L66,6" stroke="#6b8f4e" strokeWidth="3" />
@@ -38060,7 +38143,6 @@ function VlabEsterExperiment({ onReading }) {
     </div>
   );
 }
-
 /* ===== زیست) پادتن و آنتی‌ژن ===== */
 function VlabAntibodyExperiment({ onReading }) {
   const [ag, setAg] = useState(0);

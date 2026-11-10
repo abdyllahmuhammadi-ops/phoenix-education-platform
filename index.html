@@ -23836,6 +23836,60 @@ const VLAB_EXPERIMENTS = [
     intro: "منحنی قند خون و انسولین را پس از غذا در فرد سالم و در دیابت نوع ۱ و ۲ مقایسه کن.",
     tools: ["منحنی قند", "انسولین", "نوع بیماری"],
   },
+  {
+    id: "identity-area",
+    subject: "ریاضی",
+    level: "متوسطه",
+    title: "اتحادها با مساحت",
+    icon: "🟦",
+    intro: "اتحادهای مربع دو جمله‌ای و تفاضل مربعات را با تکه‌های مساحت ببین.",
+    tools: ["مربع و مستطیل", "تکه‌های مساحت", "اتحاد"],
+  },
+  {
+    id: "truth-table",
+    subject: "ریاضی",
+    level: "متوسطه",
+    title: "جدول ارزش گزاره‌ها",
+    icon: "✅",
+    intro: "ارزش گزاره‌های مرکب را در جدول ببین و هم‌ارزی دو گزاره را بررسی کن.",
+    tools: ["جدول ارزش", "گزاره‌های مرکب", "هم‌ارزی"],
+  },
+  {
+    id: "thermal-expansion",
+    subject: "فیزیک",
+    level: "متوسطه",
+    title: "انبساط گرمایی",
+    icon: "📏",
+    intro: "جنس و دمای میله را تغییر بده و انبساط طولی را ببین.",
+    tools: ["میله", "دماسنج", "ضریب انبساط"],
+  },
+  {
+    id: "thermometer",
+    subject: "فیزیک",
+    level: "متوسطه",
+    title: "دماسنج",
+    icon: "🌡️",
+    intro: "دما را بالا و پایین ببر و مقیاس‌های سلسیوس، فارنهایت و کلوین را ببین.",
+    tools: ["دماسنج", "سه مقیاس", "نقاط مرجع"],
+  },
+  {
+    id: "water-cycle",
+    subject: "زمین‌شناسی",
+    level: "متوسطه",
+    title: "چرخه‌ی آب",
+    icon: "💧",
+    intro: "گرمای خورشید و ارتفاع کوه را عوض کن و تبخیر، بارش و رواناب را ببین.",
+    tools: ["دریا و کوه", "تبخیر و بارش", "رواناب"],
+  },
+  {
+    id: "mineral-id",
+    subject: "زمین‌شناسی",
+    level: "متوسطه",
+    title: "شناسایی کانی‌ها",
+    icon: "💎",
+    intro: "سختی، رنگ خط‌خش و جلای کانی‌ها را بسنج و آن‌ها را بشناس.",
+    tools: ["نمونه‌ی کانی", "خراش با ابزار", "خط‌خش"],
+  },
 ];
 
 function vlabClamp(v, min, max) {
@@ -35903,6 +35957,235 @@ function VlabGlucoseExperiment({ onReading }) {
   );
 }
 
+/* ===== ریاضی) اتحادها با مساحت ===== */
+function VlabIdentityAreaExperiment({ onReading }) {
+  const [mode, setMode] = useState("sum");
+  const [a, setA] = useState(5);
+  const [b, setB] = useState(2);
+  const S = 14, X0 = 40, Y0 = 20;
+  const fa = (v) => vlabFaN(v);
+  let svg, form, subst, ans;
+  if (mode === "sum") {
+    const t = a + b;
+    svg = (<g>
+      <rect x={X0} y={Y0} width={a * S} height={a * S} fill="#5bb8ff" opacity="0.6" /><text x={X0 + (a * S) / 2} y={Y0 + (a * S) / 2 + 4} fontSize="11" fill="#fff" textAnchor="middle">a² = {fa(a * a)}</text>
+      <rect x={X0 + a * S} y={Y0} width={b * S} height={a * S} fill="#ffd166" opacity="0.7" /><text x={X0 + a * S + (b * S) / 2} y={Y0 + (a * S) / 2} fontSize="9" fill="#03060f" textAnchor="middle">ab</text>
+      <rect x={X0} y={Y0 + a * S} width={a * S} height={b * S} fill="#ffd166" opacity="0.7" /><text x={X0 + (a * S) / 2} y={Y0 + a * S + (b * S) / 2 + 3} fontSize="9" fill="#03060f" textAnchor="middle">ab = {fa(a * b)}</text>
+      <rect x={X0 + a * S} y={Y0 + a * S} width={b * S} height={b * S} fill="#ff6b6b" opacity="0.75" /><text x={X0 + a * S + (b * S) / 2} y={Y0 + a * S + (b * S) / 2 + 3} fontSize="8" fill="#fff" textAnchor="middle">b²</text>
+      <text x="240" y="60" fontSize="10" fill="#cfd6ea" textAnchor="middle">ضلع بزرگ = a + b = {fa(t)}</text><text x="240" y="76" fontSize="10" fill="#cfd6ea" textAnchor="middle">مساحت کل = {fa(t * t)}</text></g>);
+    form = "(a + b)² = a² + ۲ab + b²"; subst = `(${fa(a)} + ${fa(b)})²`; ans = t * t;
+  } else if (mode === "diff") {
+    const t = a - b;
+    svg = (<g>
+      <rect x={X0} y={Y0} width={a * S} height={a * S} fill="#5bb8ff" opacity="0.25" stroke="#5bb8ff" />
+      <rect x={X0} y={Y0} width={t * S} height={t * S} fill="#5de0a0" opacity="0.7" /><text x={X0 + (t * S) / 2} y={Y0 + (t * S) / 2 + 4} fontSize="10" fill="#03060f" textAnchor="middle">(a−b)²</text>
+      <rect x={X0 + t * S} y={Y0} width={b * S} height={a * S} fill="#ff9d1c" opacity="0.55" /><rect x={X0} y={Y0 + t * S} width={a * S} height={b * S} fill="#ff9d1c" opacity="0.55" />
+      <text x={X0 + t * S + (b * S) / 2} y={Y0 + (a * S) / 2} fontSize="8" fill="#fff" textAnchor="middle">ab</text>
+      <text x="240" y="60" fontSize="10" fill="#cfd6ea" textAnchor="middle">از a² دو نوار ab کم می‌کنیم</text><text x="240" y="76" fontSize="10" fill="#cfd6ea" textAnchor="middle">اما b² دو بار کم شده، یک بار برمی‌گردانیم</text></g>);
+    form = "(a − b)² = a² − ۲ab + b²"; subst = `(${fa(a)} − ${fa(b)})²`; ans = t * t;
+  } else {
+    svg = (<g>
+      <rect x={X0} y={Y0} width={a * S} height={a * S} fill="#5bb8ff" opacity="0.5" /><rect x={X0 + (a - b) * S} y={Y0 + (a - b) * S} width={b * S} height={b * S} fill="#03060f" stroke="#ff6b6b" strokeDasharray="3 2" />
+      <text x={X0 + (a * S) / 2} y={Y0 + (a * S) / 2 + 4} fontSize="10" fill="#fff" textAnchor="middle">a² − b²</text>
+      <rect x="196" y={Y0 + 20} width={(a + b) * 8} height={(a - b) * 8 + 0.1} fill="#5de0a0" opacity="0.7" /><text x={196 + ((a + b) * 8) / 2} y={Y0 + 24 + ((a - b) * 8) / 2} fontSize="9" fill="#03060f" textAnchor="middle">(a+b)(a−b)</text>
+      <text x="240" y="130" fontSize="9" fill="#cfd6ea" textAnchor="middle">قطعه‌ها را می‌بریم و به‌صورت مستطیل می‌چینیم</text></g>);
+    form = "a² − b² = (a + b)(a − b)"; subst = `(${fa(a)} + ${fa(b)})(${fa(a)} − ${fa(b)})`; ans = a * a - b * b;
+  }
+  return (
+    <div className="vlab-exp">
+      <svg viewBox="0 0 320 170" className="vlab-svg" style={{ background: "#03060f", borderRadius: "10px" }}>{svg}</svg>
+      <div className="vlab-readout" style={{ textAlign: "center" }} dir="ltr">{form}</div>
+      <div className="vlab-controls"><div className="vlab-ctrl-col" style={{ flex: 1 }}>
+        <div className="vlab-btn-row">{[["sum", "(a+b)²"], ["diff", "(a−b)²"], ["dos", "a²−b²"]].map(([k, n]) => (<button key={k} className="vlab-btn" style={{ direction: "ltr", ...(mode === k ? { outline: "2px solid #e0a83e" } : {}) }} onClick={() => setMode(k)}>{n}</button>))}</div>
+        <label className="vlab-ctrl-label">a: {fa(a)}</label><VlabRange min={mode === "sum" ? 1 : 3} max="8" step="1" value={a} onChange={(e) => { const v = +e.target.value; setA(v); if (b >= v) setB(v - 1); }} />
+        <label className="vlab-ctrl-label">b: {fa(Math.min(b, a - 1))}</label><VlabRange min="1" max={Math.max(1, a - 1)} step="1" value={Math.min(b, a - 1)} onChange={(e) => setB(+e.target.value)} />
+      </div></div>
+      <div className="vlab-readout">{`اتحاد‌ها فقط ثابت‌شدن این است که دو راه برای شمردن یک مساحت جواب یکسان می‌دهند: یا مساحت کل مربع بزرگ را حساب می‌کنیم یا مساحت قطعه‌هایش را جمع می‌کنیم. جمله‌ی «۲ab» همان دو مستطیل زرد است.`}</div>
+      <VlabFormulaCheck title="مقدار عددی" fa={form} en="identity" legend="با عدد جای‌گذاری کن و دو طرف را مقایسه کن." subst={subst} answer={ans} unit="" decimals={0} />
+      <VlabEverydayCard title="محاسبه‌ی ذهنی" text="برای حساب ۱۰۳² کافی است ۱۰۳ را (۱۰۰ + ۳) بگیری: ۱۰۰۰۰ + ۶۰۰ + ۹ = ۱۰۶۰۹. کاشی‌کار هم همین قطعه‌ها را برای پوشاندن کف می‌شمارد.">
+        <rect x="20" y="10" width="44" height="44" fill="#2e7bd5" opacity="0.6" /><rect x="64" y="10" width="14" height="44" fill="#e0a83e" /><rect x="20" y="54" width="44" height="14" fill="#e0a83e" />
+      </VlabEverydayCard>
+    </div>
+  );
+}
+
+/* ===== ریاضی) جدول ارزش گزاره‌ها ===== */
+const VLAB_LG = { "p ∧ q": (p, q) => p && q, "p ∨ q": (p, q) => p || q, "p ⇒ q": (p, q) => !p || q, "p ⇔ q": (p, q) => p === q, "¬(p ∧ q)": (p, q) => !(p && q), "¬p ∨ ¬q": (p, q) => !p || !q, "¬p ∨ q": (p, q) => !p || q, "¬q ⇒ ¬p": (p, q) => q || !p, "¬p": (p) => !p };
+function VlabTruthTableExperiment({ onReading }) {
+  const [p, setP] = useState(true);
+  const [q, setQ] = useState(false);
+  const [e1, setE1] = useState("p ⇒ q");
+  const [e2, setE2] = useState("¬p ∨ q");
+  const keys = Object.keys(VLAB_LG);
+  const rows = [[true, true], [true, false], [false, true], [false, false]];
+  const same = rows.every(([x, y]) => VLAB_LG[e1](x, y) === VLAB_LG[e2](x, y));
+  const T = (v) => (v ? "د" : "ن");
+  const sel = (v, set) => (<select value={v} onChange={(e) => set(e.target.value)} style={{ direction: "ltr", padding: "6px", borderRadius: 8, fontSize: 14 }}>{keys.map((k) => (<option key={k} value={k}>{k}</option>))}</select>);
+  return (
+    <div className="vlab-exp">
+      <table style={{ width: "100%", textAlign: "center", borderCollapse: "collapse", fontSize: 15, direction: "ltr" }}>
+        <thead><tr style={{ background: "#eef1fa" }}><th>p</th><th>q</th><th>{e1}</th><th>{e2}</th></tr></thead>
+        <tbody>{rows.map(([x, y], i) => { const hit = x === p && y === q; return (<tr key={i} style={hit ? { background: "#ffe9a8", fontWeight: 700 } : null}><td>{T(x)}</td><td>{T(y)}</td><td style={{ color: VLAB_LG[e1](x, y) ? "#18864f" : "#c0392b" }}>{T(VLAB_LG[e1](x, y))}</td><td style={{ color: VLAB_LG[e2](x, y) ? "#18864f" : "#c0392b" }}>{T(VLAB_LG[e2](x, y))}</td></tr>); })}</tbody>
+      </table>
+      <div className="vlab-readout" style={{ textAlign: "center" }}>با p = {p ? "درست" : "نادرست"} و q = {q ? "درست" : "نادرست"}: «{e1}» {VLAB_LG[e1](p, q) ? "درست" : "نادرست"} و «{e2}» {VLAB_LG[e2](p, q) ? "درست" : "نادرست"} است · {same ? "دو گزاره هم‌ارزند ✓" : "هم‌ارز نیستند"}</div>
+      <div className="vlab-controls"><div className="vlab-ctrl-col" style={{ flex: 1 }}>
+        <div className="vlab-btn-row"><button className="vlab-btn" onClick={() => setP(!p)}>p را عوض کن ({p ? "د" : "ن"})</button><button className="vlab-btn" onClick={() => setQ(!q)}>q را عوض کن ({q ? "د" : "ن"})</button></div>
+        <label className="vlab-ctrl-label">گزاره‌ی اول</label>{sel(e1, setE1)}
+        <label className="vlab-ctrl-label">گزاره‌ی دوم</label>{sel(e2, setE2)}
+      </div></div>
+      <div className="vlab-readout">{`«د» درست و «ن» نادرست است. گزاره‌ی «اگر p آنگاه q» فقط وقتی نادرست است که p درست و q نادرست باشد. دو گزاره‌ی مرکب هم‌ارزند اگر ستون ارزششان در هر چهار سطر یکی باشد؛ مثلاً p ⇒ q با ¬p ∨ q، و قانون دمورگان: ¬(p ∧ q) با ¬p ∨ ¬q.`}</div>
+      <VlabFormulaCheck title="تعداد سطرهای جدول" fa="۲ⁿ (n = تعداد گزاره‌ها)" en="2^n" legend="هر گزاره‌ی ساده دو حالت دارد." subst="۲²" answer={4} unit="سطر" decimals={0} />
+      <VlabEverydayCard title="مدار و برنامه‌نویسی" text="ریاضی‌دان‌ها برای کنترل «اگر باران آمد و باد نیامد، چتر بردار» از جدول ارزش استفاده می‌کنند؛ همین منطق در ساخت کلیدها و شرط‌های برنامه (if) به کار می‌رود.">
+        <rect x="26" y="20" width="26" height="26" rx="4" fill="#2e7bd5" /><rect x="76" y="20" width="26" height="26" rx="4" fill="#d83a3a" /><path d="M52,33 H76" stroke="#7d8bb5" strokeWidth="2" />
+      </VlabEverydayCard>
+    </div>
+  );
+}
+
+/* ===== فیزیک) انبساط گرمایی ===== */
+const VLAB_AL = { Al: ["آلومینیوم", 24e-6], Cu: ["مس", 17e-6], Fe: ["آهن (ریل)", 12e-6], Gl: ["شیشه", 9e-6] };
+function VlabThermalExpansionExperiment({ onReading }) {
+  const [mk, setMk] = useState("Fe");
+  const [L0, setL0] = useState(20);
+  const [T, setT] = useState(50);
+  const al = VLAB_AL[mk][1];
+  const dL = al * L0 * (T - 20) * 1000; // mm
+  const vis = dL * 4;
+  const fa = (v, d = 1) => vlabMFa(v, d);
+  const hot = T > 20;
+  return (
+    <div className="vlab-exp">
+      <svg viewBox="0 0 320 150" className="vlab-svg" style={{ background: "#03060f", borderRadius: "10px" }}>
+        <rect x="20" y="70" width="14" height="34" fill="#6a7aa8" /><rect x="286" y="70" width="14" height="34" fill="#6a7aa8" />
+        <rect x="36" y="76" width={Math.max(10, 200 + vis)} height="20" fill={hot ? "#ff9d1c" : "#5bb8ff"} opacity="0.85" rx="2" />
+        <line x1="236" y1="60" x2="236" y2="108" stroke="#9aa6c8" strokeDasharray="3 3" /><text x="236" y="54" fontSize="8" fill="#9aa6c8" textAnchor="middle">طول در ۲۰°C</text>
+        <text x="160" y="30" fontSize="12" fill="#ffd166" textAnchor="middle">{vlabFaN(T)}°C · ΔL = {fa(dL, 2)} mm</text>
+        <text x="160" y="130" fontSize="8" fill="#9aa6c8" textAnchor="middle">تغییر طول برای دیدن ۴ برابر بزرگ‌نمایی شده است</text>
+      </svg>
+      <div className="vlab-readout" style={{ textAlign: "center" }}>میله‌ی {VLAB_AL[mk][0]} به طول {vlabFaN(L0)} متر، از ۲۰ تا {vlabFaN(T)}°C، <b>{fa(Math.abs(dL), 2)}</b> میلی‌متر {dL >= 0 ? "بلندتر" : "کوتاه‌تر"} می‌شود</div>
+      <div className="vlab-controls"><div className="vlab-ctrl-col" style={{ flex: 1 }}>
+        <div className="vlab-btn-row">{Object.keys(VLAB_AL).map((k) => (<button key={k} className="vlab-btn" style={mk === k ? { outline: "2px solid #e0a83e" } : null} onClick={() => setMk(k)}>{VLAB_AL[k][0]}</button>))}</div>
+        <label className="vlab-ctrl-label">دما: {vlabFaN(T)}°C</label><VlabRange min="-20" max="80" step="5" value={T} onChange={(e) => setT(+e.target.value)} />
+        <label className="vlab-ctrl-label">طول اولیه: {vlabFaN(L0)} m</label><VlabRange min="1" max="50" step="1" value={L0} onChange={(e) => setL0(+e.target.value)} />
+      </div></div>
+      <div className="vlab-readout">{`با گرم‌شدن، ذره‌ها بیشتر می‌لرزند و فاصله‌شان زیاد می‌شود؛ پس جسم بلندتر می‌شود. ضریب انبساط هر ماده فرق دارد (آلومینیوم بیش از شیشه). به همین دلیل بین ریل‌ها و در پل‌ها درز انبساط می‌گذارند تا در تابستان خم نشوند.`}</div>
+      <VlabFormulaCheck title="انبساط طولی" fa="ΔL = α × L₀ × ΔT" en="ΔL = α L0 ΔT" legend={`α = ${vlabMFa(al * 1e6, 0)}×۱۰⁻⁶ بر کلوین؛ جواب را به میلی‌متر ببر (×۱۰۰۰).`} subst={`ΔL = ${vlabMFa(al * 1e6, 0)}×۱۰⁻⁶ × ${vlabFaN(L0)} × ${vlabFaN(T - 20)} × ۱۰۰۰`} answer={dL} unit="mm" decimals={2} />
+      <VlabEverydayCard title="درز ریل و پل" text="یک ریل ۲۰ متری آهنی در تابستان (۵۰°C) حدود ۷ میلی‌متر بلندتر می‌شود. اگر درزی نباشد ریل‌ها فشرده و خمیده می‌شوند. سیم‌های برق هم در تابستان شل‌تر آویزان‌اند.">
+        <rect x="8" y="42" width="44" height="8" fill="#9aa6c8" /><rect x="60" y="42" width="44" height="8" fill="#9aa6c8" /><rect x="52" y="40" width="8" height="12" fill="#03060f" opacity="0.4" />
+      </VlabEverydayCard>
+    </div>
+  );
+}
+
+/* ===== فیزیک) دماسنج ===== */
+function VlabThermometerExperiment({ onReading }) {
+  const [C, setC] = useState(37);
+  const F = 1.8 * C + 32, K = C + 273.15;
+  const y = (c) => 150 - ((c + 40) / 160) * 128;
+  const fa = (v, d = 1) => vlabMFa(v, d);
+  const marks = [[-40, "نقطه‌ای که C و F برابرند"], [0, "یخ می‌بندد"], [37, "دمای بدن"], [100, "آب می‌جوشد"]];
+  return (
+    <div className="vlab-exp">
+      <svg viewBox="0 0 320 180" className="vlab-svg" style={{ background: "#03060f", borderRadius: "10px" }}>
+        <rect x="70" y="20" width="16" height="134" rx="8" fill="#1c2644" stroke="#9aa6c8" /><circle cx="78" cy="160" r="11" fill="#ff6b6b" />
+        <rect x="73" y={y(C)} width="10" height={158 - y(C)} fill="#ff6b6b" />
+        {[-40, -20, 0, 20, 40, 60, 80, 100, 120].map((c) => (<g key={c}><line x1="88" y1={y(c)} x2="96" y2={y(c)} stroke="#9aa6c8" /><text x="100" y={y(c) + 3} fontSize="8" fill="#cfd6ea" direction="ltr">{c}°C</text><line x1="62" y1={y(c)} x2="70" y2={y(c)} stroke="#9aa6c8" /><text x="58" y={y(c) + 3} fontSize="7" fill="#9aa6c8" textAnchor="end" direction="ltr">{Math.round(1.8 * c + 32)}°F</text></g>))}
+        {marks.map(([c, t]) => (<text key={c} x="200" y={y(c) + 3} fontSize="8" fill="#ffd166" textAnchor="middle">{t}</text>))}
+        <text x="250" y="44" fontSize="18" fill="#ff9d1c" textAnchor="middle" direction="ltr">{fa(C, 0)}°C</text>
+        <text x="250" y="66" fontSize="14" fill="#5bb8ff" textAnchor="middle" direction="ltr">{fa(F, 1)}°F</text>
+        <text x="250" y="86" fontSize="14" fill="#5de0a0" textAnchor="middle" direction="ltr">{fa(K, 1)} K</text>
+      </svg>
+      <div className="vlab-readout" style={{ textAlign: "center" }}>{vlabFaN(C)} درجه‌ی سلسیوس = {fa(F)} فارنهایت = {fa(K)} کلوین</div>
+      <div className="vlab-controls"><div className="vlab-ctrl-col" style={{ flex: 1 }}>
+        <label className="vlab-ctrl-label">دما: {vlabFaN(C)}°C</label><VlabRange min="-40" max="120" step="1" value={C} onChange={(e) => setC(+e.target.value)} />
+        <div className="vlab-btn-row">{[[0, "یخ"], [37, "بدن"], [100, "جوشش"], [-40, "−۴۰"]].map(([c, n]) => (<button key={c} className="vlab-btn" onClick={() => setC(c)}>{n}</button>))}</div>
+      </div></div>
+      <div className="vlab-readout">{`مایع داخل دماسنج با گرم‌شدن منبسط می‌شود و ستون بالا می‌رود. مقیاس سلسیوس را با نقطه‌ی ذوب یخ (۰) و جوشش آب (۱۰۰) می‌سازند، فارنهایت در آمریکا به کار می‌رود و کلوین با صفر مطلق (−۲۷۳٫۱۵°C) شروع می‌شود و در فیزیک استفاده می‌شود.`}</div>
+      <VlabFormulaCheck title="سلسیوس به فارنهایت" fa="F = ۱٫۸ × C + ۳۲" en="F = 1.8C + 32" legend="" subst={`F = ۱٫۸ × ${vlabFaN(C)} + ۳۲`} answer={F} unit="°F" decimals={1} />
+      <VlabFormulaCheck title="سلسیوس به کلوین" fa="K = C + ۲۷۳٫۱۵" en="K = C + 273.15" legend="" subst={`K = ${vlabFaN(C)} + ۲۷۳٫۱۵`} answer={K} unit="K" decimals={2} />
+      <VlabEverydayCard title="تب‌سنج" text="دمای طبیعی بدن حدود ۳۷°C است و تب یعنی بالاتر از ۳۸. اگر دماسنج آمریکایی ببینی که ۱۰۰٫۴ را نشان می‌دهد، با فرمول بالا می‌فهمی همان ۳۸ درجه‌ی سلسیوس است.">
+        <rect x="14" y="30" width="86" height="10" rx="5" fill="#d8dde8" stroke="#7d8bb5" /><rect x="14" y="30" width="56" height="10" rx="5" fill="#ff6b6b" />
+      </VlabEverydayCard>
+    </div>
+  );
+}
+
+/* ===== زمین‌شناسی) چرخه‌ی آب ===== */
+function VlabWaterCycleExperiment({ onReading }) {
+  const [sun, setSun] = useState(50);
+  const [mh, setMh] = useState(50);
+  const E = sun * 0.05;
+  const P = E * (0.8 + mh / 250);
+  const runoff = P * 0.35 * (mh / 100 + 0.5);
+  const fa = (v, d = 1) => vlabMFa(v, d);
+  const mt = 150 - mh * 0.9;
+  return (
+    <div className="vlab-exp">
+      <svg viewBox="0 0 320 190" className="vlab-svg" style={{ background: "#03060f", borderRadius: "10px" }}>
+        <circle cx="40" cy="30" r={12 + sun / 12} fill="#ffd166" opacity="0.9" />
+        <rect x="0" y="150" width="130" height="40" fill="#2e7bd5" opacity="0.75" /><text x="65" y="174" fontSize="9" fill="#fff" textAnchor="middle">دریا</text>
+        <path d={`M140,190 L230,${mt} L320,190 Z`} fill="#6b8f4e" /><path d={`M215,${mt + 14} L230,${mt} L245,${mt + 14} Z`} fill="#fff" opacity={mh > 60 ? 0.9 : 0.1} />
+        <path d="M70,146 C70,100 120,96 160,70" fill="none" stroke="#9fd4ff" strokeWidth={1 + E * 0.5} strokeDasharray="4 3" /><text x="76" y="116" fontSize="8" fill="#9fd4ff">تبخیر {fa(E)}</text>
+        <ellipse cx="190" cy="52" rx="38" ry="14" fill="#cfd6ea" opacity="0.85" /><text x="190" y="55" fontSize="8" fill="#03060f" textAnchor="middle">میعان (ابر)</text>
+        {[0, 1, 2, 3].map((i) => (<line key={i} x1={200 + i * 8} y1="68" x2={196 + i * 8} y2={68 + 14 + P * 1.5} stroke="#5bb8ff" strokeWidth="2" />))}
+        <text x="274" y="76" fontSize="8" fill="#5bb8ff" textAnchor="middle">بارش {fa(P)}</text>
+        <path d={`M240,${mt + 22} Q200,${(mt + 150) / 2 + 20} 136,152`} fill="none" stroke="#5bb8ff" strokeWidth={1 + runoff * 0.5} /><text x="190" y={(mt + 150) / 2 + 28} fontSize="8" fill="#9fd4ff" textAnchor="middle">رواناب {fa(runoff)}</text>
+      </svg>
+      <div className="vlab-readout" style={{ textAlign: "center" }}>تبخیر {fa(E)} ← بارش {fa(P)} (برحسب میلی‌متر در روز)</div>
+      <div className="vlab-controls"><div className="vlab-ctrl-col" style={{ flex: 1 }}>
+        <label className="vlab-ctrl-label">گرمای خورشید: {vlabFaN(sun)}٪</label><VlabRange min="10" max="100" step="5" value={sun} onChange={(e) => setSun(+e.target.value)} />
+        <label className="vlab-ctrl-label">ارتفاع کوه: {vlabFaN(mh)}٪</label><VlabRange min="10" max="100" step="5" value={mh} onChange={(e) => setMh(+e.target.value)} />
+      </div></div>
+      <div className="vlab-readout">{`خورشید آب دریا را تبخیر می‌کند، بخار بالا می‌رود و در سرما به قطره (میعان و ابر) تبدیل می‌شود و بارش می‌کند. کوه بلند هوای نمدار را بالاتر و سردتر می‌برد و بارش دامنه‌ی رو به باد را زیاد می‌کند؛ بارش به رودها و آب‌های زیرزمینی می‌رود و دوباره به دریا می‌رسد. آب از بین نمی‌رود، فقط جابه‌جا می‌شود.`}</div>
+      <VlabFormulaCheck title="رواناب" fa="رواناب ≈ ۰٫۳۵ × بارش × (ارتفاع کوه ÷ ۱۰۰ + ۰٫۵)" en="runoff" legend="مدل ساده برای دیدن اثر کوه؛ واحد: میلی‌متر در روز." subst={`${fa(P, 2)} × ۰٫۳۵ × (${fa(mh / 100, 2)} + ۰٫۵)`} answer={runoff} unit="mm/day" decimals={2} />
+      <VlabEverydayCard title="باران در البرز و کویر" text="هوای مرطوب خزر با رسیدن به کوه‌های البرز بالا می‌رود و می‌بارد؛ پشت کوه، سمت کویر، هوا خشک می‌شود. به همین دلیل شمال ایران سرسبز و دامنه‌ی جنوبی کم‌باران است.">
+        <path d="M10,64 L48,16 L84,64 Z" fill="#6b8f4e" /><ellipse cx="62" cy="14" rx="26" ry="9" fill="#cfd6ea" />
+      </VlabEverydayCard>
+    </div>
+  );
+}
+
+/* ===== زمین‌شناسی) شناسایی کانی‌ها ===== */
+const VLAB_MN = [
+  { n: "تالک", H: 1, st: "سفید", lu: "صدفی", d: 2.7, col: "#e6efe1" },
+  { n: "گچ (ژیپس)", H: 2, st: "سفید", lu: "ابریشمی", d: 2.3, col: "#f3ede2" },
+  { n: "کلسیت", H: 3, st: "سفید", lu: "شیشه‌ای", d: 2.7, col: "#f2e6c9" },
+  { n: "فلورین", H: 4, st: "سفید", lu: "شیشه‌ای", d: 3.2, col: "#9a7bd8" },
+  { n: "فلدسپار", H: 6, st: "سفید", lu: "شیشه‌ای", d: 2.6, col: "#e8b9a3" },
+  { n: "کوارتز", H: 7, st: "سفید", lu: "شیشه‌ای", d: 2.65, col: "#d9e3ea" },
+  { n: "پیریت (طلای ابلهان)", H: 6.3, st: "سیاه‌مایل‌به‌سبز", lu: "فلزی", d: 5.0, col: "#d8c25a" },
+  { n: "هماتیت", H: 5.5, st: "قرمز‌قهوه‌ای", lu: "فلزی/خاکی", d: 5.3, col: "#6b2a2a" },
+];
+const VLAB_TL = [["ناخن", 2.5], ["سکه‌ی مسی", 3.5], ["تیغه‌ی چاقو", 5.5], ["شیشه", 5.5], ["سوهان فولادی", 6.5]];
+function VlabMineralExperiment({ onReading }) {
+  const [i, setI] = useState(5);
+  const [tool, setTool] = useState(null);
+  const M = VLAB_MN[i];
+  const T = tool != null ? VLAB_TL[tool] : null;
+  const scratch = T ? T[1] > M.H : null;
+  const fa = (v) => vlabMFa(v, Number.isInteger(v) ? 0 : 1);
+  return (
+    <div className="vlab-exp">
+      <svg viewBox="0 0 320 160" className="vlab-svg" style={{ background: "#03060f", borderRadius: "10px" }}>
+        <polygon points="110,110 130,50 170,36 210,60 200,110 160,126" fill={M.col} stroke="#fff" strokeWidth="1.4" /><polygon points="130,50 170,36 160,80" fill="#fff" opacity="0.25" />
+        <text x="160" y="146" fontSize="11" fill="#ffd166" textAnchor="middle">{M.n}</text>
+        <rect x="14" y="30" width="60" height="38" rx="3" fill="#f2f2f2" /><line x1="20" y1="55" x2="68" y2="45" stroke={M.st === "سفید" ? "#fff" : M.st.startsWith("قرمز") ? "#7a3030" : "#2a3a30"} strokeWidth="5" /><text x="44" y="82" fontSize="8" fill="#9aa6c8" textAnchor="middle">رنگ خط‌خش</text>
+        {T && <><path d={scratch ? "M200,50 l-40,40 M190,48 l-40,40" : "M200,50 l-14,14"} stroke={scratch ? "#5de0a0" : "#ff6b6b"} strokeWidth="2.4" /><text x="268" y="48" fontSize="9" fill={scratch ? "#5de0a0" : "#ff6b6b"} textAnchor="middle">{scratch ? "خراش می‌اندازد" : "خراش نمی‌اندازد"}</text></>}
+      </svg>
+      <div className="vlab-readout" style={{ textAlign: "center" }}>سختی موس: <b>{fa(M.H)}</b> · چگالی {fa(M.d)} · جلا: {M.lu} · خط‌خش: {M.st}{T ? ` · ${T[0]} (${fa(T[1])}) ${scratch ? "از کانی سخت‌تر است" : "از کانی نرم‌تر یا هم‌سخت است"}` : ""}</div>
+      <div className="vlab-controls"><div className="vlab-ctrl-col" style={{ flex: 1 }}>
+        <div className="vlab-btn-row">{VLAB_MN.map((m, k) => (<button key={k} className="vlab-btn" style={i === k ? { outline: "2px solid #e0a83e" } : null} onClick={() => { setI(k); setTool(null); }}>{m.n.split(" ")[0]}</button>))}</div>
+        <div className="vlab-btn-row">{VLAB_TL.map((t, k) => (<button key={k} className="vlab-btn" style={tool === k ? { outline: "2px solid #2e7bd5" } : null} onClick={() => setTool(k)}>خراش با {t[0]}</button>))}</div>
+      </div></div>
+      <div className="vlab-readout">{`سختی یعنی مقاومت در برابر خراش: هر ماده‌ای که سخت‌تر باشد، ماده‌ی نرم‌تر را خراش می‌دهد. مقیاس موس ۱ (تالک) تا ۱۰ (الماس) است. برای شناسایی چند ویژگی را باهم می‌سنجیم: سختی، رنگ خط‌خش روی چینی، جلا و چگالی. رنگ ظاهری کانی تنها کافی نیست؛ پیریت زرد است ولی خط‌خشش سیاه‌ مایل به سبز است.`}</div>
+      <VlabFormulaCheck title="تفاوت سختی با ابزار" fa="تفاوت = سختی ابزار − سختی کانی" en="Δ" legend="اگر مثبت باشد ابزار کانی را خراش می‌دهد." subst={T ? `${fa(T[1])} − ${fa(M.H)}` : "ابزاری را انتخاب کن"} answer={T ? T[1] - M.H : 0} unit="" decimals={1} />
+      <VlabEverydayCard title="چرا الماس می‌برد؟" text="الماس سخت‌ترین کانی (۱۰) است؛ پس شیشه و فولاد را خراش می‌دهد و در مته‌ی سنگ‌بُری به کار می‌رود. ناخن (۲٫۵) گچ را خراش می‌دهد ولی کوارتز را نه.">
+        <polygon points="30,30 60,14 90,30 60,62" fill="#9fd4ff" stroke="#5bb8ff" strokeWidth="1.5" />
+      </VlabEverydayCard>
+    </div>
+  );
+}
+
 const VLAB_COMPONENTS = {
   lever: VlabLeverExperiment,
   pendulum: VlabPendulumExperiment,
@@ -36046,6 +36329,12 @@ const VLAB_COMPONENTS = {
   "resonance": VlabResonanceExperiment,
   "flame-test": VlabFlameTestExperiment,
   "blood-glucose": VlabGlucoseExperiment,
+  "identity-area": VlabIdentityAreaExperiment,
+  "truth-table": VlabTruthTableExperiment,
+  "thermal-expansion": VlabThermalExpansionExperiment,
+  "thermometer": VlabThermometerExperiment,
+  "water-cycle": VlabWaterCycleExperiment,
+  "mineral-id": VlabMineralExperiment,
 };
 
 function StudentVirtualLabView({ onBack, grade, studentCode, schoolCode }) {

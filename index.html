@@ -24214,6 +24214,60 @@ const VLAB_EXPERIMENTS = [
     intro: "زاویه‌ی شیب و باران را تغییر بده و ببین چه زمانی توده‌ی خاک می‌لغزد.",
     tools: ["شیب", "اصطکاک", "ضریب اطمینان"],
   },
+  {
+    id: "line-plane-3d",
+    subject: "ریاضی",
+    level: "متوسطه",
+    title: "خط و صفحه در فضا",
+    icon: "📐",
+    intro: "شیب و جهت خط را تغییر بده و زاویه‌اش با یک صفحه و موازی یا متقاطع بودن را ببین.",
+    tools: ["خط", "صفحه", "زاویه"],
+  },
+  {
+    id: "plasmid-cloning",
+    subject: "زیست‌شناسی",
+    level: "متوسطه",
+    title: "برش ژن و پلاسمید",
+    icon: "🧬",
+    intro: "با آنزیم برشی ژن و پلاسمید را ببر و با لیگاز بچسبان تا پلاسمید نوترکیب بسازی.",
+    tools: ["آنزیم برشی", "لیگاز", "پلاسمید"],
+  },
+  {
+    id: "gas-equilibrium",
+    subject: "شیمی",
+    level: "متوسطه",
+    title: "تعادل گازی",
+    icon: "🟤",
+    intro: "فشار و دما را تغییر بده و جابه‌جایی تعادل N₂O₄ و NO₂ را از رنگ و Kp ببین.",
+    tools: ["فشار", "دما", "Kp"],
+  },
+  {
+    id: "phagocytosis",
+    subject: "زیست‌شناسی",
+    level: "متوسطه",
+    title: "فاگوسیتوز",
+    icon: "🦠",
+    intro: "مراحل بلعیده‌شدن یک باکتری توسط گویچه‌ی سفید را گام‌به‌گام ببین.",
+    tools: ["باکتری", "فاگوزوم", "لیزوزوم"],
+  },
+  {
+    id: "circulation-types",
+    subject: "زیست‌شناسی",
+    level: "متوسطه",
+    title: "گردش مواد در جانداران",
+    icon: "❤️",
+    intro: "گردش مواد در هیدرا، کرم، ملخ، ماهی و پستاندار را مقایسه کن.",
+    tools: ["باز و بسته", "قلب", "جاندار"],
+  },
+  {
+    id: "iran-map",
+    subject: "زمین‌شناسی",
+    level: "متوسطه",
+    title: "نقشه‌ی تعاملی ایران",
+    icon: "🗺️",
+    intro: "روی شهرها بزن و بارش و دمای آن‌ها را روی نقشه‌ی ایران ببین.",
+    tools: ["نقشه", "بارش", "دما"],
+  },
 ];
 
 function vlabClamp(v, min, max) {
@@ -37834,6 +37888,228 @@ function VlabSlopeExperiment({ onReading }) {
   );
 }
 
+/* ===== ریاضی) خط و صفحه در فضا ===== */
+function VlabLinePlaneExperiment({ onReading }) {
+  const [t, setT] = useState(40);
+  const [az, setAz] = useState(30);
+  const [dd, setDd] = useState(2);
+  const fa = (v, d = 2) => vlabMFa(v, d);
+  const n = [1, 2, 2], nl = 3;
+  const P0 = [0, 0, 1], u = [Math.cos((az * Math.PI) / 180), Math.sin((az * Math.PI) / 180), 0];
+  const th = (t * Math.PI) / 180;
+  const dir = [u[0] * Math.cos(th), u[1] * Math.cos(th), Math.sin(th)];
+  const dotn = n[0] * dir[0] + n[1] * dir[1] + n[2] * dir[2];
+  const ang = (Math.asin(Math.abs(dotn) / nl) * 180) / Math.PI;
+  const proj = (p) => [160 + (p[0] - p[1] * 0.6) * 24, 92 - (p[2] * 24 + (p[0] * 0.3 + p[1] * 0.4) * 9)];
+  const L = (p) => proj(p).map((v) => v.toFixed(1)).join(",");
+  const plane = [[-2, -2], [3, -2], [3, 3], [-2, 3]].map(([x, y]) => [x, y, (dd - x - 2 * y) / 2]);
+  const A = [0, 0, -1.5].map((v, i) => v);
+  const p1 = [-dir[0] * 2.2, -dir[1] * 2.2, -dir[2] * 2.2 + 0.2], p2 = [dir[0] * 2.2, dir[1] * 2.2, dir[2] * 2.2 + 0.2];
+  const par = Math.abs(dotn) < 0.02;
+  const rel = par ? "خط با صفحه موازی است" : "خط صفحه را قطع می‌کند";
+  return (
+    <div className="vlab-exp">
+      <svg viewBox="0 0 320 176" className="vlab-svg" style={{ background: "#03060f", borderRadius: "10px" }}>
+        <polygon points={plane.map(L).join(" ")} fill="#5bb8ff" fillOpacity="0.3" stroke="#9fd4ff" />
+        <line x1={proj(p1)[0]} y1={proj(p1)[1]} x2={proj(p2)[0]} y2={proj(p2)[1]} stroke="#ffd166" strokeWidth="3" strokeLinecap="round" />
+        <line x1={proj([0, 0, 0.2])[0]} y1={proj([0, 0, 0.2])[1]} x2={proj([0.5, 1, 1.2])[0]} y2={proj([0.5, 1, 1.2])[1]} stroke="#5de0a0" strokeDasharray="3 2" />
+        <text x="270" y="20" fontSize="9" fill="#9fd4ff" textAnchor="middle">صفحه</text>
+        <text x="50" y="30" fontSize="9" fill="#ffd166" textAnchor="middle">خط</text>
+        <text x="160" y="168" fontSize="9" fill="#cfd6ea" textAnchor="middle" direction="ltr">x + 2y + 2z = {vlabFaN(dd)}  ،  n = (1, 2, 2)</text>
+      </svg>
+      <div className="vlab-readout" style={{ textAlign: "center" }}>زاویه‌ی خط با صفحه <b>{fa(ang, 1)}°</b> · {rel}</div>
+      <div className="vlab-controls"><div className="vlab-ctrl-col" style={{ flex: 1 }}>
+        <label className="vlab-ctrl-label">شیب خط نسبت به افق: {vlabFaN(t)}°</label><VlabRange min="-80" max="80" step="1" value={t} onChange={(e) => setT(+e.target.value)} />
+        <label className="vlab-ctrl-label">جهت خط در افق: {vlabFaN(az)}°</label><VlabRange min="0" max="180" step="1" value={az} onChange={(e) => setAz(+e.target.value)} />
+        <label className="vlab-ctrl-label">فاصله‌ی صفحه از مبدأ (d): {vlabFaN(dd)}</label><VlabRange min="0" max="6" step="1" value={dd} onChange={(e) => setDd(+e.target.value)} />
+      </div></div>
+      <div className="vlab-readout">{`صفحه با معادله‌ی ax + by + cz = d و بردار نرمال n = (a, b, c) تعریف می‌شود. خط با بردار جهت v مشخص است. اگر v · n = ۰ باشد خط موازی صفحه است و در غیر این صورت آن را قطع می‌کند. زاویه‌ی خط و صفحه از sin θ = |v·n| ÷ (|v||n|) به‌دست می‌آید. همچنین فاصله‌ی مبدأ تا صفحه برابر d ÷ |n| است.`}</div>
+      <VlabFormulaCheck title="زاویه‌ی خط و صفحه" fa="sin θ = |v·n| ÷ (|v|·|n|)" en="angle between line and plane" legend="|v| = ۱ و |n| = ۳ است." subst={`sin θ = |${fa(dotn)}| ÷ ۳`} answer={ang} unit="°" decimals={1} />
+      <VlabEverydayCard title="سقف شیب‌دار و تیر چوبی" text="زاویه‌ی تیر با سطح شیب‌دار سقف را با همین روش می‌سنجند تا اتصال محکم شود. یک تیر عمود بر سقف همان راستای بردار نرمال است.">
+        <polygon points="14,60 70,20 110,20 110,60" fill="#8b6b4a" /><line x1="50" y1="62" x2="76" y2="14" stroke="#ffd166" strokeWidth="4" />
+      </VlabEverydayCard>
+    </div>
+  );
+}
+
+/* ===== زیست) برش ژن و پلاسمید ===== */
+const VLAB_PLX = [["EcoRI", "GAATTC", "G^AATTC"], ["BamHI", "GGATCC", "G^GATCC"], ["HindIII", "AAGCTT", "A^AGCTT"]];
+function VlabPlasmidExperiment({ onReading }) {
+  const [ei, setEi] = useState(0);
+  const [lig, setLig] = useState(false);
+  const [cut, setCut] = useState(false);
+  const E = VLAB_PLX[ei];
+  const cx = 90, cy = 80, R = 46;
+  const a = (deg) => [cx + R * Math.cos((deg * Math.PI) / 180), cy + R * Math.sin((deg * Math.PI) / 180)];
+  const [sx, sy] = a(-90);
+  const open = cut;
+  const fa = vlabFaN;
+  const ins = lig && cut;
+  return (
+    <div className="vlab-exp">
+      <svg viewBox="0 0 320 176" className="vlab-svg" style={{ background: "#03060f", borderRadius: "10px" }}>
+        <circle cx={cx} cy={cy} r={R} fill="none" stroke="#5bb8ff" strokeWidth="5" strokeDasharray={open ? "250 40" : "0"} strokeDashoffset="-20" />
+        <circle cx={cx} cy={cy} r={R} fill="none" stroke={ins ? "#5de0a0" : "transparent"} strokeWidth="5" strokeDasharray="60 230" strokeDashoffset="-190" />
+        <text x={cx} y={cy + 4} fontSize="10" fill="#cfd6ea" textAnchor="middle">پلاسمید</text>
+        <text x={sx} y={sy - 8} fontSize="8" fill="#ffd166" textAnchor="middle" direction="ltr">{E[0]}</text>
+        <rect x="180" y="40" width="120" height="14" fill={cut ? "#ff9d1c" : "#6a7aa8"} rx="3" /><text x="240" y="34" fontSize="8" fill="#9aa6c8" textAnchor="middle">ژن هدف</text>
+        {cut && (<g><rect x="180" y="40" width="10" height="14" fill="#ff6b6b" /><rect x="290" y="40" width="10" height="14" fill="#ff6b6b" /></g>)}
+        <text x="240" y="76" fontSize="9" fill="#ffd166" textAnchor="middle" direction="ltr">{E[2]}</text>
+        <text x="240" y="96" fontSize="8" fill="#cfd6ea" textAnchor="middle">دو سر چسبنده (حاصل برش)</text>
+        <text x="240" y="130" fontSize="10" fontWeight="700" fill={ins ? "#5de0a0" : "#9aa6c8"} textAnchor="middle">{ins ? "پلاسمید نوترکیب ساخته شد" : cut ? "حالا لیگاز را بزن" : "ابتدا آنزیم برش را بزن"}</text>
+        <text x="160" y="168" fontSize="8" fill="#9aa6c8" textAnchor="middle">باکتری با پلاسمید نوترکیب پروتئین هدف (مثل انسولین) می‌سازد</text>
+      </svg>
+      <div className="vlab-readout" style={{ textAlign: "center" }}>جایگاه شناسایی <b direction="ltr">{E[1]}</b> · آنزیم <b>{E[0]}</b></div>
+      <div className="vlab-controls"><div className="vlab-ctrl-col" style={{ flex: 1 }}>
+        <div className="vlab-btn-row">{VLAB_PLX.map((x, i) => (<button key={i} className="vlab-btn" style={{ direction: "ltr", ...(ei === i ? { outline: "2px solid #e0a83e" } : {}) }} onClick={() => { setEi(i); setCut(false); setLig(false); }}>{x[0]}</button>))}</div>
+        <div className="vlab-btn-row"><button className="vlab-btn" onClick={() => setCut(true)}>برش با آنزیم</button><button className="vlab-btn" onClick={() => setLig(true)}>اتصال با لیگاز</button><button className="vlab-btn" onClick={() => { setCut(false); setLig(false); }}>از نو</button></div>
+      </div></div>
+      <div className="vlab-readout">{`آنزیم‌های برشی توالی‌های مشخصی را تشخیص می‌دهند و DNA را می‌برند و دو سر چسبنده می‌سازند. اگر ژن هدف و پلاسمید را با یک آنزیم ببریم، سرهایشان مکمل هم می‌شود و آنزیم لیگاز آن‌ها را به هم می‌دوزد. این روش مهندسی ژنتیک است؛ مثلاً ساخت انسولین انسانی در باکتری.`}</div>
+      <VlabFormulaCheck title="طول جایگاه شناسایی" fa="تعداد بازها" en="site length" legend={`توالی ${E[1]}`} subst={`شمارش ${E[1]}`} answer={E[1].length} unit="باز" decimals={0} />
+      <VlabEverydayCard title="انسولین بیماران دیابتی" text="انسولین امروز را باکتری‌هایی می‌سازند که ژن انسولین انسانی را در پلاسمیدشان دارند؛ ارزان‌تر و ایمن‌تر از استخراج از حیوان.">
+        <rect x="40" y="10" width="26" height="54" rx="6" fill="#d8dde8" stroke="#7d8bb5" /><rect x="46" y="22" width="14" height="22" fill="#5bb8ff" />
+      </VlabEverydayCard>
+    </div>
+  );
+}
+
+/* ===== شیمی) تعادل گازی ===== */
+function VlabGasEqExperiment({ onReading }) {
+  const [P, setP] = useState(1);
+  const [T, setT] = useState(300);
+  const K = 0.2 * Math.exp(-(T - 300) / 80) / (P > 0 ? 1 : 1);
+  // N2O4 <=> 2NO2 : Kp = 4a^2 P/(1-a^2); a degree of dissociation
+  const Kp = 0.15 * Math.exp((T - 300) / 40);
+  const al = Math.sqrt(Kp / (Kp + 4 * P));
+  const nN2O4 = (1 - al), nNO2 = 2 * al;
+  const fa = (v, d = 2) => vlabMFa(v, d);
+  const dots = [];
+  const total = 24, nB = Math.round((nN2O4 / (nN2O4 + nNO2)) * total * 0.5), nA = Math.round((nNO2 / (1 + al)) / 2 * total * 0.5 * 2 / 2);
+  const cnt1 = Math.max(0, Math.round(((1 - al) / (1 + al)) * 12)), cnt2 = Math.max(0, Math.round(((2 * al) / (1 + al)) * 12));
+  for (let i = 0; i < cnt1; i++) dots.push(<g key={"a" + i}><circle cx={50 + (i % 4) * 22 + (i % 2) * 6} cy={40 + Math.floor(i / 4) * 22} r="7" fill="#5bb8ff" /><circle cx={64 + (i % 4) * 22 + (i % 2) * 6} cy={40 + Math.floor(i / 4) * 22} r="7" fill="#5bb8ff" /></g>);
+  for (let i = 0; i < cnt2; i++) dots.push(<circle key={"b" + i} cx={190 + (i % 4) * 26} cy={40 + Math.floor(i / 4) * 22} r="8" fill="#c0643a" />);
+  return (
+    <div className="vlab-exp">
+      <svg viewBox="0 0 320 150" className="vlab-svg" style={{ background: "#03060f", borderRadius: "10px" }}>
+        <text x="160" y="14" fontSize="10" fill="#ffd166" textAnchor="middle" direction="ltr">N₂O₄ (بی‌رنگ) ⇌ 2 NO₂ (قهوه‌ای)</text>
+        <rect x="30" y="24" width="260" height="96" rx="8" fill={`rgba(192,100,58,${0.08 + al * 0.4})`} stroke="#6a7aa8" />
+        {dots}
+        <text x="100" y="138" fontSize="9" fill="#5bb8ff" textAnchor="middle" direction="ltr">N₂O₄</text><text x="230" y="138" fontSize="9" fill="#c0643a" textAnchor="middle" direction="ltr">NO₂</text>
+      </svg>
+      <div className="vlab-readout" style={{ textAlign: "center" }}>درجه‌ی تفکیک α = <b>{fa(al * 100, 0)}٪</b> · Kp = <b>{fa(Kp, 2)}</b></div>
+      <div className="vlab-controls"><div className="vlab-ctrl-col" style={{ flex: 1 }}>
+        <label className="vlab-ctrl-label">فشار کل: {fa(P, 1)} atm</label><VlabRange min="0.2" max="5" step="0.2" value={P} onChange={(e) => setP(+e.target.value)} />
+        <label className="vlab-ctrl-label">دما: {vlabFaN(T)} K</label><VlabRange min="250" max="400" step="10" value={T} onChange={(e) => setT(+e.target.value)} />
+      </div></div>
+      <div className="vlab-readout">{`در تعادل گازی، تعداد مول‌های گاز دو طرف واکنش مهم است. این واکنش گرماگیر است و از ۱ مول به ۲ مول گاز می‌رود. با افزایش فشار، تعادل به‌سمت مول‌های کمتر (N₂O₄) می‌رود و رنگ کمرنگ‌تر می‌شود؛ با افزایش دما، چون گرماگیر است، رنگ قهوه‌ای پررنگ‌تر می‌شود (اصل لوشاتلیه).`}</div>
+      <VlabFormulaCheck title="ثابت تعادل بر حسب فشار" fa="Kp = 4α²P ÷ (1 − α²)" en="Kp" legend="α درجه‌ی تفکیک و P فشار کل است." subst={`۴×${fa(al, 3)}²×${fa(P, 1)} ÷ (۱ − ${fa(al, 3)}²)`} answer={(4 * al * al * P) / (1 - al * al)} unit="atm" decimals={2} />
+      <VlabEverydayCard title="دود قهوه‌ای شهر" text="گاز قهوه‌ای NO₂ در دود خودروها هست و با خنک‌شدن هوا به N₂O₄ بی‌رنگ تبدیل می‌شود؛ به همین دلیل رنگ مه‌دود در روز گرم پررنگ‌تر است.">
+        <rect x="14" y="40" width="96" height="22" fill="#a97449" opacity="0.6" rx="10" />
+      </VlabEverydayCard>
+    </div>
+  );
+}
+
+/* ===== زیست) فاگوسیتوز ===== */
+function VlabPhagoExperiment({ onReading }) {
+  const [st, setSt] = useState(0);
+  const names = ["تشخیص و چسبیدن", "احاطه با پاهای کاذب", "بلعیده‌شدن (فاگوزوم)", "هضم با لیزوزوم", "نمایش آنتی‌ژن"];
+  const k = st / 4;
+  const mx = 100 + k * 0, bx = 215 - Math.min(1, st / 2) * 62;
+  const fa = vlabFaN;
+  return (
+    <div className="vlab-exp">
+      <svg viewBox="0 0 320 170" className="vlab-svg" style={{ background: "#03060f", borderRadius: "10px" }}>
+        <ellipse cx="120" cy="86" rx="58" ry="50" fill="#4a5ea8" opacity="0.55" stroke="#9fb4ff" strokeWidth="2" />
+        <circle cx="110" cy="80" r="14" fill="#2a3566" /><text x="110" y="84" fontSize="7" fill="#cfd6ea" textAnchor="middle">هسته</text>
+        {st >= 1 && st < 2 && (<g><path d="M172,66 q14,12 0,24" fill="none" stroke="#9fb4ff" strokeWidth="5" strokeLinecap="round" /><path d="M172,102 q14,-12 0,-24" fill="none" stroke="#9fb4ff" strokeWidth="5" strokeLinecap="round" /></g>)}
+        {st < 2 ? (<g><circle cx={bx + 22} cy="86" r="14" fill="#d83a3a" /><text x={bx + 22} y="106" fontSize="8" fill="#ff9d9d" textAnchor="middle">باکتری</text></g>)
+          : st === 2 ? (<g><circle cx="150" cy="86" r="22" fill="none" stroke="#ffd166" strokeDasharray="3 2" /><circle cx="150" cy="86" r="13" fill="#d83a3a" /><text x="150" y="124" fontSize="8" fill="#ffd166" textAnchor="middle">فاگوزوم</text></g>)
+          : st === 3 ? (<g><circle cx="150" cy="86" r="22" fill="none" stroke="#ffd166" /><circle cx="150" cy="86" r="8" fill="#a54" /><circle cx="170" cy="70" r="7" fill="#5de0a0" /><text x="150" y="124" fontSize="8" fill="#5de0a0" textAnchor="middle">لیزوزوم + آنزیم</text></g>)
+            : (<g><path d="M172,60 l10,-10 M172,70 l16,-4" stroke="#ff9d1c" strokeWidth="3" /><circle cx="186" cy="48" r="5" fill="#ff9d1c" /><circle cx="196" cy="66" r="5" fill="#ff9d1c" /><text x="216" y="58" fontSize="8" fill="#ff9d1c" textAnchor="middle">تکه‌های آنتی‌ژن به سطح</text></g>)}
+        <text x="160" y="160" fontSize="10" fontWeight="700" fill="#e0a83e" textAnchor="middle">{names[st]}</text>
+      </svg>
+      <div className="vlab-readout" style={{ textAlign: "center" }}>مرحله‌ی {fa(st + 1)} از ۵: <b>{names[st]}</b></div>
+      <div className="vlab-controls"><div className="vlab-ctrl-col" style={{ flex: 1 }}>
+        <label className="vlab-ctrl-label">مرحله: {fa(st + 1)}</label><VlabRange min="0" max="4" step="1" value={st} onChange={(e) => setSt(+e.target.value)} />
+      </div></div>
+      <div className="vlab-readout">{`گویچه‌های سفید درشت‌خوار (ماکروفاژ و نوتروفیل) میکروب را با گیرنده‌هایشان می‌شناسند، با پاهای کاذب دورش را می‌گیرند و آن را درون کیسه‌ای به نام فاگوزوم فرو می‌برند. لیزوزوم با آنزیم‌های گوارشی آن را هضم می‌کند. ماکروفاژ تکه‌هایی از آنتی‌ژن را به سطح می‌آورد و به لنفوسیت‌ها نشان می‌دهد تا ایمنی اختصاصی شروع شود.`}</div>
+      <VlabFormulaCheck title="تعداد مراحل" fa="مراحل فاگوسیتوز" en="steps" legend="از تشخیص تا نمایش آنتی‌ژن." subst="شمارش مراحل" answer={5} unit="مرحله" decimals={0} />
+      <VlabEverydayCard title="چرک زخم" text="چرک بقایای نوتروفیل‌های مرده‌ای است که میکروب‌ها را بلعیده‌اند؛ نشانه‌ی مبارزه‌ی بدن با عفونت.">
+        <circle cx="60" cy="38" r="22" fill="#e6d77a" opacity="0.8" />
+      </VlabEverydayCard>
+    </div>
+  );
+}
+
+/* ===== زیست) گردش مواد در جانداران ===== */
+const VLAB_CIRC = [["هیدرا", "بدون دستگاه گردش؛ انتشار مستقیم", 0], ["کرم خاکی", "گردش بسته با ۵ جفت قلب لوله‌ای", 1], ["ملخ", "گردش باز؛ همولنف در حفره‌ی بدن", 2], ["ماهی", "بسته ساده؛ قلب دو حفره‌ای", 3], ["پرنده و پستاندار", "بسته مضاعف؛ قلب چهار حفره‌ای", 4]];
+function VlabCirculationExperiment({ onReading }) {
+  const [i, setI] = useState(4);
+  const c = VLAB_CIRC[i];
+  const fa = vlabFaN;
+  const chambers = [0, 0, 0, 2, 4][i];
+  return (
+    <div className="vlab-exp">
+      <svg viewBox="0 0 320 170" className="vlab-svg" style={{ background: "#03060f", borderRadius: "10px" }}>
+        {i === 0 && <ellipse cx="160" cy="84" rx="30" ry="56" fill="#5bb8ff" opacity="0.4" stroke="#9fd4ff" />}
+        {i === 1 && (<g><rect x="40" y="76" width="240" height="18" rx="9" fill="#c0643a" opacity="0.5" /><line x1="50" y1="80" x2="270" y2="80" stroke="#d83a3a" strokeWidth="3" /><line x1="50" y1="90" x2="270" y2="90" stroke="#d83a3a" strokeWidth="2" />{[0, 1, 2, 3, 4].map((k) => <circle key={k} cx={90 + k * 12} cy="85" r="4" fill="#ff6b6b" />)}</g>)}
+        {i === 2 && (<g><ellipse cx="160" cy="84" rx="110" ry="30" fill="#6b8f4e" opacity="0.5" /><line x1="60" y1="78" x2="260" y2="78" stroke="#d8e56b" strokeWidth="3" /><text x="160" y="110" fontSize="9" fill="#d8e56b" textAnchor="middle">مایع در حفره‌ی بدن (باز)</text></g>)}
+        {i === 3 && (<g><ellipse cx="160" cy="84" rx="110" ry="32" fill="#5bb8ff" opacity="0.4" /><rect x="120" y="70" width="26" height="22" rx="6" fill="#d83a3a" /><rect x="150" y="70" width="26" height="22" rx="6" fill="#ff9d9d" /><path d="M176,82 H250 M250,82 V50 H80 V82 H120" fill="none" stroke="#ff6b6b" strokeWidth="2" /><text x="160" y="130" fontSize="9" fill="#9fd4ff" textAnchor="middle">قلب → آبشش → بدن → قلب</text></g>)}
+        {i === 4 && (<g><rect x="136" y="64" width="48" height="44" rx="10" fill="#d83a3a" opacity="0.8" /><line x1="160" y1="64" x2="160" y2="108" stroke="#fff" /><line x1="136" y1="86" x2="184" y2="86" stroke="#fff" /><ellipse cx="70" cy="86" rx="40" ry="34" fill="#5bb8ff" opacity="0.4" /><ellipse cx="250" cy="86" rx="40" ry="34" fill="#c0643a" opacity="0.4" /><text x="70" y="90" fontSize="9" fill="#9fd4ff" textAnchor="middle">شش‌ها</text><text x="250" y="90" fontSize="9" fill="#ffb27a" textAnchor="middle">بدن</text></g>)}
+        <text x="160" y="22" fontSize="12" fontWeight="700" fill="#e0a83e" textAnchor="middle">{c[0]}</text>
+        <text x="160" y="158" fontSize="9" fill="#cfd6ea" textAnchor="middle">{c[1]}</text>
+      </svg>
+      <div className="vlab-readout" style={{ textAlign: "center" }}><b>{c[0]}</b>: {c[1]} · حفره‌های قلب: {fa(chambers)}</div>
+      <div className="vlab-controls"><div className="vlab-ctrl-col" style={{ flex: 1 }}>
+        <div className="vlab-btn-row" style={{ flexWrap: "wrap" }}>{VLAB_CIRC.map((x, k) => (<button key={k} className="vlab-btn" style={i === k ? { outline: "2px solid #e0a83e" } : null} onClick={() => setI(k)}>{x[0]}</button>))}</div>
+      </div></div>
+      <div className="vlab-readout">{`جانداران کوچک و ساده مواد را با انتشار مستقیم جابه‌جا می‌کنند. جانداران بزرگ‌تر دستگاه گردش دارند: در گردش باز، خون از رگ‌ها خارج و در حفره‌ی بدن پخش می‌شود. در گردش بسته، خون همیشه درون رگ‌هاست و فشار و سرعت بهتری دارد. در پرندگان و پستانداران خون اکسیژن‌دار و بی‌اکسیژن کاملاً جدا می‌ماند (گردش مضاعف)، که برای سوخت‌وساز بالا لازم است.`}</div>
+      <VlabFormulaCheck title="شمار حفره‌های قلب" fa="ماهی ۲، پرنده و پستاندار ۴" en="heart chambers" legend="گردش مضاعف حفره‌های بیشتر دارد." subst={c[0]} answer={chambers} unit="حفره" decimals={0} />
+      <VlabEverydayCard title="چرا ماهی کند است؟" text="خونی که از آبشش می‌آید فشار کمی دارد و بدن را آهسته می‌رساند؛ پستانداران قلب چهار حفره‌ای دارند و می‌توانند فعالیت شدید و دمای ثابت داشته باشند.">
+        <ellipse cx="60" cy="38" rx="44" ry="18" fill="#9fd4ff" opacity="0.8" /><polygon points="104,38 126,24 126,52" fill="#9fd4ff" />
+      </VlabEverydayCard>
+    </div>
+  );
+}
+
+/* ===== زمین‌شناسی) نقشه‌ی تعاملی ایران ===== */
+const VLAB_IRAN = [["تهران", 51.4, 35.7, "پایتخت؛ دامنه‌ی جنوبی البرز"], ["تبریز", 46.3, 38.1, "شمال غرب؛ سردسیر"], ["مشهد", 59.6, 36.3, "شمال شرق؛ کوهپایه‌ی بینالود"], ["اصفهان", 51.7, 32.6, "فلات مرکزی؛ زاینده‌رود"], ["شیراز", 52.5, 29.6, "زاگرس جنوبی"], ["اهواز", 48.7, 31.3, "جلگه‌ی خوزستان؛ بسیار گرم"], ["رشت", 49.6, 37.3, "ساحل خزر؛ پربارش‌ترین"], ["بیرجند", 59.2, 32.9, "شرق؛ خشک و کم‌بارش"], ["بجنورد", 57.3, 37.5, "خراسان شمالی"], ["بندرعباس", 56.3, 27.2, "ساحل خلیج فارس"], ["یزد", 54.4, 31.9, "کویر مرکزی؛ بسیار خشک"], ["زاهدان", 60.9, 29.5, "جنوب شرق؛ خشک"]];
+const VLAB_IRAN_OUT = [[44.0, 39.4], [45.5, 39.0], [47.5, 38.9], [48.9, 38.4], [49.0, 37.5], [50.5, 37.0], [53.0, 36.8], [54.0, 37.3], [56.0, 38.0], [57.5, 38.2], [60.0, 36.8], [61.2, 36.5], [60.8, 34.5], [60.5, 33.5], [60.8, 31.5], [61.7, 30.0], [61.5, 28.5], [63.2, 26.8], [61.6, 25.2], [58.0, 25.6], [57.0, 26.8], [54.5, 26.5], [52.5, 27.4], [50.8, 29.0], [49.5, 30.2], [48.6, 30.0], [48.0, 31.0], [47.7, 32.2], [46.2, 33.2], [45.5, 34.4], [45.8, 35.5], [44.8, 37.2], [44.1, 38.5]];
+function VlabIranMapExperiment({ onReading }) {
+  const [sel, setSel] = useState(0);
+  const [mode, setMode] = useState("rain");
+  const rain = [230, 300, 260, 130, 320, 210, 1300, 190, 280, 170, 60, 80];
+  const temp = [17, 13, 15, 16.5, 18, 26, 16, 17, 13.5, 27, 19.5, 22];
+  const X = (lon) => 20 + (lon - 43.5) * 15.2, Y = (lat) => 150 - (lat - 25) * 9.6;
+  const v = mode === "rain" ? rain : temp;
+  const mx = mode === "rain" ? 1300 : 28;
+  const col = (x) => { const t = Math.min(1, x / mx); return mode === "rain" ? `rgb(${Math.round(120 - 80 * t)},${Math.round(150 + 60 * t)},255)` : `rgb(${Math.round(110 + 140 * t)},${Math.round(180 - 90 * t)},80)`; };
+  const c = VLAB_IRAN[sel];
+  return (
+    <div className="vlab-exp">
+      <svg viewBox="0 0 320 176" className="vlab-svg" style={{ background: "#03060f", borderRadius: "10px" }}>
+        <polygon points={VLAB_IRAN_OUT.map((p) => X(p[0]).toFixed(1) + "," + Y(p[1]).toFixed(1)).join(" ")} fill="#1c2644" stroke="#6a7aa8" strokeWidth="1.5" />
+        <path d={`M${X(44.5)},${Y(37)} L${X(46.5)},${Y(34.5)} L${X(49)},${Y(32)} L${X(51.5)},${Y(30)} L${X(54)},${Y(28)}`} stroke="#8b6b4a" strokeWidth="6" opacity="0.5" fill="none" />
+        <path d={`M${X(48.8)},${Y(37.3)} L${X(51)},${Y(36.2)} L${X(54)},${Y(36.6)} L${X(56.5)},${Y(37)}`} stroke="#8b6b4a" strokeWidth="5" opacity="0.5" fill="none" />
+        {VLAB_IRAN.map((p, k) => (<g key={k} onClick={() => setSel(k)} style={{ cursor: "pointer" }}><circle cx={X(p[1])} cy={Y(p[2])} r={k === sel ? 8 : 5.5} fill={col(v[k])} stroke={k === sel ? "#fff" : "none"} strokeWidth="2" /><text x={X(p[1])} y={Y(p[2]) - 9} fontSize="7" fill="#cfd6ea" textAnchor="middle">{p[0]}</text></g>))}
+        <text x="250" y="168" fontSize="8" fill="#b08a62" textAnchor="middle">رشته‌کوه‌ها (قهوه‌ای)</text>
+        <text x="50" y="168" fontSize="8" fill="#9aa6c8" textAnchor="middle">{mode === "rain" ? "آبی پررنگ = پربارش" : "نارنجی = گرم"}</text>
+      </svg>
+      <div className="vlab-readout" style={{ textAlign: "center" }}><b>{c[0]}</b>: {c[3]} · {mode === "rain" ? "بارش سالانه " + vlabFaN(rain[sel]) + " mm" : "میانگین دما " + vlabFaN(temp[sel]) + "°C"}</div>
+      <div className="vlab-controls"><div className="vlab-ctrl-col" style={{ flex: 1 }}>
+        <div className="vlab-btn-row"><button className="vlab-btn" style={mode === "rain" ? { outline: "2px solid #2e7bd5" } : null} onClick={() => setMode("rain")}>بارش</button><button className="vlab-btn" style={mode === "temp" ? { outline: "2px solid #e0a83e" } : null} onClick={() => setMode("temp")}>دما</button></div>
+        <label className="vlab-ctrl-label">شهر: {c[0]}</label><VlabRange min="0" max={VLAB_IRAN.length - 1} step="1" value={sel} onChange={(e) => setSel(+e.target.value)} />
+      </div></div>
+      <div className="vlab-readout">{`ایران بر کمربند خشک جهان قرار دارد و رشته‌کوه‌های بلند البرز و زاگرس بیشتر بارش را می‌گیرند. دامنه‌ی شمالی البرز رطوبت خزر را می‌گیرد و پربارش است؛ فلات مرکزی پشت کوه‌ها «سایه‌ی بارانی» دارد و کویر ایجاد می‌شود. جنوب هم به دلیل نزدیکی به خلیج فارس و عرض جغرافیایی کم گرم است. (موقعیت‌ها و اعداد تقریبی‌اند.)`}</div>
+      <VlabFormulaCheck title="نسبت بارش" fa="بارش رشت ÷ بارش یزد" en="rain ratio" legend="دو شهر با شرایط بسیار متفاوت." subst={`${vlabFaN(rain[6])} ÷ ${vlabFaN(rain[10])}`} answer={rain[6] / rain[10]} unit="برابر" decimals={1} />
+      <VlabEverydayCard title="چرا کویر هست؟" text="ابرهای دریای خزر به کوه‌های البرز می‌خورند و بارانشان را همان‌جا می‌ریزند؛ هوای خشکی که به فلات مرکزی می‌رسد دیگر بارانی ندارد.">
+        <polygon points="10,60 50,16 90,60" fill="#8b6b4a" /><ellipse cx="38" cy="14" rx="20" ry="8" fill="#9fd4ff" opacity="0.7" />
+      </VlabEverydayCard>
+    </div>
+  );
+}
+
 const VLAB_COMPONENTS = {
   lever: VlabLeverExperiment,
   pendulum: VlabPendulumExperiment,
@@ -38019,6 +38295,12 @@ const VLAB_COMPONENTS = {
   "mutation": VlabMutationExperiment,
   "aquifer": VlabAquiferExperiment,
   "slope-stability": VlabSlopeExperiment,
+  "line-plane-3d": VlabLinePlaneExperiment,
+  "plasmid-cloning": VlabPlasmidExperiment,
+  "gas-equilibrium": VlabGasEqExperiment,
+  "phagocytosis": VlabPhagoExperiment,
+  "circulation-types": VlabCirculationExperiment,
+  "iran-map": VlabIranMapExperiment,
 };
 
 function StudentVirtualLabView({ onBack, grade, studentCode, schoolCode }) {

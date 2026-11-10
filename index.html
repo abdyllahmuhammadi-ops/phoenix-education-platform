@@ -34230,7 +34230,7 @@ function VlabInscribedAngleExperiment({ onReading }) {
 function VlabGeoTransformExperiment({ onReading }) {
   const [mode, setMode] = useState("trans");
   const [tx, setTx] = useState(3);
-  const [ty, setTy] = useState(2);
+  const [ty, setTy] = useState(1);
   const [th, setTh] = useState(90);
   const [ax, setAx] = useState("x");
   const [k, setK] = useState(2);
@@ -34243,7 +34243,7 @@ function VlabGeoTransformExperiment({ onReading }) {
     return [q[0] * k, q[1] * k];
   };
   const out = tri.map(img);
-  const S = 22, CX = 160, CY = 98;
+  const S = 20, CX = 120, CY = 120;
   const X = (v) => CX + v * S, Y = (v) => CY - v * S;
   const poly = (pts) => pts.map((q) => `${X(q[0]).toFixed(1)},${Y(q[1]).toFixed(1)}`).join(" ");
   const fa = (v, d = 2) => vlabMFa(v, Number.isInteger(Math.round(v * 100) / 100) ? 0 : d);
@@ -34254,8 +34254,8 @@ function VlabGeoTransformExperiment({ onReading }) {
   return (
     <div className="vlab-exp">
       <svg viewBox="0 0 320 196" className="vlab-svg" style={{ background: "#03060f", borderRadius: "10px" }}>
-        {Array.from({ length: 15 }).map((_, i) => (<line key={"v" + i} x1={CX + (i - 7) * S} y1="0" x2={CX + (i - 7) * S} y2="196" stroke={i === 7 ? "#6a7aa8" : "#141c36"} strokeWidth="1" />))}
-        {Array.from({ length: 9 }).map((_, i) => (<line key={"h" + i} x1="0" y1={CY + (i - 4) * S} x2="320" y2={CY + (i - 4) * S} stroke={i === 4 ? "#6a7aa8" : "#141c36"} strokeWidth="1" />))}
+        {Array.from({ length: 17 }).map((_, i) => (<line key={"v" + i} x1={CX + (i - 6) * S} y1="0" x2={CX + (i - 6) * S} y2="196" stroke={i === 6 ? "#6a7aa8" : "#141c36"} strokeWidth="1" />))}
+        {Array.from({ length: 10 }).map((_, i) => (<line key={"h" + i} x1="0" y1={CY + (i - 6) * S} x2="320" y2={CY + (i - 6) * S} stroke={i === 6 ? "#6a7aa8" : "#141c36"} strokeWidth="1" />))}
         {mode === "ref" && ax === "d" ? <line x1={X(-4)} y1={Y(-4)} x2={X(4)} y2={Y(4)} stroke="#ff6b6b" strokeWidth="1.2" strokeDasharray="4 3" /> : null}
         <polygon points={poly(tri)} fill="#5bb8ff" fillOpacity="0.35" stroke="#5bb8ff" strokeWidth="1.8" />
         <polygon points={poly(out)} fill="#ff9d1c" fillOpacity="0.35" stroke="#ff9d1c" strokeWidth="1.8" />

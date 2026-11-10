@@ -23584,6 +23584,51 @@ const VLAB_EXPERIMENTS = [
     intro: "دو نقطه را جابه‌جا کن و فاصله، وسط، شیب و معادله‌ی خط گذرنده از آن‌ها را بخوان.",
     tools: ["دو نقطه", "فاصله", "شیب"],
   },
+  {
+    id: "triangle-laws",
+    subject: "ریاضی",
+    level: "متوسطه دوم",
+    title: "مثلث و قضایای سینوس و کسینوس",
+    icon: "📐",
+    intro: "دو ضلع و زاویه‌ی بینشان را بده و با قضیه‌ی کسینوس ضلع سوم و با قضیه‌ی سینوس زاویه‌ها را پیدا کن.",
+    tools: ["دو ضلع", "زاویه‌ی میانی", "ضلع سوم"],
+  },
+  {
+    id: "trig-equation",
+    subject: "ریاضی",
+    level: "متوسطه دوم",
+    title: "معادله‌ی مثلثاتی روی دایره",
+    icon: "🌀",
+    intro: "مقدار sin یا cos را انتخاب کن و جواب‌ها را روی دایره و روی موج ببین.",
+    tools: ["دایره‌ی یکه", "نمودار موج", "زاویه‌های جواب"],
+  },
+  {
+    id: "pattern-sequence",
+    subject: "ریاضی",
+    level: "متوسطه دوم",
+    title: "الگوهای تصویری و دنباله",
+    icon: "🔢",
+    intro: "شکل‌های چوب‌کبریتی و نقطه‌ای را بساز، جدول تعداد را ببین و جمله‌ی عمومی الگو را پیدا کن.",
+    tools: ["چهار الگو", "جدول", "جمله‌ی عمومی"],
+  },
+  {
+    id: "sampling",
+    subject: "ریاضی",
+    level: "متوسطه دوم",
+    title: "نمونه‌گیری",
+    icon: "🗳️",
+    intro: "از یک جامعه‌ی ۱۰۰ نفره بارها نمونه بگیر و ببین نسبت نمونه‌ها دور نسبت واقعی جمع می‌شوند و با نمونه‌ی بزرگ‌تر دقیق‌تر می‌شوند.",
+    tools: ["جامعه‌ی ۱۰۰ نفره", "اندازه‌ی نمونه", "خطای معیار"],
+  },
+  {
+    id: "cone-section",
+    subject: "ریاضی",
+    level: "متوسطه دوم",
+    title: "برش مخروط (دایره، بیضی، سهمی، هذلولی)",
+    icon: "🔻",
+    intro: "صفحه‌ی برش را کج کن و ببین از مخروط یکی از چهار منحنی دایره، بیضی، سهمی یا هذلولی بیرون می‌آید.",
+    tools: ["مخروط دوتایی", "صفحه‌ی برش", "خروج از مرکز"],
+  },
 ];
 
 function vlabClamp(v, min, max) {
@@ -34453,6 +34498,236 @@ function VlabLineDistanceExperiment({ onReading }) {
   );
 }
 
+/* ===== ریاضی) مثلث و قضایای سینوس و کسینوس ===== */
+function VlabTriangleLawsExperiment({ onReading }) {
+  const [b, setB] = useState(7);
+  const [c, setC] = useState(5);
+  const [Ad, setAd] = useState(60);
+  const rad = (d) => (d * Math.PI) / 180;
+  const a = Math.sqrt(b * b + c * c - 2 * b * c * Math.cos(rad(Ad)));
+  const sB = (b * Math.sin(rad(Ad))) / a;
+  const Bd = (Math.asin(Math.min(1, sB)) * 180) / Math.PI;
+  const Bdeg = b * b > a * a + c * c ? 180 - Bd : Bd;
+  const Cd = 180 - Ad - Bdeg;
+  const S = Math.min(22, 150 / Math.max(b, c, a));
+  const A = [40, 160], Bp = [A[0] + c * S, A[1]], Cp = [A[0] + b * S * Math.cos(rad(Ad)), A[1] - b * S * Math.sin(rad(Ad))];
+  const fa = (v, d = 2) => vlabMFa(v, Number.isInteger(Math.round(v * 100) / 100) ? 0 : d);
+  const mid = (p, q) => [(p[0] + q[0]) / 2, (p[1] + q[1]) / 2];
+  return (
+    <div className="vlab-exp">
+      <svg viewBox="0 0 320 196" className="vlab-svg" style={{ background: "#03060f", borderRadius: "10px" }}>
+        <polygon points={`${A} ${Bp} ${Cp}`} fill="#5bb8ff" fillOpacity="0.2" stroke="#5bb8ff" strokeWidth="2" />
+        {[[A, "A", -12, 6], [Bp, "B", 12, 6], [Cp, "C", 0, -9]].map(([p, t, dx, dy]) => (<text key={t} x={p[0] + dx} y={p[1] + dy} fontSize="11" fontWeight="700" fill="#ffd166" textAnchor="middle" direction="ltr">{t}</text>))}
+        <text x={mid(Bp, Cp)[0] + 14} y={mid(Bp, Cp)[1]} fontSize="9" fill="#5de0a0" textAnchor="middle">a = {fa(a)}</text>
+        <text x={mid(A, Cp)[0] - 16} y={mid(A, Cp)[1]} fontSize="9" fill="#ff9d1c" textAnchor="middle">b = {fa(b)}</text>
+        <text x={mid(A, Bp)[0]} y={A[1] + 14} fontSize="9" fill="#ff6b6b" textAnchor="middle">c = {fa(c)}</text>
+        <text x="160" y="190" fontSize="9" fill="#cfd6ea" textAnchor="middle">زاویه‌ها: A = {fa(Ad, 1)}° · B = {fa(Bdeg, 1)}° · C = {fa(Cd, 1)}°</text>
+      </svg>
+      <div className="vlab-readout" style={{ textAlign: "center" }}>ضلع روبه‌روی A: a = <b>{fa(a)}</b></div>
+      <div className="vlab-controls"><div className="vlab-ctrl-col" style={{ flex: 1 }}>
+        <label className="vlab-ctrl-label">ضلع b: {fa(b)}</label><VlabRange min="2" max="10" step="1" value={b} onChange={(e) => setB(+e.target.value)} />
+        <label className="vlab-ctrl-label">ضلع c: {fa(c)}</label><VlabRange min="2" max="10" step="1" value={c} onChange={(e) => setC(+e.target.value)} />
+        <label className="vlab-ctrl-label">زاویه‌ی A بین آن‌ها: {vlabFaN(Ad)}°</label><VlabRange min="20" max="160" step="5" value={Ad} onChange={(e) => setAd(+e.target.value)} />
+      </div></div>
+      <div className="vlab-readout">
+        {`وقتی دو ضلع و زاویه‌ی بینشان معلوم است، قضیه‌ی کسینوس ضلع سوم را می‌دهد (اگر زاویه ۹۰° باشد همان فیثاغورس است). بعد قضیه‌ی سینوس می‌گوید نسبت هر ضلع به سینوس زاویه‌ی روبه‌رویش ثابت است: a÷sin A = ${fa(a / Math.sin(rad(Ad)), 3)}، b÷sin B = ${fa(b / Math.sin(rad(Bdeg)), 3)}.`}
+      </div>
+      <VlabFormulaCheck title="قضیه‌ی کسینوس" fa="a² = b² + c² − ۲bc·cos A" en="a² = b² + c² − 2bc·cos(A)" legend="ماشین‌حساب را روی درجه بگذار؛ در آخر جذر بگیر." subst={`a = √(${fa(b)}² + ${fa(c)}² − 2×${fa(b)}×${fa(c)}×cos ${vlabFaN(Ad)}°)`} answer={a} unit="" decimals={2} />
+      <VlabFormulaCheck title="قضیه‌ی سینوس" fa="sin B = b × sin A ÷ a" en="b / sin B = a / sin A" legend="جواب sin B است؛ سپس با sin⁻¹ زاویه‌ی B به‌دست می‌آید." subst={`sin B = ${fa(b)} × sin ${vlabFaN(Ad)}° ÷ ${fa(a)}`} answer={sB} unit="" decimals={2} />
+      <VlabEverydayCard title="فاصله تا کوه یا برج" text="نقشه‌بردار نمی‌تواند از رودخانه رد شود، پس از دو نقطه‌ی ساحل، زاویه‌ی دید به کوه را اندازه می‌گیرد؛ قضیه‌ی سینوس فاصله را بی‌آنکه کسی از رودخانه رد شود می‌دهد. این روش مثلث‌بندی در GPS هم هست.">
+        <path d="M8,66 L62,66 L100,14 z" fill="#bcd4f4" stroke="#7d8bb5" strokeWidth="1.4" /><path d="M6,70 H114" stroke="#2e7bd5" strokeWidth="6" opacity="0.5" />
+      </VlabEverydayCard>
+    </div>
+  );
+}
+
+/* ===== ریاضی) معادله‌ی مثلثاتی روی دایره ===== */
+function VlabTrigEquationExperiment({ onReading }) {
+  const [fn, setFn] = useState("sin");
+  const [kv, setKv] = useState(0.5);
+  const sols = fn === "sin" ? (() => { const t = (Math.asin(kv) * 180) / Math.PI; return [((t % 360) + 360) % 360, (((180 - t) % 360) + 360) % 360]; })() : (() => { const t = (Math.acos(kv) * 180) / Math.PI; return [t, (360 - t) % 360]; })();
+  const uniq = Math.abs(sols[0] - sols[1]) < 0.01 ? [sols[0]] : [...sols].sort((p, q) => p - q);
+  const R = 62, CX = 84, CY = 98, WX = 176, WW = 136, WH = 52;
+  const rad = (d) => (d * Math.PI) / 180;
+  const Pt = (d) => [CX + R * Math.cos(rad(d)), CY - R * Math.sin(rad(d))];
+  const g = fn === "sin" ? Math.sin : Math.cos;
+  let wave = ""; for (let i = 0; i <= 72; i++) { const d = (i / 72) * 360; wave += (i ? "L" : "M") + (WX + (d / 360) * WW).toFixed(1) + "," + (CY - WH * g(rad(d))).toFixed(1); }
+  const fa = (v, d = 2) => vlabMFa(v, d);
+  const level = fn === "sin" ? CY - R * kv : CX + R * kv;
+  return (
+    <div className="vlab-exp">
+      <svg viewBox="0 0 320 196" className="vlab-svg" style={{ background: "#03060f", borderRadius: "10px" }}>
+        <circle cx={CX} cy={CY} r={R} fill="none" stroke="#8fa0c8" strokeWidth="1.5" />
+        <line x1="12" y1={CY} x2="162" y2={CY} stroke="#4a5578" /><line x1={CX} y1="18" x2={CX} y2="180" stroke="#4a5578" />
+        {fn === "sin" ? <line x1="12" y1={level} x2="162" y2={level} stroke="#ff6b6b" strokeWidth="1.2" strokeDasharray="4 3" /> : <line x1={level} y1="18" x2={level} y2="180" stroke="#5bb8ff" strokeWidth="1.2" strokeDasharray="4 3" />}
+        {uniq.map((d, i) => { const p = Pt(d); return (<g key={i}><line x1={CX} y1={CY} x2={p[0]} y2={p[1]} stroke="#fff" strokeWidth="1.6" /><circle cx={p[0]} cy={p[1]} r="5" fill="#ffd166" stroke="#fff" strokeWidth="1.2" /></g>); })}
+        <line x1={WX} y1={CY} x2={WX + WW} y2={CY} stroke="#4a5578" /><line x1={WX} y1={CY - WH - 6} x2={WX} y2={CY + WH + 6} stroke="#4a5578" />
+        <path d={wave} fill="none" stroke={fn === "sin" ? "#ff6b6b" : "#5bb8ff"} strokeWidth="1.6" />
+        <line x1={WX} y1={CY - WH * kv} x2={WX + WW} y2={CY - WH * kv} stroke="#ffd166" strokeWidth="1" strokeDasharray="3 3" />
+        {uniq.map((d, i) => (<circle key={i} cx={WX + (d / 360) * WW} cy={CY - WH * kv} r="4" fill="#ffd166" stroke="#fff" strokeWidth="1" />))}
+        <text x={WX + WW - 8} y={CY + 11} fontSize="7" fill="#9aa6c8" textAnchor="middle">۳۶۰°</text><text x={WX + WW / 2} y={CY + 11} fontSize="7" fill="#9aa6c8" textAnchor="middle">۱۸۰°</text>
+      </svg>
+      <div className="vlab-readout" style={{ textAlign: "center" }}>{fn === "sin" ? "sin" : "cos"} θ = {fa(kv)} ← θ = {uniq.map((d) => vlabFaN(Math.round(d * 10) / 10) + "°").join(" و ")} (در یک دور)</div>
+      <div className="vlab-controls"><div className="vlab-ctrl-col" style={{ flex: 1 }}>
+        <div className="vlab-btn-row"><button className="vlab-btn" style={fn === "sin" ? { outline: "2px solid #e0a83e" } : null} onClick={() => setFn("sin")}>sin θ = k</button><button className="vlab-btn" style={fn === "cos" ? { outline: "2px solid #e0a83e" } : null} onClick={() => setFn("cos")}>cos θ = k</button></div>
+        <label className="vlab-ctrl-label">مقدار k: {fa(kv)}</label>
+        <VlabRange min="-1" max="1" step="0.05" value={kv} onChange={(e) => setKv(+e.target.value)} />
+        <div className="vlab-btn-row">{[0.5, 0.707, 0.866, 1, -0.5].map((q) => (<button key={q} className="vlab-btn" onClick={() => setKv(q)}>{fa(q)}</button>))}</div>
+      </div></div>
+      <div className="vlab-readout">
+        {`معادله‌ی مثلثاتی یعنی «کدام زاویه‌ها این مقدار را دارند؟». روی دایره خط ${fn === "sin" ? "افقی" : "عمودی"} را رسم می‌کنیم و دو نقطه‌ی برخوردش با دایره دو جواب در یک دور است (در k = ۱ یا ۱− فقط یک جواب). با اضافه‌کردن مضرب‌های ۳۶۰° همه‌ی جواب‌ها به‌دست می‌آیند.`}
+      </div>
+      <VlabFormulaCheck title="جواب اول" fa={fn === "sin" ? "θ = sin⁻¹(k)" : "θ = cos⁻¹(k)"} en={fn === "sin" ? "θ₁ = arcsin(k)" : "θ₁ = arccos(k)"} legend="ماشین‌حساب را روی درجه بگذار؛ جواب دوم از قرینه‌ی دایره (۱۸۰−θ یا ۳۶۰−θ) به‌دست می‌آید." subst={`θ = ${fn === "sin" ? "sin⁻¹" : "cos⁻¹"}(${fa(kv)})`} answer={fn === "sin" ? (Math.asin(kv) * 180) / Math.PI : (Math.acos(kv) * 180) / Math.PI} unit="درجه" decimals={1} />
+      <VlabEverydayCard title="مدت روشنایی روز" text="طول روز در هر ماه تقریباً موجی سینوسی است. اگر بپرسیم «چه روزهایی روز ۱۲ ساعته است؟»، یعنی معادله‌ی sin θ = ۰ را حل کنیم و دو جواب در سال (اعتدال بهاری و پاییزی) به‌دست می‌آید.">
+        <circle cx="30" cy="40" r="22" fill="#ffd166" opacity="0.8" /><path d="M64,56 q12,-40 24,0 t24,0" fill="none" stroke="#e08a1c" strokeWidth="2.2" />
+      </VlabEverydayCard>
+    </div>
+  );
+}
+
+/* ===== ریاضی) الگوهای تصویری و دنباله ===== */
+const VLAB_PT = {
+  stick: { name: "مربع‌های چوب‌کبریتی", f: (n) => 3 * n + 1, g: "۳n + ۱" },
+  tri: { name: "مثلث‌های چوب‌کبریتی", f: (n) => 2 * n + 1, g: "۲n + ۱" },
+  stair: { name: "نقطه‌چین پلکانی", f: (n) => (n * (n + 1)) / 2, g: "n(n+۱)÷۲" },
+  sq: { name: "مربع‌های نقطه‌ای", f: (n) => n * n, g: "n²" },
+};
+function VlabPatternSequenceExperiment({ onReading }) {
+  const [pk, setPk] = useState("stick");
+  const [n, setN] = useState(4);
+  const P = VLAB_PT[pk];
+  const val = P.f(n);
+  const fa = (v) => vlabFaN(v);
+  const draw = () => {
+    const els = [];
+    if (pk === "stick") { for (let i = 0; i < n; i++) { const x = 24 + i * 34, y = 60; els.push(<rect key={i} x={x} y={y} width="30" height="30" fill="none" stroke="#ffd166" strokeWidth="3" />); } }
+    else if (pk === "tri") { for (let i = 0; i < n; i++) { const x = 24 + i * 30; els.push(<path key={i} d={`M${x},100 L${x + 15},62 L${x + 30},100 Z`} fill="none" stroke="#ffd166" strokeWidth="3" />); } }
+    else if (pk === "stair") { for (let r = 0; r < n; r++) for (let c = 0; c <= r; c++) els.push(<circle key={r + "-" + c} cx={30 + c * 18} cy={30 + r * 16} r="5.4" fill="#5bb8ff" />); }
+    else { for (let r = 0; r < n; r++) for (let c = 0; c < n; c++) els.push(<circle key={r + "-" + c} cx={30 + c * 15} cy={22 + r * 15} r="5" fill="#5de0a0" />); }
+    return els;
+  };
+  const rows = Array.from({ length: 8 }, (_, i) => i + 1);
+  return (
+    <div className="vlab-exp">
+      <svg viewBox="0 0 320 196" className="vlab-svg" style={{ background: "#03060f", borderRadius: "10px" }}>
+        {draw()}
+        <text x="160" y="186" fontSize="10" fill="#ffd166" textAnchor="middle">شکل {fa(n)}: {fa(val)} {pk === "stick" || pk === "tri" ? "چوب‌کبریت" : "نقطه"}</text>
+      </svg>
+      <table style={{ width: "100%", textAlign: "center", fontSize: 12, borderCollapse: "collapse" }}><tbody>
+        <tr style={{ background: "#eef1fa" }}><td>شماره</td>{rows.map((r) => (<td key={r} style={r === n ? { background: "#ffe9a8", fontWeight: 700 } : null}>{fa(r)}</td>))}</tr>
+        <tr><td>تعداد</td>{rows.map((r) => (<td key={r} style={r === n ? { background: "#ffe9a8", fontWeight: 700 } : null}>{fa(P.f(r))}</td>))}</tr>
+      </tbody></table>
+      <div className="vlab-controls"><div className="vlab-ctrl-col" style={{ flex: 1 }}>
+        <div className="vlab-btn-row">{Object.keys(VLAB_PT).map((k) => (<button key={k} className="vlab-btn" style={pk === k ? { outline: "2px solid #e0a83e" } : null} onClick={() => setPk(k)}>{VLAB_PT[k].name}</button>))}</div>
+        <label className="vlab-ctrl-label">شماره‌ی شکل: {fa(n)}</label>
+        <VlabRange min="1" max="8" step="1" value={n} onChange={(e) => setN(+e.target.value)} />
+      </div></div>
+      <div className="vlab-readout">
+        {`الگو را از روی شکل‌ها پیدا می‌کنیم: ${pk === "stick" ? "هر مربع جدید ۳ چوب‌کبریت اضافه می‌کند (چون یک ضلعش مشترک است)" : pk === "tri" ? "هر مثلث جدید ۲ چوب‌کبریت اضافه می‌کند" : pk === "stair" ? "هر ردیف جدید یک نقطه بیشتر از ردیف قبل دارد (جمع ۱ تا n)" : "تعداد نقطه‌ها برابر n ردیف و n ستون است"}. جمله‌ی عمومی: ${P.g}.`}
+      </div>
+      <VlabFormulaCheck title="تعداد در شکل n‌ام" fa={`جمله‌ی عمومی: ${P.g}`} en="aₙ = rule(n)" legend="n را در جمله‌ی عمومی بگذار و با شمارش روی شکل مقایسه کن." subst={`n = ${fa(n)}`} answer={val} unit="" decimals={0} />
+      <VlabFormulaCheck title="پیش‌بینی شکل ۱۰۰" fa="همان قاعده را برای n = ۱۰۰ بزن" en="a₁₀₀ = rule(100)" legend="بدون کشیدن شکل، فقط با جمله‌ی عمومی جواب بده." subst={`n = ۱۰۰`} answer={P.f(100)} unit="" decimals={0} />
+      <VlabEverydayCard title="چیدن آجر و کاشی" text="بنّا برای چیدن کاشی در پلکان یا آجر در یک دیوار الگوی تکراری دارد. اگر جمله‌ی عمومی را بداند، بدون چیدن تک‌تک ردیف‌ها حساب می‌کند چند آجر لازم است و سفارش می‌دهد.">
+        <rect x="14" y="52" width="24" height="12" fill="#c46b3a" /><rect x="40" y="52" width="24" height="12" fill="#c46b3a" /><rect x="26" y="38" width="24" height="12" fill="#c46b3a" /><rect x="52" y="38" width="24" height="12" fill="#c46b3a" /><rect x="40" y="24" width="24" height="12" fill="#c46b3a" />
+      </VlabEverydayCard>
+    </div>
+  );
+}
+
+/* ===== ریاضی) نمونه‌گیری ===== */
+function VlabSamplingExperiment({ onReading }) {
+  const [p, setP] = useState(40);
+  const [n, setN] = useState(25);
+  const [samples, setSamples] = useState([]);
+  const [last, setLast] = useState(null);
+  const draw = (m) => { const out = [...samples]; let lst = last; for (let j = 0; j < m; j++) { let k = 0; for (let i = 0; i < n; i++) if (Math.random() * 100 < p) k++; out.push(k / n); lst = k / n; } setSamples(out); setLast(lst); };
+  const reset = () => { setSamples([]); setLast(null); };
+  const bins = Array.from({ length: 11 }, () => 0);
+  samples.forEach((v) => { bins[Math.min(10, Math.floor(v * 10 + 0.5))]++; });
+  const mx = Math.max(5, ...bins);
+  const se = Math.sqrt((p / 100) * (1 - p / 100) / n);
+  const mean = samples.length ? samples.reduce((a, b) => a + b, 0) / samples.length : 0;
+  const GX = 20, GW = 280, GH = 108, GY = 38, bw = GW / 11;
+  const fa = (v, d = 2) => vlabMFa(v, d);
+  const dots = Array.from({ length: 100 }, (_, i) => i < p);
+  return (
+    <div className="vlab-exp">
+      <svg viewBox="0 0 320 204" className="vlab-svg" style={{ background: "#03060f", borderRadius: "10px" }}>
+        {dots.map((r, i) => (<circle key={i} cx={20 + (i % 25) * 11.2 + 5} cy={10 + Math.floor(i / 25) * 6} r="2.4" fill={r ? "#ff6b6b" : "#4a5578"} />))}
+        <line x1={GX} y1={GY + GH} x2={GX + GW} y2={GY + GH} stroke="#6a7aa8" />
+        {bins.map((v, i) => (<g key={i}><rect x={GX + i * bw + 3} y={GY + GH - (v / mx) * GH} width={bw - 6} height={(v / mx) * GH} fill="#5bb8ff" rx="2" /><text x={GX + i * bw + bw / 2} y={GY + GH + 11} fontSize="7" fill="#9aa6c8" textAnchor="middle">{vlabFaN(i * 10)}٪</text></g>))}
+        <line x1={GX + (p / 100) * 10 * bw + bw / 2} y1={GY} x2={GX + (p / 100) * 10 * bw + bw / 2} y2={GY + GH} stroke="#ff6b6b" strokeWidth="1.6" strokeDasharray="4 3" />
+        <text x="160" y="198" fontSize="9" fill="#ffd166" textAnchor="middle">{samples.length ? `${vlabFaN(samples.length)} نمونه؛ میانگین نسبت‌ها ${fa(mean * 100, 1)}٪` : "نمونه‌ای گرفته نشده"}</text>
+      </svg>
+      <div className="vlab-readout" style={{ textAlign: "center" }}>{last != null ? `آخرین نمونه: ${fa(last * 100, 0)}٪ قرمز` : "جامعه: ۱۰۰ نفر؛ قرمزها همان ویژگی موردنظرند"} · نسبت واقعی {vlabFaN(p)}٪</div>
+      <div className="vlab-controls"><div className="vlab-ctrl-col" style={{ flex: 1 }}>
+        <label className="vlab-ctrl-label">نسبت واقعی ویژگی در جامعه: {vlabFaN(p)}٪</label>
+        <VlabRange min="10" max="90" step="5" value={p} onChange={(e) => { setP(+e.target.value); reset(); }} />
+        <label className="vlab-ctrl-label">اندازه‌ی هر نمونه: {vlabFaN(n)} نفر</label>
+        <VlabRange min="5" max="100" step="5" value={n} onChange={(e) => { setN(+e.target.value); reset(); }} />
+        <div className="vlab-btn-row"><button className="vlab-btn" onClick={() => draw(1)}>۱ نمونه بگیر</button><button className="vlab-btn" onClick={() => draw(20)}>۲۰ نمونه بگیر</button><button className="vlab-btn" onClick={() => draw(100)}>۱۰۰ نمونه</button><button className="vlab-btn" onClick={reset}>پاک‌کردن</button></div>
+      </div></div>
+      <div className="vlab-readout">
+        {`هر نمونه نسبت کمی متفاوت می‌دهد، اما وقتی نمونه‌های زیادی بگیری، ستون‌ها دور نسبت واقعی (خط قرمز) جمع می‌شوند. با بزرگ‌تر کردن هر نمونه ستون‌ها باریک‌تر می‌شوند؛ پراکندگی نمونه‌ها (خطای معیار) حدود ${fa(se * 100, 1)}٪ است.`}
+      </div>
+      <VlabFormulaCheck title="خطای معیار نسبت نمونه" fa="SE = √( p(1 − p) ÷ n )" en="SE = sqrt(p(1−p)/n)" legend="p را به‌صورت اعشار بگذار (۴۰٪ = ۰٫۴)؛ جواب را به درصد بنویس (×۱۰۰)." subst={`SE = √(${fa(p / 100)} × ${fa(1 - p / 100)} ÷ ${vlabFaN(n)}) × 100`} answer={se * 100} unit="٪" decimals={1} />
+      <VlabEverydayCard title="نظرسنجی انتخابات" text="مؤسسه‌های نظرسنجی از ۱۰۰۰ نفر می‌پرسند، نه ۸۰ میلیون نفر. نمونه‌ی تصادفی و کافی نسبت جامعه را با خطای حدود ۳٪ برآورد می‌کند. اگر نمونه تصادفی نباشد (مثلاً فقط یک شهر)، هر اندازه بزرگ باشد باز اشتباه است.">
+        <circle cx="60" cy="40" r="32" fill="none" stroke="#7d8bb5" strokeWidth="1.5" strokeDasharray="4 3" /><circle cx="48" cy="34" r="3" fill="#d83a3a" /><circle cx="68" cy="30" r="3" fill="#2e7bd5" /><circle cx="60" cy="52" r="3" fill="#d83a3a" /><circle cx="76" cy="46" r="3" fill="#2e7bd5" />
+      </VlabEverydayCard>
+    </div>
+  );
+}
+
+/* ===== ریاضی) برش مخروط ===== */
+function VlabConeSectionExperiment({ onReading }) {
+  const [beta, setBeta] = useState(60);
+  const alpha = 30;
+  const rad = (d) => (d * Math.PI) / 180;
+  const e = Math.cos(rad(beta)) / Math.cos(rad(alpha));
+  const type = beta >= 89.5 ? "دایره" : Math.abs(beta - alpha) < 1 ? "سهمی" : beta > alpha ? "بیضی" : "هذلولی";
+  const fa = (v, d = 2) => vlabMFa(v, d);
+  // مخروط دوتایی از کنار
+  const CXc = 90, CYc = 100, hh = 80, tw = Math.tan(rad(alpha));
+  const bl = rad(beta);
+  const px = 90 + 0, py = 100;
+  const ex = Math.cos(bl) * 74, ey = Math.sin(bl) * 74;
+  // منحنی مقطع (قطبی با کانون در مبدأ)
+  const l = 40;
+  const cx0 = 238, cy0 = 100;
+  let curve = ""; 
+  if (type === "دایره") curve = `M${cx0 + 34},${cy0} A34,34 0 1 1 ${cx0 - 34},${cy0} A34,34 0 1 1 ${cx0 + 34},${cy0}`;
+  else { const ee = type === "سهمی" ? 1 : Math.max(0.01, e); const pts = []; if (ee < 1) { for (let i = 0; i <= 120; i++) { const t = (i / 120) * 2 * Math.PI; const r = l / (1 + ee * Math.cos(t)); pts.push([cx0 + r * Math.cos(t) - (ee * l / (1 - ee * ee)), cy0 - r * Math.sin(t)]); } }
+    else { for (let i = 0; i <= 120; i++) { const lim = ee > 1 ? Math.acos(-1 / ee) * 0.96 : Math.PI * 0.8; const t = -lim + (i / 120) * 2 * lim; const r = l / (1 + ee * Math.cos(t)); pts.push([cx0 + r * Math.cos(t) - 40, cy0 - r * Math.sin(t)]); } }
+    curve = pts.filter((q) => Math.abs(q[0] - cx0) < 130 && Math.abs(q[1] - cy0) < 90).map((q, i) => (i ? "L" : "M") + q[0].toFixed(1) + "," + q[1].toFixed(1)).join(""); }
+  return (
+    <div className="vlab-exp">
+      <svg viewBox="0 0 320 200" className="vlab-svg" style={{ background: "#03060f", borderRadius: "10px" }}>
+        <path d={`M${CXc},${CYc} L${CXc - hh * tw},${CYc - hh} M${CXc},${CYc} L${CXc + hh * tw},${CYc - hh} M${CXc},${CYc} L${CXc - hh * tw},${CYc + hh} M${CXc},${CYc} L${CXc + hh * tw},${CYc + hh}`} stroke="#5bb8ff" strokeWidth="1.6" />
+        <path d={`M${CXc - hh * tw},${CYc - hh} L${CXc + hh * tw},${CYc - hh} L${CXc},${CYc} Z`} fill="#5bb8ff" fillOpacity="0.12" /><path d={`M${CXc - hh * tw},${CYc + hh} L${CXc + hh * tw},${CYc + hh} L${CXc},${CYc} Z`} fill="#5bb8ff" fillOpacity="0.12" />
+        <line x1={px - ex} y1={py + ey} x2={px + ex} y2={py - ey} stroke="#ffd166" strokeWidth="2.8" />
+        <line x1={CXc} y1="14" x2={CXc} y2="186" stroke="#4a5578" strokeDasharray="3 3" />
+        <text x="90" y="196" fontSize="8" fill="#9aa6c8" textAnchor="middle">صفحه‌ی برش (زرد)</text>
+        <line x1="180" y1="100" x2="300" y2="100" stroke="#2a3558" /><line x1="238" y1="20" x2="238" y2="180" stroke="#2a3558" />
+        <path d={curve} fill="none" stroke="#5de0a0" strokeWidth="2.4" />
+        <text x="238" y="14" fontSize="10" fill="#5de0a0" textAnchor="middle">{type}</text>
+      </svg>
+      <div className="vlab-readout" style={{ textAlign: "center" }}>زاویه‌ی صفحه با محور مخروط {vlabFaN(beta)}° ← <b>{type}</b> · خروج از مرکز e = {fa(e)}</div>
+      <div className="vlab-controls"><div className="vlab-ctrl-col" style={{ flex: 1 }}>
+        <label className="vlab-ctrl-label">زاویه‌ی صفحه‌ی برش با محور: {vlabFaN(beta)}°</label>
+        <VlabRange min="10" max="90" step="1" value={beta} onChange={(e) => setBeta(+e.target.value)} />
+        <div className="vlab-btn-row"><button className="vlab-btn" onClick={() => setBeta(90)}>دایره</button><button className="vlab-btn" onClick={() => setBeta(60)}>بیضی</button><button className="vlab-btn" onClick={() => setBeta(30)}>سهمی</button><button className="vlab-btn" onClick={() => setBeta(15)}>هذلولی</button></div>
+      </div></div>
+      <div className="vlab-readout">
+        {`زاویه‌ی نیم‌رأس مخروط ${vlabFaN(alpha)}° است. اگر صفحه عمود بر محور برش بخورد دایره، اگر موازی یک خط مولد باشد (زاویه‌ی ${vlabFaN(alpha)}°) سهمی، بین این دو بیضی و کمتر از آن هذلولی (برش هر دو مخروط) به‌دست می‌آید. عدد خروج از مرکز e نوع منحنی را می‌گوید: e = ۰ دایره، e < ۱ بیضی، e = ۱ سهمی، e > ۱ هذلولی.`}
+      </div>
+      <VlabFormulaCheck title="خروج از مرکز" fa="e = cos(زاویه‌ی صفحه) ÷ cos(نیم‌رأس مخروط)" en="e = cos(β) / cos(α)" legend="ماشین‌حساب را روی درجه بگذار؛ α = ۳۰° است." subst={`e = cos ${vlabFaN(beta)}° ÷ cos 30°`} answer={e} unit="" decimals={2} />
+      <VlabEverydayCard title="سایه‌ی لامپ روی دیوار" text="نور یک آباژور یا چراغ‌قوه مخروطی از نور است. وقتی روی دیوار می‌افتد، بسته به زاویه‌ی دیوار، لبه‌ی روشنایی دایره، بیضی یا قوس‌هایی از هذلولی (دو قوس بالای آباژور) می‌شود. مدار سیاره‌ها بیضی و مسیر پرتاب سهمی است.">
+        <path d="M30,10 L50,34 L10,34 Z" fill="#e0a83e" /><path d="M10,50 Q30,36 50,50" fill="none" stroke="#d83a3a" strokeWidth="2.4" /><path d="M64,70 Q90,2 110,70" fill="none" stroke="#2e7bd5" strokeWidth="2.4" />
+      </VlabEverydayCard>
+    </div>
+  );
+}
+
 const VLAB_COMPONENTS = {
   lever: VlabLeverExperiment,
   pendulum: VlabPendulumExperiment,
@@ -34568,6 +34843,11 @@ const VLAB_COMPONENTS = {
   "right-triangle": VlabRightTriangleExperiment,
   "circle-equation": VlabCircleEquationExperiment,
   "line-distance": VlabLineDistanceExperiment,
+  "triangle-laws": VlabTriangleLawsExperiment,
+  "trig-equation": VlabTrigEquationExperiment,
+  "pattern-sequence": VlabPatternSequenceExperiment,
+  "sampling": VlabSamplingExperiment,
+  "cone-section": VlabConeSectionExperiment,
 };
 
 function StudentVirtualLabView({ onBack, grade, studentCode, schoolCode }) {

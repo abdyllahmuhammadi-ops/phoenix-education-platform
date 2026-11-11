@@ -43819,6 +43819,74 @@ function SystemSuggestionAdminView() {
    داشبورد اصلی معلم — نمای کلی زیبا و ورودی به همه‌ی ابزارها
    ============================================================ */
 
+function TeacherLabFeedbackView({ onBack }) {
+  const [rows, setRows] = useState(null);
+  const [subject, setSubject] = useState("همه");
+  const [open, setOpen] = useState(null);
+  useEffect(() => {
+    (async () => {
+      try {
+        if (!(await waitForStorage())) { setRows([]); return; }
+        const out = [];
+        for (const ex of VLAB_EXPERIMENTS) {
+          const r = await window.storage.get("lab-feedback:" + ex.id, true).catch(() => null);
+          const list = r && r.value ? JSON.parse(r.value) : [];
+          if (!list.length) continue;
+          const good = list.filter((x) => (x.vote || "").includes("واضح")).length;
+          const meh = list.filter((x) => (x.vote || "").includes("گنگ")).length;
+          const bad = list.filter((x) => (x.vote || "").includes("نفهمیدم")).length;
+          out.push({ ex, n: list.length, good, meh, bad, score: (bad * 2 + meh) / list.length, comments: list.filter((x) => x.text).slice(-20).reverse() });
+        }
+        out.sort((a, b) => b.score - a.score || b.n - a.n);
+        setRows(out);
+      } catch (e) { setRows([]); }
+    })();
+  }, []);
+  const shown = (rows || []).filter((r) => subject === "همه" || r.ex.subject === subject);
+  const fa = (n) => String(n).replace(/\d/g, (d) => "۰۱۲۳۴۵۶۷۸۹"[d]);
+  return (
+    <div dir="rtl" className="pqb-root">
+      <style>{`
+        .pqb-root, .pqb-root * { box-sizing: border-box; font-family: 'Vazirmatn', Tahoma, Arial, sans-serif; }
+        .pqb-root { min-height: 100vh; width: 100%; background: linear-gradient(180deg, #0e1638, #05091c); padding: 20px 14px 28px; display: flex; justify-content: center; }
+        .lfb-card { width: 100%; max-width: 900px; background: #fbf7ec; border-radius: 20px; padding: 22px 18px 26px; }
+        .lfb-row { background: #fff; border: 1px solid rgba(28,37,64,.1); border-radius: 14px; padding: 12px 14px; margin-bottom: 10px; }
+        .lfb-head { display: flex; justify-content: space-between; gap: 10px; align-items: center; cursor: pointer; flex-wrap: wrap; }
+        .lfb-bar { display: flex; height: 12px; border-radius: 6px; overflow: hidden; background: #e8e8ee; margin-top: 8px; }
+        .lfb-comment { background: #f6f3ea; border-radius: 10px; padding: 8px 10px; margin-top: 6px; font-size: 12.5px; color: #3a3320; line-height: 1.9; }
+        .lfb-back { background: none; border: none; color: #8a5a10; font-weight: 700; font-size: 13px; cursor: pointer; padding: 0; margin-bottom: 10px; }
+      `}</style>
+      <div className="lfb-card">
+        <button type="button" className="lfb-back" onClick={onBack}>→ بازگشت</button>
+        <h1 style={{ margin: "0 0 4px", fontSize: 20, color: "#1c2540" }}>📊 بازخورد دانش‌آموزان درباره‌ی آزمایش‌ها</h1>
+        <p style={{ margin: "0 0 14px", fontSize: 12.5, color: "#6b7399", lineHeight: 1.9 }}>آزمایش‌هایی که بیشتر «گنگ» یا «نفهمیدم» گرفته‌اند بالاتر آمده‌اند؛ اول سراغ همین‌ها برای بهبود بروید.</p>
+        <select className="pqb-select" style={{ height: 40, borderRadius: 10, border: "1.3px solid #e0c98a", padding: "0 10px", marginBottom: 12 }} value={subject} onChange={(e) => setSubject(e.target.value)} aria-label="فیلتر درس">
+          <option value="همه">همه‌ی درس‌ها</option>
+          {VLAB_SUBJECTS.map((x) => <option key={x} value={x}>{x}</option>)}
+        </select>
+        {rows === null && <p style={{ color: "#6b7399" }}>در حال بارگذاری…</p>}
+        {rows !== null && shown.length === 0 && <p style={{ color: "#8a8060", textAlign: "center", padding: "24px 0", lineHeight: 2 }}>هنوز بازخوردی ثبت نشده است.<br />وقتی دانش‌آموزان در پایین هر آزمایش نظر بدهند، اینجا می‌بینید.</p>}
+        {shown.map((r) => (
+          <div key={r.ex.id} className="lfb-row">
+            <div className="lfb-head" onClick={() => setOpen(open === r.ex.id ? null : r.ex.id)} role="button" tabIndex={0} onKeyDown={(e) => { if (e.key === "Enter" || e.key === " ") setOpen(open === r.ex.id ? null : r.ex.id); }}>
+              <strong style={{ color: "#1c2540", fontSize: 14 }}>{r.ex.icon} {r.ex.title}</strong>
+              <span style={{ fontSize: 12, color: "#6b7399" }}>{r.ex.subject} · {r.ex.level} · {fa(r.n)} نظر</span>
+            </div>
+            <div className="lfb-bar" aria-label={"واضح " + r.good + "، گنگ " + r.meh + "، نفهمیدم " + r.bad}>
+              <div style={{ width: (r.good / r.n) * 100 + "%", background: "#3aa66a" }} />
+              <div style={{ width: (r.meh / r.n) * 100 + "%", background: "#f0b840" }} />
+              <div style={{ width: (r.bad / r.n) * 100 + "%", background: "#d9534f" }} />
+            </div>
+            <div style={{ fontSize: 11.5, color: "#6b7399", marginTop: 4 }}>👍 واضح {fa(r.good)} · 😐 گنگ {fa(r.meh)} · 👎 نفهمیدم {fa(r.bad)}</div>
+            {open === r.ex.id && (r.comments.length ? r.comments.map((c, i) => <div key={i} className="lfb-comment">{c.text}</div>) : <div className="lfb-comment">نظر نوشتاری ثبت نشده است.</div>)}
+          </div>
+        ))}
+      </div>
+    </div>
+  );
+}
+
+
 function TeacherHomeDashboard({
   teacherFullName,
   teacherMainSubject,
@@ -43831,6 +43899,7 @@ function TeacherHomeDashboard({
   onOpenSuggestionBox,
   onOpenSystemSuggestionBox,
   onOpenRahyar,
+  onOpenLabFeedback,
   onLogout,
 }) {
   const [classCount, setClassCount] = useState(0);
@@ -43879,6 +43948,7 @@ function TeacherHomeDashboard({
     { key: "lessonplan", icon: "📘", label: "طرح درس هوشمند", desc: "برنامه‌ریزی جلسات درسی", onClick: onOpenLessonPlan, color: "linear-gradient(135deg, #9fe3bd, #2c9e6a)" },
     { key: "suggestion", icon: "💡", label: "بانک پیشنهادات", desc: "ثبت ایده برای بهبود مدرسه", onClick: onOpenSuggestionBox, color: "linear-gradient(135deg, #f3b9d8, #c9569a)" },
     { key: "systemSuggestion", icon: "📣", label: "پیشنهاد برای سامانه", desc: "ایده برای بهبود خودِ ققنوس", onClick: onOpenSystemSuggestionBox, color: "linear-gradient(135deg, #c29fe8, #6a4aa8)" },
+    { key: "labFeedback", icon: "📊", label: "بازخورد آزمایش‌ها", desc: "کدام آزمایش برای دانش‌آموزان گنگ بوده؟", onClick: onOpenLabFeedback, color: "linear-gradient(135deg, #ffd29a, #e08a2c)" },
     { key: "rahyar", icon: "🧑‍🏫", label: "معلم هوشمند", desc: "ایده‌ی تدریس، مدیریت کلاس و مشاوره‌ی آموزشی", onClick: onOpenRahyar, color: "linear-gradient(135deg, #d8c2f0, #8f5fc9)" },
   ];
 
@@ -44770,6 +44840,7 @@ function PhoenixApp() {
         onOpenLessonPlan={() => setScreen("teacherLessonPlan")}
         onOpenSuggestionBox={() => setScreen("teacherSuggestionBox")}
         onOpenSystemSuggestionBox={() => { setSystemSuggestionRole("teacher"); setSystemSuggestionReturnScreen("teacherHome"); setScreen("systemSuggestionBox"); }}
+        onOpenLabFeedback={() => setScreen("teacherLabFeedback")}
         onOpenRahyar={() => {
           setMessagingInitialRole("teacher");
           setMessagingInitialMode("ai");
@@ -44778,6 +44849,10 @@ function PhoenixApp() {
         onLogout={() => setScreen("welcome")}
       />
     );
+  }
+
+  if (screen === "teacherLabFeedback") {
+    return <TeacherLabFeedbackView onBack={() => setScreen("teacherHome")} />;
   }
 
   if (screen === "teacherSchedule") {

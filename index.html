@@ -32786,6 +32786,7 @@ function VlabMitosisExperiment({ onReading }) {
   }, [run]);
   const ST = [{ e: 0.12, n: "اینترفاز", d: "DNA دو برابر می‌شود و سلول رشد می‌کند. کروموزوم‌ها هنوز کلاف‌های نازک‌اند." }, { e: 0.3, n: "پروفاز", d: "کروموزوم‌ها فشرده و X شکل می‌شوند؛ پوشش هسته از بین می‌رود." }, { e: 0.5, n: "متافاز", d: "کروموزوم‌ها در خط استوا ردیف می‌شوند و رشته‌های دوک آنها را نگه می‌دارند." }, { e: 0.72, n: "آنافاز", d: "کروماتیدهای خواهری از هم جدا می‌شوند و به دو قطب سلول می‌روند." }, { e: 1.01, n: "تلوفاز و سیتوکینز", d: "دو هسته‌ی تازه ساخته می‌شود و سلول وسط تنگ شده و به دو سلول تقسیم می‌شود." }];
   const stage = ST.find((s) => p < s.e), q = Math.max(0, Math.min(1, (p - 0.88) / 0.12));
+  const pinch = Math.min(1, q / 0.62), sepv = Math.max(0, (q - 0.62) / 0.38) * 12;
   const chroms = p < 0.5 ? 4 : 8, dna = p < 0.12 ? 2 : p < 0.5 ? 4 : p < 0.72 ? 4 : q > 0.9 ? 2 : 4;
   useEffect(() => {
     if (onReading) onReading(`مرحله: ${stage.n} | پیشرفت: ${Math.round(p * 100)}٪`);
@@ -32795,15 +32796,15 @@ function VlabMitosisExperiment({ onReading }) {
   const spind = Math.max(0, Math.min(1, (p - 0.3) / 0.12)) * Math.max(0, Math.min(1, (0.8 - p) / 0.08));
   const oldN = Math.max(0, Math.min(1, (0.3 - p) / 0.18)), newN = Math.max(0, Math.min(1, (p - 0.8) / 0.15));
   const items = [];
-  for (let i = 0; i < 4; i++) for (let k = 0; k < 2; k++) { const fr = vlabMitFrame(i, k, p); items.push({ i, k, ...fr }); }
-  const cellShape = (() => { const xr = 100 + q * 18, ry = 72 - q * 6, top = [], bot = []; for (let k = 0; k <= 40; k++) { const th = (k / 40) * Math.PI, t = Math.cos(th), h = ry * Math.sin(th) * (1 - q * 0.93 * Math.exp(-Math.pow(t / 0.22, 2))); top.push([160 - t * xr, 100 - h]); bot.push([160 - t * xr, 100 + h]); } const pts = top.concat(bot.reverse()); return <polygon points={pts.map((v) => v[0].toFixed(1) + "," + v[1].toFixed(1)).join(" ")} fill="#2a2038" stroke="#e88ab0" strokeWidth="3" strokeLinejoin="round" />; })();
+  for (let i = 0; i < 4; i++) for (let k = 0; k < 2; k++) { const fr = vlabMitFrame(i, k, p); items.push({ i, k, ...fr, x: fr.x + (k ? 1 : -1) * sepv }); }
+  const cellShape = (() => { const xr = 100 + q * 18, ry = 72 - q * 6, c = 62 * pinch, aa = xr - c; const poly = (pts, key) => <polygon key={key} points={pts.map((v) => v[0].toFixed(1) + "," + v[1].toFixed(1)).join(" ")} fill="#2a2038" stroke="#e88ab0" strokeWidth="3" strokeLinejoin="round" />; const ell = (cx) => { const t = [], bt = []; for (let k = 0; k <= 40; k++) { const th = (k / 40) * Math.PI; t.push([cx - aa * Math.cos(th), 100 - ry * Math.sin(th)]); bt.push([cx - aa * Math.cos(th), 100 + ry * Math.sin(th)]); } return t.concat(bt.reverse()); }; if (c >= aa) return <g>{poly(ell(160 - c - sepv), "l")}{poly(ell(160 + c + sepv), "r")}</g>; const top = [], bot = []; const x0 = 160 - c - aa, x1 = 160 + c + aa; for (let k = 0; k <= 120; k++) { const x = x0 + ((x1 - x0) * k) / 120, f = (cx) => ry * Math.sqrt(Math.max(0, 1 - Math.pow((x - cx) / aa, 2))), h = Math.max(f(160 - c), f(160 + c)); top.push([x, 100 - h]); bot.push([x, 100 + h]); } return poly(top.concat(bot.reverse()), "u"); })();
   const dbl = Math.pow(2, n);
   return (
     <div className="vlab-exp">
       <svg ref={svgRef} viewBox="0 0 320 244" className="vlab-svg" style={{ background: "#03060f", borderRadius: "10px", touchAction: "none" }}>
         {cellShape}
         <circle cx="160" cy="100" r="52" fill="#5a4a9c" opacity={0.55 * oldN} stroke="#b79cf0" strokeWidth="2" />
-        {[-1, 1].map((s) => <circle key={s} cx={160 + s * 66} cy="100" r="30" fill="#5a4a9c" opacity={0.5 * newN} stroke="#b79cf0" strokeWidth="1.6" />)}
+        {[-1, 1].map((s) => <circle key={s} cx={160 + s * 66 + s * sepv} cy="100" r="30" fill="#5a4a9c" opacity={0.5 * newN} stroke="#b79cf0" strokeWidth="1.6" />)}
         {[[60, 100], [260, 100]].map((c, j) => items.filter((it) => it.k === j).map((it) => <line key={j + "-" + it.i} x1={c[0] + (j ? -6 : 6)} y1="100" x2={it.x} y2={it.y} stroke="#9fb0e0" strokeWidth="0.9" opacity={0.7 * spind} />))}
         {q === 0 ? [[58, 100], [262, 100]].map((c, j) => <circle key={j} cx={c[0]} cy={c[1]} r="3" fill="#ffd98a" opacity={spind} />) : null}
         {items.map((it) => { const sp = it.k ? 1 : -1, cond = Math.min(1, it.c * 1.6), wav = Math.max(0, 1 - it.c * 2);

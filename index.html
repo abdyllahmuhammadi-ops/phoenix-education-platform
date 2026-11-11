@@ -23036,6 +23036,42 @@ const VLAB_EXPERIMENTS = [
     tools: ["مربع پانت","شجره‌نامه","ژنوتیپ"],
   },
   {
+    id: "food-web",
+    subject: "زیست‌شناسی",
+    level: "متوسطه",
+    title: "شبکه‌ی غذایی، هرم انرژی و چرخه‌ی کربن",
+    icon: "🕸️",
+    intro: "یک گونه را از شبکه‌ی غذایی حذف کن و ببین چه کسانی گرسنه می‌مانند. در هرم انرژی ببین چرا انرژی بالا رفتن از زنجیره کم می‌شود و در چرخه‌ی کربن اثر سوخت فسیلی بر CO₂ جو را بسنج.",
+    tools: ["شبکه‌ی غذایی","هرم انرژی","چرخه‌ی کربن"],
+  },
+  {
+    id: "alkane-isomers",
+    subject: "شیمی",
+    level: "متوسطه دوم",
+    title: "ایزومرهای آلکان و نام‌گذاری",
+    icon: "🧪",
+    intro: "همه‌ی ایزومرهای آلکان‌های ۴ تا ۷ کربنی را ببین، نامشان را بخوان یا حدس بزن و نقطه‌ی جوششان را مقایسه کن.",
+    tools: ["ساختار","نام‌گذاری","نقطه‌ی جوش"],
+  },
+  {
+    id: "cell-respiration",
+    subject: "زیست‌شناسی",
+    level: "متوسطه دوم",
+    title: "تنفس سلولی (از گلوکز تا ATP)",
+    icon: "🔋",
+    intro: "مراحل گلیکولیز، اکسایش پیرووات، چرخه‌ی کربس و زنجیره‌ی انتقال الکترون را در سلول دنبال کن و ATP هر مرحله را بشمار. اکسیژن را حذف کن و تخمیر را ببین.",
+    tools: ["گلوکز","میتوکندری","ATP"],
+  },
+  {
+    id: "buffer-ph",
+    subject: "شیمی",
+    level: "متوسطه دوم",
+    title: "بافر و pH (آب در برابر محلول بافر)",
+    icon: "🧫",
+    intro: "به آب خالص و به یک بافر استات اسید و باز اضافه کن و تغییر pH را در دو بشر کنار هم ببین. نمودار نشان می‌دهد ظرفیت بافر کجا تمام می‌شود.",
+    tools: ["بشر","اسید و باز","نمودار pH"],
+  },
+  {
     id: "hooke-law",
     subject: "فیزیک",
     level: "متوسطه اول",
@@ -31258,6 +31294,264 @@ function VlabDihybridExperiment({ onReading }) {
         <div className="vlab-toggle-row"><button type="button" className={"vlab-toggle-btn" + (show ? " active" : "")} onClick={() => setShow(!show)}>{show ? "پنهان‌کردن ژنوتیپ‌ها" : "نمایش ژنوتیپ‌ها (اول خودت حدس بزن)"}</button></div>
         <div className="vlab-readout" style={{ direction: "rtl" }}>{show ? T.note : "اول فکر کن: این صفت غالب است یا مغلوب؟ از چه جنسی به ارث رسیده؟ سپس ژنوتیپ‌ها را نشان بده و با حدست مقایسه کن. A_ یعنی AA یا Aa؛ داده‌ها برای تعیین دقیق کافی نیست."}</div>
       </>)}
+    </div>
+  );
+}
+
+/* ===== شبکه غذایی، هرم انرژی و چرخه کربن ===== */
+const VLAB_FW = {
+  sp: { plant: ["گیاه", "🌿", 160, 200], grass: ["ملخ", "🦗", 50, 145], mouse: ["موش", "🐁", 160, 145], rabbit: ["خرگوش", "🐇", 270, 145], frog: ["قورباغه", "🐸", 50, 90], snake: ["مار", "🐍", 112, 90], fox: ["روباه", "🦊", 268, 90], eagle: ["عقاب", "🦅", 160, 35] },
+  eats: { grass: ["plant"], mouse: ["plant"], rabbit: ["plant"], frog: ["grass"], snake: ["mouse", "frog"], fox: ["rabbit", "mouse"], eagle: ["snake", "mouse", "rabbit"] },
+};
+function vlabFwState(removed) {
+  const dead = new Set(removed); let ch = true;
+  while (ch) { ch = false; Object.keys(VLAB_FW.eats).forEach((k) => { if (!dead.has(k) && VLAB_FW.eats[k].every((f) => dead.has(f))) { dead.add(k); ch = true; } }); }
+  const risk = new Set(); Object.keys(VLAB_FW.eats).forEach((k) => { if (!dead.has(k) && VLAB_FW.eats[k].some((f) => dead.has(f))) risk.add(k); });
+  return { dead, risk };
+}
+function VlabFoodWebExperiment({ onReading }) {
+  const [mode, setMode] = useState("web");
+  const [rem, setRem] = useState([]);
+  const [E0, setE0] = useState(10000), [eff, setEff] = useState(10);
+  const [em, setEm] = useState(9), [yrs, setYrs] = useState(30);
+  const st = vlabFwState(rem);
+  const lv = [E0, E0 * eff / 100, E0 * Math.pow(eff / 100, 2), E0 * Math.pow(eff / 100, 3)];
+  const ppm0 = 420, rate = (em * 0.45) / 2.13, ppm = ppm0 + rate * yrs;
+  useEffect(() => { if (onReading) onReading(mode === "web" ? `گونه‌های حذف‌شده: ${rem.length} | منقرض‌شده در کل: ${st.dead.size}` : mode === "energy" ? `انرژی تولیدکننده ${E0} kJ | بازده ${eff}٪` : `انتشار ${em} GtC/سال | بعد ${yrs} سال: ${ppm.toFixed(0)} ppm`); }, [rem, E0, eff, em, yrs, mode]);
+  const edges = []; Object.keys(VLAB_FW.eats).forEach((k) => VLAB_FW.eats[k].forEach((f) => edges.push([f, k])));
+  const tl = ["تولیدکننده", "مصرف‌کننده‌ی اول", "مصرف‌کننده‌ی دوم", "مصرف‌کننده‌ی سوم"];
+  const fmt = (x) => (x >= 100 ? vlabMFa(Math.round(x), 0) : vlabMFa(x, 1));
+  const ppmPts = Array.from({ length: 51 }, (_, i) => `${30 + (i / 50) * 270},${(190 - ((ppm0 + rate * i - 400) / 140) * 120).toFixed(1)}`).join(" ");
+  const capY = 190 - ((ppm - 400) / 140) * 120;
+  return (
+    <div className="vlab-exp">
+      <div className="vlab-toggle-row" style={{ flexWrap: "wrap" }}>{[["web", "شبکه‌ی غذایی"], ["energy", "هرم انرژی"], ["carbon", "چرخه‌ی کربن"]].map(([k, t]) => (<button key={k} type="button" className={"vlab-toggle-btn" + (mode === k ? " active" : "")} onClick={() => setMode(k)}>{t}</button>))}</div>
+      {mode === "web" && (<>
+        <svg viewBox="0 0 320 230" className="vlab-svg" style={{ background: "#0b1a14", borderRadius: "10px" }}>
+          <defs><marker id="fwA" markerWidth="6" markerHeight="6" refX="5" refY="3" orient="auto"><path d="M0,0 L6,3 L0,6z" fill="#7be0a4" /></marker></defs>
+          {edges.map(([f, k], i) => { const a = VLAB_FW.sp[f], b = VLAB_FW.sp[k], dx = b[2] - a[2], dy = b[3] - a[3], L = Math.hypot(dx, dy), px = dx / L, py = dy / L, off = Math.min(Math.abs(px) > 1e-6 ? 30 / Math.abs(px) : 1e9, Math.abs(py) > 1e-6 ? 15 / Math.abs(py) : 1e9), dead = st.dead.has(f) || st.dead.has(k); return <line key={i} x1={a[2] + px * off} y1={a[3] + py * off} x2={b[2] - px * (off + 3)} y2={b[3] - py * (off + 3)} stroke={dead ? "#3a4a44" : "#7be0a4"} strokeWidth="1.2" markerEnd="url(#fwA)" opacity={dead ? 0.5 : 0.9} />; })}
+          {Object.keys(VLAB_FW.sp).map((k) => { const [n, em2, x, y] = VLAB_FW.sp[k], d = st.dead.has(k), r = st.risk.has(k), isR = rem.includes(k); return (
+            <g key={k} onClick={() => setRem((a) => (a.includes(k) ? a.filter((q) => q !== k) : a.concat([k])))} style={{ cursor: "pointer" }}>
+              <rect x={x - 28} y={y - 13} width="56" height="26" rx="8" fill={d ? "#2a2f2d" : r ? "#4a3512" : "#14382a"} stroke={d ? "#555" : isR ? "#ff6b6b" : r ? "#ffb86a" : "#7be0a4"} strokeWidth={isR ? 2.2 : 1.3} />
+              <text x={x - 17} y={y + 5} fontSize="13" textAnchor="middle" opacity={d ? 0.35 : 1}>{em2}</text>
+              <text x={x + 6} y={y + 4} fontSize="8.5" fill={d ? "#777" : "#e8f6ee"} textAnchor="middle" textDecoration={d ? "line-through" : "none"}>{n}</text>
+            </g>); })}
+          <text x="160" y="226" fontSize="7.5" fill="#9fd8b8" textAnchor="middle">پیکان از غذا به سمت خورنده است (جهت انتقال انرژی). روی یک گونه بزن تا حذف شود.</text>
+        </svg>
+        <div className="vlab-toggle-row"><button type="button" className="vlab-toggle-btn" onClick={() => setRem([])}>↺ همه‌ی گونه‌ها برگردند</button></div>
+        <div className="vlab-readout" style={{ direction: "rtl" }}>
+          <div>حذف‌شده توسط تو: {rem.length ? rem.map((k) => VLAB_FW.sp[k][0]).join("، ") : "—"}</div>
+          <div>منقرض به‌دنبال آن (گرسنگی): {Array.from(st.dead).filter((k) => !rem.includes(k)).map((k) => VLAB_FW.sp[k][0]).join("، ") || "—"}</div>
+          <div>در خطر (یک منبع غذایی را از دست داده‌اند): {Array.from(st.risk).map((k) => VLAB_FW.sp[k][0]).join("، ") || "—"}</div>
+          <div style={{ opacity: 0.8, fontSize: 12 }}>قاعده: گونه‌ای که همه‌ی غذاهایش حذف شود منقرض می‌شود. گونه‌ای که چند غذا دارد (مثل عقاب) مقاوم‌تر است. تنوع غذا یعنی پایداری.</div>
+        </div>
+      </>)}
+      {mode === "energy" && (<>
+        <svg viewBox="0 0 320 210" className="vlab-svg" style={{ background: "#0b1a14", borderRadius: "10px" }}>
+          {lv.map((e, i) => { const w = 40 + 230 * (1 - i * 0.26), y = 150 - i * 44; return (<g key={i}><rect x={160 - w / 2} y={y} width={w} height="38" rx="4" fill={["#3fa66a", "#9bc94a", "#e0c040", "#e07a4a"][i]} stroke="#fff" strokeWidth="0.6" opacity="0.92" /><text x="160" y={y + 16} fontSize="8.5" fill="#101010" textAnchor="middle" fontWeight="700">{tl[i]}</text><text x="160" y={y + 30} fontSize="9" fill="#101010" textAnchor="middle" direction="ltr" fontWeight="700">{fmt(e) + " kJ"}</text></g>); })}
+          <text x="160" y="16" fontSize="9" fill="#9fd8b8" textAnchor="middle">در هر سطح فقط حدود {vlabMFa(eff, 0)}٪ انرژی به سطح بعد می‌رسد</text>
+          <text x="160" y="204" fontSize="7.5" fill="#9fd8b8" textAnchor="middle">بقیه به‌صورت گرما، تنفس و مواد دفعی از دست می‌رود</text>
+        </svg>
+        <div className="vlab-controls"><div className="vlab-ctrl-col" style={{ flex: 1 }}>
+          <label className="vlab-ctrl-label">انرژی تولیدکننده‌ها: <bdi dir="ltr">{vlabMFa(E0, 0)} kJ</bdi></label><VlabRange min="1000" max="100000" step="1000" value={E0} onChange={(e) => setE0(+e.target.value)} />
+          <label className="vlab-ctrl-label">بازده انتقال انرژی: <bdi dir="ltr">{vlabMFa(eff, 0)}٪</bdi></label><VlabRange min="5" max="20" step="1" value={eff} onChange={(e) => setEff(+e.target.value)} />
+        </div></div>
+        <div className="vlab-readout" style={{ direction: "rtl" }}>
+          <div>انرژی در سطح چهارم (مصرف‌کننده‌ی سوم): <bdi dir="ltr">{fmt(lv[3])} kJ</bdi>، یعنی {vlabMFa((lv[3] / E0) * 100, 2)}٪ از انرژی تولیدکننده‌ها.</div>
+          <div style={{ opacity: 0.8, fontSize: 12 }}>به همین دلیل زنجیره‌های غذایی معمولاً بیشتر از ۴ یا ۵ حلقه ندارند و شکارچیان بزرگ کم‌شمارند. قاعده‌ی ۱۰٪ یک تقریب است و در اکوسیستم‌های مختلف از ۵ تا ۲۰٪ تغییر می‌کند.</div>
+        </div>
+        <VlabFormulaCheck title="انرژی در سطح n‌ام" fa="انرژی سطح بعد = انرژی سطح قبل × بازده" en="E₃ = E₁ · (η)²" legend="η را به‌صورت کسر بنویس (۱۰٪ = ۰٫۱)؛ سطح سوم دو مرحله انتقال دارد" subst={`E₃ = ${E0} × (${eff / 100})² = ?`} label="E₃:" answer={lv[2]} unit="kJ" decimals={1} />
+      </>)}
+      {mode === "carbon" && (<>
+        <svg viewBox="0 0 320 230" className="vlab-svg" style={{ background: "#0b1a14", borderRadius: "10px" }}>
+          <defs><marker id="ccA" markerWidth="6" markerHeight="6" refX="5" refY="3" orient="auto"><path d="M0,0 L6,3 L0,6z" fill="#ffd98a" /></marker></defs>
+          <rect x="105" y="14" width="110" height="34" rx="8" fill="#26384a" stroke="#9fc4ff" /><text x="160" y="29" fontSize="9" fill="#cfe3ff" textAnchor="middle">CO₂ جو</text><text x="160" y="42" fontSize="9" fill="#ffd98a" textAnchor="middle" direction="ltr">{`${vlabMFa(ppm, 0)} ppm`}</text>
+          <rect x="14" y="108" width="84" height="34" rx="8" fill="#14382a" stroke="#7be0a4" /><text x="56" y="129" fontSize="8.5" fill="#e8f6ee" textAnchor="middle">گیاهان و خاک</text>
+          <rect x="222" y="108" width="84" height="34" rx="8" fill="#12335a" stroke="#6ab0ff" /><text x="264" y="129" fontSize="8.5" fill="#e8f6ee" textAnchor="middle">اقیانوس</text>
+          <rect x="105" y="168" width="110" height="34" rx="8" fill="#3a2a22" stroke="#c9a06a" /><text x="160" y="189" fontSize="8.5" fill="#f0dcc0" textAnchor="middle">سوخت‌های فسیلی</text>
+          <path d="M84,108 L130,52" stroke="#ffd98a" strokeWidth="2" markerEnd="url(#ccA)" fill="none" /><text x="116" y="92" fontSize="7" fill="#ffe3a8" textAnchor="start">تنفس</text>
+          <path d="M110,52 L62,106" stroke="#7be0a4" strokeWidth="2.4" markerEnd="url(#ccA)" fill="none" /><text x="70" y="70" fontSize="7" fill="#9fd8b8" textAnchor="end">فتوسنتز</text>
+          <path d="M214,52 L250,106" stroke="#6ab0ff" strokeWidth="2" markerEnd="url(#ccA)" fill="none" /><text x="238" y="78" fontSize="7" fill="#9fc4ff">جذب</text>
+          <path d="M160,168 L160,52" stroke="#ff8a6a" strokeWidth={1 + em * 0.5} markerEnd="url(#ccA)" fill="none" /><text x="166" y="112" fontSize="8" fill="#ffb59a" direction="ltr">{`${vlabMFa(em, 1)} GtC/yr`}</text>
+          <text x="160" y="224" fontSize="7" fill="#9fd8b8" textAnchor="middle">ضخامت پیکان نارنجی = شدت سوزاندن سوخت فسیلی</text>
+        </svg>
+        <svg viewBox="0 0 320 210" className="vlab-svg" style={{ background: "#0b1a14", borderRadius: "10px" }}>
+          <line x1="30" y1="190" x2="300" y2="190" stroke="#4a6a5c" /><line x1="30" y1="190" x2="30" y2="50" stroke="#4a6a5c" />
+          {[400, 440, 480, 520].map((v) => <g key={v}><line x1="28" y1={190 - ((v - 400) / 140) * 120} x2="300" y2={190 - ((v - 400) / 140) * 120} stroke="#1f3a30" /><text x="26" y={193 - ((v - 400) / 140) * 120} fontSize="7" fill="#9fd8b8" textAnchor="end" direction="ltr">{v}</text></g>)}
+          <polyline points={ppmPts} fill="none" stroke="#ffd98a" strokeWidth="1.8" />
+          <circle cx={30 + (yrs / 50) * 270} cy={capY} r="4" fill="#ff6b6b" stroke="#fff" />
+          <text x="165" y="205" fontSize="8" fill="#9fd8b8" textAnchor="middle">گذشت زمان (سال، تا ۵۰)</text><text x="165" y="16" fontSize="9" fill="#cfe3ff" textAnchor="middle">غلظت CO₂ جو (ppm)</text>
+        </svg>
+        <div className="vlab-controls"><div className="vlab-ctrl-col" style={{ flex: 1 }}>
+          <label className="vlab-ctrl-label">کربن حاصل از سوخت فسیلی: <bdi dir="ltr">{vlabMFa(em, 1)} GtC/yr</bdi></label><VlabRange min="0" max="12" step="0.5" value={em} onChange={(e) => setEm(+e.target.value)} />
+          <label className="vlab-ctrl-label">زمان: <bdi dir="ltr">{vlabMFa(yrs, 0)} سال</bdi></label><VlabRange min="0" max="50" step="1" value={yrs} onChange={(e) => setYrs(+e.target.value)} />
+        </div></div>
+        <div className="vlab-readout" style={{ direction: "rtl" }}>
+          <div>افزایش سالانه‌ی CO₂ جو: <bdi dir="ltr">{vlabMFa(rate, 2)} ppm/yr</bdi></div>
+          <div>پس از {vlabMFa(yrs, 0)} سال: <bdi dir="ltr">{vlabMFa(ppm, 0)} ppm</bdi> (امروز حدود ۴۲۰)</div>
+          <div style={{ opacity: 0.8, fontSize: 12 }}>الگوی ساده‌شده: حدود ۴۵٪ از کربن منتشرشده در جو می‌ماند و بقیه را اقیانوس و گیاهان می‌گیرند؛ هر ۲٫۱۳ گیگاتن کربن، ۱ ppm است. این الگو برای یادگیری مفهوم است، نه پیش‌بینی دقیق آب‌وهوا.</div>
+        </div>
+        <VlabFormulaCheck title="افزایش CO₂ جو" fa="افزایش (ppm) = کربن منتشرشده × نسبت ماندگار ÷ ۲٫۱۳ × سال" en="Δc = E · 0.45 · t / 2.13" legend="E برحسب گیگاتن کربن در سال؛ نسبت ماندگار ۰٫۴۵" subst={`Δc = ${em} × 0.45 × ${yrs} ÷ 2.13 = ?`} label="Δc:" answer={rate * yrs} unit="ppm" decimals={1} />
+      </>)}
+    </div>
+  );
+}
+
+/* ===== ایزومرهای آلکان ===== */
+const VLAB_ISO = {
+  4: [{ n: "بوتان", m: 4, b: [], bp: -0.5 }, { n: "۲-متیل‌پروپان", m: 3, b: [[2, 1]], bp: -11.7 }],
+  5: [{ n: "پنتان", m: 5, b: [], bp: 36.1 }, { n: "۲-متیل‌بوتان", m: 4, b: [[2, 1]], bp: 27.8 }, { n: "۲،۲-دی‌متیل‌پروپان", m: 3, b: [[2, 1], [2, 1]], bp: 9.5 }],
+  6: [{ n: "هگزان", m: 6, b: [], bp: 68.7 }, { n: "۲-متیل‌پنتان", m: 5, b: [[2, 1]], bp: 60.3 }, { n: "۳-متیل‌پنتان", m: 5, b: [[3, 1]], bp: 63.3 }, { n: "۲،۳-دی‌متیل‌بوتان", m: 4, b: [[2, 1], [3, 1]], bp: 58.0 }, { n: "۲،۲-دی‌متیل‌بوتان", m: 4, b: [[2, 1], [2, 1]], bp: 49.7 }],
+  7: [{ n: "هپتان", m: 7, b: [], bp: 98.4 }, { n: "۲-متیل‌هگزان", m: 6, b: [[2, 1]], bp: 90.0 }, { n: "۳-متیل‌هگزان", m: 6, b: [[3, 1]], bp: 92.0 }, { n: "۳-اتیل‌پنتان", m: 5, b: [[3, 2]], bp: 93.5 }, { n: "۲،۴-دی‌متیل‌پنتان", m: 5, b: [[2, 1], [4, 1]], bp: 80.5 }, { n: "۲،۳-دی‌متیل‌پنتان", m: 5, b: [[2, 1], [3, 1]], bp: 89.8 }, { n: "۳،۳-دی‌متیل‌پنتان", m: 5, b: [[3, 1], [3, 1]], bp: 86.1 }, { n: "۲،۲-دی‌متیل‌پنتان", m: 5, b: [[2, 1], [2, 1]], bp: 79.2 }, { n: "۲،۲،۳-تری‌متیل‌بوتان", m: 4, b: [[2, 1], [2, 1], [3, 1]], bp: 80.9 }],
+};
+function vlabIsoGeom(iso) {
+  const dx = 34, dy = 15, x0 = 160 - ((iso.m - 1) * dx) / 2, y0 = 110, atoms = [], bonds = [];
+  for (let i = 1; i <= iso.m; i++) atoms.push({ x: x0 + (i - 1) * dx, y: y0 + (i % 2 === 0 ? -dy : dy), main: true, label: String(i), peak: i % 2 === 0 });
+  for (let i = 1; i < iso.m; i++) bonds.push([i - 1, i, true]);
+  const grp = {}; iso.b.forEach(([p, len]) => { (grp[p] = grp[p] || []).push(len); });
+  Object.keys(grp).forEach((p) => {
+    const ci = +p - 1, c = atoms[ci], dir = c.peak ? -1 : 1, lens = grp[p], k = lens.length;
+    lens.forEach((len, j) => {
+      const ang = k === 1 ? 0 : (j === 0 ? -1 : 1) * 0.55, bx = c.x + Math.sin(ang) * 30, by = c.y + dir * Math.cos(ang) * 30;
+      atoms.push({ x: bx, y: by, main: false }); bonds.push([ci, atoms.length - 1, false]);
+      if (len === 2) { atoms.push({ x: bx + 28, y: by + dir * 14, main: false }); bonds.push([atoms.length - 2, atoms.length - 1, false]); }
+    });
+  });
+  return { atoms, bonds };
+}
+function VlabIsomerExperiment({ onReading }) {
+  const [n, setN] = useState(5), [k, setK] = useState(0), [num, setNum] = useState(true), [guess, setGuess] = useState(false);
+  const list = VLAB_ISO[n], iso = list[Math.min(k, list.length - 1)], g = vlabIsoGeom(iso);
+  useEffect(() => { if (onReading) onReading(`C${n}H${2 * n + 2} | ${iso.n} | نقطه جوش ≈ ${iso.bp}°C`); }, [n, k]);
+  const bmin = Math.min(...list.map((q) => q.bp)), bmax = Math.max(...list.map((q) => q.bp));
+  const frm = (x) => String(x).replace(/\d/g, (d) => "₀₁₂₃₄₅₆₇₈₉"[d]);
+  return (
+    <div className="vlab-exp">
+      <div className="vlab-num-row" role="group" aria-label="تعداد کربن">{[4, 5, 6, 7].map((c) => (<button key={c} type="button" className={"vlab-num-btn" + (n === c ? " active" : "")} onClick={() => { setN(c); setK(0); setGuess(false); }}>C{frm(c)} ({vlabMFa(VLAB_ISO[c].length, 0)} ایزومر)</button>))}</div>
+      <div className="vlab-num-row" role="group" aria-label="ایزومرها">{list.map((q, i) => (<button key={i} type="button" className={"vlab-num-btn" + (k === i ? " active" : "")} onClick={() => { setK(i); setGuess(false); }} style={{ minWidth: 40 }}>{vlabMFa(i + 1, 0)}</button>))}</div>
+      <svg viewBox="0 0 320 200" className="vlab-svg" style={{ background: "#0b1230", borderRadius: "10px" }}>
+        {g.bonds.map(([a, b, m], i) => <line key={i} x1={g.atoms[a].x} y1={g.atoms[a].y} x2={g.atoms[b].x} y2={g.atoms[b].y} stroke={m ? "#7fd8ff" : "#ffb86a"} strokeWidth="3" strokeLinecap="round" />)}
+        {g.atoms.map((a, i) => (<g key={i}><circle cx={a.x} cy={a.y} r="5.4" fill={a.main ? "#1f3a6a" : "#5a3a1a"} stroke={a.main ? "#7fd8ff" : "#ffb86a"} />{num && a.main ? <text x={a.x} y={a.y + (a.peak ? -10 : 17)} fontSize="8" fill="#9fb0e0" textAnchor="middle">{a.label}</text> : null}</g>))}
+        <text x="160" y="20" fontSize="12" fill="#ffd98a" textAnchor="middle" fontWeight="700">{guess ? "این ساختار چه نامی دارد؟" : iso.n}</text>
+        <text x="160" y="190" fontSize="8" fill="#9fb0e0" textAnchor="middle">آبی: زنجیر اصلی (طولانی‌ترین) · نارنجی: شاخه‌ی فرعی</text>
+      </svg>
+      <div className="vlab-toggle-row"><button type="button" className={"vlab-toggle-btn" + (num ? " active" : "")} onClick={() => setNum(!num)}>شماره‌ی کربن‌ها</button><button type="button" className={"vlab-toggle-btn" + (guess ? " active" : "")} onClick={() => setGuess(!guess)}>{guess ? "نام را نشان بده" : "تمرین: نام را حدس بزن"}</button></div>
+      <div className="vlab-readout" style={{ direction: "rtl" }}>
+        <div>فرمول مولکولی: C{frm(n)}H{frm(2 * n + 2)} (برای همه‌ی ایزومرها یکسان) · {vlabMFa(n, 0)} کربن و {vlabMFa(2 * n + 2, 0)} هیدروژن</div>
+        <div>زنجیر اصلی: {vlabMFa(iso.m, 0)} کربن · شاخه‌ها: {iso.b.length ? iso.b.map(([p, l]) => (l === 1 ? "متیل" : "اتیل") + " روی کربن " + vlabMFa(p, 0)).join("، ") : "ندارد"}</div>
+        <div>نقطه‌ی جوش: حدود <bdi dir="ltr">{vlabMFa(iso.bp, 1)} °C</bdi></div>
+      </div>
+      <svg viewBox="0 0 320 130" className="vlab-svg" style={{ background: "#0b1230", borderRadius: "10px" }}>
+        <text x="160" y="14" fontSize="9" fill="#cfd6ea" textAnchor="middle">نقطه‌ی جوش ایزومرها (°C)</text>
+        {list.map((q, i) => { const w = 260 / list.length, x = 30 + i * w, h = 12 + ((q.bp - bmin) / Math.max(1, bmax - bmin)) * 70; return (<g key={i}><rect x={x + 4} y={105 - h} width={w - 8} height={h} rx="3" fill={i === k ? "#ffd98a" : "#4a6aa8"} onClick={() => { setK(i); setGuess(false); }} style={{ cursor: "pointer" }} /><text x={x + w / 2} y={102 - h} fontSize="7.5" fill="#cfd6ea" textAnchor="middle" direction="ltr">{vlabMFa(q.bp, 0)}</text><text x={x + w / 2} y="118" fontSize="8" fill="#9fb0e0" textAnchor="middle">{vlabMFa(i + 1, 0)}</text></g>); })}
+      </svg>
+      <div className="vlab-readout">هرچه شاخه‌ها بیشتر و مولکول گردتر باشد، نیروی بین مولکولی (وان‌دروالس) ضعیف‌تر و نقطه‌ی جوش پایین‌تر است. نقطه‌ی جوش‌ها تقریبی و از منابع مرجع گرد شده‌اند؛ برای تمرین نام‌گذاری: طولانی‌ترین زنجیر را پیدا کن، از سمتی شماره بزن که شاخه‌ها شماره‌ی کوچک‌تری بگیرند.</div>
+      <VlabFormulaCheck title="تعداد هیدروژن آلکان" fa="تعداد هیدروژن = دو برابر کربن + ۲" en="CₙH₂ₙ₊₂" legend="این رابطه برای همه‌ی آلکان‌های راست‌زنجیر و شاخه‌دار درست است" subst={`H = 2 × ${n} + 2 = ?`} label="H:" answer={2 * n + 2} unit="" decimals={0} />
+    </div>
+  );
+}
+
+/* ===== تنفس سلولی ===== */
+function VlabRespirationExperiment({ onReading }) {
+  const [stage, setStage] = useState(0), [o2, setO2] = useState(true), [nG, setNG] = useState(1), [book, setBook] = useState(false), [play, setPlay] = useState(false);
+  useEffect(() => { if (!play) return; const id = setInterval(() => setStage((s) => { if (s >= 3) { setPlay(false); return s; } return s + 1; }), 2600); return () => clearInterval(id); }, [play]);
+  const ST = [
+    { n: "گلیکولیز", where: "سیتوپلاسم", atp: 2, d: "گلوکز (۶ کربنی) به ۲ پیرووات (۳ کربنی) شکسته می‌شود. ۴ ATP ساخته و ۲ ATP مصرف می‌شود (سود خالص ۲)، و ۲ NADH پدید می‌آید. اکسیژن لازم نیست." },
+    { n: "اکسایش پیرووات", where: "ماتریکس میتوکندری", atp: 0, d: "هر پیرووات یک CO₂ از دست می‌دهد و به استیل‌کوآ تبدیل می‌شود. جمعاً ۲ CO₂ و ۲ NADH." },
+    { n: "چرخه‌ی کربس", where: "ماتریکس میتوکندری", atp: 2, d: "استیل‌کوآ کاملاً اکسید می‌شود: ۴ CO₂، ۶ NADH، ۲ FADH₂ و ۲ ATP برای هر گلوکز." },
+    { n: "زنجیره‌ی انتقال الکترون", where: "غشای درونی (کریستا)", atp: book ? 32 : 26, d: "NADH و FADH₂ الکترون می‌دهند؛ اکسیژن پذیرنده‌ی نهایی است و آب می‌سازد. ATP‌سنتاز بیشترین ATP را می‌سازد." },
+  ];
+  const aerobic = o2, cur = ST[stage];
+  const atpStage = !aerobic && stage > 0 ? 0 : cur.atp;
+  const cum = ST.slice(0, stage + 1).reduce((s, q, i) => s + (!aerobic && i > 0 ? 0 : q.atp), 0) * nG;
+  const total = (aerobic ? (book ? 36 : 30) : 2) * nG;
+  useEffect(() => { if (onReading) onReading(`${aerobic ? "هوازی" : "بی‌هوازی"} | مرحله: ${cur.n} | ATP تا اینجا: ${cum}`); }, [stage, o2, nG, book]);
+  const zone = (i) => (i === 0 ? "cyt" : i === 3 ? "cri" : "mat");
+  return (
+    <div className="vlab-exp">
+      <div className="vlab-toggle-row"><button type="button" className={"vlab-toggle-btn" + (o2 ? " active" : "")} onClick={() => setO2(true)}>اکسیژن هست (هوازی)</button><button type="button" className={"vlab-toggle-btn" + (!o2 ? " active" : "")} onClick={() => { setO2(false); if (stage > 0) setStage(0); }}>اکسیژن نیست (بی‌هوازی)</button></div>
+      <svg viewBox="0 0 320 210" className="vlab-svg" style={{ background: "#03060f", borderRadius: "10px" }}>
+        <rect x="6" y="22" width="308" height="172" rx="20" fill="#1c2a3a" stroke="#e88ab0" strokeWidth="2.4" />
+        <rect x="10" y="26" width="104" height="164" rx="16" fill={stage === 0 ? "#2f4a66" : "#1c2a3a"} opacity="0.9" /><text x="62" y="42" fontSize="8" fill="#cfe3ff" textAnchor="middle">سیتوپلاسم</text>
+        <ellipse cx="216" cy="108" rx="92" ry="66" fill="#3a2230" stroke="#e0643c" strokeWidth="2.4" />
+        <ellipse cx="216" cy="108" rx="80" ry="55" fill={stage === 1 || stage === 2 ? "#5a3340" : "#3a2230"} stroke="#ff9a7a" strokeWidth="1" opacity={aerobic ? 1 : 0.35} />
+        {[-50, -25, 0, 25, 50].map((o, i) => <path key={i} d={`M${216 + o},${64 + (i % 2) * 3} q-8,22 0,44 q8,22 0,44`} fill="none" stroke={stage === 3 ? "#ffd98a" : "#c46a4a"} strokeWidth={stage === 3 ? 2.6 : 1.4} opacity={aerobic ? 1 : 0.35} />)}
+        <text x="216" y="40" fontSize="8" fill="#ffd9c0" textAnchor="middle" opacity={aerobic ? 1 : 0.5}>میتوکندری</text>
+        {stage === 0 || !aerobic ? <g><polygon points="62,98 74,91 86,98 86,112 74,119 62,112" fill="#ffd98a" stroke="#fff" /><text x="74" y="108" fontSize="7" fill="#222" textAnchor="middle">گلوکز</text></g> : null}
+        {aerobic && stage === 0 ? <g>{[0, 1].map((i) => <g key={i}><circle cx={52 + i * 36} cy="140" r="7" fill="#9fe3a8" stroke="#fff" /><text x={52 + i * 36} y="143" fontSize="5.5" fill="#102" textAnchor="middle">پیرووات</text></g>)}</g> : null}
+        {aerobic && stage === 1 ? <g><text x="216" y="100" fontSize="9" fill="#e8f6ee" textAnchor="middle">پیرووات × ۲ ← استیل‌کوآ × ۲</text><text x="216" y="118" fontSize="9" fill="#ffb59a" textAnchor="middle" direction="ltr">{`+ ${2 * nG} CO₂`}</text></g> : null}
+        {aerobic && stage === 2 ? <g><text x="216" y="96" fontSize="9" fill="#e8f6ee" textAnchor="middle">چرخه‌ی کربس</text><text x="216" y="114" fontSize="9" fill="#ffb59a" textAnchor="middle" direction="ltr">{`+ ${4 * nG} CO₂ · ${6 * nG} NADH · ${2 * nG} FADH₂`}</text></g> : null}
+        {aerobic && stage === 3 ? <g><text x="216" y="100" fontSize="9" fill="#e8f6ee" textAnchor="middle" direction="ltr">{`${6 * nG} O₂ → ${6 * nG} H₂O`}</text><text x="216" y="118" fontSize="9" fill="#ffd98a" textAnchor="middle" direction="ltr">{`+ ${(book ? 32 : 26) * nG} ATP`}</text></g> : null}
+        {!aerobic ? <g><text x="62" y="150" fontSize="8" fill="#ffd98a" textAnchor="middle">تخمیر: پیرووات ← لاکتات (یا اتانول + CO₂)</text><text x="216" y="108" fontSize="9" fill="#cfb0b0" textAnchor="middle">بدون اکسیژن، میتوکندری کار نمی‌کند</text></g> : null}
+        <text x="160" y="14" fontSize="10" fill="#ffd98a" textAnchor="middle" fontWeight="700">{aerobic ? cur.n + " — " + cur.where : "گلیکولیز + تخمیر — سیتوپلاسم"}</text>
+        <text x="160" y="205" fontSize="8" fill="#cfd6ea" textAnchor="middle" direction="ltr">{`ATP تا اینجا: ${vlabMFa(aerobic ? cum : 2 * nG, 0)}`}</text>
+      </svg>
+      <div className="vlab-toggle-row" style={{ flexWrap: "wrap" }}>{aerobic && ST.map((q, i) => (<button key={i} type="button" className={"vlab-toggle-btn" + (stage === i ? " active" : "")} onClick={() => { setPlay(false); setStage(i); }}>{vlabMFa(i + 1, 0)}. {q.n}</button>))}<button type="button" className="vlab-toggle-btn" onClick={() => { setStage(0); setPlay(!play); }} style={{ display: aerobic ? undefined : "none" }}>{play ? "⏸" : "▶ پخش مراحل"}</button></div>
+      <div className="vlab-controls"><div className="vlab-ctrl-col" style={{ flex: 1 }}>
+        <label className="vlab-ctrl-label">تعداد مولکول گلوکز: {vlabMFa(nG, 0)}</label><VlabRange min="1" max="10" step="1" value={nG} onChange={(e) => setNG(+e.target.value)} />
+        <div className="vlab-toggle-row"><button type="button" className={"vlab-toggle-btn" + (book ? " active" : "")} onClick={() => setBook(!book)}>{book ? "عدد کتاب درسی: ۳۶ ATP" : "عدد منابع جدید: ≈ ۳۰ ATP"} (بزن تا عوض شود)</button></div>
+      </div></div>
+      <div className="vlab-readout" style={{ direction: "rtl" }}>
+        <div><b>{aerobic ? cur.n : "تخمیر"}:</b> {aerobic ? cur.d : "بدون اکسیژن فقط گلیکولیز ادامه می‌یابد: ۲ ATP برای هر گلوکز. پیرووات برای بازیافت NADH به لاکتات (در ماهیچه) یا اتانول و CO₂ (در مخمر) تبدیل می‌شود."}</div>
+        <div>جمع ATP برای {vlabMFa(nG, 0)} گلوکز: <bdi dir="ltr">{vlabMFa(total, 0)} ATP</bdi> ({aerobic ? "هوازی" : "بی‌هوازی"}) · هوازی حدود {vlabMFa(Math.round((book ? 36 : 30) / 2), 0)} برابر بی‌هوازی بازده دارد.</div>
+        <div style={{ opacity: 0.8, fontSize: 12 }}>عدد دقیق ATP به حمل‌ونقل و نشت پروتون بستگی دارد: کتاب‌های درسی ۳۶ تا ۳۸ می‌نویسند و منابع جدید حدود ۳۰ تا ۳۲. هر دو را بگذار و ببین کدام را در امتحان می‌خواهند.</div>
+      </div>
+      <VlabFormulaCheck title="ATP کل تنفس هوازی" fa="ATP کل = ATP هر گلوکز × تعداد گلوکز" en="ATP = n × (2 + 0 + 2 + e)" legend={`اکسایش پیرووات ATP نمی‌سازد؛ زنجیره ${book ? 32 : 26} ATP می‌سازد`} subst={`ATP = ${nG} × (2 + 0 + 2 + ${book ? 32 : 26}) = ?`} label="ATP:" answer={nG * (4 + (book ? 32 : 26))} unit="" decimals={0} />
+      <VlabEverydayCard title="چرا بعد از دویدن تند خسته می‌شویم؟" text="وقتی ماهیچه‌ها اکسیژن کافی ندارند، تخمیر لاکتیکی انجام می‌دهند و ATP کمی می‌سازند. لاکتات جمع می‌شود و ماهیچه درد می‌گیرد. با تنفس عمیق و استراحت، اکسیژن برمی‌گردد و لاکتات از بین می‌رود.">
+        <circle cx="60" cy="30" r="9" fill="#e8b58a" /><path d="M60,39 L52,62 M60,39 L70,60 M60,48 L44,40 M60,48 L76,52 M52,62 L46,76 M70,60 L80,72" stroke="#c46a4a" strokeWidth="3" fill="none" strokeLinecap="round" />
+      </VlabEverydayCard>
+    </div>
+  );
+}
+
+/* ===== بافر و pH ===== */
+function vlabBufPH(opts) {
+  const { Ct, nA, nAdd, nBase, V } = opts, Ka = Math.pow(10, -4.76), Kw = 1e-14, Vt = V + (opts.mL || 0) / 1000;
+  const na = (nA + nBase) / Vt, cl = nAdd / Vt, ct = Ct / Vt;
+  const f = (pH) => { const H = Math.pow(10, -pH); return H + na - ct * Ka / (Ka + H) - cl - Kw / H; };
+  let lo = -1, hi = 15; for (let i = 0; i < 80; i++) { const m = (lo + hi) / 2; if (f(m) > 0) lo = m; else hi = m; }
+  return (lo + hi) / 2;
+}
+function vlabBufColor(ph) {
+  const pts = [[0, [229, 57, 53]], [2, [229, 57, 53]], [4, [251, 140, 0]], [5.5, [253, 216, 53]], [6.5, [192, 202, 51]], [7, [67, 160, 71]], [8, [38, 166, 154]], [9.5, [30, 136, 229]], [11, [57, 73, 171]], [14, [106, 27, 154]]];
+  let i = 0; while (i < pts.length - 2 && ph > pts[i + 1][0]) i++; const a = pts[i], b = pts[i + 1], f = Math.max(0, Math.min(1, (ph - a[0]) / (b[0] - a[0])));
+  return "rgb(" + [0, 1, 2].map((c) => Math.round(a[1][c] + (b[1][c] - a[1][c]) * f)).join(",") + ")";
+}
+function VlabBufferExperiment({ onReading }) {
+  const [x, setX] = useState(10), [fa, setFa] = useState(50);
+  const V = 0.1, tot = 0.02, nA0 = tot * (fa / 100), nHA0 = tot - nA0;
+  const calc = (xx, buf) => { const mL = Math.abs(xx), n = mL * 1e-4, acid = xx > 0 ? n : 0, base = xx < 0 ? n : 0; return vlabBufPH({ Ct: buf ? tot : 0, nA: buf ? nA0 : 0, nAdd: acid, nBase: base, V, mL }); };
+  const phW = calc(x, false), phB = calc(x, true), ph0 = calc(0, true);
+  useEffect(() => { if (onReading) onReading(`افزودن ${x} mL (مثبت = اسید) | آب: pH ${phW.toFixed(2)} | بافر: pH ${phB.toFixed(2)}`); }, [x, fa]);
+  const bk = (ph, cx, label) => (<g><path d={`M${cx - 38},50 L${cx - 32},140 Q${cx},150 ${cx + 32},140 L${cx + 38},50`} fill="none" stroke="#cfd6ea" strokeWidth="2" /><path d={`M${cx - 36},78 L${cx - 31},138 Q${cx},147 ${cx + 31},138 L${cx + 36},78 Z`} fill={vlabBufColor(ph)} opacity="0.92" /><text x={cx} y="112" fontSize="14" fill="#fff" textAnchor="middle" fontWeight="700" stroke="#00000066" strokeWidth="2" paintOrder="stroke" direction="ltr">{vlabMFa(ph, 2)}</text><text x={cx} y="40" fontSize="10" fill="#ffd98a" textAnchor="middle">{label}</text></g>);
+  const pts = (buf) => { const a = []; for (let xx = -60; xx <= 60; xx += 2) a.push(`${30 + ((xx + 60) / 120) * 270},${(190 - (calc(xx, buf) / 14) * 130).toFixed(1)}`); return a.join(" "); };
+  const exhausted = x > 0 ? x * 1e-4 > nA0 : -x * 1e-4 > nHA0;
+  return (
+    <div className="vlab-exp">
+      <svg viewBox="0 0 320 170" className="vlab-svg" style={{ background: "#0b1230", borderRadius: "10px" }}>
+        {bk(phW, 90, "آب خالص")}{bk(phB, 230, "محلول بافر (استات)")}
+        <text x="160" y="18" fontSize="9" fill="#cfd6ea" textAnchor="middle">{x === 0 ? "هنوز چیزی اضافه نشده" : x > 0 ? `${vlabMFa(x, 0)} mL اسید کلریدریک ۰٫۱ مولار` : `${vlabMFa(-x, 0)} mL سدیم هیدروکسید ۰٫۱ مولار`}</text>
+        <text x="160" y="164" fontSize="7.5" fill="#9fb0e0" textAnchor="middle">رنگ محلول مثل کاغذ pH جهانی است (قرمز اسیدی، سبز خنثی، بنفش بازی)</text>
+      </svg>
+      <svg viewBox="0 0 320 210" className="vlab-svg" style={{ background: "#0b1230", borderRadius: "10px" }}>
+        {[0, 4, 7, 10, 14].map((v) => <g key={v}><line x1="30" y1={190 - (v / 14) * 130} x2="300" y2={190 - (v / 14) * 130} stroke="#1f2a55" /><text x="26" y={193 - (v / 14) * 130} fontSize="7" fill="#9fb0e0" textAnchor="end" direction="ltr">{v}</text></g>)}
+        <line x1="165" y1="60" x2="165" y2="190" stroke="#2a3466" />
+        <polyline points={pts(false)} fill="none" stroke="#7fd8ff" strokeWidth="1.6" /><polyline points={pts(true)} fill="none" stroke="#ffb86a" strokeWidth="1.8" />
+        <circle cx={30 + ((x + 60) / 120) * 270} cy={190 - (phW / 14) * 130} r="3.5" fill="#7fd8ff" stroke="#fff" /><circle cx={30 + ((x + 60) / 120) * 270} cy={190 - (phB / 14) * 130} r="3.5" fill="#ffb86a" stroke="#fff" />
+        <text x="14" y="16" fontSize="8.5" fill="#7fd8ff">آب</text><text x="40" y="16" fontSize="8.5" fill="#ffb86a">بافر</text>
+        <text x="165" y="205" fontSize="7.5" fill="#9fb0e0" textAnchor="middle" direction="ltr">{"← NaOH (mL)   |   HCl (mL) →"}</text>
+      </svg>
+      <div className="vlab-controls"><div className="vlab-ctrl-col" style={{ flex: 1 }}>
+        <label className="vlab-ctrl-label">افزودن: <bdi dir="ltr">{x > 0 ? "+" : x < 0 ? "−" : ""}{vlabMFa(Math.abs(x), 0)} mL</bdi> {x > 0 ? "(اسید)" : x < 0 ? "(باز)" : ""}</label><VlabRange min="-60" max="60" step="1" value={x} onChange={(e) => setX(+e.target.value)} />
+        <label className="vlab-ctrl-label">سهم نمک (A⁻) در بافر: {vlabMFa(fa, 0)}٪ (بقیه اسید ضعیف HA)</label><VlabRange min="10" max="90" step="5" value={fa} onChange={(e) => setFa(+e.target.value)} />
+      </div></div>
+      <div className="vlab-readout" style={{ direction: "rtl" }}>
+        <div>pH آب: <bdi dir="ltr">{vlabMFa(phW, 2)}</bdi> · pH بافر: <bdi dir="ltr">{vlabMFa(phB, 2)}</bdi> (شروع بافر: <bdi dir="ltr">{vlabMFa(ph0, 2)}</bdi>)</div>
+        <div>تغییر pH با افزودن این مقدار: آب <bdi dir="ltr">{vlabMFa(Math.abs(phW - 7), 2)}</bdi> واحد، بافر <bdi dir="ltr">{vlabMFa(Math.abs(phB - ph0), 2)}</bdi> واحد.</div>
+        {exhausted && <div style={{ color: "#ffb59a" }}>⚠️ ظرفیت بافر تمام شد: بخش فعال بافر (A⁻ یا HA) مصرف شد و pH مثل آب می‌پرد.</div>}
+        <div style={{ opacity: 0.8, fontSize: 12 }}>بافر استات: ۱۰۰ mL با مجموع ۰٫۲ مولار (pKa = ۴٫۷۶). با حل معادله‌ی بار الکتریکی به‌طور دقیق حساب شده، نه فقط با فرمول ساده. خون و آب دهان هم بافر دارند.</div>
+      </div>
+      <VlabFormulaCheck title="معادله‌ی هندرسون–هاسلباخ" fa="pH = pKa + لگاریتم (غلظت نمک ÷ غلظت اسید ضعیف)" en="pH = pKa + log([A⁻]/[HA])" legend="pKa = ۴٫۷۶؛ سهم نمک و اسید را از لغزنده‌ی دوم بگیر (کسر مولی)" subst={`pH = 4.76 + log(${(fa / 100).toFixed(2)} ÷ ${(1 - fa / 100).toFixed(2)}) = ?`} label="pH:" answer={4.76 + Math.log10(fa / (100 - fa))} unit="" decimals={2} />
     </div>
   );
 }
@@ -39785,6 +40079,10 @@ const VLAB_COMPONENTS = {
   "torque": VlabTorqueExperiment,
   "sound-doppler": VlabSoundExperiment,
   "dihybrid-pedigree": VlabDihybridExperiment,
+  "food-web": VlabFoodWebExperiment,
+  "alkane-isomers": VlabIsomerExperiment,
+  "cell-respiration": VlabRespirationExperiment,
+  "buffer-ph": VlabBufferExperiment,
   "hooke-law": VlabHookeExperiment,
   "fluid-pressure": VlabFluidPressureExperiment,
   "plane-mirror": VlabPlaneMirrorExperiment,
@@ -39951,6 +40249,10 @@ const VLAB_GUIDE = {
   "torque": { goals: ["گشتاور را به‌صورت نیرو × بازو بفهمی.", "شرط تعادل چرخشی را کشف کنی."], challenges: ["وزنه‌ها را طوری بچین که تخته افقی بماند. رابطه‌ی جرم و فاصله چیست؟", "یک وزنه را دو برابر سنگین کن؛ فاصله‌ی دیگری را چقدر باید عوض کنی؟", "در حالت آچار، زاویه را ۰ و ۹۰ و ۱۸۰ بگذار. کدام بیشترین گشتاور را می‌دهد؟", "چرا هرچه آچار بلندتر باشد، پیچ آسان‌تر باز می‌شود؟"], misconception: "گشتاور فقط به اندازه‌ی نیرو بستگی ندارد؛ جای اعمال نیرو و جهتش هم مهم است.", check: { q: "وزنه‌ی ۲ کیلوگرمی در ۰٫۵ متری تکیه‌گاه است. وزنه‌ی ۱ کیلوگرمی را کجا بگذاریم تا تعادل شود؟", a: "در ۱ متری سمت دیگر (۲×۰٫۵ = ۱×۱)." } },
   "sound-doppler": { goals: ["اثر دوپلر را با فشردگی موج‌ها ببینی.", "ضربان را به اختلاف بسامد ربط بدهی."], challenges: ["سرعت منبع را صفر بگذار و بعد زیاد کن. موج‌های جلو و پشت چه فرقی دارند؟", "بسامد ناظر جلو و پشت را در یک سرعت ثابت مقایسه کن.", "سرعت را از سرعت صوت بیشتر کن. چه شکلی پیدا می‌شود و چرا؟", "در ضربان، Δf را ۲ برابر کن. فاصله‌ی قوی‌شدن‌های صدا چه می‌شود؟"], misconception: "بسامد خود منبع عوض نمی‌شود؛ بسامدی که ناظر می‌شنود به‌خاطر حرکت منبع فرق می‌کند.", check: { q: "آمبولانس با ۳۴ متر بر ثانیه به ما نزدیک می‌شود و بسامدش ۵۰۰ هرتز است. بسامد شنیده‌شده؟", a: "حدود ۵۵۶ هرتز (500 × 340 ÷ 306)." } },
   "dihybrid-pedigree": { goals: ["نسبت ۹:۳:۳:۱ را بسازی.", "از روی شجره‌نامه نوع وراثت را حدس بزنی."], challenges: ["دو والد RrYy را تلاقی بده. نسبت فنوتیپی را بنویس.", "آزمون‌تلاقی را بزن؛ چرا نسبت ۱:۱:۱:۱ می‌شود؟", "در شجره‌نامه‌ی مغلوب اتوزومی، چرا دو والد سالم فرزند بیمار دارند؟", "در شجره‌نامه‌ی وابسته به X، چرا پسرها بیشتر بیمار می‌شوند؟"], misconception: "دو صفت مستقل هر کدام نسبت ۳:۱ دارند؛ نسبت ۹:۳:۳:۱ ضرب این دو نسبت است.", check: { q: "در تلاقی RrYy × RrYy چند درصد فرزندان چروکیده و سبز (rryy) هستند؟", a: "۱ از ۱۶، یعنی ۶٫۲۵٪." } },
+  "food-web": { goals: ["ببینی تنوع غذا چطور اکوسیستم را پایدار می‌کند.", "قاعده‌ی ۱۰٪ انرژی را بفهمی."], challenges: ["گیاه را حذف کن. چه می‌شود؟", "فقط موش را حذف کن. کدام گونه‌ها در خطرند و کدام منقرض می‌شوند؟ چرا عقاب نمی‌میرد؟", "در هرم انرژی، بازده را از ۱۰ به ۲۰٪ ببر. سطح چهارم چند برابر می‌شود؟", "در چرخه‌ی کربن، انتشار را صفر کن و بعد زیاد کن. شیب نمودار چه می‌شود؟"], misconception: "انرژی چرخه نمی‌زند، فقط یک‌طرفه از خورشید می‌آید و گرما می‌شود؛ ماده (مثل کربن) است که چرخه دارد.", check: { q: "تولیدکننده‌ها ۱۰۰۰۰ کیلوژول انرژی دارند. با بازده ۱۰٪ مصرف‌کننده‌ی دوم چقدر می‌گیرد؟", a: "۱۰۰ کیلوژول (۱۰۰۰۰ × ۰٫۱ × ۰٫۱)." } },
+  "alkane-isomers": { goals: ["ایزومر را بشناسی و نام‌گذاری کنی.", "رابطه‌ی شاخه‌دار بودن و نقطه‌ی جوش را ببینی."], challenges: ["برای C₅ هر سه ایزومر را باز کن. نقطه‌ی جوش کدام کمتر است؟", "برای C₆ پنج ایزومر را بشمار و تأیید کن.", "تمرین نام‌گذاری را روشن کن و قبل از دیدن جواب نام را بنویس.", "چرا همه‌ی ایزومرها فرمول مولکولی یکسان دارند؟"], misconception: "نام‌گذاری از طولانی‌ترین زنجیره شروع می‌شود، نه از شکل ظاهری رسم‌شده روی کاغذ.", check: { q: "فرمول آلکان با ۶ کربن چیست؟", a: "C₆H₁₄ (۲×۶ + ۲ = ۱۴ هیدروژن)." } },
+  "cell-respiration": { goals: ["مراحل تنفس هوازی را به ترتیب و با جایشان بدانی.", "تفاوت هوازی و بی‌هوازی را در ATP ببینی."], challenges: ["هر مرحله را باز کن و ATP هر کدام را بنویس.", "اکسیژن را حذف کن. ATP کل چند برابر کمتر می‌شود؟", "عدد کتاب و عدد منابع جدید را مقایسه کن؛ تفاوت از کدام مرحله است؟", "با ۱۰ گلوکز، تعداد CO₂ و O₂ را حساب کن."], misconception: "CO₂ در چرخه‌ی کربس (و اکسایش پیرووات) آزاد می‌شود، نه در زنجیره‌ی انتقال الکترون؛ اکسیژن در آخر مصرف می‌شود و آب می‌سازد.", check: { q: "یک گلوکز در تخمیر چند ATP خالص می‌دهد؟", a: "۲ ATP (از گلیکولیز)." } },
+  "buffer-ph": { goals: ["بفهمی بافر چرا در برابر اسید و باز مقاومت می‌کند.", "ظرفیت بافر را ببینی."], challenges: ["۱ میلی‌لیتر اسید به هر دو اضافه کن. pH کدام بیشتر عوض می‌شود؟", "اسید را زیاد کن تا ظرفیت بافر تمام شود. چه می‌شود؟", "سهم نمک را ۱۰٪ و ۹۰٪ بگذار و pH اول را مقایسه کن.", "چرا خون به بافر نیاز دارد؟"], misconception: "بافر pH را ثابت نگه نمی‌دارد؛ فقط تغییر را کم می‌کند و تا وقتی ظرفیتش تمام نشده کار می‌کند.", check: { q: "اگر غلظت نمک و اسید ضعیف برابر باشد، pH بافر برابر با چیست؟", a: "برابر با pKa (چون لگاریتم ۱ صفر است)." } },
   "hooke-law": { goals: ["افزایش طول فنر با نیرو متناسب است (F = kx)."], challenges: ["جرم را دو برابر کن. افزایش طول چند برابر می‌شود؟", "یک جرم ثابت را با فنرهای ۲۰ و ۸۰ بسنج. کدام بیشتر کش می‌آید؟ چرا؟", "حدس بزن نمودار نیرو–افزایش طول چه شکلی است و شیبش چه معنایی دارد."], misconception: "هر فنری هر قدر بکشی همین رابطه را دارد؛ از حد کشسانی که بگذریم، فنر خراب می‌شود.", check: { q: "فنری با k = 40 نیوتن بر متر، وزنه‌ی ۲۰۰ گرمی را نگه می‌دارد. افزایش طول تقریباً چقدر است؟", a: "حدود ۴٫۹ سانتی‌متر (F ≈ 1٫96 N، x = F ÷ k)." } },
   "density-floating": { goals: ["شناوری به چگالی نسبت به آب بستگی دارد، نه به سنگینی."], challenges: ["اجسام را به دو گروه شناور و غوطه‌ور تقسیم کن و دلیلش را بنویس.", "چگالی چه محدوده‌ای داشته باشد تا جسم در آب شناور بماند؟", "چرا کشتی‌ای که از آهن ساخته شده غرق نمی‌شود؟"], misconception: "فکر می‌کنیم چیزهای سنگین حتماً غرق می‌شوند؛ کشتی‌های بزرگ هم شناورند.", check: { q: "جسمی چگالی ۰٫۹ گرم بر سانتی‌متر مکعب دارد. در آب شناور است؟", a: "بله؛ چگالی‌اش از آب (۱) کمتر است." } },
   "acid-base": { goals: ["اسید pH را کم و باز pH را زیاد می‌کند.", "خنثی‌شدن یعنی رسیدن به pH نزدیک ۷."], challenges: ["قطره‌های اسید را یکی‌یکی بریز. رنگ شناساگر و pH چه می‌شود؟", "از حالت اسیدی با چند قطره باز به حالت خنثی برمی‌گردی؟ عدد را ثبت کن.", "پیش از دیدن رنگ، pH را حدس بزن و با آزمایش مقایسه کن."], misconception: "همه‌ی اسیدها خطرناک نیستند؛ آب‌لیمو و سرکه اسیدهای ضعیفی هستند.", check: { q: "محلولی pH برابر ۳ دارد. اسیدی است یا بازی؟", a: "اسیدی؛ چون pH کمتر از ۷ است." } },

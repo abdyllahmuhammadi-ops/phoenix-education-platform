@@ -22973,6 +22973,33 @@ const VLAB_EXPERIMENTS = [
     tools: ["باتری", "مقاومت", "لامپ", "کلید", "سیم", "آمپرسنج", "ولت‌سنج"],
   },
   {
+    id: "transformer",
+    subject: "برق و الکترونیک",
+    level: "متوسطه دوم",
+    title: "ترانسفورماتور (افزاینده و کاهنده)",
+    icon: "🔁",
+    intro: "تعداد دورهای سیم‌پیچ اولیه و ثانویه را عوض کن و ببین ولتاژ و جریان خروجی چطور تغییر می‌کنند. توان در ترانسفورماتور آرمانی ثابت می‌ماند.",
+    tools: ["سیم‌پیچ","هسته‌ی آهنی","لامپ"],
+  },
+  {
+    id: "balance-equation",
+    subject: "شیمی",
+    level: "متوسطه",
+    title: "موازنه‌ی معادله‌ی شیمیایی",
+    icon: "⚖️",
+    intro: "ضریب‌ها را طوری تنظیم کن که تعداد هر اتم در دو سمت معادله برابر شود. ترازو و جدول اتم‌ها به تو نشان می‌دهند چقدر مانده است.",
+    tools: ["ضریب","ترازو","جدول اتم"],
+  },
+  {
+    id: "natural-selection",
+    subject: "زیست‌شناسی",
+    level: "متوسطه دوم",
+    title: "انتخاب طبیعی (خرگوش‌ها و شکارچی)",
+    icon: "🐇",
+    intro: "خرگوش‌های تیره و روشن در دو محیط زندگی می‌کنند. شکارچی خرگوش‌های آشکارتر را بیشتر می‌خورد. چند نسل جلو برو و ببین جمعیت چطور تغییر می‌کند.",
+    tools: ["جمعیت","محیط","نمودار نسل‌ها"],
+  },
+  {
     id: "hooke-law",
     subject: "فیزیک",
     level: "متوسطه اول",
@@ -30690,6 +30717,149 @@ function VlabCircuitKitExperiment({ onReading }) {
       <div className="vlab-readout" style={{ direction: "rtl" }}>
         {bats.length === 0 ? "باتری‌ای در مدار نیست؛ یکی بگذار." : bats.map((x, i) => (<div key={i}>باتری {vlabMFa(x.c.v, 1)} V: جریان خروجی {vlabMFa(Math.abs(x.o.I), 3)} A · توان تحویلی {vlabMFa(Math.abs(x.o.P), 2)} W</div>))}
         <div style={{ opacity: 0.8, fontSize: 12 }}>باتری مقاومت درونی ۰٫۰۵ Ω دارد؛ سیم‌ها تقریباً بدون مقاومت‌اند. جریان قراردادی از قطب مثبت باتری به‌سمت مقاومت‌ها می‌رود.</div>
+      </div>
+    </div>
+  );
+}
+
+/* ===== ترانسفورماتور ===== */
+function VlabTransformerExperiment({ onReading }) {
+  const [vp, setVp] = useState(24), [np, setNp] = useState(200), [ns, setNs] = useState(400), [R, setR] = useState(20);
+  const vs = vp * ns / np, is = vs / R, ps = vs * is, ip = vp > 0 ? ps / vp : 0;
+  useEffect(() => { if (onReading) onReading(`ولتاژ اولیه ${vp} V | دور اولیه ${np} و ثانویه ${ns} | ولتاژ ثانویه ${vs.toFixed(1)} V | جریان ثانویه ${is.toFixed(2)} A | توان ${ps.toFixed(1)} W`); }, [vp, np, ns, R]);
+  const coil = (x, n, col) => { const k = Math.max(3, Math.min(14, Math.round(n / 50))); return Array.from({ length: k }, (_, i) => { const y = 62 + (i + 0.5) * (116 / k); return <ellipse key={i} cx={x} cy={y} rx="15" ry={Math.min(6, 52 / k)} fill="none" stroke={col} strokeWidth="2.4" />; }); };
+  const glow = Math.min(1, Math.pow(ps / 60, 0.6));
+  return (
+    <div className="vlab-exp">
+      <svg viewBox="0 0 320 230" className="vlab-svg" style={{ background: "#0b1230", borderRadius: "10px" }}>
+        <rect x="100" y="48" width="120" height="144" rx="6" fill="none" stroke="#7d89b5" strokeWidth="14" />
+        <rect x="100" y="48" width="120" height="144" rx="6" fill="none" stroke="#a9b3d6" strokeWidth="1" strokeDasharray="4 4" />
+        {coil(100, np, "#ff9d66")}{coil(220, ns, "#7fd8ff")}
+        <path d="M100,62 H60 V30 H24" fill="none" stroke="#ff9d66" strokeWidth="1.6" /><path d="M100,178 H60 V206 H24" fill="none" stroke="#ff9d66" strokeWidth="1.6" />
+        <circle cx="24" cy="118" r="14" fill="#1a2250" stroke="#ff9d66" /><text x="24" y="122" fontSize="9" fill="#ffd9c0" textAnchor="middle">~</text><path d="M24,104 V30 M24,132 V206" stroke="#ff9d66" strokeWidth="1.6" />
+        <path d="M220,62 H260 V84 M220,178 H260 V152" fill="none" stroke="#7fd8ff" strokeWidth="1.6" />
+        <circle cx="260" cy="118" r="34" fill="#ffe27a" opacity={glow * 0.5} /><circle cx="260" cy="118" r="17" fill="#1a2250" stroke="#fff0a0" strokeWidth="1.8" /><path d="M252,110 L268,126 M252,126 L268,110" stroke={glow > 0.05 ? "#fff6c0" : "#fff0a0"} strokeWidth="1.4" />
+        <text x="160" y="16" fontSize="9" fill="#ffd9c0" textAnchor="middle" direction="ltr">{`اولیه: ${np} دور · ${vlabMFa(vp, 0)} V`}</text>
+        <text x="160" y="224" fontSize="9" fill="#bfeaff" textAnchor="middle" direction="ltr">{`ثانویه: ${ns} دور · ${vlabMFa(vs, 1)} V`}</text>
+        <text x="160" y="124" fontSize="10" fill="#c8d0ee" textAnchor="middle">هسته‌ی آهنی</text>
+      </svg>
+      <div className="vlab-controls"><div className="vlab-ctrl-col" style={{ flex: 1 }}>
+        <label className="vlab-ctrl-label">ولتاژ اولیه (V): {vlabMFa(vp, 0)}</label><VlabRange min="5" max="240" step="1" value={vp} onChange={(e) => setVp(+e.target.value)} />
+        <label className="vlab-ctrl-label">دور اولیه: {vlabMFa(np, 0)}</label><VlabRange min="50" max="1000" step="50" value={np} onChange={(e) => setNp(+e.target.value)} />
+        <label className="vlab-ctrl-label">دور ثانویه: {vlabMFa(ns, 0)}</label><VlabRange min="50" max="1000" step="50" value={ns} onChange={(e) => setNs(+e.target.value)} />
+        <label className="vlab-ctrl-label">مقاومت بار (Ω): {vlabMFa(R, 0)}</label><VlabRange min="5" max="200" step="5" value={R} onChange={(e) => setR(+e.target.value)} />
+      </div></div>
+      <div className="vlab-readout" style={{ direction: "rtl" }}>
+        <div>ولتاژ ثانویه: {vlabMFa(vs, 2)} V ({ns > np ? "افزاینده" : ns < np ? "کاهنده" : "بدون تغییر"})</div>
+        <div>جریان ثانویه: {vlabMFa(is, 3)} A · جریان اولیه: {vlabMFa(ip, 3)} A</div>
+        <div>توان ثانویه = توان اولیه = {vlabMFa(ps, 2)} W (ترانسفورماتور آرمانی)</div>
+        <div style={{ opacity: 0.8, fontSize: 12 }}>هرجا ولتاژ بالا می‌رود، جریان پایین می‌آید؛ توان ثابت می‌ماند. ترانسفورماتور فقط با جریان متناوب کار می‌کند.</div>
+      </div>
+      <VlabFormulaCheck title="نسبت دورها" fa="ولتاژ ثانویه = ولتاژ اولیه × (دور ثانویه ÷ دور اولیه)" en="Vs / Vp = Ns / Np" legend="ولتاژ اولیه و تعداد دورها را از لغزنده‌ها بخوان" subst={`Vs = ${vp} × ${ns} ÷ ${np} = ?`} label="Vs:" answer={vs} unit="V" decimals={1} />
+    </div>
+  );
+}
+
+/* ===== موازنه‌ی معادله‌ی شیمیایی ===== */
+const VLAB_BAL_RX = [
+  { n: "تشکیل آب", L: [["H", 2, "H₂"], ["O", 2, "O₂"]], R: [["H₂O", 0, "H₂O"]], at: { L: [{ H: 2 }, { O: 2 }], R: [{ H: 2, O: 1 }] }, ans: [2, 1, 2] },
+  { n: "تشکیل آمونیاک", L: [["N₂"], ["H₂"]], R: [["NH₃"]], at: { L: [{ N: 2 }, { H: 2 }], R: [{ N: 1, H: 3 }] }, ans: [1, 3, 2] },
+  { n: "سوختن متان", L: [["CH₄"], ["O₂"]], R: [["CO₂"], ["H₂O"]], at: { L: [{ C: 1, H: 4 }, { O: 2 }], R: [{ C: 1, O: 2 }, { H: 2, O: 1 }] }, ans: [1, 2, 1, 2] },
+  { n: "زنگ آهن", L: [["Fe"], ["O₂"]], R: [["Fe₂O₃"]], at: { L: [{ Fe: 1 }, { O: 2 }], R: [{ Fe: 2, O: 3 }] }, ans: [4, 3, 2] },
+  { n: "سوختن پروپان", L: [["C₃H₈"], ["O₂"]], R: [["CO₂"], ["H₂O"]], at: { L: [{ C: 3, H: 8 }, { O: 2 }], R: [{ C: 1, O: 2 }, { H: 2, O: 1 }] }, ans: [1, 5, 3, 4] },
+];
+function VlabBalanceEquationExperiment({ onReading }) {
+  const [ri, setRi] = useState(0);
+  const rx = VLAB_BAL_RX[ri];
+  const nL = rx.at.L.length, nT = nL + rx.at.R.length;
+  const [co, setCo] = useState([1, 1, 1, 1]);
+  const c = co.slice(0, nT);
+  const sum = (side, off) => { const t = {}; rx.at[side].forEach((m, i) => Object.keys(m).forEach((e) => { t[e] = (t[e] || 0) + m[e] * c[off + i]; })); return t; };
+  const Lt = sum("L", 0), Rt = sum("R", nL);
+  const els = Array.from(new Set(Object.keys(Lt).concat(Object.keys(Rt))));
+  const ok = els.every((e) => (Lt[e] || 0) === (Rt[e] || 0));
+  const diff = els.reduce((s, e) => s + (Lt[e] || 0) - (Rt[e] || 0), 0);
+  const names = rx.L.map((m) => m[0]).concat(rx.R.map((m) => m[0]));
+  useEffect(() => { if (onReading) onReading(`${rx.n}: ${ok ? "موازنه شد ✓" : "هنوز موازنه نیست"} | ضرایب: ${c.join("، ")}`); }, [ri, co]);
+  const setC = (i, d) => setCo((a) => a.map((v, j) => (j === i ? Math.max(1, Math.min(9, v + d)) : v)));
+  const tilt = Math.max(-14, Math.min(14, -diff * 1.2));
+  return (
+    <div className="vlab-exp">
+      <div className="vlab-toggle-row" style={{ flexWrap: "wrap" }}>{VLAB_BAL_RX.map((r, i) => (<button key={i} type="button" className={"vlab-toggle-btn" + (ri === i ? " active" : "")} onClick={() => { setRi(i); setCo([1, 1, 1, 1]); }}>{r.n}</button>))}</div>
+      <div style={{ display: "flex", flexWrap: "wrap", gap: 8, justifyContent: "center", direction: "ltr", alignItems: "center", fontSize: 18, margin: "6px 0" }}>
+        {names.map((nm, i) => (<React.Fragment key={i}>
+          {i === nL && <span style={{ fontSize: 22 }}>→</span>}{i > 0 && i !== nL && <span>+</span>}
+          <span style={{ display: "inline-flex", flexDirection: "column", alignItems: "center", gap: 2 }}>
+            <button type="button" className="vlab-num-btn" aria-label="افزایش" onClick={() => setC(i, 1)} style={{ minWidth: 34, height: 26 }}>▲</button>
+            <b style={{ fontSize: 20 }}>{c[i] > 1 ? c[i] : ""}{nm}</b>
+            <button type="button" className="vlab-num-btn" aria-label="کاهش" onClick={() => setC(i, -1)} style={{ minWidth: 34, height: 26 }}>▼</button>
+          </span></React.Fragment>))}
+      </div>
+      <svg viewBox="0 0 320 110" className="vlab-svg" style={{ background: "#0b1230", borderRadius: "10px" }}>
+        <polygon points="160,62 148,100 172,100" fill="#7d89b5" />
+        <g transform={`rotate(${tilt} 160 62)`}><rect x="40" y="58" width="240" height="6" rx="3" fill="#cfd6ea" />
+          <rect x="44" y="40" width="70" height="18" rx="3" fill="#2a3466" /><text x="79" y="53" fontSize="9" fill="#ffd9c0" textAnchor="middle">واکنش‌دهنده‌ها</text>
+          <rect x="206" y="40" width="70" height="18" rx="3" fill="#2a3466" /><text x="241" y="53" fontSize="9" fill="#bfeaff" textAnchor="middle">فراورده‌ها</text></g>
+        <text x="160" y="16" fontSize="11" fill={ok ? "#9fe3a8" : "#ffd166"} textAnchor="middle">{ok ? "✓ ترازو متعادل است؛ معادله موازنه شد" : "ترازو متعادل نیست"}</text>
+      </svg>
+      <table style={{ width: "100%", borderCollapse: "collapse", textAlign: "center", fontSize: 14 }}>
+        <thead><tr><th>اتم</th><th>سمت چپ</th><th>سمت راست</th><th></th></tr></thead>
+        <tbody>{els.map((e) => (<tr key={e}><td dir="ltr">{e}</td><td>{vlabMFa(Lt[e] || 0, 0)}</td><td>{vlabMFa(Rt[e] || 0, 0)}</td><td>{(Lt[e] || 0) === (Rt[e] || 0) ? "✓" : "✗"}</td></tr>))}</tbody>
+      </table>
+      <div className="vlab-readout">تعداد هر اتم در دو سمت معادله باید برابر باشد (پایستگی جرم). فقط ضریب‌ها را عوض کن، نه فرمول مواد را.{ok && ri < VLAB_BAL_RX.length ? " آفرین! ضرایب درست: " + rx.ans.join("، ") + " (ساده‌ترین حالت)." : ""}</div>
+    </div>
+  );
+}
+
+/* ===== انتخاب طبیعی ===== */
+function VlabNaturalSelectionExperiment({ onReading }) {
+  const N = 40;
+  const [env, setEnv] = useState("dark");
+  const [pop, setPop] = useState(() => ({ d: 20, l: 20 }));
+  const [hist, setHist] = useState([50]);
+  const [gen, setGen] = useState(0);
+  const [lastEaten, setLastEaten] = useState(null);
+  const step = (times) => {
+    let p = pop, h = hist.slice(), g = gen, eaten = null;
+    for (let t = 0; t < times; t++) {
+      const sd = env === "dark" ? 0.8 : 0.35, sl = env === "dark" ? 0.35 : 0.8;
+      let d = 0, l = 0;
+      for (let i = 0; i < p.d; i++) if (Math.random() < sd) d++;
+      for (let i = 0; i < p.l; i++) if (Math.random() < sl) l++;
+      eaten = p.d + p.l - d - l;
+      if (d + l === 0) { d = 1; }
+      let nd = 0; for (let i = 0; i < N; i++) { let isD = Math.random() < d / (d + l); if (Math.random() < 0.02) isD = !isD; if (isD) nd++; }
+      p = { d: nd, l: N - nd }; g++; h.push((nd / N) * 100);
+    }
+    setPop(p); setHist(h); setGen(g); setLastEaten(eaten);
+  };
+  const reset = () => { setPop({ d: 20, l: 20 }); setHist([50]); setGen(0); setLastEaten(null); };
+  useEffect(() => { if (onReading) onReading(`نسل ${gen} | محیط ${env === "dark" ? "خاک تیره" : "برف"} | خرگوش تیره ${pop.d} از ${N}`); }, [pop, env]);
+  const dots = Array.from({ length: N }, (_, i) => ({ i, dark: i < pop.d, x: 18 + (i % 10) * 30, y: 24 + Math.floor(i / 10) * 26 }));
+  const gw = 300, gh = 70, pts = hist.map((v, i) => `${10 + (i / Math.max(hist.length - 1, 1)) * (gw - 20)},${gh - 8 - (v / 100) * (gh - 16)}`).join(" ");
+  return (
+    <div className="vlab-exp">
+      <div className="vlab-toggle-row">
+        <button type="button" className={"vlab-toggle-btn" + (env === "dark" ? " active" : "")} onClick={() => setEnv("dark")}>محیط: خاک تیره</button>
+        <button type="button" className={"vlab-toggle-btn" + (env === "snow" ? " active" : "")} onClick={() => setEnv("snow")}>محیط: برف</button>
+      </div>
+      <svg viewBox="0 0 320 112" className="vlab-svg" style={{ background: env === "dark" ? "#3b2f26" : "#eef3f8", borderRadius: "10px" }}>
+        {dots.map((o) => (<g key={o.i}><ellipse cx={o.x} cy={o.y} rx="9" ry="7" fill={o.dark ? "#2b2420" : "#f7f4ee"} stroke={o.dark ? "#14100e" : "#b8b2a6"} /><circle cx={o.x + 6} cy={o.y - 6} r="2.6" fill={o.dark ? "#2b2420" : "#f7f4ee"} stroke={o.dark ? "#14100e" : "#b8b2a6"} strokeWidth="0.6" /><circle cx={o.x + 7} cy={o.y - 1} r="0.9" fill="#d33" /></g>))}
+      </svg>
+      <svg viewBox={`0 0 ${gw} ${gh}`} className="vlab-svg" style={{ background: "#0b1230", borderRadius: "10px" }}>
+        <line x1="10" y1={gh / 2} x2={gw - 10} y2={gh / 2} stroke="#2a3466" strokeDasharray="3 3" />
+        <polyline points={pts} fill="none" stroke="#ffd166" strokeWidth="2" />
+        <text x={gw / 2} y="11" fontSize="8" fill="#9fb0e0" textAnchor="middle">درصد خرگوش‌های تیره در هر نسل</text>
+      </svg>
+      <div className="vlab-toggle-row" style={{ flexWrap: "wrap" }}>
+        <button type="button" className="vlab-toggle-btn active" onClick={() => step(1)}>▶ یک نسل بعد</button>
+        <button type="button" className="vlab-toggle-btn" onClick={() => step(10)}>⏩ ۱۰ نسل</button>
+        <button type="button" className="vlab-toggle-btn" onClick={reset}>↺ از نو</button>
+      </div>
+      <div className="vlab-readout" style={{ direction: "rtl" }}>
+        <div>نسل {vlabMFa(gen, 0)}: خرگوش تیره {vlabMFa(pop.d, 0)} · روشن {vlabMFa(pop.l, 0)} (از {vlabMFa(N, 0)})</div>
+        {lastEaten !== null && <div>شکارچی در این نسل {vlabMFa(lastEaten, 0)} خرگوش را خورد؛ خرگوش‌هایی که در محیط دیده می‌شوند بیشتر شکار می‌شوند.</div>}
+        <div style={{ opacity: 0.8, fontSize: 12 }}>نتیجه تصادفی است؛ هر بار کمی فرق می‌کند، اما روند کلی همیشه به‌سمت رنگِ استتارشده می‌رود. جهش‌های کوچک هم گاهی رنگ تازه می‌سازند.</div>
       </div>
     </div>
   );
@@ -39205,6 +39375,9 @@ const VLAB_COMPONENTS = {
   "transpiration": VlabTranspirationExperiment,
   "punnett-square": VlabPunnettExperiment,
   "circuit-kit": VlabCircuitKitExperiment,
+  "transformer": VlabTransformerExperiment,
+  "balance-equation": VlabBalanceEquationExperiment,
+  "natural-selection": VlabNaturalSelectionExperiment,
   "hooke-law": VlabHookeExperiment,
   "fluid-pressure": VlabFluidPressureExperiment,
   "plane-mirror": VlabPlaneMirrorExperiment,
@@ -39364,6 +39537,9 @@ const VLAB_GUIDE = {
   "newton-second-law": { goals: ["شتاب با نیرو متناسب و با جرم وارونه است (a = F ÷ m)."], challenges: ["جرم را ثابت کن و نیرو را دو برابر کن. شتاب چه می‌شود؟", "نیرو را ثابت کن و جرم را دو برابر کن. شتاب چه می‌شود؟", "نیرو و جرم را هم‌زمان دو برابر کن. شتاب چه می‌شود؟ چرا؟"], misconception: "نیروی بیشتر یعنی سرعت بیشتر؟ نه؛ نیروی خالص شتاب می‌دهد.", check: { q: "نیروی ۳۰ نیوتن بر جسمی ۶ کیلوگرمی وارد می‌شود. شتاب چقدر است؟", a: "۵ متر بر مجذور ثانیه." } },
   "archimedes": { goals: ["نیروی شناوری برابر وزن مایعِ جابه‌جاشده است.", "به جنس جسم بستگی ندارد، به حجم فرورفته بستگی دارد."], challenges: ["جسم را کم‌کم در آب فرو ببر. نیروی شناوری چگونه تغییر می‌کند؟", "حجم را دو برابر کن (کاملاً فرورفته). نیروی شناوری چند برابر می‌شود؟", "آلومینیوم و سرب با حجم برابر: آیا نیروی شناوری یکی است؟"], misconception: "گمان می‌کنیم جسم سنگین‌تر نیروی شناوری بیشتری می‌گیرد؛ شناوری به حجم جابه‌جاشده بستگی دارد.", check: { q: "جسمی به حجم ۲۰۰ سانتی‌متر مکعب کاملاً در آب است. نیروی شناوری تقریباً چقدر است؟", a: "حدود ۲ نیوتن (ρgV)." } },
   "circuit-kit": { goals: ["جریان، ولتاژ و مقاومت را در مدارهای دلخواه خودت بسنجی.", "تفاوت سری و موازی را با ساختن و اندازه‌گیری ببینی."], challenges: ["مدار «سری» را باز کن. لامپ‌ها چقدر روشن‌اند؟ حالا یک لامپ را حذف کن؛ لامپ دیگر چه می‌شود؟", "مدار «موازی» را باز کن. یک لامپ را حذف کن؛ لامپ دیگر چه می‌شود؟ چرا برق خانه موازی است؟", "با آمپرسنج جریان هر شاخه را در مدار ترکیبی بخوان. جریان کل را با مجموع جریان شاخه‌ها مقایسه کن.", "با ولت‌سنج ولتاژ دو سر هر مقاومت را بخوان و جمعشان را با ولتاژ باتری مقایسه کن."], misconception: "جریان در مقاومت اول «مصرف نمی‌شود»؛ در مدار سری جریان همه‌جا یکی است و انرژی در مقاومت‌ها به گرما و نور تبدیل می‌شود.", check: { q: "باتری ۱۲ ولتی به دو مقاومت ۱۰ و ۳۰ اهمی سری وصل است. جریان تقریباً چقدر است؟", a: "حدود ۰٫۳ آمپر (۱۲ ÷ ۴۰)؛ باتری مقاومت درونی کوچکی هم دارد." } },
+  "transformer": { goals: ["رابطه‌ی ولتاژ با تعداد دورها را کشف کنی.", "بفهمی چرا ولتاژ بالا جریان را کم می‌کند."], challenges: ["دور ثانویه را دو برابر اولیه کن. ولتاژ خروجی چند برابر می‌شود؟ جریان چطور؟", "ولتاژ را کاهنده کن و روشنایی لامپ را ببین.", "توان اولیه و ثانویه را مقایسه کن."], misconception: "ترانسفورماتور انرژی نمی‌سازد؛ فقط ولتاژ را با کم‌شدن جریان بالا می‌برد (یا برعکس).", check: { q: "اولیه ۲۰۰ دور و ثانویه ۴۰۰ دور و ولتاژ اولیه ۲۴ V است. ولتاژ ثانویه؟", a: "۴۸ ولت (۲۴ × ۴۰۰ ÷ ۲۰۰)." } },
+  "balance-equation": { goals: ["قانون پایستگی جرم را در معادله‌ها ببینی.", "با ضریب‌ها معادله را موازنه کنی."], challenges: ["معادله‌ی تشکیل آب را موازنه کن.", "سوختن متان را موازنه کن؛ از کدام اتم شروع کردی؟", "چرا نباید عدد کوچک زیر فرمول (اندیس) را عوض کنیم؟"], misconception: "برای موازنه، اندیس‌ها را تغییر نمی‌دهیم؛ فقط ضریب‌ها را؛ چون اندیس خودِ ماده را مشخص می‌کند.", check: { q: "در موازنه‌ی H₂ + O₂ → H₂O ضریب‌ها چیست؟", a: "۲ و ۱ و ۲." } },
+  "natural-selection": { goals: ["ببینی چرا رنگِ استتارشده در جمعیت زیاد می‌شود.", "نقش محیط و شکارچی را درک کنی."], challenges: ["در خاک تیره ۱۰ نسل جلو برو. چه می‌شود؟", "محیط را به برف عوض کن و دوباره ۱۰ نسل برو.", "چند بار تکرار کن؛ آیا نتیجه هر بار دقیقاً یکی است؟"], misconception: "خرگوش‌ها «تصمیم نمی‌گیرند» رنگشان عوض شود؛ ویژگی‌های مناسب‌تر شانس زنده‌ماندن و تولیدمثل بیشتری دارند.", check: { q: "در برف، کدام خرگوش بیشتر زنده می‌ماند و چرا؟", a: "روشن؛ چون کمتر دیده می‌شود و کمتر شکار می‌شود." } },
   "hooke-law": { goals: ["افزایش طول فنر با نیرو متناسب است (F = kx)."], challenges: ["جرم را دو برابر کن. افزایش طول چند برابر می‌شود؟", "یک جرم ثابت را با فنرهای ۲۰ و ۸۰ بسنج. کدام بیشتر کش می‌آید؟ چرا؟", "حدس بزن نمودار نیرو–افزایش طول چه شکلی است و شیبش چه معنایی دارد."], misconception: "هر فنری هر قدر بکشی همین رابطه را دارد؛ از حد کشسانی که بگذریم، فنر خراب می‌شود.", check: { q: "فنری با k = 40 نیوتن بر متر، وزنه‌ی ۲۰۰ گرمی را نگه می‌دارد. افزایش طول تقریباً چقدر است؟", a: "حدود ۴٫۹ سانتی‌متر (F ≈ 1٫96 N، x = F ÷ k)." } },
   "density-floating": { goals: ["شناوری به چگالی نسبت به آب بستگی دارد، نه به سنگینی."], challenges: ["اجسام را به دو گروه شناور و غوطه‌ور تقسیم کن و دلیلش را بنویس.", "چگالی چه محدوده‌ای داشته باشد تا جسم در آب شناور بماند؟", "چرا کشتی‌ای که از آهن ساخته شده غرق نمی‌شود؟"], misconception: "فکر می‌کنیم چیزهای سنگین حتماً غرق می‌شوند؛ کشتی‌های بزرگ هم شناورند.", check: { q: "جسمی چگالی ۰٫۹ گرم بر سانتی‌متر مکعب دارد. در آب شناور است؟", a: "بله؛ چگالی‌اش از آب (۱) کمتر است." } },
   "acid-base": { goals: ["اسید pH را کم و باز pH را زیاد می‌کند.", "خنثی‌شدن یعنی رسیدن به pH نزدیک ۷."], challenges: ["قطره‌های اسید را یکی‌یکی بریز. رنگ شناساگر و pH چه می‌شود؟", "از حالت اسیدی با چند قطره باز به حالت خنثی برمی‌گردی؟ عدد را ثبت کن.", "پیش از دیدن رنگ، pH را حدس بزن و با آزمایش مقایسه کن."], misconception: "همه‌ی اسیدها خطرناک نیستند؛ آب‌لیمو و سرکه اسیدهای ضعیفی هستند.", check: { q: "محلولی pH برابر ۳ دارد. اسیدی است یا بازی؟", a: "اسیدی؛ چون pH کمتر از ۷ است." } },

@@ -30590,7 +30590,7 @@ function VlabTranspirationExperiment({ onReading }) {
         </div>
       </div>
       <div className="vlab-readout">برگ‌ها آب را از راه روزنه‌ها تبخیر می‌کنند و ساقه آب تازه می‌مکد؛ حباب هوا در لوله جلو می‌رود. نور و باد بیشتر و رطوبت کمتر، تعرق را سریع‌تر می‌کند.</div>
-      <VlabFormulaCheck title="حجم آب مصرفی" fa="حجم = π × (شعاع لوله)² × جابه‌جایی حباب" en="V = π r² d" legend="شعاع لوله r = ۰٫۵ mm ؛ جواب بر حسب mm³ (همان میکرولیتر)" subst={`V = 3.14 × 0.5² × ${dist.toFixed(1)} = ?`} label="V:" answer={volume} unit="µL" decimals={1} />
+      <VlabFormulaCheck title="حجم آب مصرفی" fa="حجم = π × (شعاع لوله)² × جابه‌جایی حباب" en="V = π r² d" legend="شعاع لوله r = ۰٫۵ mm ؛ جواب بر حسب mm³ (همان میکرولیتر)" subst={`V = 3.14 × 0.5² × ${dist.toFixed(1)} = ?`} label="V:" answer={3.14 * 0.5 * 0.5 * Number(dist.toFixed(1))} unit="µL" decimals={1} />
     </div>
   );
 }

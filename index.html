@@ -32780,12 +32780,12 @@ function VlabMitosisExperiment({ onReading }) {
   useEffect(() => {
     if (!run) return;
     let raf, last = null;
-    const step = (t) => { if (last !== null) { const np = Math.min(1, pRef.current + ((t - last) / 1000) * 0.09); setP(np); pRef.current = np; if (np >= 1) { setRun(false); return; } } last = t; raf = requestAnimationFrame(step); };
+    const step = (t) => { if (last !== null) { const np = Math.min(1, pRef.current + ((t - last) / 1000) * 0.062); setP(np); pRef.current = np; if (np >= 1) { setRun(false); return; } } last = t; raf = requestAnimationFrame(step); };
     raf = requestAnimationFrame(step);
     return () => cancelAnimationFrame(raf);
   }, [run]);
   const ST = [{ e: 0.12, n: "اینترفاز", d: "DNA دو برابر می‌شود و سلول رشد می‌کند. کروموزوم‌ها هنوز کلاف‌های نازک‌اند." }, { e: 0.3, n: "پروفاز", d: "کروموزوم‌ها فشرده و X شکل می‌شوند؛ پوشش هسته از بین می‌رود." }, { e: 0.5, n: "متافاز", d: "کروموزوم‌ها در خط استوا ردیف می‌شوند و رشته‌های دوک آنها را نگه می‌دارند." }, { e: 0.72, n: "آنافاز", d: "کروماتیدهای خواهری از هم جدا می‌شوند و به دو قطب سلول می‌روند." }, { e: 1.01, n: "تلوفاز و سیتوکینز", d: "دو هسته‌ی تازه ساخته می‌شود و سلول وسط تنگ شده و به دو سلول تقسیم می‌شود." }];
-  const stage = ST.find((s) => p < s.e), q = Math.max(0, Math.min(1, (p - 0.88) / 0.12));
+  const stage = ST.find((s) => p < s.e), q = Math.max(0, Math.min(1, (p - 0.8) / 0.2));
   const pinch = Math.min(1, q / 0.62), sepv = Math.max(0, (q - 0.62) / 0.38) * 12;
   const chroms = p < 0.5 ? 4 : 8, dna = p < 0.12 ? 2 : p < 0.5 ? 4 : p < 0.72 ? 4 : q > 0.9 ? 2 : 4;
   useEffect(() => {

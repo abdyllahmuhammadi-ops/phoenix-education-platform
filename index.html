@@ -23009,6 +23009,33 @@ const VLAB_EXPERIMENTS = [
     tools: ["نوار زمان","کروموزوم همتا","دوک تقسیم"],
   },
   {
+    id: "torque",
+    subject: "فیزیک",
+    level: "متوسطه دوم",
+    title: "گشتاور و تعادل چرخشی",
+    icon: "🔩",
+    intro: "وزنه‌ها را روی تخته بگذار و ببین کی در تعادل چرخشی می‌ماند، یا با آچار و زاویه‌ی نیرو ببین چرا گشتاور فقط به مؤلفه‌ی عمود نیرو بستگی دارد.",
+    tools: ["تخته","وزنه","آچار","نیروسنج"],
+  },
+  {
+    id: "sound-doppler",
+    subject: "فیزیک",
+    level: "متوسطه دوم",
+    title: "اثر دوپلر و ضربان صوت",
+    icon: "🚑",
+    intro: "منبع صوت را با سرعت‌های مختلف حرکت بده؛ فشردگی موج‌ها، بسامد ناظرها و مخروط ماخ را ببین. در حالت دوم، ضربان دو صدای نزدیک را بررسی کن.",
+    tools: ["منبع صوت","ناظر","نمودار موج"],
+  },
+  {
+    id: "dihybrid-pedigree",
+    subject: "زیست‌شناسی",
+    level: "متوسطه دوم",
+    title: "وراثت دوصفتی و شجره‌نامه",
+    icon: "🌱",
+    intro: "مربع پانت ۴×۴ را برای دو صفت مستقل بساز و نسبت ۹:۳:۳:۱ را کشف کن. سپس شجره‌نامه‌ی صفت‌های اتوزومی و وابسته به X را بخوان.",
+    tools: ["مربع پانت","شجره‌نامه","ژنوتیپ"],
+  },
+  {
     id: "hooke-law",
     subject: "فیزیک",
     level: "متوسطه اول",
@@ -30988,6 +31015,249 @@ function VlabNaturalSelectionExperiment({ onReading }) {
         {lastEaten !== null && <div>شکارچی در این نسل {vlabMFa(lastEaten, 0)} خرگوش را خورد؛ خرگوش‌هایی که در محیط دیده می‌شوند بیشتر شکار می‌شوند.</div>}
         <div style={{ opacity: 0.8, fontSize: 12 }}>نتیجه تصادفی است؛ هر بار کمی فرق می‌کند، اما روند کلی همیشه به‌سمت رنگِ استتارشده می‌رود. جهش‌های کوچک هم گاهی رنگ تازه می‌سازند.</div>
       </div>
+    </div>
+  );
+}
+
+/* ===== گشتاور و تعادل چرخشی ===== */
+function VlabTorqueExperiment({ onReading }) {
+  const [mode, setMode] = useState("beam");
+  const [m1, setM1] = useState(2), [d1, setD1] = useState(0.6), [m2, setM2] = useState(1), [d2, setD2] = useState(0.8);
+  const [F, setF] = useState(40), [arm, setArm] = useState(0.25), [ang, setAng] = useState(90);
+  const [th, setTh] = useState(0), [run, setRun] = useState(false);
+  const S = React.useRef({ th: 0, w: 0 }), P = React.useRef({}); P.current = { m1, d1, m2, d2 };
+  const G = 9.8, Mb = 2, Lb = 2;
+  const t1 = m1 * G * d1, t2 = m2 * G * d2, net = t2 - t1;
+  const I = (Mb * Lb * Lb) / 12 + m1 * d1 * d1 + m2 * d2 * d2, alpha = net / I;
+  useEffect(() => { S.current = { th: 0, w: 0 }; setTh(0); setRun(false); }, [m1, d1, m2, d2, mode]);
+  useEffect(() => {
+    if (!run) return;
+    let raf, last = null;
+    const step = (t) => {
+      if (last !== null) {
+        const dt = Math.min(0.03, (t - last) / 1000), s = S.current, q = P.current;
+        const Ii = (Mb * Lb * Lb) / 12 + q.m1 * q.d1 * q.d1 + q.m2 * q.d2 * q.d2;
+        const tau = G * Math.cos((s.th * Math.PI) / 180) * (q.m2 * q.d2 - q.m1 * q.d1);
+        s.w += (tau / Ii) * dt - 1.2 * s.w * dt; s.th += ((s.w * dt) * 180) / Math.PI;
+        if (s.th > 20) { s.th = 20; s.w = 0; } if (s.th < -20) { s.th = -20; s.w = 0; }
+        setTh(s.th);
+      }
+      last = t; raf = requestAnimationFrame(step);
+    };
+    raf = requestAnimationFrame(step);
+    return () => cancelAnimationFrame(raf);
+  }, [run]);
+  const rad = (ang * Math.PI) / 180, tauW = F * arm * Math.sin(rad), lever = arm * Math.abs(Math.sin(rad));
+  useEffect(() => { if (onReading) onReading(mode === "beam" ? `گشتاور چپ ${t1.toFixed(2)} | راست ${t2.toFixed(2)} N·m | برآیند ${net.toFixed(2)}` : `نیرو ${F} N | بازو ${arm} m | زاویه ${ang}° | گشتاور ${tauW.toFixed(2)} N·m`); }, [m1, d1, m2, d2, F, arm, ang, mode]);
+  const sc = 130, blk = (m) => 12 + 5 * Math.sqrt(m);
+  const bal = Math.abs(net) < 0.005;
+  const E = [60 + arm * 480, 110], v = [Math.cos(rad), -Math.sin(rad)], Lf = 16 + F * 0.5, tt = -(arm * 480) * Math.cos(rad), foot = [E[0] + v[0] * tt, E[1] + v[1] * tt];
+  return (
+    <div className="vlab-exp">
+      <div className="vlab-toggle-row"><button type="button" className={"vlab-toggle-btn" + (mode === "beam" ? " active" : "")} onClick={() => setMode("beam")}>تخته و وزنه‌ها</button><button type="button" className={"vlab-toggle-btn" + (mode === "wrench" ? " active" : "")} onClick={() => setMode("wrench")}>آچار و پیچ</button></div>
+      {mode === "beam" ? (<>
+        <svg viewBox="0 0 320 210" className="vlab-svg" style={{ background: "#0b1230", borderRadius: "10px" }}>
+          <rect x="0" y="190" width="320" height="20" fill="#1a2250" />
+          <polygon points="160,140 138,190 182,190" fill="#7d89b5" stroke="#aab4d8" />
+          <g transform={`translate(160 140) rotate(${th})`}>
+            <rect x="-140" y="-4" width="280" height="8" rx="2" fill="#c9a96a" stroke="#6a5320" />
+            {[0.2, 0.4, 0.6, 0.8, 1.0].flatMap((k) => [-1, 1].map((s) => <g key={k + "" + s}><line x1={s * k * sc} y1="4" x2={s * k * sc} y2="9" stroke="#e8d9a8" /><text x={s * k * sc} y="19" fontSize="6.5" fill="#cfd6ea" textAnchor="middle" direction="ltr">{vlabMFa(k, 1)}</text></g>))}
+            <g transform={`translate(${-d1 * sc} 0)`}><rect x={-blk(m1) / 2} y={-4 - blk(m1)} width={blk(m1)} height={blk(m1)} rx="2" fill="#ff8a8a" stroke="#7a1f1f" /><text x="0" y={-4 - blk(m1) / 2 + 3} fontSize="8" fill="#2a0a0a" textAnchor="middle" fontWeight="700" direction="ltr">{vlabMFa(m1, 1)}</text></g>
+            <g transform={`translate(${d2 * sc} 0)`}><rect x={-blk(m2) / 2} y={-4 - blk(m2)} width={blk(m2)} height={blk(m2)} rx="2" fill="#7fb8ff" stroke="#1f3f7a" /><text x="0" y={-4 - blk(m2) / 2 + 3} fontSize="8" fill="#0a1a2a" textAnchor="middle" fontWeight="700" direction="ltr">{vlabMFa(m2, 1)}</text></g>
+          </g>
+          <circle cx="160" cy="140" r="3.5" fill="#ffd98a" />
+          <text x="160" y="16" fontSize="10" fill={bal ? "#9fe3a8" : "#ffd166"} textAnchor="middle">{bal ? "✓ تخته در تعادل چرخشی است" : net > 0 ? "سمت راست سنگین‌تر است (چرخش ساعت‌گرد)" : "سمت چپ سنگین‌تر است (چرخش پادساعت‌گرد)"}</text>
+          <text x="160" y="205" fontSize="7" fill="#9fb0e0" textAnchor="middle">جرم برحسب kg و فاصله برحسب m</text>
+        </svg>
+        <div className="vlab-toggle-row"><button type="button" className="vlab-toggle-btn active" onClick={() => { S.current = { th: 0, w: 0 }; setTh(0); setRun(!run); }}>{run ? "⏸ ایست" : "▶ رها کن"}</button><button type="button" className="vlab-toggle-btn" onClick={() => { setRun(false); S.current = { th: 0, w: 0 }; setTh(0); }}>↺ افقی کن</button></div>
+        <div className="vlab-controls"><div className="vlab-ctrl-col" style={{ flex: 1 }}>
+          <label className="vlab-ctrl-label">جرم قرمز (چپ): <bdi dir="ltr">{vlabMFa(m1, 1)} kg</bdi></label><VlabRange min="0.1" max="5" step="0.1" value={m1} onChange={(e) => setM1(+e.target.value)} />
+          <label className="vlab-ctrl-label">فاصله‌ی قرمز تا تکیه‌گاه: <bdi dir="ltr">{vlabMFa(d1, 2)} m</bdi></label><VlabRange min="0.1" max="1" step="0.05" value={d1} onChange={(e) => setD1(+e.target.value)} />
+          <label className="vlab-ctrl-label">جرم آبی (راست): <bdi dir="ltr">{vlabMFa(m2, 1)} kg</bdi></label><VlabRange min="0.1" max="5" step="0.1" value={m2} onChange={(e) => setM2(+e.target.value)} />
+          <label className="vlab-ctrl-label">فاصله‌ی آبی تا تکیه‌گاه: <bdi dir="ltr">{vlabMFa(d2, 2)} m</bdi></label><VlabRange min="0.1" max="1" step="0.05" value={d2} onChange={(e) => setD2(+e.target.value)} />
+        </div></div>
+        <div className="vlab-readout" style={{ direction: "rtl" }}>
+          <div>گشتاور قرمز = m·g·d = <bdi dir="ltr">{vlabMFa(t1, 2)} N·m</bdi> (پادساعت‌گرد)</div>
+          <div>گشتاور آبی = m·g·d = <bdi dir="ltr">{vlabMFa(t2, 2)} N·m</bdi> (ساعت‌گرد)</div>
+          <div>گشتاور برآیند: <bdi dir="ltr">{vlabMFa(Math.abs(net), 2)} N·m</bdi> · لختی دورانی کل: <bdi dir="ltr">{vlabMFa(I, 2)} kg·m²</bdi></div>
+          <div>شتاب زاویه‌ای: <bdi dir="ltr">{vlabMFa(Math.abs(alpha), 2)} rad/s²</bdi>{bal ? " (تعادل: صفر)" : ""}</div>
+          <div style={{ opacity: 0.8, fontSize: 12 }}>شرط تعادل: m₁·d₁ = m₂·d₂. جرم تخته (۲ کیلوگرم) روی تکیه‌گاه است و گشتاور نمی‌سازد، اما در لختی دورانی اثر دارد.</div>
+        </div>
+        <VlabFormulaCheck title="گشتاور وزنه" fa="گشتاور = جرم × شتاب گرانش × فاصله از تکیه‌گاه" en="τ = m · g · d" legend="g = ۹٫۸؛ جرم را بر حسب کیلوگرم و فاصله را بر حسب متر بگذار" subst={`τ = ${m2.toFixed(1)} × 9.8 × ${d2.toFixed(2)} = ?`} label="τ:" answer={t2} unit="N·m" decimals={2} />
+        <VlabFormulaCheck title="دوران تخته" fa="شتاب زاویه‌ای = گشتاور برآیند ÷ لختی دورانی" en="α = τ_net / I" legend="I = (تخته) + m₁d₁² + m₂d₂² ؛ گشتاور برآیند را از اختلاف دو گشتاور بساز" subst={`α = ${Math.abs(net).toFixed(2)} ÷ ${I.toFixed(2)} = ?`} label="α:" answer={Math.abs(alpha)} unit="rad/s²" decimals={2} />
+      </>) : (<>
+        <svg viewBox="0 0 320 210" className="vlab-svg" style={{ background: "#0b1230", borderRadius: "10px" }}>
+          <polygon points="60,94 72,102 72,118 60,126 48,118 48,102" fill="#7d89b5" stroke="#cfd6ea" /><circle cx="60" cy="110" r="3" fill="#ffd98a" />
+          <rect x="60" y="105.5" width={arm * 480} height="9" rx="4" fill="#9aa5c8" stroke="#cfd6ea" />
+          <line x1={E[0] - v[0] * 150} y1={E[1] - v[1] * 150} x2={E[0] + v[0] * 150} y2={E[1] + v[1] * 150} stroke="#6a78b0" strokeDasharray="3 4" strokeWidth="0.8" />
+          <line x1="60" y1="110" x2={foot[0]} y2={foot[1]} stroke="#ffd98a" strokeWidth="1.6" strokeDasharray="4 2" />
+          <line x1={E[0]} y1={E[1]} x2={E[0] + v[0] * Lf} y2={E[1] + v[1] * Lf} stroke="#ff6b6b" strokeWidth="3" />
+          <polygon points={`${E[0] + v[0] * (Lf + 7)},${E[1] + v[1] * (Lf + 7)} ${E[0] + v[0] * Lf - v[1] * 4},${E[1] + v[1] * Lf + v[0] * 4} ${E[0] + v[0] * Lf + v[1] * 4},${E[1] + v[1] * Lf - v[0] * 4}`} fill="#ff6b6b" />
+          <path d={`M${E[0] + 24},${E[1]} A24,24 0 0 0 ${E[0] + 24 * Math.cos(rad)},${E[1] - 24 * Math.sin(rad)}`} fill="none" stroke="#9fe3a8" />
+          <text x={E[0] + 30} y={E[1] - 6} fontSize="8" fill="#9fe3a8" direction="ltr">{`θ=${ang}°`}</text>
+          <text x="60" y="152" fontSize="8" fill="#ffd98a" textAnchor="middle">بازوی گشتاور</text>
+          <text x="160" y="196" fontSize="9" fill="#cfd6ea" textAnchor="middle" direction="ltr">{`τ = F·d·sinθ = ${vlabMFa(tauW, 2)} N·m`}</text>
+          <text x="160" y="16" fontSize="10" fill="#ffd166" textAnchor="middle">{lever < 0.005 ? "نیرو روی راستای آچار است: بازو صفر و پیچ نمی‌چرخد" : ang === 90 ? "نیرو عمود بر آچار: بیشترین گشتاور" : "فقط مؤلفه‌ی عمود بر آچار گشتاور می‌سازد"}</text>
+        </svg>
+        <div className="vlab-controls"><div className="vlab-ctrl-col" style={{ flex: 1 }}>
+          <label className="vlab-ctrl-label">نیرو: <bdi dir="ltr">{vlabMFa(F, 0)} N</bdi></label><VlabRange min="5" max="100" step="5" value={F} onChange={(e) => setF(+e.target.value)} />
+          <label className="vlab-ctrl-label">طول آچار (فاصله تا پیچ): <bdi dir="ltr">{vlabMFa(arm, 2)} m</bdi></label><VlabRange min="0.05" max="0.45" step="0.01" value={arm} onChange={(e) => setArm(+e.target.value)} />
+          <label className="vlab-ctrl-label">زاویه‌ی نیرو با آچار (θ): <bdi dir="ltr">{vlabMFa(ang, 0)}°</bdi></label><VlabRange min="0" max="180" step="5" value={ang} onChange={(e) => setAng(+e.target.value)} />
+        </div></div>
+        <div className="vlab-readout" style={{ direction: "rtl" }}>
+          <div>بازوی گشتاور: d·sinθ = <bdi dir="ltr">{vlabMFa(lever, 3)} m</bdi></div>
+          <div>مؤلفه‌ی عمود: F·sinθ = <bdi dir="ltr">{vlabMFa(Math.abs(F * Math.sin(rad)), 1)} N</bdi> · مؤلفه‌ی موازی: <bdi dir="ltr">{vlabMFa(Math.abs(F * Math.cos(rad)), 1)} N</bdi> (بی‌اثر در چرخاندن)</div>
+          <div>گشتاور: <bdi dir="ltr">{vlabMFa(Math.abs(tauW), 2)} N·m</bdi></div>
+        </div>
+        <VlabFormulaCheck title="گشتاور نیرو" fa="گشتاور = نیرو × فاصله تا محور × سینوس زاویه" en="τ = F · d · sinθ" legend="زاویه بین نیرو و خط واصل پیچ تا نقطه‌ی اعمال نیرو؛ sin90°=1" subst={`τ = ${F} × ${arm.toFixed(2)} × sin(${ang}°) = ?`} label="τ:" answer={Math.abs(tauW)} unit="N·m" decimals={2} />
+      </>)}
+      <VlabEverydayCard title="چرا دستگیره‌ی در دور از لولاست؟" text="گشتاور = نیرو × بازو. هرچه دستگیره از لولا دورتر باشد، با نیروی کمتری در را می‌چرخانی. آچار بلندتر هم همین‌طور؛ و اگر نیرو را در راستای آچار بزنی، پیچ هرگز نمی‌چرخد.">
+        <rect x="14" y="14" width="46" height="70" rx="3" fill="#c8923a" stroke="#6a4a10" strokeWidth="2" /><circle cx="52" cy="50" r="3.5" fill="#ffd98a" /><circle cx="14" cy="22" r="3" fill="#555" /><path d="M96,50 H64" stroke="#2a6ab8" strokeWidth="2" /><path d="M70,44 l-6,6 l6,6" fill="none" stroke="#2a6ab8" strokeWidth="2" />
+      </VlabEverydayCard>
+    </div>
+  );
+}
+
+/* ===== دوپلر و ضربان صوت ===== */
+function VlabSoundExperiment({ onReading }) {
+  const [mode, setMode] = useState("doppler");
+  const [u, setU] = useState(120), [f, setF] = useState(500), [f1, setF1] = useState(100), [df, setDf] = useState(4);
+  const [t, setT] = useState(0), [run, setRun] = useState(true);
+  const C = 340, CP = 60, KPX = CP / C;
+  const tRef = React.useRef(0), uRef = React.useRef(u); uRef.current = u;
+  useEffect(() => {
+    if (!run || mode !== "doppler") return;
+    let raf, last = null;
+    const step = (ts) => {
+      if (last !== null) { const dt = Math.min(0.05, (ts - last) / 1000); tRef.current += dt; const vp = uRef.current * KPX, cyc = Math.min(8, 160 / Math.max(vp, 1)); if (tRef.current > cyc) tRef.current = 0; setT(tRef.current); }
+      last = ts; raf = requestAnimationFrame(step);
+    };
+    raf = requestAnimationFrame(step);
+    return () => cancelAnimationFrame(raf);
+  }, [run, mode]);
+  useEffect(() => { tRef.current = 0; setT(0); }, [u, mode]);
+  const M = u / C, fF = u < C ? (f * C) / (C - u) : null, fB = (f * C) / (C + u), lamF = ((C - u) / f), lamB = (C + u) / f;
+  useEffect(() => { if (onReading) onReading(mode === "doppler" ? `سرعت منبع ${u} m/s (ماخ ${M.toFixed(2)}) | بسامد جلو ${fF ? fF.toFixed(0) : "موج ضربه"} Hz | پشت ${fB.toFixed(0)} Hz` : `بسامد ضربان ${df} Hz`); }, [u, f, df, mode]);
+  const vpx = u * KPX, xs = 60 + vpx * t, fronts = [];
+  for (let k = 0; k * 0.5 <= t; k++) { const te = k * 0.5, r = CP * (t - te), cx = 60 + vpx * te; if (r < 300) fronts.push({ k, r, cx }); }
+  const win = 0.4, N = 800, wave = (fq, tt) => Math.sin(2 * Math.PI * fq * tt);
+  const f2 = f1 + df;
+  const mk = (fn, y0, A) => Array.from({ length: N + 1 }, (_, i) => { const tt = (i / N) * win; return `${10 + (i / N) * 300},${(y0 - A * fn(tt)).toFixed(1)}`; }).join(" ");
+  return (
+    <div className="vlab-exp">
+      <div className="vlab-toggle-row"><button type="button" className={"vlab-toggle-btn" + (mode === "doppler" ? " active" : "")} onClick={() => setMode("doppler")}>اثر دوپلر</button><button type="button" className={"vlab-toggle-btn" + (mode === "beats" ? " active" : "")} onClick={() => setMode("beats")}>ضربان (دو صدای نزدیک)</button></div>
+      {mode === "doppler" ? (<>
+        <svg viewBox="0 0 320 200" className="vlab-svg" style={{ background: "#0b1230", borderRadius: "10px" }}>
+          <defs><clipPath id="sndClip"><rect x="0" y="22" width="320" height="156" /></clipPath></defs>
+          <g clipPath="url(#sndClip)">
+            {fronts.map((q) => <circle key={q.k} cx={q.cx} cy="100" r={q.r} fill="none" stroke="#7fd8ff" strokeWidth="1.3" opacity={Math.max(0.15, 1 - q.r / 320)} />)}
+            {M > 1 && <g stroke="#ffd166" strokeWidth="1.4" strokeDasharray="4 3"><line x1={xs} y1="100" x2={xs - 200} y2={100 - 200 * Math.tan(Math.asin(1 / M))} /><line x1={xs} y1="100" x2={xs - 200} y2={100 + 200 * Math.tan(Math.asin(1 / M))} /></g>}
+          </g>
+          <circle cx={xs} cy="100" r="6" fill="#ff6b6b" stroke="#fff" /><text x={xs} y="84" fontSize="8" fill="#ffd9c0" textAnchor="middle">منبع</text>
+          <g><circle cx="300" cy="100" r="7" fill="#9fe3a8" stroke="#fff" /><text x="300" y="120" fontSize="8" fill="#bff0c8" textAnchor="middle">ناظر جلو</text></g>
+          <g><circle cx="20" cy="100" r="7" fill="#ffb86a" stroke="#fff" /><text x="20" y="120" fontSize="8" fill="#ffe0bd" textAnchor="middle">ناظر پشت</text></g>
+          <text x="160" y="16" fontSize="10" fill={M >= 1 ? "#ffd166" : "#cfd6ea"} textAnchor="middle">{M >= 1 ? (M === 1 ? "سرعت صوت: موج‌ها روی هم انباشته می‌شوند" : "فراصوتی: مخروط ماخ و موج ضربه") : `ماخ ${vlabMFa(M, 2)} (زیر سرعت صوت)`}</text>
+          <text x="160" y="194" fontSize="7.5" fill="#9fb0e0" textAnchor="middle">برای دیده‌شدن، فاصله‌ی موج‌ها بزرگ‌نمایی شده است؛ نسبت‌ها همان نسبت‌های واقعی‌اند.</text>
+        </svg>
+        <div className="vlab-toggle-row"><button type="button" className="vlab-toggle-btn active" onClick={() => setRun(!run)}>{run ? "⏸ ایست" : "▶ پخش"}</button></div>
+        <div className="vlab-controls"><div className="vlab-ctrl-col" style={{ flex: 1 }}>
+          <label className="vlab-ctrl-label">سرعت منبع: <bdi dir="ltr">{vlabMFa(u, 0)} m/s</bdi> ({vlabMFa(M, 2)} ماخ)</label><VlabRange min="0" max="510" step="10" value={u} onChange={(e) => setU(+e.target.value)} />
+          <label className="vlab-ctrl-label">بسامد منبع: <bdi dir="ltr">{vlabMFa(f, 0)} Hz</bdi></label><VlabRange min="200" max="1000" step="50" value={f} onChange={(e) => setF(+e.target.value)} />
+        </div></div>
+        <div className="vlab-readout" style={{ direction: "rtl" }}>
+          <div>ناظر جلو: {fF ? <span>بسامد <bdi dir="ltr">{vlabMFa(fF, 0)} Hz</bdi> · طول موج <bdi dir="ltr">{vlabMFa(lamF, 3)} m</bdi> (فشرده‌تر)</span> : "منبع از صدا تندتر است؛ موج به ناظر جلو نمی‌رسد و موج ضربه (انفجار صوتی) می‌سازد"}</div>
+          <div>ناظر پشت: بسامد <bdi dir="ltr">{vlabMFa(fB, 0)} Hz</bdi> · طول موج <bdi dir="ltr">{vlabMFa(lamB, 3)} m</bdi> (کشیده‌تر)</div>
+          <div style={{ opacity: 0.8, fontSize: 12 }}>سرعت صدا در هوا ۳۴۰ m/s. صدای آمبولانس هنگام نزدیک‌شدن زیرتر و هنگام دورشدن بم‌تر می‌شود.{M > 1 ? ` زاویه‌ی مخروط ماخ: ${vlabMFa((Math.asin(1 / M) * 180) / Math.PI, 1)}°` : ""}</div>
+        </div>
+        {fF && <VlabFormulaCheck title="اثر دوپلر (منبع متحرک)" fa="بسامد شنیده‌شده برای ناظر جلو = بسامد منبع × سرعت صدا ÷ (سرعت صدا − سرعت منبع)" en="f' = f · v / (v − u)" legend="v = ۳۴۰ m/s؛ ناظر ساکن است و منبع به‌سمت او می‌رود" subst={`f' = ${f} × 340 ÷ (340 − ${u}) = ?`} label="f':" answer={fF} unit="Hz" decimals={0} />}
+        <VlabFormulaCheck title="اثر دوپلر برای ناظر پشت" fa="بسامد شنیده‌شده برای ناظر پشت = بسامد منبع × سرعت صدا ÷ (سرعت صدا + سرعت منبع)" en="f' = f · v / (v + u)" legend="منبع از ناظر دور می‌شود" subst={`f' = ${f} × 340 ÷ (340 + ${u}) = ?`} label="f':" answer={fB} unit="Hz" decimals={0} />
+      </>) : (<>
+        <svg viewBox="0 0 320 200" className="vlab-svg" style={{ background: "#0b1230", borderRadius: "10px" }}>
+          <polyline points={mk((tt) => wave(f1, tt), 30, 13)} fill="none" stroke="#7fd8ff" strokeWidth="0.8" />
+          <polyline points={mk((tt) => wave(f2, tt), 76, 13)} fill="none" stroke="#ffb86a" strokeWidth="0.8" />
+          <polyline points={mk((tt) => wave(f1, tt) + wave(f2, tt), 144, 21)} fill="none" stroke="#ffd98a" strokeWidth="0.9" />
+          <polyline points={mk((tt) => 2 * Math.abs(Math.cos(Math.PI * df * tt)), 144, 21)} fill="none" stroke="#ff6b6b" strokeWidth="1.2" strokeDasharray="3 2" />
+          {Array.from({ length: Math.floor(win * df) + 1 }, (_, k) => k / df).filter((tt) => tt <= win).map((tt, i) => <line key={i} x1={10 + (tt / win) * 300} y1="100" x2={10 + (tt / win) * 300} y2="188" stroke="#6a78b0" strokeDasharray="2 3" strokeWidth="0.6" />)}
+          <text x="160" y="12" fontSize="8" fill="#7fd8ff" textAnchor="middle" stroke="#0b1230" strokeWidth="3" paintOrder="stroke" direction="ltr">{`f₁ = ${vlabMFa(f1, 0)} Hz`}</text>
+          <text x="160" y="58" fontSize="8" fill="#ffb86a" textAnchor="middle" stroke="#0b1230" strokeWidth="3" paintOrder="stroke" direction="ltr">{`f₂ = ${vlabMFa(f2, 0)} Hz`}</text>
+          <text x="160" y="100" fontSize="8" fill="#ffd98a" textAnchor="middle" stroke="#0b1230" strokeWidth="3" paintOrder="stroke">مجموع دو صدا (خط‌چین قرمز: پوش دامنه)</text>
+          <text x="160" y="197" fontSize="8" fill="#cfd6ea" textAnchor="middle" stroke="#0b1230" strokeWidth="3" paintOrder="stroke" direction="ltr">{`T(ضربان) = 1/Δf = ${vlabMFa(1 / df, 2)} s`}</text>
+        </svg>
+        <div className="vlab-controls"><div className="vlab-ctrl-col" style={{ flex: 1 }}>
+          <label className="vlab-ctrl-label">بسامد صدای اول: <bdi dir="ltr">{vlabMFa(f1, 0)} Hz</bdi></label><VlabRange min="60" max="120" step="5" value={f1} onChange={(e) => setF1(+e.target.value)} />
+          <label className="vlab-ctrl-label">اختلاف بسامد (Δf): <bdi dir="ltr">{vlabMFa(df, 0)} Hz</bdi></label><VlabRange min="1" max="12" step="1" value={df} onChange={(e) => setDf(+e.target.value)} />
+        </div></div>
+        <div className="vlab-readout" style={{ direction: "rtl" }}>
+          <div>بسامد ضربان: <bdi dir="ltr">{vlabMFa(df, 0)} Hz</bdi> (هر <bdi dir="ltr">{vlabMFa(1 / df, 2)} s</bdi> یک بار صدا قوی می‌شود)</div>
+          <div style={{ opacity: 0.8, fontSize: 12 }}>برای خواناشدن نمودار، بسامدها پایین گرفته شده‌اند؛ قانون ضربان برای صدای واقعی هم همین است. نوازنده‌ها با شنیدن ضربان سیم‌ها را کوک می‌کنند: وقتی ضربان صفر شد، دو صدا هم‌بسامدند.</div>
+        </div>
+        <VlabFormulaCheck title="بسامد ضربان" fa="بسامد ضربان = اختلاف دو بسامد" en="f_beat = |f₂ − f₁|" legend="دو بسامد را از بالای نمودار بخوان" subst={`f_beat = ${f2} − ${f1} = ?`} label="f:" answer={df} unit="Hz" decimals={0} />
+      </>)}
+    </div>
+  );
+}
+
+/* ===== وراثت دوصفتی و شجره‌نامه ===== */
+const VLAB_GEN_PED = {
+  ar: { n: "صفت مغلوب اتوزومی", note: "پدر و مادر سالم (Aa) فرزند بیمار (aa) دارند؛ پس هر دو ناقل‌اند. دختر II-3 هم چون فرزند بیمار دارد، حتماً Aa است.", P: [
+    { id: "a", x: 85, y: 30, s: "f", g: "Aa", aff: 0 }, { id: "b", x: 155, y: 30, s: "m", g: "Aa", aff: 0 },
+    { id: "c", x: 50, y: 100, s: "m", g: "aa", aff: 1 }, { id: "d", x: 120, y: 100, s: "m", g: "A_", aff: 0 }, { id: "e", x: 190, y: 100, s: "f", g: "Aa", aff: 0 }, { id: "f", x: 260, y: 100, s: "m", g: "Aa", aff: 0 },
+    { id: "g", x: 195, y: 170, s: "m", g: "aa", aff: 1 }, { id: "h", x: 255, y: 170, s: "f", g: "A_", aff: 0 }], C: [["a", "b", ["c", "d", "e"]], ["e", "f", ["g", "h"]]] },
+  ad: { n: "صفت غالب اتوزومی", note: "هر فرد بیمار حتماً یک والد بیمار دارد و صفت نسل‌به‌نسل دیده می‌شود. والد سالم (aa) هیچ‌وقت ژن بیماری را ندارد.", P: [
+    { id: "a", x: 85, y: 30, s: "f", g: "aa", aff: 0 }, { id: "b", x: 155, y: 30, s: "m", g: "Aa", aff: 1 },
+    { id: "c", x: 50, y: 100, s: "m", g: "Aa", aff: 1 }, { id: "d", x: 120, y: 100, s: "f", g: "aa", aff: 0 }, { id: "e", x: 190, y: 100, s: "f", g: "Aa", aff: 1 }, { id: "f", x: 260, y: 100, s: "m", g: "aa", aff: 0 },
+    { id: "g", x: 195, y: 170, s: "m", g: "Aa", aff: 1 }, { id: "h", x: 255, y: 170, s: "f", g: "aa", aff: 0 }], C: [["a", "b", ["c", "d", "e"]], ["e", "f", ["g", "h"]]] },
+  xr: { n: "صفت مغلوب وابسته به X (مثل هموفیلی)", note: "مادر ناقل (XᴴXʰ) نیمی از پسرانش را بیمار می‌کند و دخترانش یا ناقل‌اند یا سالم. پسر بیمار ژنش را از مادر گرفته؛ پدر تنها Y می‌دهد.", P: [
+    { id: "a", x: 85, y: 30, s: "f", g: "XᴴXʰ", aff: 0, car: 1 }, { id: "b", x: 155, y: 30, s: "m", g: "XᴴY", aff: 0 },
+    { id: "c", x: 50, y: 100, s: "m", g: "XʰY", aff: 1 }, { id: "d", x: 120, y: 100, s: "m", g: "XᴴY", aff: 0 }, { id: "e", x: 190, y: 100, s: "f", g: "XᴴXʰ", aff: 0, car: 1 }, { id: "f", x: 260, y: 100, s: "m", g: "XᴴY", aff: 0 },
+    { id: "g", x: 195, y: 170, s: "m", g: "XʰY", aff: 1 }, { id: "h", x: 255, y: 170, s: "f", g: "XᴴXʰ", aff: 0, car: 1 }], C: [["a", "b", ["c", "d", "e"]], ["e", "f", ["g", "h"]]] },
+};
+const VLAB_GEN_PH = [["گرد و زرد", "#e8c84a"], ["گرد و سبز", "#6ab04c"], ["چروکیده و زرد", "#b8903a"], ["چروکیده و سبز", "#3f7a3f"]];
+function VlabDihybridExperiment({ onReading }) {
+  const [mode, setMode] = useState("punnett");
+  const [p1, setP1] = useState(["Rr", "Yy"]), [p2, setP2] = useState(["Rr", "Yy"]);
+  const [ped, setPed] = useState("ar"), [show, setShow] = useState(false);
+  const gam = (p) => { const r = []; for (const a of p[0]) for (const b of p[1]) r.push(a + b); return r; };
+  const g1 = gam(p1), g2 = gam(p2);
+  const geno = (a, b) => { const A = (a[0] + b[0]).split("").sort().join(""), B = (a[1] + b[1]).split("").sort().join(""); return A + B; };
+  const phen = (g) => (g.includes("R") ? 0 : 2) + (g.slice(2).includes("Y") ? 0 : 1);
+  const cnt = [0, 0, 0, 0]; g1.forEach((a) => g2.forEach((b) => { cnt[phen(geno(a, b))]++; }));
+  const tot = 16, pickAll = (cur, setCur, gi, opts, nm) => (<div className="vlab-num-row" style={{ marginBottom: 4 }}><span style={{ fontSize: 12, minWidth: 54 }}>{nm}</span>{opts.map((o) => (<button key={o} type="button" className={"vlab-num-btn" + (cur[gi] === o ? " active" : "")} style={{ minWidth: 38 }} onClick={() => { const n = cur.slice(); n[gi] = o; setCur(n); }}>{o}</button>))}</div>);
+  useEffect(() => { if (onReading) onReading(mode === "punnett" ? `${p1.join("")} × ${p2.join("")} | نسبت: ${cnt.join(" : ")}` : `شجره‌نامه: ${VLAB_GEN_PED[ped].n}`); }, [p1, p2, mode, ped]);
+  const T = VLAB_GEN_PED[ped], byId = {}; T.P.forEach((q) => { byId[q.id] = q; });
+  const sym = (q) => (q.s === "m" ? <rect x={q.x - 11} y={q.y - 11} width="22" height="22" fill={q.aff ? "#ffd98a" : "#0b1230"} stroke="#cfd6ea" strokeWidth="1.6" /> : <circle cx={q.x} cy={q.y} r="11" fill={q.aff ? "#ffd98a" : "#0b1230"} stroke="#cfd6ea" strokeWidth="1.6" />);
+  return (
+    <div className="vlab-exp">
+      <div className="vlab-toggle-row"><button type="button" className={"vlab-toggle-btn" + (mode === "punnett" ? " active" : "")} onClick={() => setMode("punnett")}>مربع پانت دوصفتی</button><button type="button" className={"vlab-toggle-btn" + (mode === "ped" ? " active" : "")} onClick={() => setMode("ped")}>شجره‌نامه</button></div>
+      {mode === "punnett" ? (<>
+        <div className="vlab-toggle-row" style={{ flexWrap: "wrap" }}>{[["دورگه × دورگه", ["Rr", "Yy"], ["Rr", "Yy"]], ["آزمون‌تلاقی", ["Rr", "Yy"], ["rr", "yy"]], ["خالص × خالص", ["RR", "YY"], ["rr", "yy"]]].map(([t, a, b]) => (<button key={t} type="button" className="vlab-toggle-btn" onClick={() => { setP1(a); setP2(b); }}>{t}</button>))}</div>
+        <div className="vlab-controls"><div className="vlab-ctrl-col" style={{ flex: 1 }}>
+          {pickAll(p1, setP1, 0, ["RR", "Rr", "rr"], "والد ۱ (شکل)")}{pickAll(p1, setP1, 1, ["YY", "Yy", "yy"], "والد ۱ (رنگ)")}
+          {pickAll(p2, setP2, 0, ["RR", "Rr", "rr"], "والد ۲ (شکل)")}{pickAll(p2, setP2, 1, ["YY", "Yy", "yy"], "والد ۲ (رنگ)")}
+        </div></div>
+        <div style={{ overflowX: "auto" }}>
+          <table style={{ borderCollapse: "collapse", margin: "0 auto", direction: "ltr", fontSize: 11 }}>
+            <thead><tr><th style={{ padding: 3 }} />{g2.map((g, i) => <th key={i} style={{ padding: 3, color: "#ffb86a" }}>{g}</th>)}</tr></thead>
+            <tbody>{g1.map((a, i) => (<tr key={i}><th style={{ padding: 3, color: "#7fd8ff" }}>{a}</th>{g2.map((b, j) => { const gg = geno(a, b); return <td key={j} style={{ background: VLAB_GEN_PH[phen(gg)][1], color: "#101010", textAlign: "center", padding: "6px 4px", border: "1px solid #0b1230", minWidth: 44, fontWeight: 700 }}>{gg}</td>; })}</tr>))}</tbody>
+          </table>
+        </div>
+        <div className="vlab-readout" style={{ direction: "rtl" }}>
+          {VLAB_GEN_PH.map(([n, c], i) => (<div key={i}><span style={{ display: "inline-block", width: 12, height: 12, background: c, borderRadius: 3, marginInlineEnd: 6 }} />{n}: {vlabMFa(cnt[i], 0)} از ۱۶ ({vlabMFa((cnt[i] / tot) * 100, 1)}٪)</div>))}
+          <div style={{ marginTop: 4 }}>نسبت فنوتیپی: <bdi dir="ltr">{cnt.join(" : ")}</bdi></div>
+          <div style={{ opacity: 0.8, fontSize: 12 }}>گامت‌ها: والد ۱ ({g1.join("، ")}) · والد ۲ ({g2.join("، ")}). گرد (R) و زرد (Y) غالب‌اند. دو ژن روی کروموزوم‌های جدا و مستقل‌اند (قانون مندل).</div>
+        </div>
+        <VlabFormulaCheck title="احتمال فنوتیپ گرد و زرد" fa="احتمال = تعداد خانه‌های گرد و زرد ÷ ۱۶ × ۱۰۰" en="P = n / 16" legend="خانه‌های زردرنگ ردیف اول جدول را بشمار" subst={`P = ${cnt[0]} ÷ 16 × 100 = ?`} label="P:" answer={(cnt[0] / 16) * 100} unit="%" decimals={1} />
+      </>) : (<>
+        <div className="vlab-toggle-row" style={{ flexWrap: "wrap" }}>{Object.keys(VLAB_GEN_PED).map((k) => (<button key={k} type="button" className={"vlab-toggle-btn" + (ped === k ? " active" : "")} onClick={() => { setPed(k); setShow(false); }}>{VLAB_GEN_PED[k].n}</button>))}</div>
+        <svg viewBox="0 0 320 214" className="vlab-svg" style={{ background: "#0b1230", borderRadius: "10px" }}>
+          {T.C.map(([a, b, ch], i) => { const A = byId[a], B = byId[b], mx = (A.x + B.x) / 2, kids = ch.map((c) => byId[c]), yb = kids[0].y - 22; const xs = kids.map((k) => k.x).concat([mx]); return (<g key={i} stroke="#9fb0e0" strokeWidth="1.4" fill="none"><line x1={A.x + 11} y1={A.y} x2={B.x - 11} y2={B.y} /><line x1={mx} y1={A.y} x2={mx} y2={yb} /><line x1={Math.min(...xs)} y1={yb} x2={Math.max(...xs)} y2={yb} />{kids.map((k) => <line key={k.id} x1={k.x} y1={yb} x2={k.x} y2={k.y - 11} />)}</g>); })}
+          {T.P.map((q) => (<g key={q.id}>{sym(q)}{q.car ? <circle cx={q.x} cy={q.y} r="3.4" fill="#ffd98a" /> : null}{show ? <text x={q.x} y={q.y + 25} fontSize="8.5" fill="#9fe3a8" textAnchor="middle" direction="ltr" fontWeight="700">{q.g}</text> : null}</g>))}
+          {["I", "II", "III"].map((r, i) => <text key={r} x="10" y={34 + i * 70} fontSize="9" fill="#9fb0e0" direction="ltr">{r}</text>)}
+          <text x="160" y="208" fontSize="7.5" fill="#cfd6ea" textAnchor="middle">مربع = پسر، دایره = دختر؛ رنگ پر = بیمار؛ نقطه‌ی وسط = ناقل (سالم)</text>
+        </svg>
+        <div className="vlab-toggle-row"><button type="button" className={"vlab-toggle-btn" + (show ? " active" : "")} onClick={() => setShow(!show)}>{show ? "پنهان‌کردن ژنوتیپ‌ها" : "نمایش ژنوتیپ‌ها (اول خودت حدس بزن)"}</button></div>
+        <div className="vlab-readout" style={{ direction: "rtl" }}>{show ? T.note : "اول فکر کن: این صفت غالب است یا مغلوب؟ از چه جنسی به ارث رسیده؟ سپس ژنوتیپ‌ها را نشان بده و با حدست مقایسه کن. A_ یعنی AA یا Aa؛ داده‌ها برای تعیین دقیق کافی نیست."}</div>
+      </>)}
     </div>
   );
 }
@@ -39512,6 +39782,9 @@ const VLAB_COMPONENTS = {
   "balance-equation": VlabBalanceEquationExperiment,
   "natural-selection": VlabNaturalSelectionExperiment,
   "meiosis": VlabMeiosisExperiment,
+  "torque": VlabTorqueExperiment,
+  "sound-doppler": VlabSoundExperiment,
+  "dihybrid-pedigree": VlabDihybridExperiment,
   "hooke-law": VlabHookeExperiment,
   "fluid-pressure": VlabFluidPressureExperiment,
   "plane-mirror": VlabPlaneMirrorExperiment,
@@ -39675,6 +39948,9 @@ const VLAB_GUIDE = {
   "balance-equation": { goals: ["قانون پایستگی جرم را در معادله‌ها ببینی.", "با ضریب‌ها معادله را موازنه کنی."], challenges: ["معادله‌ی تشکیل آب را موازنه کن.", "سوختن متان را موازنه کن؛ از کدام اتم شروع کردی؟", "چرا نباید عدد کوچک زیر فرمول (اندیس) را عوض کنیم؟"], misconception: "برای موازنه، اندیس‌ها را تغییر نمی‌دهیم؛ فقط ضریب‌ها را؛ چون اندیس خودِ ماده را مشخص می‌کند.", check: { q: "در موازنه‌ی H₂ + O₂ → H₂O ضریب‌ها چیست؟", a: "۲ و ۱ و ۲." } },
   "natural-selection": { goals: ["ببینی چرا رنگِ استتارشده در جمعیت زیاد می‌شود.", "نقش محیط و شکارچی را درک کنی."], challenges: ["در خاک تیره ۱۰ نسل جلو برو. چه می‌شود؟", "محیط را به برف عوض کن و دوباره ۱۰ نسل برو.", "چند بار تکرار کن؛ آیا نتیجه هر بار دقیقاً یکی است؟"], misconception: "خرگوش‌ها «تصمیم نمی‌گیرند» رنگشان عوض شود؛ ویژگی‌های مناسب‌تر شانس زنده‌ماندن و تولیدمثل بیشتری دارند.", check: { q: "در برف، کدام خرگوش بیشتر زنده می‌ماند و چرا؟", a: "روشن؛ چون کمتر دیده می‌شود و کمتر شکار می‌شود." } },
   "meiosis": { goals: ["تفاوت میتوز و میوز را ببینی.", "بفهمی چرا گامت‌ها با هم و با سلول مادر فرق دارند."], challenges: ["در آنافاز I، چه چیزی از هم جدا می‌شود؟ در آنافاز II چه چیزی؟", "تعداد کروموزوم هر سلول را در ابتدا، بعد از تقسیم اول و در پایان بنویس.", "در پروفاز I دنبال بخش‌های رنگ‌عوض‌شده (کراسینگ‌اور) بگرد.", "n را ۲۳ کن و تعداد گامت‌های ممکن را حساب کن."], misconception: "در میوز I همتاها جدا می‌شوند، نه کروماتیدهای خواهری؛ کروماتیدها در میوز II جدا می‌شوند.", check: { q: "یک سلول 2n = ۴ چند گامت می‌سازد و هر گامت چند کروموزوم دارد؟", a: "چهار گامت، هرکدام ۲ کروموزوم (n = ۲)." } },
+  "torque": { goals: ["گشتاور را به‌صورت نیرو × بازو بفهمی.", "شرط تعادل چرخشی را کشف کنی."], challenges: ["وزنه‌ها را طوری بچین که تخته افقی بماند. رابطه‌ی جرم و فاصله چیست؟", "یک وزنه را دو برابر سنگین کن؛ فاصله‌ی دیگری را چقدر باید عوض کنی؟", "در حالت آچار، زاویه را ۰ و ۹۰ و ۱۸۰ بگذار. کدام بیشترین گشتاور را می‌دهد؟", "چرا هرچه آچار بلندتر باشد، پیچ آسان‌تر باز می‌شود؟"], misconception: "گشتاور فقط به اندازه‌ی نیرو بستگی ندارد؛ جای اعمال نیرو و جهتش هم مهم است.", check: { q: "وزنه‌ی ۲ کیلوگرمی در ۰٫۵ متری تکیه‌گاه است. وزنه‌ی ۱ کیلوگرمی را کجا بگذاریم تا تعادل شود؟", a: "در ۱ متری سمت دیگر (۲×۰٫۵ = ۱×۱)." } },
+  "sound-doppler": { goals: ["اثر دوپلر را با فشردگی موج‌ها ببینی.", "ضربان را به اختلاف بسامد ربط بدهی."], challenges: ["سرعت منبع را صفر بگذار و بعد زیاد کن. موج‌های جلو و پشت چه فرقی دارند؟", "بسامد ناظر جلو و پشت را در یک سرعت ثابت مقایسه کن.", "سرعت را از سرعت صوت بیشتر کن. چه شکلی پیدا می‌شود و چرا؟", "در ضربان، Δf را ۲ برابر کن. فاصله‌ی قوی‌شدن‌های صدا چه می‌شود؟"], misconception: "بسامد خود منبع عوض نمی‌شود؛ بسامدی که ناظر می‌شنود به‌خاطر حرکت منبع فرق می‌کند.", check: { q: "آمبولانس با ۳۴ متر بر ثانیه به ما نزدیک می‌شود و بسامدش ۵۰۰ هرتز است. بسامد شنیده‌شده؟", a: "حدود ۵۵۶ هرتز (500 × 340 ÷ 306)." } },
+  "dihybrid-pedigree": { goals: ["نسبت ۹:۳:۳:۱ را بسازی.", "از روی شجره‌نامه نوع وراثت را حدس بزنی."], challenges: ["دو والد RrYy را تلاقی بده. نسبت فنوتیپی را بنویس.", "آزمون‌تلاقی را بزن؛ چرا نسبت ۱:۱:۱:۱ می‌شود؟", "در شجره‌نامه‌ی مغلوب اتوزومی، چرا دو والد سالم فرزند بیمار دارند؟", "در شجره‌نامه‌ی وابسته به X، چرا پسرها بیشتر بیمار می‌شوند؟"], misconception: "دو صفت مستقل هر کدام نسبت ۳:۱ دارند؛ نسبت ۹:۳:۳:۱ ضرب این دو نسبت است.", check: { q: "در تلاقی RrYy × RrYy چند درصد فرزندان چروکیده و سبز (rryy) هستند؟", a: "۱ از ۱۶، یعنی ۶٫۲۵٪." } },
   "hooke-law": { goals: ["افزایش طول فنر با نیرو متناسب است (F = kx)."], challenges: ["جرم را دو برابر کن. افزایش طول چند برابر می‌شود؟", "یک جرم ثابت را با فنرهای ۲۰ و ۸۰ بسنج. کدام بیشتر کش می‌آید؟ چرا؟", "حدس بزن نمودار نیرو–افزایش طول چه شکلی است و شیبش چه معنایی دارد."], misconception: "هر فنری هر قدر بکشی همین رابطه را دارد؛ از حد کشسانی که بگذریم، فنر خراب می‌شود.", check: { q: "فنری با k = 40 نیوتن بر متر، وزنه‌ی ۲۰۰ گرمی را نگه می‌دارد. افزایش طول تقریباً چقدر است؟", a: "حدود ۴٫۹ سانتی‌متر (F ≈ 1٫96 N، x = F ÷ k)." } },
   "density-floating": { goals: ["شناوری به چگالی نسبت به آب بستگی دارد، نه به سنگینی."], challenges: ["اجسام را به دو گروه شناور و غوطه‌ور تقسیم کن و دلیلش را بنویس.", "چگالی چه محدوده‌ای داشته باشد تا جسم در آب شناور بماند؟", "چرا کشتی‌ای که از آهن ساخته شده غرق نمی‌شود؟"], misconception: "فکر می‌کنیم چیزهای سنگین حتماً غرق می‌شوند؛ کشتی‌های بزرگ هم شناورند.", check: { q: "جسمی چگالی ۰٫۹ گرم بر سانتی‌متر مکعب دارد. در آب شناور است؟", a: "بله؛ چگالی‌اش از آب (۱) کمتر است." } },
   "acid-base": { goals: ["اسید pH را کم و باز pH را زیاد می‌کند.", "خنثی‌شدن یعنی رسیدن به pH نزدیک ۷."], challenges: ["قطره‌های اسید را یکی‌یکی بریز. رنگ شناساگر و pH چه می‌شود؟", "از حالت اسیدی با چند قطره باز به حالت خنثی برمی‌گردی؟ عدد را ثبت کن.", "پیش از دیدن رنگ، pH را حدس بزن و با آزمایش مقایسه کن."], misconception: "همه‌ی اسیدها خطرناک نیستند؛ آب‌لیمو و سرکه اسیدهای ضعیفی هستند.", check: { q: "محلولی pH برابر ۳ دارد. اسیدی است یا بازی؟", a: "اسیدی؛ چون pH کمتر از ۷ است." } },

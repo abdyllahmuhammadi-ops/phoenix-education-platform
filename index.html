@@ -39191,6 +39191,14 @@ function StudentVirtualLabView({ onBack, grade, studentCode, schoolCode }) {
   const [speechSupported, setSpeechSupported] = useState(false);
   const [faVoiceAvailable, setFaVoiceAvailable] = useState(true); // تا بارگذاری فهرست صداها، خوش‌بینانه فرض می‌کنیم
   const faVoiceRef = React.useRef(null);
+  const [prediction, setPrediction] = useState("");
+  const [predMatch, setPredMatch] = useState("");
+  const [resetKey, setResetKey] = useState(0);
+  const [animPaused, setAnimPaused] = useState(false);
+  const [fbVote, setFbVote] = useState("");
+  const [fbText, setFbText] = useState("");
+  const [fbMsg, setFbMsg] = useState("");
+  const labBoxRef = React.useRef(null);
 
   useEffect(() => {
     if (typeof window === "undefined" || !window.speechSynthesis || !window.SpeechSynthesisUtterance) {
@@ -39258,6 +39266,42 @@ function StudentVirtualLabView({ onBack, grade, studentCode, schoolCode }) {
     }
   };
 
+  // دسترسی‌پذیری: نقش و برچسب برای تصویرها و لغزنده‌ها (برای صفحه‌خوان) — همه‌ی آزمایش‌ها
+  useEffect(() => {
+    const box = labBoxRef.current; if (!box) return;
+    const fix = () => {
+      const t = (VLAB_EXPERIMENTS.find((e) => e.id === activeId) || {}).title || "آزمایش";
+      box.querySelectorAll("svg.vlab-svg, svg[viewBox]").forEach((sv) => { if (!sv.getAttribute("role")) { sv.setAttribute("role", "img"); sv.setAttribute("aria-label", "تصویر متحرک آزمایش " + t); } });
+      box.querySelectorAll("input[type=range], input[type=number]").forEach((inp) => {
+        if (inp.getAttribute("aria-label")) return;
+        const col = inp.closest(".vlab-ctrl-col, .pqb-field, div");
+        const lab = col && col.querySelector(".vlab-ctrl-label, .pqb-label");
+        inp.setAttribute("aria-label", (lab && lab.textContent.trim()) || "تنظیم مقدار");
+      });
+    };
+    fix(); const mo = new MutationObserver(fix); mo.observe(box, { childList: true, subtree: true });
+    return () => mo.disconnect();
+  }, [activeId, resetKey]);
+
+  // توقف/ادامه‌ی همه‌ی انیمیشن‌ها (برای کسانی که حرکت آزارشان می‌دهد یا می‌خواهند دقیق نگاه کنند)
+  useEffect(() => {
+    const box = labBoxRef.current; if (!box) return;
+    const apply = () => { box.querySelectorAll("svg").forEach((sv) => { try { animPaused ? sv.pauseAnimations() : sv.unpauseAnimations(); } catch (e) {} }); box.classList.toggle("vlab-paused", animPaused); };
+    apply(); const t = setInterval(apply, 700); return () => clearInterval(t);
+  }, [animPaused, activeId, resetKey]);
+
+  const submitFeedback = async () => {
+    if (!fbVote) return;
+    const entry = { experimentId: activeId, vote: fbVote, text: fbText.trim(), grade: grade || "", at: new Date().toISOString() };
+    try {
+      if (typeof window !== "undefined" && window.storage) {
+        const k = "lab-feedback:" + activeId; const r = await window.storage.get(k, true).catch(() => null);
+        const list = r && r.value ? JSON.parse(r.value) : []; list.push(entry); await window.storage.set(k, JSON.stringify(list), true);
+      }
+      setFbMsg("✅ سپاس! نظرت ثبت شد و به بهتر شدن آزمایش کمک می‌کند."); setFbVote(""); setFbText("");
+    } catch (e) { setFbMsg("ثبت نظر انجام نشد."); }
+  };
+
   const reportsKey = "lab-reports:" + (schoolCode || "نامشخص") + ":" + skey(studentCode || "ناشناس");
 
   const loadReports = async () => {
@@ -39285,6 +39329,7 @@ function StudentVirtualLabView({ onBack, grade, studentCode, schoolCode }) {
     setReading("");
     setReportText("");
     setSaveMsg("");
+    setPrediction(""); setPredMatch(""); setResetKey(0); setAnimPaused(false); setFbVote(""); setFbText(""); setFbMsg("");
   };
 
   const saveReport = async () => {
@@ -39296,6 +39341,8 @@ function StudentVirtualLabView({ onBack, grade, studentCode, schoolCode }) {
       subject: activeExperiment ? activeExperiment.subject : "",
       reading,
       reportText: reportText.trim(),
+      prediction: prediction.trim(),
+      predictionMatch: predMatch,
       savedAt: new Date().toLocaleDateString("fa-IR"),
     };
     try {
@@ -39411,6 +39458,17 @@ function StudentVirtualLabView({ onBack, grade, studentCode, schoolCode }) {
         .vlab-tools-chip-row { display: flex; flex-wrap: wrap; gap: 8px; }
         .vlab-tool-chip { background: #eef3fb; border: 1px solid #c9d9f0; color: #27406b; font-size: 12px; font-weight: 700; padding: 6px 12px; border-radius: 999px; }
         .vlab-tools-note { font-size: 11.5px; color: #8a8060; line-height: 1.8; margin: 10px 0 0; }
+        .pqb-root button:focus-visible, .pqb-root input:focus-visible, .pqb-root select:focus-visible, .pqb-root textarea:focus-visible, .pqb-root [tabindex]:focus-visible { outline: 3px solid #1b6ef3; outline-offset: 2px; }
+        .vlab-predict-box { background: #fff7e0; border: 1px solid #f0d98a; border-radius: 14px; padding: 14px 16px; margin-bottom: 12px; }
+        .vlab-toolbar { display: flex; gap: 8px; flex-wrap: wrap; margin: 4px 0 12px; }
+        .vlab-tb-btn { height: 38px; padding: 0 14px; border-radius: 999px; border: 1.3px solid var(--t-accD,#c8862b); background: #fff; color: #5b3a05; font-weight: 700; font-size: 12.5px; cursor: pointer; }
+        .vlab-tb-btn.on { background: #1c2540; color: #fff; border-color: #1c2540; }
+        .vlab-paused * { animation-play-state: paused !important; }
+        .vlab-print-sheet { display: none; }
+        .vlab-print-sheet .ps-lines { height: 90px; background: repeating-linear-gradient(transparent, transparent 28px, #999 29px); }
+        .vlab-print-sheet .ps-lines.short { height: 60px; }
+        .vlab-print-sheet .ps-table { height: 200px; border: 1px solid #333; background: linear-gradient(90deg, transparent 33%, #333 33%, #333 33.3%, transparent 33.3%, transparent 66%, #333 66%, #333 66.3%, transparent 66.3%), repeating-linear-gradient(transparent, transparent 38px, #333 39px); }
+        @media print { body * { visibility: hidden !important; } .vlab-print-sheet, .vlab-print-sheet * { visibility: visible !important; } .vlab-print-sheet { display: block !important; position: absolute; top: 0; left: 0; right: 0; padding: 20px; color: #000; background: #fff; font-size: 14px; line-height: 2; } .vlab-print-sheet h1 { font-size: 20px; } .vlab-print-sheet h3 { margin: 14px 0 4px; font-size: 14px; } }
         .vlab-report-box { margin-top: 16px; background: color-mix(in srgb, var(--t-paper,#fbf7ec) 50%, #fff); border: 1px solid rgba(28,37,64,0.08); border-radius: 14px; padding: 16px; }
         .vlab-reports-list { display: flex; flex-direction: column; gap: 10px; margin-top: 10px; }
         .vlab-report-item { background: #fff; border: 1px solid rgba(28,37,64,0.08); border-radius: 10px; padding: 10px 12px; font-size: 12.5px; }
@@ -39525,7 +39583,19 @@ function StudentVirtualLabView({ onBack, grade, studentCode, schoolCode }) {
               </div>
             )}
 
-            {ActiveComponent && <ActiveComponent onReading={setReading} />}
+            <div className="vlab-predict-box">
+              <h2 className="pqb-section-title" style={{ marginBottom: 6 }}>🎯 اول پیش‌بینی کن</h2>
+              <p className="pqb-upload-hint" style={{ marginBottom: 8 }}>قبل از دست‌بردن به آزمایش، حدس بزن چه اتفاقی می‌افتد و چرا. دانشمندان هم همین‌طور شروع می‌کنند.</p>
+              <textarea className="pqb-textarea" aria-label="پیش‌بینی من" style={{ minHeight: 56 }} value={prediction} onChange={(e) => setPrediction(e.target.value)} placeholder="به نظرم … چون …" />
+            </div>
+            <div className="vlab-toolbar" role="toolbar" aria-label="ابزارهای آزمایش">
+              <button type="button" className="vlab-tb-btn" onClick={() => setResetKey((k) => k + 1)}>🔄 بازنشانی آزمایش</button>
+              <button type="button" className={"vlab-tb-btn" + (animPaused ? " on" : "")} aria-pressed={animPaused} onClick={() => setAnimPaused((p) => !p)}>{animPaused ? "▶ ادامه‌ی حرکت" : "⏸ توقف حرکت"}</button>
+              <button type="button" className="vlab-tb-btn" onClick={() => { try { window.print(); } catch (e) {} }}>🖨 برگه‌ی فعالیت (چاپ)</button>
+            </div>
+            <div ref={labBoxRef}>
+            {ActiveComponent && <ActiveComponent key={resetKey} onReading={setReading} />}
+            </div>
             {ActiveComponent && VLAB_EVERYDAY[activeId] && <VlabEverydayCard title={VLAB_EVERYDAY[activeId].title} text={VLAB_EVERYDAY[activeId].text}>{VLAB_EVERYDAY[activeId].art}</VlabEverydayCard>}
 
             <div className="vlab-report-box">
@@ -39542,6 +39612,32 @@ function StudentVirtualLabView({ onBack, grade, studentCode, schoolCode }) {
               <button type="button" className="pqb-submit-btn" style={{ marginTop: 10 }} onClick={saveReport} disabled={!reportText.trim()}>
                 💾 ثبت گزارش کار
               </button>
+            </div>
+            <div className="vlab-report-box">
+              <h2 className="pqb-section-title" style={{ marginBottom: 8 }}>🔍 پیش‌بینی‌ات درست بود؟</h2>
+              <div className="vlab-toggle-row" role="group" aria-label="مقایسه با پیش‌بینی">
+                {["بله", "تا حدی", "نه"].map((o) => (<button key={o} type="button" className={"vlab-toggle-btn" + (predMatch === o ? " active" : "")} onClick={() => setPredMatch(o)}>{o}</button>))}
+              </div>
+              <p className="pqb-upload-hint" style={{ margin: "8px 0 0" }}>اگر نه، همین جالب‌ترین بخش است: چه چیزی تو را غافلگیر کرد؟ در گزارش کار بنویس.</p>
+            </div>
+            <div className="vlab-report-box">
+              <h2 className="pqb-section-title" style={{ marginBottom: 8 }}>💬 این آزمایش چطور بود؟</h2>
+              <div className="vlab-toggle-row" role="group" aria-label="نظر درباره‌ی آزمایش">
+                {["👍 واضح بود", "😐 کمی گنگ", "👎 نفهمیدم"].map((o) => (<button key={o} type="button" className={"vlab-toggle-btn" + (fbVote === o ? " active" : "")} onClick={() => setFbVote(o)}>{o}</button>))}
+              </div>
+              <textarea className="pqb-textarea" aria-label="نظر یا پیشنهاد" style={{ minHeight: 50, marginTop: 8 }} value={fbText} onChange={(e) => setFbText(e.target.value)} placeholder="پیشنهاد یا اشکالی دیدی؟ (اختیاری)" />
+              {fbMsg && <p className="pqb-save-msg">{fbMsg}</p>}
+              <button type="button" className="pqb-submit-btn" style={{ marginTop: 10 }} onClick={submitFeedback} disabled={!fbVote}>ارسال نظر</button>
+            </div>
+            <div className="vlab-print-sheet" dir="rtl">
+              <h1>برگه‌ی فعالیت: {activeExperiment.title}</h1>
+              <p>نام: ............................ &nbsp; پایه: ............ &nbsp; تاریخ: ............</p>
+              <h3>هدف و توضیح</h3><p>{activeExperiment.intro}</p>
+              {activeExperiment.tools && <><h3>وسایل</h3><p>{activeExperiment.tools.join("، ")}</p></>}
+              <h3>۱) پیش‌بینی (قبل از آزمایش)</h3><div className="ps-lines" />
+              <h3>۲) مشاهدات (جدول یا نوشته)</h3><div className="ps-table" />
+              <h3>۳) نتیجه‌گیری: پیش‌بینی‌ام درست بود؟ چرا؟</h3><div className="ps-lines" />
+              <h3>۴) یک سؤال که هنوز دارم</h3><div className="ps-lines short" />
             </div>
           </>
         )}

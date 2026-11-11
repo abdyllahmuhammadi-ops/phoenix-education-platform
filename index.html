@@ -23000,6 +23000,15 @@ const VLAB_EXPERIMENTS = [
     tools: ["جمعیت","محیط","نمودار نسل‌ها"],
   },
   {
+    id: "meiosis",
+    subject: "زیست‌شناسی",
+    level: "متوسطه دوم",
+    title: "تقسیم میوز (کاهشی)",
+    icon: "🧬",
+    intro: "مراحل میوز را قدم‌به‌قدم ببین: جفت‌شدن کروموزوم‌های همتا، کراسینگ‌اور و تقسیم دوم تا رسیدن به چهار سلول هاپلوئید. با میتوز مقایسه‌اش کن.",
+    tools: ["نوار زمان","کروموزوم همتا","دوک تقسیم"],
+  },
+  {
     id: "hooke-law",
     subject: "فیزیک",
     level: "متوسطه اول",
@@ -30812,6 +30821,124 @@ function VlabBalanceEquationExperiment({ onReading }) {
 }
 
 /* ===== انتخاب طبیعی ===== */
+/* ===== میوز (کاهشی) ===== */
+function vlabMeiKey(k, p) { let j = 0; while (j < k.length - 2 && p > k[j + 1][0]) j++; const a = k[j], b = k[j + 1], f = Math.max(0, Math.min(1, (p - a[0]) / (b[0] - a[0]))); return { x: a[1] + (b[1] - a[1]) * f, y: a[2] + (b[2] - a[2]) * f, a: a[3] + (b[3] - a[3]) * f }; }
+const VLAB_MEI_ENTS = [
+  { id: "Am", col: "#ff6b6b", alt: "#6aa8ff", L: 28, pro: [138, 78, 28], biv: [150, 70], ana: [100, 70], telo: [72, 82], plate: [72, 100] },
+  { id: "Ap", col: "#6aa8ff", alt: "#ff6b6b", L: 28, pro: [184, 74, -25], biv: [170, 70], ana: [220, 70], telo: [220, 82], plate: [220, 100] },
+  { id: "Bm", col: "#ff6b6b", alt: "#6aa8ff", L: 17, pro: [132, 122, -18], biv: [150, 125], ana: [100, 125], telo: [100, 118], plate: [100, 100] },
+  { id: "Bp", col: "#6aa8ff", alt: "#ff6b6b", L: 17, pro: [186, 126, 22], biv: [170, 125], ana: [220, 125], telo: [248, 118], plate: [248, 100] },
+];
+function vlabMeiPos(e, p) { return vlabMeiKey([[0, e.pro[0], e.pro[1], e.pro[2]], [0.1, e.pro[0], e.pro[1], e.pro[2]], [0.28, e.biv[0], e.biv[1], 0], [0.42, e.biv[0], e.biv[1], 0], [0.55, e.ana[0], e.ana[1], 0], [0.68, e.telo[0], e.telo[1], 0], [0.74, e.plate[0], e.plate[1], 90], [1, e.plate[0], e.plate[1], 90]], p); }
+function vlabMeiShape(cx, cy, Rt, Rp, c, axis, key) {
+  const aa = Rt - c; const mapP = (u, v) => (axis === "x" ? [cx + u, cy + v] : [cx + v, cy + u]);
+  const poly = (pts, k) => <polygon key={k} points={pts.map((v) => v[0].toFixed(1) + "," + v[1].toFixed(1)).join(" ")} fill="#2a2038" stroke="#e88ab0" strokeWidth="3" strokeLinejoin="round" />;
+  const ell = (u0, k) => { const t = [], b = []; for (let i = 0; i <= 40; i++) { const th = (i / 40) * Math.PI; t.push(mapP(u0 - aa * Math.cos(th), -Rp * Math.sin(th))); b.push(mapP(u0 - aa * Math.cos(th), Rp * Math.sin(th))); } return poly(t.concat(b.reverse()), k); };
+  if (c >= aa) return <g key={key}>{ell(-c, "a")}{ell(c, "b")}</g>;
+  const t = [], b = [], u0 = -c - aa, u1 = c + aa;
+  for (let i = 0; i <= 120; i++) { const u = u0 + ((u1 - u0) * i) / 120, f = (cc) => Rp * Math.sqrt(Math.max(0, 1 - Math.pow((u - cc) / aa, 2))), h = Math.max(f(-c), f(c)); t.push(mapP(u, -h)); b.push(mapP(u, h)); }
+  return poly(t.concat(b.reverse()), key);
+}
+function VlabMeiosisExperiment({ onReading }) {
+  const [p, setP] = useState(0.04), [run, setRun] = useState(false), [n, setN] = useState(3);
+  const pRef = React.useRef(0.04); pRef.current = p;
+  const X0 = 30, X1 = 290;
+  const { svgRef, startDrag } = useVlabDrag((id, pt) => { setRun(false); setP(Math.max(0, Math.min(1, Math.round(((pt.x - X0) / (X1 - X0)) * 200) / 200))); });
+  useEffect(() => {
+    if (!run) return;
+    let raf, last = null;
+    const step = (t) => { if (last !== null) { const np = Math.min(1, pRef.current + ((t - last) / 1000) * 0.04); setP(np); pRef.current = np; if (np >= 1) { setRun(false); return; } } last = t; raf = requestAnimationFrame(step); };
+    raf = requestAnimationFrame(step);
+    return () => cancelAnimationFrame(raf);
+  }, [run]);
+  const ST = [
+    { e: 0.1, n: "اینترفاز", d: "DNA دو برابر می‌شود. این سلول ۴ کروموزوم دارد: ۲ جفت همتا (قرمز از مادر، آبی از پدر)." },
+    { e: 0.28, n: "پروفاز I", d: "کروموزوم‌های همتا فشرده می‌شوند، کنار هم جفت می‌شوند و قطعه‌هایی را با هم عوض می‌کنند (کراسینگ‌اور)." },
+    { e: 0.42, n: "متافاز I", d: "جفت‌های همتا (نه تک‌کروموزوم‌ها) روی خط استوا می‌ایستند و به رشته‌های دوک وصل می‌شوند." },
+    { e: 0.55, n: "آنافاز I", d: "کروموزوم‌های همتا از هم جدا می‌شوند و به دو قطب می‌روند. هر کروموزوم هنوز دو کروماتید دارد." },
+    { e: 0.74, n: "تلوفاز I و تقسیم اول", d: "دو سلول پدید می‌آید که هر کدام نصف تعداد کروموزوم را دارد (۲ کروموزوم دوکروماتیدی)." },
+    { e: 0.8, n: "متافاز II", d: "در هر سلول، کروموزوم‌ها روی خط استوا ردیف می‌شوند (مثل میتوز)." },
+    { e: 0.9, n: "آنافاز II", d: "کروماتیدهای خواهری از هم جدا می‌شوند و به دو قطب هر سلول می‌روند." },
+    { e: 1.01, n: "تلوفاز II و تقسیم دوم", d: "چهار سلول هاپلوئید (n = ۲) پدید می‌آید؛ هر کدام ترکیب ژنی متفاوتی دارد (گامت)." },
+  ];
+  const stage = ST.find((s) => p < s.e);
+  const cl = (v) => Math.max(0, Math.min(1, v));
+  const cond = cl((p - 0.08) / 0.12), oldN = cl((0.2 - p) / 0.1), newN = cl((p - 0.9) / 0.07);
+  const split2 = p > 0.8, s2 = cl((p - 0.8) / 0.1) * 34, co = p > 0.24 && p < 0.55;
+  const pinch1 = cl((p - 0.55) / 0.09), sep1 = cl((p - 0.64) / 0.04) * 12, pinch2 = cl((p - 0.88) / 0.1), sep2 = cl((p - 0.95) / 0.05) * 8;
+  const ents = VLAB_MEI_ENTS.map((e) => ({ e, ...vlabMeiPos(e, p) }));
+  const cellsCx = [160 - 62 - sep1, 160 + 62 + sep1];
+  let cells;
+  if (p < 0.68 || (pinch1 < 1 && p < 0.68)) { const Rt = 100 + 18 * cl((p - 0.42) / 0.13), Rp = 72 - 6 * pinch1, c = 62 * pinch1; cells = vlabMeiShape(160, 100, Rt, Rp, c, "x", "m1"); if (pinch1 >= 1) cells = vlabMeiShape(160, 100, 118, 66, 62, "x", "m1"); }
+  else { const Rt = 66 + 6 * cl((p - 0.8) / 0.1), c2 = 38 * pinch2 + 0; cells = <g>{cellsCx.map((cx, i) => vlabMeiShape(cx, 100, Rt, 56, c2 + (pinch2 > 0 ? 0 : 0), "y", "c" + i))}</g>; }
+  const sepShift = (k) => (k ? 1 : -1) * 0;
+  const spind1 = cl((p - 0.18) / 0.1) * cl((0.6 - p) / 0.05), spind2 = cl((p - 0.7) / 0.06) * cl((0.92 - p) / 0.05);
+  useEffect(() => { if (onReading) onReading(`مرحله: ${stage.n} | پیشرفت: ${Math.round(p * 100)}٪`); }, [stage.n]);
+  const nCells = p < 0.6 ? 1 : p < 0.9 ? 2 : 4, chromPer = p < 0.6 ? 4 : 2, dnaC = p < 0.1 ? 2 : p < 0.6 ? 4 : p < 0.9 ? 2 : 1;
+  const Xs = (x, y, a, L, col, alt, cross, key, op) => (
+    <g key={key} opacity={op} transform={`rotate(${a} ${x} ${y})`}>
+      <rect x={x - 2.6} y={y - L / 2} width="5.2" height={L} rx="2.6" fill={col} stroke="#fff" strokeWidth="0.5" transform={`rotate(-20 ${x} ${y})`} />
+      <rect x={x - 2.6} y={y - L / 2} width="5.2" height={L} rx="2.6" fill={col} stroke="#fff" strokeWidth="0.5" transform={`rotate(20 ${x} ${y})`} />
+      {cross ? <rect x={x - 2.6} y={y - L / 2} width="5.2" height={L * 0.3} rx="2.6" fill={alt} transform={`rotate(20 ${x} ${y})`} /> : null}
+      <circle cx={x} cy={y} r="2.3" fill="#fff" />
+    </g>
+  );
+  return (
+    <div className="vlab-exp">
+      <svg ref={svgRef} viewBox="0 0 320 244" className="vlab-svg" style={{ background: "#03060f", borderRadius: "10px", touchAction: "none" }}>
+        {cells}
+        <circle cx="160" cy="100" r="52" fill="#5a4a9c" opacity={0.55 * oldN} stroke="#b79cf0" strokeWidth="2" />
+        {[0, 1].flatMap((i) => [0, 1].map((j) => <circle key={i + "n" + j} cx={cellsCx[i]} cy={100 + (j ? 1 : -1) * (38 + sep2)} r="17" fill="#5a4a9c" opacity={0.55 * newN} stroke="#b79cf0" strokeWidth="1.4" />))}
+        {[60, 260].map((x, j) => ents.map((it) => <line key={"s1" + j + it.e.id} x1={x + (j ? -4 : 4)} y1="100" x2={it.x} y2={it.y} stroke="#9fb0e0" strokeWidth="0.8" opacity={0.65 * spind1} />))}
+        {spind1 > 0 ? [60, 260].map((x) => <circle key={"p" + x} cx={x} cy="100" r="3" fill="#ffd98a" opacity={spind1} />) : null}
+        {spind2 > 0 ? cellsCx.flatMap((cx, i) => [42, 158].map((y) => <g key={"q" + i + y}><circle cx={cx} cy={y} r="3" fill="#ffd98a" opacity={spind2} />{ents.filter((it) => (i === 0 ? it.e.id[1] === "m" : it.e.id[1] === "p")).map((it) => <line key={it.e.id} x1={cx} y1={y} x2={it.x} y2={it.y} stroke="#9fb0e0" strokeWidth="0.8" opacity={0.65 * spind2} />)}</g>)) : null}
+        {ents.map((it) => {
+          const e = it.e, wav = 1 - cond * 2;
+          return (
+            <g key={e.id}>
+              {wav > 0 ? <path d={`M${it.x - 11},${it.y} q3,-6 5.5,0 t5.5,0 t5.5,0 t5.5,0`} stroke={e.col} strokeWidth={e.L > 20 ? 1.8 : 1.4} fill="none" opacity={wav} /> : null}
+              {!split2 ? Xs(it.x, it.y, it.a, e.L, e.col, e.alt, co, "x" + e.id, Math.min(1, cond * 1.4)) : [-1, 1].map((sg) => { const y = it.y + sg * s2, sx = e.id[1] === "m" ? -1 : 1; return (
+                <g key={"c" + sg}><polyline points={`${it.x - 8},${y - sg * -(e.L * 0.35) } ${it.x},${y} ${it.x + 8},${y - sg * -(e.L * 0.35)}`} fill="none" stroke={e.col} strokeWidth="4.6" strokeLinecap="round" strokeLinejoin="round" transform={`translate(0 ${0})`} /><circle cx={it.x} cy={y} r="1.8" fill="#fff" /></g>); })}
+            </g>
+          ); })}
+        <rect x={X0} y="214" width={X1 - X0} height="8" rx="4" fill="#27324f" />
+        {[0, 0.1, 0.28, 0.42, 0.55, 0.74, 0.8, 0.9].map((v, i) => <rect key={i} x={X0 + v * (X1 - X0)} y="214" width={(Math.min(ST[i].e, 1) - v) * (X1 - X0)} height="8" fill={["#6aa8ff", "#ffa55a", "#ffd98a", "#7be0a4", "#e88ab0", "#b79cf0", "#7bd0e0", "#f0a0a0"][i]} opacity="0.55" />)}
+        <circle cx={X0 + p * (X1 - X0)} cy="218" r="8" fill="#fff" stroke="#ffd98a" strokeWidth="2" pointerEvents="none" /><circle cx={X0 + p * (X1 - X0)} cy="218" r="20" fill="transparent" onPointerDown={startDrag("t")} style={{ cursor: "ew-resize", touchAction: "none" }} />
+        <text x="160" y="240" fontSize="8.5" fill="#9fb0e0" textAnchor="middle">دکمه‌ی سفید را بکش یا پخش را بزن</text>
+        <text x="160" y="18" fontSize="12" fontWeight="bold" fill="#ffd98a" textAnchor="middle">{stage.n}</text>
+      </svg>
+      <VlabMeterRow height={150} meters={[{ label: "پیشرفت", unit: "%", value: p * 100, ranges: [100], maj: 5, decimals: 0 }, { label: "کروموزوم در هر سلول", unit: "", value: chromPer, ranges: [4], maj: 4, decimals: 0 }, { label: "تعداد سلول", unit: "", value: nCells, ranges: [4], maj: 4, decimals: 0 }]} />
+      <div className="vlab-controls"><div className="vlab-ctrl-col" style={{ flex: 1 }}>
+        <label className="vlab-ctrl-label">پیشرفت (٪): {Math.round(p * 100)}</label><VlabRange min="0" max="100" step="1" value={Math.round(p * 100)} onChange={(e) => { setRun(false); setP(+e.target.value / 100); }} />
+        <div style={{ display: "flex", gap: "6px", flexWrap: "wrap", marginTop: "6px" }}><button className="vlab-btn" onClick={() => { if (p >= 1) { setP(0); pRef.current = 0; } setRun(!run); }}>{run ? "⏸ ایست" : "▶ پخش"}</button>{[["پروفاز I", 0.2], ["متافاز I", 0.36], ["آنافاز I", 0.5], ["پایان تقسیم اول", 0.7], ["متافاز II", 0.77], ["آنافاز II", 0.86], ["پایان", 1]].map(([t, v]) => <button key={t} className="vlab-btn" onClick={() => { setRun(false); setP(v); }}>{t}</button>)}</div>
+        <label className="vlab-ctrl-label">تعداد جفت کروموزوم همتا (n): {n}</label><VlabRange min="1" max="23" step="1" value={n} onChange={(e) => setN(+e.target.value)} />
+      </div></div>
+      <div className="vlab-readout"><b>{stage.n}:</b> {stage.d}<div style={{ marginTop: 6, opacity: 0.85 }}>DNA هر سلول: {vlabMFa(dnaC, 0)}C · در پایان از یک سلول دیپلوئید (2n) چهار سلول هاپلوئید (n) به‌دست می‌آید؛ در میتوز دو سلول 2n می‌شد.</div></div>
+      <VlabFormulaCheck title="انواع گامت ممکن" fa="تعداد ترکیب‌های ممکن گامت (بدون کراسینگ‌اور) = دو به توان تعداد جفت کروموزوم‌ها" en="N = 2ⁿ" legend="هر جفت همتا مستقل از بقیه تقسیم می‌شود؛ انسان ۲۳ جفت دارد" subst={`N = 2^${n} = ?`} label="N:" answer={Math.pow(2, n)} unit="" decimals={0} />
+      <VlabEverydayCard title="چرا دو خواهر و برادر شبیه هم نیستند؟" text="هر گامت ترکیب تصادفی تازه‌ای از کروموزوم‌های مادر و پدر دارد و کراسینگ‌اور هم قطعه‌ها را جابه‌جا می‌کند. به همین دلیل جز دوقلوهای همسان، فرزندان یک خانواده هرکدام ژن‌های متفاوتی دارند.">
+        <circle cx="38" cy="40" r="14" fill="#e8b0c8" stroke="#a45" /><circle cx="82" cy="40" r="14" fill="#9fc4ff" stroke="#46a" /><path d="M52,40 H68" stroke="#555" strokeWidth="2" /><circle cx="60" cy="66" r="9" fill="#f4e6c8" stroke="#c9a96a" />
+      </VlabEverydayCard>
+    </div>
+  );
+}
+
+function vlabRabbit(x, y, dark, key) {
+  const fur = dark ? "#3a2f2a" : "#f7f4ee", ln = dark ? "#16110e" : "#b8b2a6", inner = dark ? "#6a4a4a" : "#f0b8c0";
+  return (
+    <g key={key} transform={`translate(${x} ${y})`}>
+      <ellipse cx="-1" cy="2" rx="9.5" ry="6" fill={fur} stroke={ln} strokeWidth="0.8" />
+      <circle cx="-10.5" cy="1.5" r="2.6" fill={fur} stroke={ln} strokeWidth="0.7" />
+      <ellipse cx="3" cy="7.2" rx="4" ry="1.8" fill={fur} stroke={ln} strokeWidth="0.7" />
+      <circle cx="8" cy="-2.5" r="4.6" fill={fur} stroke={ln} strokeWidth="0.8" />
+      <ellipse cx="6.2" cy="-10" rx="1.9" ry="5.4" fill={fur} stroke={ln} strokeWidth="0.8" transform="rotate(-10 6.2 -10)" />
+      <ellipse cx="6.2" cy="-10" rx="0.8" ry="3.6" fill={inner} transform="rotate(-10 6.2 -10)" />
+      <ellipse cx="10.4" cy="-9.4" rx="1.9" ry="5.4" fill={fur} stroke={ln} strokeWidth="0.8" transform="rotate(12 10.4 -9.4)" />
+      <ellipse cx="10.4" cy="-9.4" rx="0.8" ry="3.6" fill={inner} transform="rotate(12 10.4 -9.4)" />
+      <circle cx="10" cy="-3.2" r="0.9" fill={dark ? "#fff" : "#222"} /><circle cx="12.6" cy="-1.8" r="0.8" fill="#d77" />
+    </g>
+  );
+}
+
 function VlabNaturalSelectionExperiment({ onReading }) {
   const N = 40;
   const [env, setEnv] = useState("dark");
@@ -30835,7 +30962,7 @@ function VlabNaturalSelectionExperiment({ onReading }) {
   };
   const reset = () => { setPop({ d: 20, l: 20 }); setHist([50]); setGen(0); setLastEaten(null); };
   useEffect(() => { if (onReading) onReading(`نسل ${gen} | محیط ${env === "dark" ? "خاک تیره" : "برف"} | خرگوش تیره ${pop.d} از ${N}`); }, [pop, env]);
-  const dots = Array.from({ length: N }, (_, i) => ({ i, dark: i < pop.d, x: 18 + (i % 10) * 30, y: 24 + Math.floor(i / 10) * 26 }));
+  const dots = Array.from({ length: N }, (_, i) => ({ i, dark: i < pop.d, x: 20 + (i % 10) * 30, y: 26 + Math.floor(i / 10) * 29 }));
   const gw = 300, gh = 70, pts = hist.map((v, i) => `${10 + (i / Math.max(hist.length - 1, 1)) * (gw - 20)},${gh - 8 - (v / 100) * (gh - 16)}`).join(" ");
   return (
     <div className="vlab-exp">
@@ -30843,8 +30970,8 @@ function VlabNaturalSelectionExperiment({ onReading }) {
         <button type="button" className={"vlab-toggle-btn" + (env === "dark" ? " active" : "")} onClick={() => setEnv("dark")}>محیط: خاک تیره</button>
         <button type="button" className={"vlab-toggle-btn" + (env === "snow" ? " active" : "")} onClick={() => setEnv("snow")}>محیط: برف</button>
       </div>
-      <svg viewBox="0 0 320 112" className="vlab-svg" style={{ background: env === "dark" ? "#3b2f26" : "#eef3f8", borderRadius: "10px" }}>
-        {dots.map((o) => (<g key={o.i}><ellipse cx={o.x} cy={o.y} rx="9" ry="7" fill={o.dark ? "#2b2420" : "#f7f4ee"} stroke={o.dark ? "#14100e" : "#b8b2a6"} /><circle cx={o.x + 6} cy={o.y - 6} r="2.6" fill={o.dark ? "#2b2420" : "#f7f4ee"} stroke={o.dark ? "#14100e" : "#b8b2a6"} strokeWidth="0.6" /><circle cx={o.x + 7} cy={o.y - 1} r="0.9" fill="#d33" /></g>))}
+      <svg viewBox="0 0 320 128" className="vlab-svg" style={{ background: env === "dark" ? "#3b2f26" : "#eef3f8", borderRadius: "10px" }}>
+        {dots.map((o) => vlabRabbit(o.x, o.y, o.dark, o.i))}
       </svg>
       <svg viewBox={`0 0 ${gw} ${gh}`} className="vlab-svg" style={{ background: "#0b1230", borderRadius: "10px" }}>
         <line x1="10" y1={gh / 2} x2={gw - 10} y2={gh / 2} stroke="#2a3466" strokeDasharray="3 3" />
@@ -39384,6 +39511,7 @@ const VLAB_COMPONENTS = {
   "transformer": VlabTransformerExperiment,
   "balance-equation": VlabBalanceEquationExperiment,
   "natural-selection": VlabNaturalSelectionExperiment,
+  "meiosis": VlabMeiosisExperiment,
   "hooke-law": VlabHookeExperiment,
   "fluid-pressure": VlabFluidPressureExperiment,
   "plane-mirror": VlabPlaneMirrorExperiment,
@@ -39546,6 +39674,7 @@ const VLAB_GUIDE = {
   "transformer": { goals: ["رابطه‌ی ولتاژ با تعداد دورها را کشف کنی.", "بفهمی چرا ولتاژ بالا جریان را کم می‌کند."], challenges: ["دور ثانویه را دو برابر اولیه کن. ولتاژ خروجی چند برابر می‌شود؟ جریان چطور؟", "ولتاژ را کاهنده کن و روشنایی لامپ را ببین.", "توان اولیه و ثانویه را مقایسه کن."], misconception: "ترانسفورماتور انرژی نمی‌سازد؛ فقط ولتاژ را با کم‌شدن جریان بالا می‌برد (یا برعکس).", check: { q: "اولیه ۲۰۰ دور و ثانویه ۴۰۰ دور و ولتاژ اولیه ۲۴ V است. ولتاژ ثانویه؟", a: "۴۸ ولت (۲۴ × ۴۰۰ ÷ ۲۰۰)." } },
   "balance-equation": { goals: ["قانون پایستگی جرم را در معادله‌ها ببینی.", "با ضریب‌ها معادله را موازنه کنی."], challenges: ["معادله‌ی تشکیل آب را موازنه کن.", "سوختن متان را موازنه کن؛ از کدام اتم شروع کردی؟", "چرا نباید عدد کوچک زیر فرمول (اندیس) را عوض کنیم؟"], misconception: "برای موازنه، اندیس‌ها را تغییر نمی‌دهیم؛ فقط ضریب‌ها را؛ چون اندیس خودِ ماده را مشخص می‌کند.", check: { q: "در موازنه‌ی H₂ + O₂ → H₂O ضریب‌ها چیست؟", a: "۲ و ۱ و ۲." } },
   "natural-selection": { goals: ["ببینی چرا رنگِ استتارشده در جمعیت زیاد می‌شود.", "نقش محیط و شکارچی را درک کنی."], challenges: ["در خاک تیره ۱۰ نسل جلو برو. چه می‌شود؟", "محیط را به برف عوض کن و دوباره ۱۰ نسل برو.", "چند بار تکرار کن؛ آیا نتیجه هر بار دقیقاً یکی است؟"], misconception: "خرگوش‌ها «تصمیم نمی‌گیرند» رنگشان عوض شود؛ ویژگی‌های مناسب‌تر شانس زنده‌ماندن و تولیدمثل بیشتری دارند.", check: { q: "در برف، کدام خرگوش بیشتر زنده می‌ماند و چرا؟", a: "روشن؛ چون کمتر دیده می‌شود و کمتر شکار می‌شود." } },
+  "meiosis": { goals: ["تفاوت میتوز و میوز را ببینی.", "بفهمی چرا گامت‌ها با هم و با سلول مادر فرق دارند."], challenges: ["در آنافاز I، چه چیزی از هم جدا می‌شود؟ در آنافاز II چه چیزی؟", "تعداد کروموزوم هر سلول را در ابتدا، بعد از تقسیم اول و در پایان بنویس.", "در پروفاز I دنبال بخش‌های رنگ‌عوض‌شده (کراسینگ‌اور) بگرد.", "n را ۲۳ کن و تعداد گامت‌های ممکن را حساب کن."], misconception: "در میوز I همتاها جدا می‌شوند، نه کروماتیدهای خواهری؛ کروماتیدها در میوز II جدا می‌شوند.", check: { q: "یک سلول 2n = ۴ چند گامت می‌سازد و هر گامت چند کروموزوم دارد؟", a: "چهار گامت، هرکدام ۲ کروموزوم (n = ۲)." } },
   "hooke-law": { goals: ["افزایش طول فنر با نیرو متناسب است (F = kx)."], challenges: ["جرم را دو برابر کن. افزایش طول چند برابر می‌شود؟", "یک جرم ثابت را با فنرهای ۲۰ و ۸۰ بسنج. کدام بیشتر کش می‌آید؟ چرا؟", "حدس بزن نمودار نیرو–افزایش طول چه شکلی است و شیبش چه معنایی دارد."], misconception: "هر فنری هر قدر بکشی همین رابطه را دارد؛ از حد کشسانی که بگذریم، فنر خراب می‌شود.", check: { q: "فنری با k = 40 نیوتن بر متر، وزنه‌ی ۲۰۰ گرمی را نگه می‌دارد. افزایش طول تقریباً چقدر است؟", a: "حدود ۴٫۹ سانتی‌متر (F ≈ 1٫96 N، x = F ÷ k)." } },
   "density-floating": { goals: ["شناوری به چگالی نسبت به آب بستگی دارد، نه به سنگینی."], challenges: ["اجسام را به دو گروه شناور و غوطه‌ور تقسیم کن و دلیلش را بنویس.", "چگالی چه محدوده‌ای داشته باشد تا جسم در آب شناور بماند؟", "چرا کشتی‌ای که از آهن ساخته شده غرق نمی‌شود؟"], misconception: "فکر می‌کنیم چیزهای سنگین حتماً غرق می‌شوند؛ کشتی‌های بزرگ هم شناورند.", check: { q: "جسمی چگالی ۰٫۹ گرم بر سانتی‌متر مکعب دارد. در آب شناور است؟", a: "بله؛ چگالی‌اش از آب (۱) کمتر است." } },
   "acid-base": { goals: ["اسید pH را کم و باز pH را زیاد می‌کند.", "خنثی‌شدن یعنی رسیدن به pH نزدیک ۷."], challenges: ["قطره‌های اسید را یکی‌یکی بریز. رنگ شناساگر و pH چه می‌شود؟", "از حالت اسیدی با چند قطره باز به حالت خنثی برمی‌گردی؟ عدد را ثبت کن.", "پیش از دیدن رنگ، pH را حدس بزن و با آزمایش مقایسه کن."], misconception: "همه‌ی اسیدها خطرناک نیستند؛ آب‌لیمو و سرکه اسیدهای ضعیفی هستند.", check: { q: "محلولی pH برابر ۳ دارد. اسیدی است یا بازی؟", a: "اسیدی؛ چون pH کمتر از ۷ است." } },

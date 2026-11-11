@@ -30707,8 +30707,8 @@ function VlabCircuitKitExperiment({ onReading }) {
       )}
       {selC && selI >= 0 && (selC.k === "res" || selC.k === "bulb") && (
         <div className="vlab-readout" style={{ direction: "rtl" }}>
-          <div>ولتاژ دو سر قطعه: V = {vlabMFa(Math.abs(out[selI].dV), 2)} V</div>
-          <div>جریان: I = {vlabMFa(Math.abs(out[selI].I), 3)} A</div>
+          <div>ولتاژ دو سر قطعه: V = <bdi dir="ltr">{vlabMFa(Math.abs(out[selI].dV), 2)} V</bdi></div>
+          <div>جریان: I = <bdi dir="ltr">{vlabMFa(Math.abs(out[selI].I), 3)} A</bdi></div>
           <div>قانون اهم: V ÷ I = {Math.abs(out[selI].I) > 1e-9 ? vlabMFa(Math.abs(out[selI].dV / out[selI].I), 2) : "—"} Ω ≈ R = {vlabMFa(selC.v, 0)} Ω ✓</div>
           <div>توان: P = V × I = {vlabMFa(Math.abs(out[selI].P), 2)} W{selC.k === "bulb" ? (Math.abs(out[selI].P) < 0.02 ? " (خاموش)" : Math.abs(out[selI].P) > 40 ? " ⚠️ لامپ می‌سوزد" : "") : ""}</div>
         </div>
@@ -30739,20 +30739,20 @@ function VlabTransformerExperiment({ onReading }) {
         <circle cx="24" cy="118" r="14" fill="#1a2250" stroke="#ff9d66" /><text x="24" y="122" fontSize="9" fill="#ffd9c0" textAnchor="middle">~</text><path d="M24,104 V30 M24,132 V206" stroke="#ff9d66" strokeWidth="1.6" />
         <path d="M220,62 H260 V84 M220,178 H260 V152" fill="none" stroke="#7fd8ff" strokeWidth="1.6" />
         <circle cx="260" cy="118" r="34" fill="#ffe27a" opacity={glow * 0.5} /><circle cx="260" cy="118" r="17" fill="#1a2250" stroke="#fff0a0" strokeWidth="1.8" /><path d="M252,110 L268,126 M252,126 L268,110" stroke={glow > 0.05 ? "#fff6c0" : "#fff0a0"} strokeWidth="1.4" />
-        <text x="160" y="16" fontSize="9" fill="#ffd9c0" textAnchor="middle" direction="ltr">{`اولیه: ${np} دور · ${vlabMFa(vp, 0)} V`}</text>
-        <text x="160" y="224" fontSize="9" fill="#bfeaff" textAnchor="middle" direction="ltr">{`ثانویه: ${ns} دور · ${vlabMFa(vs, 1)} V`}</text>
+        <text x="300" y="16" fontSize="9" fill="#ffd9c0" textAnchor="middle">اولیه</text><text x="262" y="16" fontSize="9" fill="#ffd9c0" textAnchor="middle" direction="ltr">{`${vlabMFa(vp, 0)} V`}</text><text x="214" y="16" fontSize="9" fill="#ffd9c0" textAnchor="middle">{vlabMFa(np, 0)} دور</text>
+        <text x="300" y="224" fontSize="9" fill="#bfeaff" textAnchor="middle">ثانویه</text><text x="262" y="224" fontSize="9" fill="#bfeaff" textAnchor="middle" direction="ltr">{`${vlabMFa(vs, 1)} V`}</text><text x="214" y="224" fontSize="9" fill="#bfeaff" textAnchor="middle">{vlabMFa(ns, 0)} دور</text>
         <text x="160" y="124" fontSize="10" fill="#c8d0ee" textAnchor="middle">هسته‌ی آهنی</text>
       </svg>
       <div className="vlab-controls"><div className="vlab-ctrl-col" style={{ flex: 1 }}>
-        <label className="vlab-ctrl-label">ولتاژ اولیه (V): {vlabMFa(vp, 0)}</label><VlabRange min="5" max="240" step="1" value={vp} onChange={(e) => setVp(+e.target.value)} />
+        <label className="vlab-ctrl-label">ولتاژ اولیه: <bdi dir="ltr">{vlabMFa(vp, 0)} V</bdi></label><VlabRange min="5" max="240" step="1" value={vp} onChange={(e) => setVp(+e.target.value)} />
         <label className="vlab-ctrl-label">دور اولیه: {vlabMFa(np, 0)}</label><VlabRange min="50" max="1000" step="50" value={np} onChange={(e) => setNp(+e.target.value)} />
         <label className="vlab-ctrl-label">دور ثانویه: {vlabMFa(ns, 0)}</label><VlabRange min="50" max="1000" step="50" value={ns} onChange={(e) => setNs(+e.target.value)} />
-        <label className="vlab-ctrl-label">مقاومت بار (Ω): {vlabMFa(R, 0)}</label><VlabRange min="5" max="200" step="5" value={R} onChange={(e) => setR(+e.target.value)} />
+        <label className="vlab-ctrl-label">مقاومت بار: <bdi dir="ltr">{vlabMFa(R, 0)} Ω</bdi></label><VlabRange min="5" max="200" step="5" value={R} onChange={(e) => setR(+e.target.value)} />
       </div></div>
       <div className="vlab-readout" style={{ direction: "rtl" }}>
-        <div>ولتاژ ثانویه: {vlabMFa(vs, 2)} V ({ns > np ? "افزاینده" : ns < np ? "کاهنده" : "بدون تغییر"})</div>
-        <div>جریان ثانویه: {vlabMFa(is, 3)} A · جریان اولیه: {vlabMFa(ip, 3)} A</div>
-        <div>توان ثانویه = توان اولیه = {vlabMFa(ps, 2)} W (ترانسفورماتور آرمانی)</div>
+        <div>ولتاژ ثانویه: <bdi dir="ltr">{vlabMFa(vs, 2)} V</bdi> ({ns > np ? "افزاینده" : ns < np ? "کاهنده" : "بدون تغییر"})</div>
+        <div>جریان ثانویه: <bdi dir="ltr">{vlabMFa(is, 3)} A</bdi> · جریان اولیه: <bdi dir="ltr">{vlabMFa(ip, 3)} A</bdi></div>
+        <div>توان ثانویه = توان اولیه = <bdi dir="ltr">{vlabMFa(ps, 2)} W</bdi> (ترانسفورماتور آرمانی)</div>
         <div style={{ opacity: 0.8, fontSize: 12 }}>هرجا ولتاژ بالا می‌رود، جریان پایین می‌آید؛ توان ثابت می‌ماند. ترانسفورماتور فقط با جریان متناوب کار می‌کند.</div>
       </div>
       <VlabFormulaCheck title="نسبت دورها" fa="ولتاژ ثانویه = ولتاژ اولیه × (دور ثانویه ÷ دور اولیه)" en="Vs / Vp = Ns / Np" legend="ولتاژ اولیه و تعداد دورها را از لغزنده‌ها بخوان" subst={`Vs = ${vp} × ${ns} ÷ ${np} = ?`} label="Vs:" answer={vs} unit="V" decimals={1} />

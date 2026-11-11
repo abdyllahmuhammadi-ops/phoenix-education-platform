@@ -22964,6 +22964,15 @@ const VLAB_EXPERIMENTS = [
     tools: ["جدول پانت", "گیاه نخود", "ژن بلندی (T/t)"],
   },
   {
+    id: "circuit-kit",
+    subject: "برق و الکترونیک",
+    level: "متوسطه",
+    title: "مدارساز (باتری، لامپ، مقاومت، کلید)",
+    icon: "🔌",
+    intro: "مدار دلخواهت را خودت بساز: باتری، مقاومت، لامپ، کلید و سیم را روی صفحه بگذار و با آمپرسنج و ولت‌سنج اندازه بگیر. همه‌ی اعداد از یک حل‌کننده‌ی واقعیِ مدار (قانون اهم و قوانین کیرشهف) می‌آیند، پس جریان، ولتاژ و روشنایی لامپ همیشه با فرمول‌ها هماهنگ‌اند.",
+    tools: ["باتری", "مقاومت", "لامپ", "کلید", "سیم", "آمپرسنج", "ولت‌سنج"],
+  },
+  {
     id: "hooke-law",
     subject: "فیزیک",
     level: "متوسطه اول",
@@ -30518,6 +30527,170 @@ function VlabPunnettExperiment({ onReading }) {
       </div>
       <div className="vlab-readout">هر والد یکی از دو دگره‌ی خود را به گامت می‌دهد و خانه‌های جدول، ترکیب‌های ممکن فرزندان‌اند.<br />نسبت ژنوتیپی: <b style={{ direction: "ltr", unicodeBidi: "isolate", display: "inline-block" }}>{cnt("TT")} TT : {cnt("Tt")} Tt : {cnt("tt")} tt</b><br />نسبت ظاهری (فنوتیپ): <b>{tall} بلند : {4 - tall} کوتاه</b><br />{a === b ? (a === "TT" ? <>هر دو والد «خالص بلند» هستند و فقط دگره‌ی T می‌دهند؛ پس همه‌ی فرزندان <b>TT</b> و بلندند (۱۰۰٪).</> : a === "tt" ? <>هر دو والد «خالص کوتاه» هستند و فقط t می‌دهند؛ پس همه‌ی فرزندان <b>tt</b> و کوتاهند (۱۰۰٪).</> : <>والدین ناخالص‌اند: ۱ TT : ۲ Tt : ۱ tt ؛ یعنی ۳ بلند به ۱ کوتاه.</>) : null}</div>
       <VlabFormulaCheck title="احتمال فرزند بلند" fa="احتمال = تعداد خانه‌های دارای حالت مورد نظر ÷ کل خانه‌ها × ۱۰۰" en="P = favorable / total × 100" legend="هر خانه‌ای که حرف T دارد، گیاه بلند است" subst={`P(بلند) = ${tall} ÷ 4 × 100 = ?`} label="P:" answer={tall * 25} unit="٪" decimals={0} />
+    </div>
+  );
+}
+
+/* ===== مدارساز: ساخت آزادِ مدار با حل‌کنندهٔ واقعیِ مدار (قوانین اهم و کیرشهف) ===== */
+const VLAB_CK_C = 7, VLAB_CK_R = 4, VLAB_CK_DX = 44, VLAB_CK_DY = 50, VLAB_CK_X0 = 26, VLAB_CK_Y0 = 34;
+const vlabCkPos = (n) => [VLAB_CK_X0 + (n % VLAB_CK_C) * VLAB_CK_DX, VLAB_CK_Y0 + Math.floor(n / VLAB_CK_C) * VLAB_CK_DY];
+const vlabCkN = (c, r) => r * VLAB_CK_C + c;
+const VLAB_CK_KINDS = { bat: { n: "باتری", v: 9, min: 1, max: 24, step: 0.5, u: "V", col: "#ff8a8a" }, res: { n: "مقاومت", v: 20, min: 1, max: 100, step: 1, u: "Ω", col: "#ffd166" }, bulb: { n: "لامپ", v: 10, min: 2, max: 50, step: 1, u: "Ω", col: "#fff0a0" }, sw: { n: "کلید", col: "#9fe3bd" }, wire: { n: "سیم", col: "#cfd6ea" }, amm: { n: "آمپرسنج", col: "#8ec9e8" } };
+function vlabCkPreset(name) {
+  const C = (k, c1, r1, c2, r2, v, extra) => ({ k, a: vlabCkN(c1, r1), b: vlabCkN(c2, r2), v: v !== undefined ? v : (VLAB_CK_KINDS[k] || {}).v, on: true, rev: false, ...(extra || {}) });
+  let L = [];
+  if (name === "series") L = [C("bat", 0, 3, 0, 2, 9), C("wire", 0, 2, 0, 1), C("wire", 0, 1, 0, 0), C("wire", 0, 0, 1, 0), C("bulb", 1, 0, 2, 0, 10), C("bulb", 2, 0, 3, 0, 10), C("wire", 3, 0, 4, 0), C("sw", 4, 0, 5, 0), C("wire", 5, 0, 6, 0), C("wire", 6, 0, 6, 1), C("wire", 6, 1, 6, 2), C("wire", 6, 2, 6, 3), C("wire", 6, 3, 5, 3), C("wire", 5, 3, 4, 3), C("wire", 4, 3, 3, 3), C("wire", 3, 3, 2, 3), C("wire", 2, 3, 1, 3), C("wire", 1, 3, 0, 3)];
+  if (name === "parallel") L = [C("bat", 0, 3, 0, 2, 9), C("wire", 0, 2, 0, 1), C("wire", 0, 1, 0, 0), C("wire", 0, 0, 1, 0), C("wire", 1, 0, 2, 0), C("wire", 2, 0, 3, 0), C("wire", 3, 0, 4, 0), C("wire", 4, 0, 5, 0), C("bulb", 3, 0, 3, 1, 10), C("wire", 3, 1, 3, 2), C("wire", 3, 2, 3, 3), C("bulb", 5, 0, 5, 1, 10), C("wire", 5, 1, 5, 2), C("wire", 5, 2, 5, 3), C("wire", 0, 3, 1, 3), C("wire", 1, 3, 2, 3), C("wire", 2, 3, 3, 3), C("wire", 3, 3, 4, 3), C("wire", 4, 3, 5, 3)];
+  if (name === "mixed") L = [C("bat", 0, 3, 0, 2, 12), C("wire", 0, 2, 0, 1), C("wire", 0, 1, 0, 0), C("res", 0, 0, 1, 0, 10), C("wire", 1, 0, 2, 0), C("wire", 2, 0, 3, 0), C("wire", 3, 0, 4, 0), C("wire", 4, 0, 5, 0), C("res", 3, 0, 3, 1, 10), C("wire", 3, 1, 3, 2), C("wire", 3, 2, 3, 3), C("res", 5, 0, 5, 1, 30), C("wire", 5, 1, 5, 2), C("wire", 5, 2, 5, 3), C("wire", 0, 3, 1, 3), C("wire", 1, 3, 2, 3), C("wire", 2, 3, 3, 3), C("wire", 3, 3, 4, 3), C("wire", 4, 3, 5, 3)];
+  return L.map((c, i) => ({ ...c, id: i + 1 }));
+}
+// حل‌کنندهٔ مدار (تحلیل گره‌ای): باتری با مقاومت درونی ۰٫۰۵Ω (معادل نورتون)، سیم و آمپرسنج ۱mΩ، کلید بسته ۱mΩ، کلید باز = قطع.
+const VLAB_CK_RB = 0.05, VLAB_CK_RW = 0.001;
+function vlabCkSolve(comps) {
+  const edges = []; // {i, a, b, g, inj?:{pos,neg,I}}
+  comps.forEach((c, i) => {
+    if (c.k === "sw" && !c.on) return;
+    if (c.k === "bat") { const pos = c.rev ? c.a : c.b, neg = c.rev ? c.b : c.a; edges.push({ i, a: neg, b: pos, g: 1 / VLAB_CK_RB, src: c.v / VLAB_CK_RB }); return; }
+    const R = c.k === "res" || c.k === "bulb" ? Math.max(1e-6, c.v) : VLAB_CK_RW;
+    edges.push({ i, a: c.a, b: c.b, g: 1 / R });
+  });
+  const parent = {}; const find = (x) => { if (parent[x] === undefined) parent[x] = x; while (parent[x] !== x) { parent[x] = parent[parent[x]]; x = parent[x]; } return x; };
+  edges.forEach((e) => { const ra = find(e.a), rb = find(e.b); if (ra !== rb) parent[ra] = rb; });
+  const groups = {}; Object.keys(parent).forEach((n) => { const r = find(+n); (groups[r] = groups[r] || []).push(+n); });
+  const V = {};
+  Object.values(groups).forEach((nodes) => {
+    const gnd = nodes[0], idx = {}; let m = 0; nodes.forEach((n) => { if (n !== gnd) idx[n] = m++; V[n] = 0; });
+    if (m === 0) return;
+    const A = Array.from({ length: m }, () => new Float64Array(m + 1));
+    edges.forEach((e) => {
+      if (find(e.a) !== find(nodes[0])) return;
+      const ia = idx[e.a], ib = idx[e.b];
+      if (ia !== undefined) { A[ia][ia] += e.g; if (ib !== undefined) A[ia][ib] -= e.g; }
+      if (ib !== undefined) { A[ib][ib] += e.g; if (ia !== undefined) A[ib][ia] -= e.g; }
+      if (e.src) { if (ib !== undefined) A[ib][m] += e.src; if (ia !== undefined) A[ia][m] -= e.src; }
+    });
+    for (let c = 0; c < m; c++) {
+      let p = c; for (let r = c + 1; r < m; r++) if (Math.abs(A[r][c]) > Math.abs(A[p][c])) p = r;
+      [A[c], A[p]] = [A[p], A[c]];
+      const d = A[c][c] || 1e-30;
+      for (let r = c + 1; r < m; r++) { const f = A[r][c] / d; if (f) for (let k = c; k <= m; k++) A[r][k] -= f * A[c][k]; }
+    }
+    const x = new Float64Array(m);
+    for (let r = m - 1; r >= 0; r--) { let s = A[r][m]; for (let k = r + 1; k < m; k++) s -= A[r][k] * x[k]; x[r] = s / (A[r][r] || 1e-30); }
+    nodes.forEach((n) => { if (n !== gnd) V[n] = x[idx[n]]; });
+  });
+  const out = comps.map(() => ({ I: 0, dV: 0, P: 0 }));
+  edges.forEach((e) => {
+    const c = comps[e.i]; const Va = V[c.a] || 0, Vb = V[c.b] || 0;
+    if (c.k === "bat") { const pos = c.rev ? c.a : c.b, neg = c.rev ? c.b : c.a; const Ib = e.src - e.g * ((V[pos] || 0) - (V[neg] || 0)); out[e.i] = { I: c.rev ? -Ib : Ib, dV: (V[pos] || 0) - (V[neg] || 0), P: Ib * ((V[pos] || 0) - (V[neg] || 0)) }; }
+    else { const I = (Va - Vb) * e.g; out[e.i] = { I, dV: Va - Vb, P: I * (Va - Vb) }; }
+  });
+  return { V, out };
+}
+
+function VlabCircuitKitExperiment({ onReading }) {
+  const [comps, setComps] = useState(() => vlabCkPreset("series"));
+  const [tool, setTool] = useState("select");
+  const [sel, setSel] = useState(null);
+  const [probes, setProbes] = useState([]);
+  const [nums, setNums] = useState(true);
+  const nextId = React.useRef(100);
+  const { V, out } = useMemo(() => vlabCkSolve(comps), [comps]);
+  const selC = comps.find((c) => c.id === sel) || null, selI = selC ? comps.indexOf(selC) : -1;
+  const bats = comps.map((c, i) => ({ c, o: out[i] })).filter((x) => x.c.k === "bat");
+  const maxI = Math.max(0, ...out.map((o, i) => (comps[i].k === "bat" ? Math.abs(o.I) : 0)));
+  const short = maxI > 25;
+  const open = bats.length > 0 && maxI < 1e-6;
+  const slotKey = (a, b) => (a < b ? a + "-" + b : b + "-" + a);
+  const byKey = {}; comps.forEach((c) => { byKey[slotKey(c.a, c.b)] = c; });
+  const slots = [];
+  for (let r = 0; r < VLAB_CK_R; r++) for (let c = 0; c < VLAB_CK_C; c++) { const n = vlabCkN(c, r); if (c + 1 < VLAB_CK_C) slots.push([n, vlabCkN(c + 1, r)]); if (r + 1 < VLAB_CK_R) slots.push([n, vlabCkN(c, r + 1)]); }
+  const place = (a, b) => {
+    const key = slotKey(a, b); const ex = byKey[key];
+    if (tool === "erase") { if (ex) setComps((cs) => cs.filter((c) => c !== ex)); setSel(null); return; }
+    if (tool === "select") { setSel(ex ? ex.id : null); return; }
+    if (tool === "volt") return;
+    const spec = VLAB_CK_KINDS[tool]; if (!spec) return;
+    const nc = { id: nextId.current++, k: tool, a, b, v: spec.v, on: true, rev: false };
+    setComps((cs) => cs.filter((c) => c !== ex).concat([nc])); setSel(nc.id);
+  };
+  const nodeTap = (n) => { if (tool !== "volt") return; setProbes((p) => (p.length >= 2 ? [n] : p.includes(n) ? p : p.concat([n]))); };
+  const upd = (patch) => setComps((cs) => cs.map((c) => (c.id === sel ? { ...c, ...patch } : c)));
+  const vm = probes.length === 2 ? (V[probes[0]] || 0) - (V[probes[1]] || 0) : null;
+  useEffect(() => {
+    if (!onReading) return;
+    onReading(`مدارساز | ${comps.length} قطعه | ${bats.length ? "جریان باتری: " + maxI.toFixed(3) + " آمپر" : "بدون باتری"}${short ? " | اتصال کوتاه!" : ""}`);
+  }, [comps]);
+  const fmtI = (I) => (Math.abs(I) < 0.0005 ? "۰ A" : Math.abs(I) < 1 ? vlabMFa(Math.abs(I) * 1000, 0) + " mA" : vlabMFa(Math.abs(I), 2) + " A");
+  const sym = (c, o) => {
+    const [x1, y1] = vlabCkPos(c.a), [x2, y2] = vlabCkPos(c.b); const cx = (x1 + x2) / 2, cy = (y1 + y2) / 2; const ang = (Math.atan2(y2 - y1, x2 - x1) * 180) / Math.PI; const L = Math.hypot(x2 - x1, y2 - y1);
+    const isSel = c.id === sel; const col = VLAB_CK_KINDS[c.k].col;
+    const P = Math.abs(o.P), bright = c.k === "bulb" ? Math.min(1, Math.pow(P / 2.5, 0.6)) : 0;
+    const dir = o.I >= 0 ? 1 : -1; const act = Math.abs(o.I) > 1e-4 && c.k !== "bat";
+    const dur = Math.max(0.4, 3 / (1 + 6 * Math.min(Math.abs(o.I), 5)));
+    return (
+      <g key={c.id}>
+        <line x1={x1} y1={y1} x2={x2} y2={y2} stroke={c.k === "wire" || c.k === "amm" ? (act ? "#cfe9ff" : "#7d89b5") : "#7d89b5"} strokeWidth={c.k === "wire" ? 2.6 : 1.8} />
+        {act && [0, 1, 2].map((q) => (<circle key={q} r="2" fill="#7fd8ff" opacity="0.95"><animateMotion dur={dur.toFixed(2) + "s"} begin={(-q * dur / 3).toFixed(2) + "s"} repeatCount="indefinite" path={dir > 0 ? `M${x1},${y1} L${x2},${y2}` : `M${x2},${y2} L${x1},${y1}`} /></circle>))}
+        <g transform={`translate(${cx},${cy}) rotate(${Math.abs(ang) > 90 ? ang + 180 : ang})`}>
+          {c.k !== "wire" && <rect x="-12" y="-9" width="24" height="18" rx="4" fill="#0b1230" />}
+          {c.k === "res" && <polyline points="-11,0 -8,-6 -4,6 0,-6 4,6 8,-6 11,0" fill="none" stroke={col} strokeWidth="1.8" />}
+          {c.k === "bulb" && <g><circle r="15" fill="#ffe27a" opacity={bright * 0.55} /><circle r="8.5" fill="#1a2250" stroke={col} strokeWidth="1.6" /><path d="M-5,-5 L5,5 M-5,5 L5,-5" stroke={bright > 0.05 ? "#fff6c0" : col} strokeWidth="1.3" /></g>}
+          {c.k === "bat" && <g><line x1="-11" y1="0" x2="-3" y2="0" stroke="#7d89b5" strokeWidth="1.8" /><line x1="3" y1="0" x2="11" y2="0" stroke="#7d89b5" strokeWidth="1.8" /><line x1="-3" y1="-4.5" x2="-3" y2="4.5" stroke={col} strokeWidth="3.4" /><line x1="3" y1="-8" x2="3" y2="8" stroke={col} strokeWidth="1.8" /><text x={c.rev ? "-9" : "9"} y="-4" fontSize="7" fill="#fff" textAnchor="middle" transform={Math.abs(ang) > 90 ? "scale(-1,1)" : undefined}>+</text></g>}
+          {c.k === "sw" && <g><circle cx="-9" r="1.8" fill={col} /><circle cx="9" r="1.8" fill={col} /><line x1="-9" y1="0" x2="9" y2={c.on ? 0 : -8} stroke={col} strokeWidth="2" /></g>}
+          {c.k === "amm" && <g><circle r="8" fill="#12335a" stroke={col} strokeWidth="1.6" /><text y="3" fontSize="8.5" fill={col} textAnchor="middle" fontWeight="700">A</text></g>}
+          {isSel && <rect x="-14" y="-11" width="28" height="22" rx="5" fill="none" stroke="#ffd166" strokeWidth="1.5" strokeDasharray="3 2" />}
+        </g>
+        {nums && c.k !== "wire" && !(c.k === "sw" && !c.on) && (Math.abs(o.I) > 5e-4 || c.k === "bat") && <text x={cx} y={cy + (Math.abs(y2 - y1) > 1 ? 0 : -13)} dx={Math.abs(y2 - y1) > 1 ? 14 : 0} fontSize="6.8" fill="#c8f0ff" textAnchor="middle" direction="ltr" stroke="#050a18" strokeWidth="2" paintOrder="stroke">{c.k === "bat" ? vlabMFa(c.v, 1) + " V" : fmtI(o.I)}</text>}
+      </g>
+    );
+  };
+  const W = VLAB_CK_X0 * 2 + (VLAB_CK_C - 1) * VLAB_CK_DX, H = VLAB_CK_Y0 * 2 + (VLAB_CK_R - 1) * VLAB_CK_DY;
+  const tools = [["select", "✋ انتخاب"], ["bat", "🔋 باتری"], ["res", "▭ مقاومت"], ["bulb", "💡 لامپ"], ["sw", "⏻ کلید"], ["wire", "〰 سیم"], ["amm", "Ⓐ آمپرسنج"], ["volt", "Ⓥ ولت‌سنج"], ["erase", "🧹 پاک‌کن"]];
+  return (
+    <div className="vlab-exp">
+      <div className="vlab-toggle-row" style={{ flexWrap: "wrap" }} role="group" aria-label="نمونه مدارها">
+        {[["series", "مدار سری"], ["parallel", "مدار موازی"], ["mixed", "مدار ترکیبی"], ["empty", "مدار خالی"]].map(([k, t]) => (<button key={k} type="button" className="vlab-toggle-btn" onClick={() => { setComps(k === "empty" ? [] : vlabCkPreset(k)); setSel(null); setProbes([]); }}>{t}</button>))}
+      </div>
+      <div className="vlab-num-row" role="group" aria-label="ابزارها">
+        {tools.map(([k, t]) => (<button key={k} type="button" className={"vlab-num-btn" + (tool === k ? " active" : "")} style={{ minWidth: 64, padding: "0 10px" }} aria-pressed={tool === k} onClick={() => { setTool(k); if (k !== "volt") setProbes([]); }}>{t}</button>))}
+      </div>
+      <p className="pqb-upload-hint" style={{ margin: 0 }}>{tool === "select" ? "روی یک قطعه بزن تا مقدارش را عوض کنی." : tool === "volt" ? "دو نقطه‌ی (گره) مدار را بزن تا ولتاژ بینشان خوانده شود." : tool === "erase" ? "روی قطعه بزن تا حذف شود." : "روی یکی از جای‌های خالی بین دو نقطه بزن تا قطعه قرار بگیرد."}</p>
+      <svg viewBox={`0 0 ${W} ${H}`} className="vlab-svg" style={{ background: "#0b1230", maxWidth: 480, touchAction: "manipulation" }}>
+        {Array.from({ length: VLAB_CK_R }, (_, r) => Array.from({ length: VLAB_CK_C }, (_, c) => { const n = vlabCkN(c, r); const [x, y] = vlabCkPos(n); const pr = probes.indexOf(n); return (<g key={n}><circle cx={x} cy={y} r={pr >= 0 ? 5 : 2.4} fill={pr === 0 ? "#ff5a5a" : pr === 1 ? "#222" : "#47507a"} stroke={pr >= 0 ? "#fff" : "none"} />{tool === "volt" && <circle cx={x} cy={y} r="11" fill="transparent" style={{ cursor: "pointer" }} onClick={() => nodeTap(n)} />}</g>); }))}
+        {slots.map(([a, b]) => { const k = slotKey(a, b); if (byKey[k]) return null; const [x1, y1] = vlabCkPos(a), [x2, y2] = vlabCkPos(b); const cx = (x1 + x2) / 2, cy = (y1 + y2) / 2; return (<g key={k} onClick={() => place(a, b)} style={{ cursor: tool === "select" || tool === "volt" || tool === "erase" ? "default" : "pointer" }}><line x1={x1} y1={y1} x2={x2} y2={y2} stroke="#2a3466" strokeWidth="1" strokeDasharray="2 3" /><circle cx={cx} cy={cy} r="9" fill="transparent" />{tool !== "select" && tool !== "volt" && tool !== "erase" && <circle cx={cx} cy={cy} r="3" fill="#3a4580" />}</g>); })}
+        {comps.map((c, i) => sym(c, out[i]))}
+        {comps.map((c) => { const [x1, y1] = vlabCkPos(c.a), [x2, y2] = vlabCkPos(c.b); return <circle key={"h" + c.id} cx={(x1 + x2) / 2} cy={(y1 + y2) / 2} r="13" fill="transparent" style={{ cursor: "pointer" }} onClick={() => place(c.a, c.b)} />; })}
+        {tool === "volt" && probes.length === 2 && <text x={W / 2} y={H - 6} fontSize="11" fill="#ffd166" textAnchor="middle" direction="ltr">{`V = ${vlabMFa(vm, 2)} ولت`}</text>}
+      </svg>
+      {short && <div className="vlab-readout" style={{ background: "#fdeaea", borderColor: "#e8a8a8", color: "#9b2323" }}>⚠️ اتصال کوتاه! جریان بسیار زیاد است ({vlabMFa(maxI, 0)} A). در واقعیت باتری و سیم داغ می‌شوند. یک مقاومت یا لامپ در مسیر بگذار.</div>}
+      {open && !short && <div className="vlab-readout" style={{ background: "#fff7e0", borderColor: "#f0d98a", color: "#7a5a05" }}>مدار باز است و جریانی نمی‌گذرد. حلقه را کامل کن (یا کلید را ببند).</div>}
+      {selC && (
+        <div className="vlab-controls">
+          <div className="vlab-ctrl-col" style={{ flex: 1 }}>
+            <span className="vlab-ctrl-label">{VLAB_CK_KINDS[selC.k].n}{VLAB_CK_KINDS[selC.k].u ? `: ${vlabMFa(selC.v, selC.k === "bat" ? 1 : 0)} ${VLAB_CK_KINDS[selC.k].u}` : ""}</span>
+            {VLAB_CK_KINDS[selC.k].u && <VlabRange min={VLAB_CK_KINDS[selC.k].min} max={VLAB_CK_KINDS[selC.k].max} step={VLAB_CK_KINDS[selC.k].step} value={selC.v} onChange={(e) => upd({ v: +e.target.value })} />}
+            <div className="vlab-toggle-row" style={{ flexWrap: "wrap" }}>
+              {selC.k === "sw" && <button type="button" className="vlab-toggle-btn active" onClick={() => upd({ on: !selC.on })}>{selC.on ? "کلید بسته است (بزن تا باز شود)" : "کلید باز است (بزن تا بسته شود)"}</button>}
+              {selC.k === "bat" && <button type="button" className="vlab-toggle-btn" onClick={() => upd({ rev: !selC.rev })}>↔ برگرداندن قطب‌ها</button>}
+              <button type="button" className="vlab-toggle-btn" onClick={() => { setComps((cs) => cs.filter((c) => c.id !== sel)); setSel(null); }}>🗑 حذف</button>
+            </div>
+          </div>
+        </div>
+      )}
+      {selC && selI >= 0 && (selC.k === "res" || selC.k === "bulb") && (
+        <div className="vlab-readout" style={{ direction: "rtl" }}>
+          <div>ولتاژ دو سر قطعه: V = {vlabMFa(Math.abs(out[selI].dV), 2)} V</div>
+          <div>جریان: I = {vlabMFa(Math.abs(out[selI].I), 3)} A</div>
+          <div>قانون اهم: V ÷ I = {Math.abs(out[selI].I) > 1e-9 ? vlabMFa(Math.abs(out[selI].dV / out[selI].I), 2) : "—"} Ω ≈ R = {vlabMFa(selC.v, 0)} Ω ✓</div>
+          <div>توان: P = V × I = {vlabMFa(Math.abs(out[selI].P), 2)} W{selC.k === "bulb" ? (Math.abs(out[selI].P) < 0.02 ? " (خاموش)" : Math.abs(out[selI].P) > 40 ? " ⚠️ لامپ می‌سوزد" : "") : ""}</div>
+        </div>
+      )}
+      <div className="vlab-toggle-row"><button type="button" className={"vlab-toggle-btn" + (nums ? " active" : "")} onClick={() => setNums((n) => !n)}>{nums ? "اعداد روی مدار: روشن" : "اعداد روی مدار: خاموش"}</button></div>
+      <div className="vlab-readout" style={{ direction: "rtl" }}>
+        {bats.length === 0 ? "باتری‌ای در مدار نیست؛ یکی بگذار." : bats.map((x, i) => (<div key={i}>باتری {vlabMFa(x.c.v, 1)} V: جریان خروجی {vlabMFa(Math.abs(x.o.I), 3)} A · توان تحویلی {vlabMFa(Math.abs(x.o.P), 2)} W</div>))}
+        <div style={{ opacity: 0.8, fontSize: 12 }}>باتری مقاومت درونی ۰٫۰۵ Ω دارد؛ سیم‌ها تقریباً بدون مقاومت‌اند. جریان قراردادی از قطب مثبت باتری به‌سمت مقاومت‌ها می‌رود.</div>
+      </div>
     </div>
   );
 }
@@ -39031,6 +39204,7 @@ const VLAB_COMPONENTS = {
   "seed-germination": VlabGerminationExperiment,
   "transpiration": VlabTranspirationExperiment,
   "punnett-square": VlabPunnettExperiment,
+  "circuit-kit": VlabCircuitKitExperiment,
   "hooke-law": VlabHookeExperiment,
   "fluid-pressure": VlabFluidPressureExperiment,
   "plane-mirror": VlabPlaneMirrorExperiment,
@@ -39189,6 +39363,7 @@ const VLAB_GUIDE = {
   "friction": { goals: ["اصطکاک به جنس سطح و جرم (نیروی عمودی) بستگی دارد."], challenges: ["چهار سطح را از کم‌اصطکاک به پراصطکاک مرتب کن.", "جرم را دو برابر کن. نیروی اصطکاک چند برابر می‌شود؟", "پیش‌بینی کن: شیشه با جرم زیاد یا شن با جرم کم، کدام اصطکاک بیشتری دارد؟ بعد امتحان کن."], misconception: "اصطکاک فقط مزاحم نیست؛ بدون آن نمی‌شود راه رفت یا ترمز کرد.", check: { q: "جرم ۳ برابر شود، نیروی اصطکاک روی همان سطح چند برابر می‌شود؟", a: "۳ برابر؛ f = μmg." } },
   "newton-second-law": { goals: ["شتاب با نیرو متناسب و با جرم وارونه است (a = F ÷ m)."], challenges: ["جرم را ثابت کن و نیرو را دو برابر کن. شتاب چه می‌شود؟", "نیرو را ثابت کن و جرم را دو برابر کن. شتاب چه می‌شود؟", "نیرو و جرم را هم‌زمان دو برابر کن. شتاب چه می‌شود؟ چرا؟"], misconception: "نیروی بیشتر یعنی سرعت بیشتر؟ نه؛ نیروی خالص شتاب می‌دهد.", check: { q: "نیروی ۳۰ نیوتن بر جسمی ۶ کیلوگرمی وارد می‌شود. شتاب چقدر است؟", a: "۵ متر بر مجذور ثانیه." } },
   "archimedes": { goals: ["نیروی شناوری برابر وزن مایعِ جابه‌جاشده است.", "به جنس جسم بستگی ندارد، به حجم فرورفته بستگی دارد."], challenges: ["جسم را کم‌کم در آب فرو ببر. نیروی شناوری چگونه تغییر می‌کند؟", "حجم را دو برابر کن (کاملاً فرورفته). نیروی شناوری چند برابر می‌شود؟", "آلومینیوم و سرب با حجم برابر: آیا نیروی شناوری یکی است؟"], misconception: "گمان می‌کنیم جسم سنگین‌تر نیروی شناوری بیشتری می‌گیرد؛ شناوری به حجم جابه‌جاشده بستگی دارد.", check: { q: "جسمی به حجم ۲۰۰ سانتی‌متر مکعب کاملاً در آب است. نیروی شناوری تقریباً چقدر است؟", a: "حدود ۲ نیوتن (ρgV)." } },
+  "circuit-kit": { goals: ["جریان، ولتاژ و مقاومت را در مدارهای دلخواه خودت بسنجی.", "تفاوت سری و موازی را با ساختن و اندازه‌گیری ببینی."], challenges: ["مدار «سری» را باز کن. لامپ‌ها چقدر روشن‌اند؟ حالا یک لامپ را حذف کن؛ لامپ دیگر چه می‌شود؟", "مدار «موازی» را باز کن. یک لامپ را حذف کن؛ لامپ دیگر چه می‌شود؟ چرا برق خانه موازی است؟", "با آمپرسنج جریان هر شاخه را در مدار ترکیبی بخوان. جریان کل را با مجموع جریان شاخه‌ها مقایسه کن.", "با ولت‌سنج ولتاژ دو سر هر مقاومت را بخوان و جمعشان را با ولتاژ باتری مقایسه کن."], misconception: "جریان در مقاومت اول «مصرف نمی‌شود»؛ در مدار سری جریان همه‌جا یکی است و انرژی در مقاومت‌ها به گرما و نور تبدیل می‌شود.", check: { q: "باتری ۱۲ ولتی به دو مقاومت ۱۰ و ۳۰ اهمی سری وصل است. جریان تقریباً چقدر است؟", a: "حدود ۰٫۳ آمپر (۱۲ ÷ ۴۰)؛ باتری مقاومت درونی کوچکی هم دارد." } },
   "hooke-law": { goals: ["افزایش طول فنر با نیرو متناسب است (F = kx)."], challenges: ["جرم را دو برابر کن. افزایش طول چند برابر می‌شود؟", "یک جرم ثابت را با فنرهای ۲۰ و ۸۰ بسنج. کدام بیشتر کش می‌آید؟ چرا؟", "حدس بزن نمودار نیرو–افزایش طول چه شکلی است و شیبش چه معنایی دارد."], misconception: "هر فنری هر قدر بکشی همین رابطه را دارد؛ از حد کشسانی که بگذریم، فنر خراب می‌شود.", check: { q: "فنری با k = 40 نیوتن بر متر، وزنه‌ی ۲۰۰ گرمی را نگه می‌دارد. افزایش طول تقریباً چقدر است؟", a: "حدود ۴٫۹ سانتی‌متر (F ≈ 1٫96 N، x = F ÷ k)." } },
   "density-floating": { goals: ["شناوری به چگالی نسبت به آب بستگی دارد، نه به سنگینی."], challenges: ["اجسام را به دو گروه شناور و غوطه‌ور تقسیم کن و دلیلش را بنویس.", "چگالی چه محدوده‌ای داشته باشد تا جسم در آب شناور بماند؟", "چرا کشتی‌ای که از آهن ساخته شده غرق نمی‌شود؟"], misconception: "فکر می‌کنیم چیزهای سنگین حتماً غرق می‌شوند؛ کشتی‌های بزرگ هم شناورند.", check: { q: "جسمی چگالی ۰٫۹ گرم بر سانتی‌متر مکعب دارد. در آب شناور است؟", a: "بله؛ چگالی‌اش از آب (۱) کمتر است." } },
   "acid-base": { goals: ["اسید pH را کم و باز pH را زیاد می‌کند.", "خنثی‌شدن یعنی رسیدن به pH نزدیک ۷."], challenges: ["قطره‌های اسید را یکی‌یکی بریز. رنگ شناساگر و pH چه می‌شود؟", "از حالت اسیدی با چند قطره باز به حالت خنثی برمی‌گردی؟ عدد را ثبت کن.", "پیش از دیدن رنگ، pH را حدس بزن و با آزمایش مقایسه کن."], misconception: "همه‌ی اسیدها خطرناک نیستند؛ آب‌لیمو و سرکه اسیدهای ضعیفی هستند.", check: { q: "محلولی pH برابر ۳ دارد. اسیدی است یا بازی؟", a: "اسیدی؛ چون pH کمتر از ۷ است." } },

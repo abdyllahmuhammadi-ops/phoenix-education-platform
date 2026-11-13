@@ -41747,6 +41747,18 @@ function RahyarSegmentVisual({ visualType, visualTitle, visualData, animKey }) {
 
 const RAHYAR_FIELDS_TOP = ["علوم تجربی", "ریاضی و فیزیک", "انسانی", "فرهنگ و معارف اسلامی"];
 const RAHYAR_OTHER_CHAPTER = "سایر / وارد کردن دستی";
+// رشته‌ها برای تدریس زنده‌ی رهیار: نظری + فنی‌وحرفه‌ای + کار و دانش (بدون تکرار نام‌های مشترک و بدون «سایر»)
+const RAHYAR_FIELD_GROUPS = (() => {
+  const isOther = (f) => f.indexOf("سایر") === 0;
+  const tech = technicalFieldsTop.filter((f) => !isOther(f));
+  const kar = karDaneshFieldsTop.filter((f) => !isOther(f) && !tech.includes(f));
+  return [
+    { label: "نظری", fields: RAHYAR_FIELDS_TOP },
+    { label: "فنی و حرفه‌ای", fields: tech },
+    { label: "کار و دانش", fields: kar },
+  ];
+})();
+
 
 function RahyarTeachingLibraryView({ onBack, grade, studentCode, schoolCode }) {
   const [subject, setSubject] = useState("");
@@ -42135,7 +42147,11 @@ function RahyarTeachingLibraryView({ onBack, grade, studentCode, schoolCode }) {
               <label className="pqb-label">رشته</label>
               <select className="pqb-select pqb-w-subject" value={fieldSel} onChange={(e) => setFieldSel(e.target.value)}>
                 <option value="">انتخاب کنید</option>
-                {RAHYAR_FIELDS_TOP.map((f) => <option key={f} value={f}>{f}</option>)}
+                {RAHYAR_FIELD_GROUPS.map((gr) => (
+                  <optgroup key={gr.label} label={gr.label}>
+                    {gr.fields.map((f) => <option key={f} value={f}>{f}</option>)}
+                  </optgroup>
+                ))}
               </select>
             </div>
           )}
@@ -42700,7 +42716,11 @@ function RahyarDynamicLabView({ onBack, grade, studentCode, schoolCode }) {
               <label className="pqb-label">رشته</label>
               <select className="pqb-select pqb-w-subject" value={fieldSel} onChange={(e) => setFieldSel(e.target.value)}>
                 <option value="">انتخاب کنید</option>
-                {RAHYAR_FIELDS_TOP.map((f) => <option key={f} value={f}>{f}</option>)}
+                {RAHYAR_FIELD_GROUPS.map((gr) => (
+                  <optgroup key={gr.label} label={gr.label}>
+                    {gr.fields.map((f) => <option key={f} value={f}>{f}</option>)}
+                  </optgroup>
+                ))}
               </select>
             </div>
           )}
@@ -43233,7 +43253,11 @@ function RahyarHomeworkHelperView({ onBack, grade, studentCode, schoolCode }) {
               <label className="pqb-label">رشته</label>
               <select className="pqb-select pqb-w-subject" value={fieldSel} onChange={(e) => setFieldSel(e.target.value)}>
                 <option value="">انتخاب کنید</option>
-                {RAHYAR_FIELDS_TOP.map((f) => <option key={f} value={f}>{f}</option>)}
+                {RAHYAR_FIELD_GROUPS.map((gr) => (
+                  <optgroup key={gr.label} label={gr.label}>
+                    {gr.fields.map((f) => <option key={f} value={f}>{f}</option>)}
+                  </optgroup>
+                ))}
               </select>
             </div>
           )}

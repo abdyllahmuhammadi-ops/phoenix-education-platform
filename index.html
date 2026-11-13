@@ -10444,6 +10444,14 @@ function TeacherScheduleStep({ onBack, onContinue, teachingLevel, mainSubject, t
                         ))}
                       </select>
                     )}
+                    {cf.branch && cf.field === "سایر / وارد کردن دستی" && (
+                      <input
+                        className="pts-fields-select"
+                        placeholder="نام رشته را بنویسید"
+                        value={cf.customField || ""}
+                        onChange={(e) => setClassFieldPart(cn, "customField", e.target.value)}
+                      />
+                    )}
                   </div>
                 );
               })}
@@ -18898,7 +18906,7 @@ const PQB_SUBJECTS_BY_LEVEL = {
   "متوسطه اول": ["فارسی", "آموزش مهارت‌های نوشتاری (نگارش و انشا)", "عربی", "پیام‌های آسمانی", "آموزش قرآن", "انگلیسی", "کتاب کار انگلیسی", "ریاضی", "علوم تجربی", "مطالعات اجتماعی", "کار و فناوری", "فرهنگ و هنر", "تفکر و سبک زندگی", "آمادگی دفاعی (پایه نهم)", "تربیت‌بدنی", "سایر"],
   "متوسطه دوم": ["ادبیات فارسی", "عربی", "دینی و قرآن", "زبان انگلیسی", "ریاضی", "هندسه", "حسابان", "آمار و احتمال", "فیزیک", "شیمی", "زیست‌شناسی", "تاریخ", "جغرافیا", "علوم اجتماعی", "اقتصاد", "فلسفه و منطق", "روان‌شناسی", "تربیت‌بدنی", "سایر"],
 };
-const PQB_FIELDS_OF_STUDY = ["علوم تجربی", "ریاضی و فیزیک", "علوم انسانی", "فرهنگ و معارف اسلامی", "فنی و حرفه‌ای", "کار و دانش", "سایر"];
+const PQB_FIELDS_OF_STUDY = ["علوم تجربی", "ریاضی و فیزیک", "علوم انسانی", "فرهنگ و معارف اسلامی", "فنی و حرفه‌ای", "کار و دانش", "سایر / وارد کردن دستی"];
 const PQB_EXAM_TYPES = ["امتحان کلاسی", "امتحان درس به درس", "امتحان فصل به فصل", "نوبت اول", "نوبت دوم", "آزمایشی کنکور"];
 const PQB_QUESTION_TYPES = ["تستی (چهارگزینه‌ای)", "تشریحی", "جای خالی", "صحیح یا غلط", "بله یا خیر", "کوتاه‌پاسخ", "تطبیقی (جورکردنی)"];
 const PQB_COGNITIVE_LEVELS = ["به‌خاطرسپاری", "درک مفهومی", "کاربرد", "تحلیل", "ارزیابی و قضاوت", "خلق و ترکیب"];
@@ -18911,6 +18919,7 @@ function TeacherQuestionBankStep({ onBack, prefillSchoolCode, teacherSchools, te
   );
   const [subject, setSubject] = useState(teacherMainSubject || "");
   const [fieldOfStudy, setFieldOfStudy] = useState("");
+  const [fieldIsCustom, setFieldIsCustom] = useState(false);
   const [questions, setQuestions] = useState([]);
   const [loading, setLoading] = useState(false);
   const [autoBuilding, setAutoBuilding] = useState(false);
@@ -19426,12 +19435,18 @@ function TeacherQuestionBankStep({ onBack, prefillSchoolCode, teacherSchools, te
           {["دهم", "یازدهم", "دوازدهم"].includes(grade) && (
             <div className="pqb-field">
               <label className="pqb-label">رشته (اختیاری)</label>
-              <select className="pqb-select pqb-w-field" value={fieldOfStudy} onChange={(e) => setFieldOfStudy(e.target.value)}>
+              <select className="pqb-select pqb-w-field" value={fieldIsCustom ? "سایر / وارد کردن دستی" : fieldOfStudy} onChange={(e) => {
+                const v = e.target.value;
+                if (v === "سایر / وارد کردن دستی") { setFieldIsCustom(true); setFieldOfStudy(""); } else { setFieldIsCustom(false); setFieldOfStudy(v); }
+              }}>
                 <option value="">انتخاب کنید</option>
                 {PQB_FIELDS_OF_STUDY.map((f) => (
                   <option key={f} value={f}>{f}</option>
                 ))}
               </select>
+              {fieldIsCustom && (
+                <input className="pqb-input pqb-w-field" style={{ marginTop: 6 }} value={fieldOfStudy} onChange={(e) => setFieldOfStudy(e.target.value)} placeholder="نام رشته را بنویسید" />
+              )}
             </div>
           )}
         </div>
@@ -41764,6 +41779,7 @@ function RahyarTeachingLibraryView({ onBack, grade, studentCode, schoolCode }) {
   const [subject, setSubject] = useState("");
   const [gradeSel, setGradeSel] = useState(grade || "");
   const [fieldSel, setFieldSel] = useState("");
+  const [subjectIsCustom, setSubjectIsCustom] = useState(false);
   const [chapter, setChapter] = useState("");
   const [chapterIsCustom, setChapterIsCustom] = useState(false);
   const [chapterOptions, setChapterOptions] = useState([]);
@@ -41792,18 +41808,26 @@ function RahyarTeachingLibraryView({ onBack, grade, studentCode, schoolCode }) {
   useEffect(() => {
     setFieldSel("");
     setSubject("");
+    setSubjectIsCustom(false);
     setChapter("");
     setChapterOptions([]);
   }, [gradeSel]);
 
   useEffect(() => {
     setSubject("");
+    setSubjectIsCustom(false);
     setChapter("");
     setChapterOptions([]);
   }, [fieldSel]);
 
   // وقتی درس و پایه هر دو مشخص شدند، فهرست فصل‌های رسمی همان کتاب را از رهیار می‌گیریم (یا از کش ملی می‌خوانیم)
   useEffect(() => {
+    if (subjectIsCustom) {
+      // درسِ دستی: فهرست رسمی فصل‌ها وجود ندارد؛ مبحث را هم خود کاربر می‌نویسد (بدون درخواست به ازای هر حرف)
+      setChapterOptions([]);
+      setChapterIsCustom(true);
+      return;
+    }
     if (!subject || !gradeSel) {
       setChapterOptions([]);
       return;
@@ -41842,7 +41866,7 @@ function RahyarTeachingLibraryView({ onBack, grade, studentCode, schoolCode }) {
     return () => {
       cancelled = true;
     };
-  }, [subject, gradeSel]);
+  }, [subject, gradeSel, subjectIsCustom]);
 
   useEffect(() => {
     setSpeechSupported(typeof window !== "undefined" && !!window.speechSynthesis && !!window.SpeechSynthesisUtterance);
@@ -42152,21 +42176,32 @@ function RahyarTeachingLibraryView({ onBack, grade, studentCode, schoolCode }) {
                     {gr.fields.map((f) => <option key={f} value={f}>{f}</option>)}
                   </optgroup>
                 ))}
+                <option value={RAHYAR_OTHER_CHAPTER}>{RAHYAR_OTHER_CHAPTER}</option>
               </select>
             </div>
           )}
 
           <div className="pqb-field">
             <label className="pqb-label">درس</label>
+            {subjectIsCustom ? (
+              <div style={{ display: "flex", gap: 6, alignItems: "center" }}>
+                <input className="pqb-input pqb-w-subject" value={subject} onChange={(e) => setSubject(e.target.value)} placeholder="نام درس را بنویسید" />
+                <button type="button" className="pqb-back" onClick={() => { setSubjectIsCustom(false); setSubject(""); }}>↩ فهرست</button>
+              </div>
+            ) : (
             <select
               className="pqb-select pqb-w-subject"
               value={subject}
-              onChange={(e) => setSubject(e.target.value)}
+              onChange={(e) => {
+                if (e.target.value === RAHYAR_OTHER_CHAPTER) { setSubjectIsCustom(true); setSubject(""); setChapterIsCustom(true); setChapter(""); } else { setSubject(e.target.value); }
+              }}
               disabled={!gradeSel || (isSecondaryHigh && !fieldSel)}
             >
               <option value="">{!gradeSel ? "اول پایه را انتخاب کنید" : (isSecondaryHigh && !fieldSel) ? "اول رشته را انتخاب کنید" : "انتخاب کنید"}</option>
               {subjectOptions.map((s) => <option key={s} value={s}>{s}</option>)}
+              {gradeSel && !(isSecondaryHigh && !fieldSel) && <option value={RAHYAR_OTHER_CHAPTER}>{RAHYAR_OTHER_CHAPTER}</option>}
             </select>
+            )}
           </div>
 
           <div className="pqb-field" style={{ flex: 1, minWidth: 200 }}>
@@ -42322,6 +42357,7 @@ function RahyarDynamicLabView({ onBack, grade, studentCode, schoolCode }) {
   const [subject, setSubject] = useState("");
   const [gradeSel, setGradeSel] = useState(grade || "");
   const [fieldSel, setFieldSel] = useState("");
+  const [subjectIsCustom, setSubjectIsCustom] = useState(false);
   const [chapter, setChapter] = useState("");
   const [chapterIsCustom, setChapterIsCustom] = useState(false);
   const [chapterOptions, setChapterOptions] = useState([]);
@@ -42350,17 +42386,25 @@ function RahyarDynamicLabView({ onBack, grade, studentCode, schoolCode }) {
   useEffect(() => {
     setFieldSel("");
     setSubject("");
+    setSubjectIsCustom(false);
     setChapter("");
     setChapterOptions([]);
   }, [gradeSel]);
 
   useEffect(() => {
     setSubject("");
+    setSubjectIsCustom(false);
     setChapter("");
     setChapterOptions([]);
   }, [fieldSel]);
 
   useEffect(() => {
+    if (subjectIsCustom) {
+      // درسِ دستی: فهرست رسمی فصل‌ها وجود ندارد؛ مبحث را هم خود کاربر می‌نویسد (بدون درخواست به ازای هر حرف)
+      setChapterOptions([]);
+      setChapterIsCustom(true);
+      return;
+    }
     if (!subject || !gradeSel) {
       setChapterOptions([]);
       return;
@@ -42399,7 +42443,7 @@ function RahyarDynamicLabView({ onBack, grade, studentCode, schoolCode }) {
     return () => {
       cancelled = true;
     };
-  }, [subject, gradeSel]);
+  }, [subject, gradeSel, subjectIsCustom]);
 
   useEffect(() => {
     setSpeechSupported(typeof window !== "undefined" && !!window.speechSynthesis && !!window.SpeechSynthesisUtterance);
@@ -42721,21 +42765,32 @@ function RahyarDynamicLabView({ onBack, grade, studentCode, schoolCode }) {
                     {gr.fields.map((f) => <option key={f} value={f}>{f}</option>)}
                   </optgroup>
                 ))}
+                <option value={RAHYAR_OTHER_CHAPTER}>{RAHYAR_OTHER_CHAPTER}</option>
               </select>
             </div>
           )}
 
           <div className="pqb-field">
             <label className="pqb-label">درس</label>
+            {subjectIsCustom ? (
+              <div style={{ display: "flex", gap: 6, alignItems: "center" }}>
+                <input className="pqb-input pqb-w-subject" value={subject} onChange={(e) => setSubject(e.target.value)} placeholder="نام درس را بنویسید" />
+                <button type="button" className="pqb-back" onClick={() => { setSubjectIsCustom(false); setSubject(""); }}>↩ فهرست</button>
+              </div>
+            ) : (
             <select
               className="pqb-select pqb-w-subject"
               value={subject}
-              onChange={(e) => setSubject(e.target.value)}
+              onChange={(e) => {
+                if (e.target.value === RAHYAR_OTHER_CHAPTER) { setSubjectIsCustom(true); setSubject(""); setChapterIsCustom(true); setChapter(""); } else { setSubject(e.target.value); }
+              }}
               disabled={!gradeSel || (isSecondaryHigh && !fieldSel)}
             >
               <option value="">{!gradeSel ? "اول پایه را انتخاب کنید" : (isSecondaryHigh && !fieldSel) ? "اول رشته را انتخاب کنید" : "انتخاب کنید"}</option>
               {subjectOptions.map((s) => <option key={s} value={s}>{s}</option>)}
+              {gradeSel && !(isSecondaryHigh && !fieldSel) && <option value={RAHYAR_OTHER_CHAPTER}>{RAHYAR_OTHER_CHAPTER}</option>}
             </select>
+            )}
           </div>
 
           <div className="pqb-field" style={{ flex: 1, minWidth: 200 }}>
@@ -42900,6 +42955,7 @@ function RahyarHomeworkHelperView({ onBack, grade, studentCode, schoolCode }) {
   const [subject, setSubject] = useState("");
   const [gradeSel, setGradeSel] = useState(grade || "");
   const [fieldSel, setFieldSel] = useState("");
+  const [subjectIsCustom, setSubjectIsCustom] = useState(false);
   const [questionText, setQuestionText] = useState("");
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
@@ -42923,10 +42979,12 @@ function RahyarHomeworkHelperView({ onBack, grade, studentCode, schoolCode }) {
   useEffect(() => {
     setFieldSel("");
     setSubject("");
+    setSubjectIsCustom(false);
   }, [gradeSel]);
 
   useEffect(() => {
     setSubject("");
+    setSubjectIsCustom(false);
   }, [fieldSel]);
 
   useEffect(() => {
@@ -43258,21 +43316,32 @@ function RahyarHomeworkHelperView({ onBack, grade, studentCode, schoolCode }) {
                     {gr.fields.map((f) => <option key={f} value={f}>{f}</option>)}
                   </optgroup>
                 ))}
+                <option value={RAHYAR_OTHER_CHAPTER}>{RAHYAR_OTHER_CHAPTER}</option>
               </select>
             </div>
           )}
 
           <div className="pqb-field">
             <label className="pqb-label">درس (اختیاری)</label>
+            {subjectIsCustom ? (
+              <div style={{ display: "flex", gap: 6, alignItems: "center" }}>
+                <input className="pqb-input pqb-w-subject" value={subject} onChange={(e) => setSubject(e.target.value)} placeholder="نام درس را بنویسید" />
+                <button type="button" className="pqb-back" onClick={() => { setSubjectIsCustom(false); setSubject(""); }}>↩ فهرست</button>
+              </div>
+            ) : (
             <select
               className="pqb-select pqb-w-subject"
               value={subject}
-              onChange={(e) => setSubject(e.target.value)}
+              onChange={(e) => {
+                if (e.target.value === RAHYAR_OTHER_CHAPTER) { setSubjectIsCustom(true); setSubject(""); } else { setSubject(e.target.value); }
+              }}
               disabled={!gradeSel || (isSecondaryHigh && !fieldSel)}
             >
               <option value="">نامشخص / فرقی نمی‌کند</option>
               {subjectOptions.map((s) => <option key={s} value={s}>{s}</option>)}
+              {gradeSel && !(isSecondaryHigh && !fieldSel) && <option value={RAHYAR_OTHER_CHAPTER}>{RAHYAR_OTHER_CHAPTER}</option>}
             </select>
+            )}
           </div>
         </div>
 
@@ -43378,6 +43447,7 @@ function TeacherLessonPlanStep({ onBack, prefillSchoolCode, teacherSchools, teac
   );
   const [subject, setSubject] = useState(teacherMainSubject || "");
   const [fieldOfStudy, setFieldOfStudy] = useState("");
+  const [fieldIsCustom, setFieldIsCustom] = useState(false);
   const [plans, setPlans] = useState([]);
   const [loading, setLoading] = useState(false);
   const [questionCounts, setQuestionCounts] = useState({}); // chapter -> count
@@ -43692,12 +43762,18 @@ function TeacherLessonPlanStep({ onBack, prefillSchoolCode, teacherSchools, teac
           {isHighSchoolGrade && (
             <div className="pqb-field">
               <label className="pqb-label">رشته</label>
-              <select className="pqb-select pqb-w-field" value={fieldOfStudy} onChange={(e) => setFieldOfStudy(e.target.value)}>
+              <select className="pqb-select pqb-w-field" value={fieldIsCustom ? "سایر / وارد کردن دستی" : fieldOfStudy} onChange={(e) => {
+                const v = e.target.value;
+                if (v === "سایر / وارد کردن دستی") { setFieldIsCustom(true); setFieldOfStudy(""); } else { setFieldIsCustom(false); setFieldOfStudy(v); }
+              }}>
                 <option value="">انتخاب کنید</option>
                 {PQB_FIELDS_OF_STUDY.map((f) => (
                   <option key={f} value={f}>{f}</option>
                 ))}
               </select>
+              {fieldIsCustom && (
+                <input className="pqb-input pqb-w-field" style={{ marginTop: 6 }} value={fieldOfStudy} onChange={(e) => setFieldOfStudy(e.target.value)} placeholder="نام رشته را بنویسید" />
+              )}
             </div>
           )}
         </div>

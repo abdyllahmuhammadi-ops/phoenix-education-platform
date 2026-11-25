@@ -2752,6 +2752,56 @@ function TestMasterAccessStep({ onBack, onPick }) {
   );
 }
 
+// رضایت‌نامه‌ی جداگانه و صریحِ ولی/سرپرستِ قانونی (کدملی و مشخصات، میکروفون، دوربین، رمز، هوش مصنوعی).
+// تیکِ مستقل از «قوانین و مقررات» است و در فرم‌های دانش‌آموز، دانش‌آموزِ اتباع و ولی به‌کار می‌رود.
+const GUARDIAN_CONSENT_VERSION = "1.0";
+const GUARDIAN_CONSENT_CLAUSES = [
+  "کدملی و سایر مشخصات هویتیِ دانش‌آموز و ولی را آگاهانه در اختیار سامانه‌ی ققنوس می‌گذارم. این اطلاعات فقط برای تشکیل پرونده‌ی آموزشی، احراز هویت و ارتباط آموزشی به‌کار می‌رود و فروخته یا برای اهداف دیگر به اشخاص ثالث داده نمی‌شود.",
+  "دسترسی به این اطلاعات فقط برای خودم (ولی)، مدرسه، معلمان مرتبط و مسئولان سامانه و در حد وظیفه‌شان مجاز است.",
+  "میکروفون فقط وقتی فرزندم دکمه‌ی ضبط یا «صحبت کردن» را بزند و مرورگر اجازه بدهد، روشن می‌شود. صدا فقط برای همان لحظه است و ضبط دائمی ذخیره نمی‌شود. توجه: تبدیل گفتار به متن ممکن است توسط خدمات خودِ مرورگر انجام شود.",
+  "دوربین فقط برای عکس‌گرفتن از مدارک (مثلاً شناسنامه) هنگام ثبت‌نام و با اجازه‌ی جداگانه‌ی مرورگر استفاده می‌شود؛ تصویر زنده ضبط نمی‌شود.",
+  "رمز ورود را هرگز به هیچ‌کس (حتی دوست، معلم یا اعضای سامانه) نمی‌دهم؛ سامانه هیچ‌گاه رمز را از من نمی‌خواهد و مسئولیت نگهداری رمز با ولی است.",
+  "بر استفاده‌ی فرزندم از سامانه (زمان، محتوا، پیام‌ها، دستگاه و رمز) تا جایی که قانون اجازه می‌دهد نظارت می‌کنم و مسئولیت آن با من است.",
+  "می‌دانم رهیار (هوش مصنوعی) ممکن است اشتباه کند و جایگزین معلم نیست؛ پرسش‌وپاسخ‌های درسی برای استفاده‌ی دیگران ذخیره می‌شود (به فرزندم می‌گویم نام، شماره‌تلفن و اطلاعات شخصی نپرسد/ننویسد) و یادداشت‌های پیشرفت و نقاط ضعف درسی او نگهداری می‌شود.",
+  "این تیک به‌منزله‌ی رضایت آگاهانه و رسمی من به موارد بالا است.",
+];
+function GuardianConsentBox({ checked, onChange, id }) {
+  const [open, setOpen] = React.useState(false);
+  return (
+    <div style={{ margin: "14px 0", padding: "12px 14px", border: "1px solid #e3dcc8", borderRadius: 12, background: "rgba(255,255,255,0.6)" }}>
+      <div style={{ display: "flex", gap: 8, alignItems: "flex-start" }}>
+        <input type="checkbox" id={id} checked={checked} onChange={(e) => onChange(e.target.checked)} style={{ marginTop: 5 }} />
+        <label htmlFor={id} style={{ fontSize: 13.5, lineHeight: 1.9 }}>
+          <button type="button" onClick={() => setOpen(true)} style={{ background: "none", border: 0, padding: 0, color: "#7c3aed", fontWeight: 700, cursor: "pointer", font: "inherit", textDecoration: "underline" }}>
+            رضایت‌نامه‌ی ولی / سرپرست قانونی
+          </button>{" "}
+          (کدملی و مشخصات، میکروفون، دوربین، رمز و هوش مصنوعی) را مطالعه کرده‌ام و آگاهانه می‌پذیرم <span style={{ color: "#c0392b" }}>*</span>
+        </label>
+      </div>
+      {open && (
+        <div style={{ position: "fixed", inset: 0, background: "rgba(20,24,40,0.55)", zIndex: 99999, display: "flex", alignItems: "center", justifyContent: "center", padding: 16 }} onClick={() => setOpen(false)}>
+          <div style={{ background: "#fff", borderRadius: 16, maxWidth: 560, width: "100%", maxHeight: "86vh", overflow: "auto", direction: "rtl" }} onClick={(e) => e.stopPropagation()}>
+            <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", padding: "14px 18px", borderBottom: "1px solid #eee" }}>
+              <h3 style={{ margin: 0, fontSize: 16, color: "#1c2540" }}>رضایت‌نامه‌ی ولی / سرپرست قانونی</h3>
+              <button type="button" onClick={() => setOpen(false)} style={{ border: 0, background: "none", fontSize: 18, cursor: "pointer" }}>✕</button>
+            </div>
+            <ol style={{ margin: 0, padding: "16px 36px 8px 20px", fontSize: 13.5, lineHeight: 2, color: "#1c2540" }}>
+              {GUARDIAN_CONSENT_CLAUSES.map((c, i) => (
+                <li key={i} style={{ marginBottom: 8 }}>{c}</li>
+              ))}
+            </ol>
+            <div style={{ padding: "8px 18px 18px" }}>
+              <button type="button" onClick={() => { onChange(true); setOpen(false); }} style={{ width: "100%", padding: "12px", border: 0, borderRadius: 12, background: "#7c3aed", color: "#fff", fontWeight: 700, cursor: "pointer", font: "inherit" }}>
+                مطالعه کردم و می‌پذیرم
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+    </div>
+  );
+}
+
 function StudentRegistration({ language, onBack, onContinue, prefillPhone }) {
   const t = T[language] || T["فارسی"];
 
@@ -2857,6 +2907,7 @@ function StudentRegistration({ language, onBack, onContinue, prefillPhone }) {
   const [previousAverage, setPreviousAverage] = useState("");
   const [className, setClassName] = useState("");
   const [termsAccepted, setTermsAccepted] = useState(false);
+  const [guardianConsent, setGuardianConsent] = useState(false);
   const [registrationValidationError, setRegistrationValidationError] = useState("");
   const [termsModalOpen, setTermsModalOpen] = useState(false);
   const [studentPhoto, setStudentPhoto] = useState(null);
@@ -5419,6 +5470,8 @@ function StudentRegistration({ language, onBack, onContinue, prefillPhone }) {
             </label>
           </div>
 
+          <GuardianConsentBox id="psr-guardian-consent" checked={guardianConsent} onChange={setGuardianConsent} />
+
           {termsModalOpen && (
             <div className="psr-modal-overlay" onClick={() => setTermsModalOpen(false)}>
               <div className="psr-modal-box" onClick={(e) => e.stopPropagation()}>
@@ -5512,6 +5565,7 @@ function StudentRegistration({ language, onBack, onContinue, prefillPhone }) {
               const bloodEl = document.getElementById("psr-bloodgroup");
               if (!bloodEl || !bloodEl.value) missing.push("گروه خونی");
               if (!termsAccepted) missing.push("پذیرش قوانین و سطح دسترسی");
+              if (!guardianConsent) missing.push("رضایت‌نامه‌ی ولی / سرپرست قانونی");
 
               if (missing.length > 0) {
                 setRegistrationValidationError(
@@ -5557,6 +5611,7 @@ function StudentRegistration({ language, onBack, onContinue, prefillPhone }) {
                 county: resolvedCounty,
                 studentCode: computeStudentCode(),
                 gender: gender,
+                guardianConsent: { version: GUARDIAN_CONSENT_VERSION, at: Date.now() },
               });
             }}
           >
@@ -5662,6 +5717,7 @@ function ForeignStudentRegistration({ language, onBack }) {
   };
 
   const [validationError, setValidationError] = useState("");
+  const [guardianConsent, setGuardianConsent] = useState(false);
   const [submitting, setSubmitting] = useState(false);
   const [submitted, setSubmitted] = useState(null); // null | { studentCode, loginCode, phone }
   const [testModeReveal, setTestModeReveal] = useState(false);
@@ -5702,6 +5758,7 @@ function ForeignStudentRegistration({ language, onBack }) {
     if (form.educationLevel === "متوسطه دوم" && !form.fieldOfStudy) missing.push(t.fieldOfStudy);
     if (form.fieldOfStudy === "سایر / وارد کردن دستی" && !form.customFieldOfStudy.trim()) missing.push("نام رشته");
     if (!form.className.trim()) missing.push(t.className);
+    if (!guardianConsent) missing.push("رضایت‌نامه‌ی ولی / سرپرست قانونی");
 
     if (missing.length > 0) {
       setValidationError(t.submitErrorTitle + "\n• " + missing.join("\n• "));
@@ -5813,6 +5870,7 @@ function ForeignStudentRegistration({ language, onBack }) {
         gender: form.gender,
         isForeignStudent: true,
         country: countryLabel,
+        guardianConsent: { version: GUARDIAN_CONSENT_VERSION, at: Date.now() },
       });
 
       setSubmitted({ studentCode, loginCode, phone });
@@ -6515,10 +6573,13 @@ function ForeignStudentRegistration({ language, onBack }) {
               </div>
             </div>
           ) : (
+            <>
+            <GuardianConsentBox id="pfr-guardian-consent" checked={guardianConsent} onChange={setGuardianConsent} />
             <button type="button" className="pfr-submit" disabled={submitting} onClick={handleSubmit}>
               {submitting ? "…" : t.submit}
               <span style={{ fontSize: 20 }}>{t.dir === "rtl" ? "←" : "→"}</span>
             </button>
+            </>
           )}
         </div>
       </div>
@@ -7738,6 +7799,7 @@ function GuardianRegistration({ onBack, onContinue, onOpenMessages, prefillPhone
   const [sameAsStudentAddress, setSameAsStudentAddress] = useState(true);
   const [mobile, setMobile] = useState(prefillPhone || "");
   const [termsAccepted, setTermsAccepted] = useState(false);
+  const [guardianConsent, setGuardianConsent] = useState(false);
   const [termsModalOpen, setTermsModalOpen] = useState(false);
   const [issued, setIssued] = useState(false);
   const [testModeReveal, setTestModeReveal] = useState(false);
@@ -7762,6 +7824,7 @@ function GuardianRegistration({ onBack, onContinue, onOpenMessages, prefillPhone
     if (!stuEl || !stuEl.value.trim()) missing.push("کد ملی دانش‌آموز اول");
     if (!mobile) missing.push("شماره موبایل");
     if (!termsAccepted) missing.push("پذیرش قوانین و سطح دسترسی");
+    if (!guardianConsent) missing.push("رضایت‌نامه‌ی ولی / سرپرست قانونی");
     if (missing.length > 0) {
       setIssueError("لطفاً این فیلدهای اجباری را تکمیل کنید:\n• " + missing.join("\n• "));
       return;
@@ -7774,7 +7837,7 @@ function GuardianRegistration({ onBack, onContinue, onOpenMessages, prefillPhone
       setIssueError("ذخیره‌ی رمز ورود ناموفق بود. لطفاً دوباره روی همین دکمه بزنید — اطلاعات فرم شما حفظ شده است.");
       return;
     }
-    await saveLoginProfile(mobile, "guardian", {});
+    await saveLoginProfile(mobile, "guardian", { guardianConsent: { version: GUARDIAN_CONSENT_VERSION, at: Date.now() } });
     setIssueSaving(false);
     setLastCode(addMode ? "" : code);
     setIssued(true);
@@ -8124,6 +8187,8 @@ function GuardianRegistration({ onBack, onContinue, onOpenMessages, prefillPhone
             </label>
           </div>
 
+          <GuardianConsentBox id="pgr-guardian-consent" checked={guardianConsent} onChange={setGuardianConsent} />
+
           {termsModalOpen && (
             <div className="pgr-modal-overlay" onClick={() => setTermsModalOpen(false)}>
               <div className="pgr-modal-box" onClick={(e) => e.stopPropagation()}>
@@ -8165,7 +8230,7 @@ function GuardianRegistration({ onBack, onContinue, onOpenMessages, prefillPhone
               <div className="pgr-issued-title">✓ ثبت‌نام با موفقیت انجام شد</div>
               {lastCode ? (
               <>
-              <p className="pgr-issued-text">رمز ورود شما همین‌جا نمایش داده شده — همین حالا یادداشت کنید.<br />این رمز را در اختیار دیگران قرار ندهید.</p>
+              <p className="pgr-issued-text">رمز ورود شما همین‌جا نمایش داده شده — همین حالا یادداشت کنید.<br /><b>این رمز را به هیچ‌کس ندهید</b> (نه دوست، نه معلم، نه اعضای سامانه). سامانه هرگز رمز را از شما نمی‌خواهد.</p>
               <div className="pgr-testmode-code" style={{ fontSize: 22, letterSpacing: 3, fontWeight: 800, textAlign: "center", margin: "10px 0" }}>{lastCode}</div>
               </>
               ) : (
@@ -16490,6 +16555,57 @@ function MessageAudioPlayback({ audio }) {
   return <audio controls src={audio.dataUrl} className="voice-record-audio" style={{ marginTop: 6 }} />;
 }
 
+// نگهبانِ حریمِ خصوصیِ پرسش‌های رهیار — پیش از ارسال به هوش مصنوعی و پیش از هر ذخیره‌سازی اجرا می‌شود.
+// اگر متن شاملِ شماره‌ی موبایل/تلفن، کدملی، ایمیل، لینک/آیدیِ شبکه‌ی اجتماعی، آدرس، شماره‌ی کارت، رمز یا
+// معرفیِ هویتیِ مستقیم (اسم و نام خانوادگی) باشد، «مسدود» می‌شود: نه ارسال می‌شود، نه ذخیره، نه در کش می‌رود.
+// عمداً محتاطانه نوشته شده تا سؤال‌های درسیِ عددی (ریاضی/فیزیک) به‌اشتباه رد نشوند.
+function rahyarScanSensitive(text) {
+  if (typeof text !== "string" || !text.trim()) return null;
+  const latin = text
+    .replace(/[۰-۹]/g, (d) => "0123456789"["۰۱۲۳۴۵۶۷۸۹".indexOf(d)])
+    .replace(/[٠-٩]/g, (d) => "0123456789"["٠١٢٣٤٥٦٧٨٩".indexOf(d)])
+    .replace(/[\u200c\u200d\u200e\u200f]/g, "");
+  // یکی‌کردنِ ارقامی که با فاصله/خط‌تیره/نقطه جدا شده‌اند (مثلاً ۰۹۱۲ ۳۴۵ ۶۷۸۹)
+  const compact = latin.replace(/(?<=\d)[\s\-.\/](?=\d)/g, "");
+  if (/(?:\+98|0098|\b98|\b0)?9\d{9}(?!\d)/.test(compact) && /(?:\+98|0098|98|0)9\d{9}(?!\d)/.test(compact)) return "phone";
+  if (/(?<!\d)0[1-8]\d{9}(?!\d)/.test(compact)) return "phone";
+  if (/\d{13,}/.test(compact)) return "number";
+  const nat = compact.match(/(?<!\d)\d{10}(?!\d)/g);
+  if (nat) {
+    for (const n of nat) {
+      if (/^(\d)\1{9}$/.test(n)) continue;
+      const sum = n.slice(0, 9).split("").reduce((a, d, i) => a + Number(d) * (10 - i), 0) % 11;
+      const ok = sum < 2 ? Number(n[9]) === sum : Number(n[9]) === 11 - sum;
+      if (ok) return "nationalCode";
+    }
+  }
+  if (/(کد\s?ملی|شماره\s?ملی|شماره\s?شناسنامه|شماره\s?(موبایل|همراه|تلفن|تماس|کارت|حساب)|کد\s?پستی|پلاک\s?\d|شماره\s?ی\s?(موبایل|همراه|تلفن))/.test(latin)) return "identityWord";
+  if (/(رمز\s?(عبور|ورود)?\s?(من|ام)(?![\u0600-\u06FF])|پسورد\s?(من|ام)?|password|\bpin\b\s?(من|ام)?)/i.test(latin)) return "password";
+  if (/[\w.+-]+@[\w-]+\.[\w.]{2,}/.test(latin)) return "email";
+  if (/(https?:\/\/|www\.|t\.me\/|wa\.me\/|instagram\.com|(?:^|\s)@[A-Za-z0-9_.]{3,})/i.test(latin)) return "link";
+  if (/(آیدی|ایدی|\bid\b)\s*(من|ام)?\s*(در|توی|تو)?\s*(اینستا|اینستاگرام|تلگرام|واتساپ|ایتا|روبیکا|سروش|instagram|telegram|whatsapp)/i.test(latin)) return "social";
+  if (/(آدرس|نشانی)\s*(من|ام|منزل|خانه|محل\s?زندگی|مدرسه)/.test(latin) || /(محل\s?سکونت|ساکن\s?(شهر|تهران|اصفهان|شیراز|مشهد|تبریز|کرج|قم|اهواز)|زندگی\s?می‌?کنم\s?(در|توی))/.test(latin)) return "address";
+  if (/((اسم|نام)(\s?و\s?نام\s?خانوادگی)?\s?(من|ام)(?![\u0600-\u06FF])|نام\s?خانوادگی\s?(من|ام)(?![\u0600-\u06FF])|(اسمم|اسم\s?و\s?فامیلم|فامیلیم|فامیلی\s?من))/.test(latin)) return "name";
+  return null;
+}
+
+const RAHYAR_PII_WARNING =
+  "🔒 دوست خوبم، در این پیام اطلاعات شخصی (مثل نام و نام‌خانوادگی، شماره‌ی تماس، کد ملی، آدرس، رمز یا آیدی) دیده شد. " +
+  "برای حفظ امنیتِ تو و خانواده‌ات، این پیام نه برای هوش مصنوعی فرستاده شد و نه جایی ذخیره شد. " +
+  "لطفاً هیچ‌وقت چنین اطلاعاتی را اینجا ننویس. اگر سؤال درسی داری، همان را بدون این اطلاعات بپرس تا با کمال میل کمکت کنم. 🌱";
+
+const RAHYAR_OFFTOPIC_MARKER = "[[OFFTOPIC]]";
+const RAHYAR_OFFTOPIC_WARNING =
+  "🌿 دوست خوبم، من «رهیار»، دستیار درسی تو هستم و فقط به سؤال‌های مربوط به درس و مدرسه پاسخ می‌دهم. " +
+  "این پرسش به درس مربوط نبود؛ پس پاسخی برایش ندارم و جایی هم ذخیره نمی‌شود. " +
+  "هر سؤال درسی داری با خوشحالی کمکت می‌کنم.";
+
+const RAHYAR_OFFTOPIC_RULE =
+  "\n\nقانونِ سخت‌گیرانه‌ی حوزه‌ی پاسخ‌گویی: فقط به پرسش‌های درسی و آموزشیِ مرتبط با کتاب‌های درسی و مدرسه پاسخ بده. " +
+  "اگر آخرین پیام دانش‌آموز درباره‌ی موضوعی غیردرسی است (مثل سرگرمی، شایعه، سیاست، روابط شخصی، درخواست اطلاعات شخصی، تبلیغ، یا هر چیز بی‌ربط به درس)، " +
+  "هیچ پاسخی نده و فقط و دقیقاً همین یک عبارت را بنویس بدون هیچ کلمه‌ی دیگر: " + RAHYAR_OFFTOPIC_MARKER + "\n" +
+  "اگر دانش‌آموز اطلاعات شخصی خودش یا دیگران (نام، شماره، آدرس، رمز) نوشته بود، آن‌ها را تکرار نکن.";
+
 // نرمال‌سازیِ سؤالِ آزادِ دانش‌آموز از رهیار — برای اینکه بشود دو نوشتارِ متفاوت از «همان سؤال»
 // (فاصله‌ی اضافه، علامتِ نگارشی، پیشوندِ محاوره‌ایِ رایج) را به هم نزدیک دید، بدونِ نیاز به هوش مصنوعی.
 function rahyarNormalizeQuestion(text) {
@@ -16819,6 +16935,11 @@ function MessagingStep({ onBack, initialInboxMode, initialGuardianPhone, initial
     if (!question || aiThinking) return;
     setAiQuestion("");
     setAiError("");
+    // نگهبانِ حریمِ خصوصی: متنِ حاویِ اطلاعاتِ شخصی هرگز وارد گفت‌وگو، کش، گزارش یا هوش مصنوعی نمی‌شود.
+    if (rahyarScanSensitive(question)) {
+      setAiConversation((prev) => [...prev, { role: "assistant", text: RAHYAR_PII_WARNING, skip: true, warning: true }]);
+      return;
+    }
     if (senderRole === "student" && !sessionStartRef.current) {
       sessionStartRef.current = Date.now();
     }
@@ -16831,7 +16952,8 @@ function MessagingStep({ onBack, initialInboxMode, initialGuardianPhone, initial
     // چک می‌کنیم — شاید دانش‌آموزی دیگر (حتی در شهری دیگر) دقیقاً همین سؤال را قبلاً پرسیده باشد.
     // توجه: حافظه‌ی «مشترک» فعلاً فقط داخلِ همین مرورگر واقعاً مشترک است؛ وقتی بک‌اندِ واقعی وصل
     // شود، همین منطق بدونِ تغییر، بینِ شهرهای مختلف هم کار خواهد کرد.
-    const isStandaloneFirstQuestion = senderRole === "student" && nextConversation.length === 1;
+    const effectiveConversation = nextConversation.filter((m) => !m.skip);
+    const isStandaloneFirstQuestion = senderRole === "student" && effectiveConversation.length === 1;
     const qaCacheKey = "rahyar-qa-bank:" + skey(rahyarSubject) + ":" + (initialUserGrade || "نامشخص");
     if (isStandaloneFirstQuestion) {
       try {
@@ -16865,11 +16987,12 @@ function MessagingStep({ onBack, initialInboxMode, initialGuardianPhone, initial
           system:
             aiPersona.systemPrompt +
             timeCapNote +
+            RAHYAR_OFFTOPIC_RULE +
             (rahyarProfile.length > 0
               ? "\n\nخلاصه‌ی جلسات قبلی این دانش‌آموز با شما:\n" +
                 rahyarProfile.map((p) => "- " + p.topic + ": " + p.note + (p.weakness ? " [نقطه‌ضعف شناسایی‌شده: " + p.weakness + "]" : "")).join("\n")
               : ""),
-          messages: nextConversation.map((m) => ({ role: m.role, content: m.text })),
+          messages: effectiveConversation.map((m) => ({ role: m.role, content: m.text })),
         }),
       });
       const data = await response.json();
@@ -16877,6 +17000,15 @@ function MessagingStep({ onBack, initialInboxMode, initialGuardianPhone, initial
         data && data.content && data.content[0] && data.content[0].text
           ? data.content[0].text
           : "متاسفانه در حال حاضر امکان پاسخ‌گویی نیست.";
+      if (answerText.indexOf(RAHYAR_OFFTOPIC_MARKER) !== -1) {
+        // پرسشِ نامرتبط: پاسخ داده نمی‌شود، ذخیره نمی‌شود و در گزارش/کش نمی‌آید؛ فقط تذکرِ مؤدبانه.
+        setAiConversation((prev) => [
+          ...prev.map((m, i) => (i === prev.length - 1 && m.role === "user" ? { ...m, skip: true } : m)),
+          { role: "assistant", text: RAHYAR_OFFTOPIC_WARNING, skip: true, warning: true },
+        ]);
+        setAiThinking(false);
+        return;
+      }
       setAiConversation((prev) => [...prev, { role: "assistant", text: answerText }]);
 
       if (isStandaloneFirstQuestion && answerText && answerText.indexOf("متاسفانه") !== 0) {
@@ -16911,11 +17043,11 @@ function MessagingStep({ onBack, initialInboxMode, initialGuardianPhone, initial
   };
 
   const handleEndSessionReport = async () => {
-    if (aiConversation.length === 0 || reportSending) return;
+    if (aiConversation.filter((m) => !m.skip).length === 0 || reportSending) return;
     setReportSending(true);
     setReportSent("");
     try {
-      const transcript = aiConversation.map((m) => (m.role === "user" ? "دانش‌آموز: " : "رهیار: ") + m.text).join("\n");
+      const transcript = aiConversation.filter((m) => !m.skip).map((m) => (m.role === "user" ? "دانش‌آموز: " : "رهیار: ") + m.text).join("\n");
       const response = await fetch("https://api.anthropic.com/v1/messages", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
@@ -16941,7 +17073,8 @@ function MessagingStep({ onBack, initialInboxMode, initialGuardianPhone, initial
         reportText = rawText || reportText;
       }
 
-      const topicGuess = aiConversation[0] ? aiConversation[0].text.slice(0, 40) : "بدون عنوان";
+      const firstReal = aiConversation.find((m) => !m.skip);
+      const topicGuess = firstReal ? firstReal.text.slice(0, 40) : "بدون عنوان";
       const nextProfile = [
         ...rahyarProfile,
         { topic: topicGuess, note: reportText, weakness: weaknessText, date: new Date().toLocaleDateString("fa-IR") },

@@ -24847,6 +24847,51 @@ const VLAB_EXPERIMENTS = [
     tools: ["ذره‌بین","ذره‌های ماده","نشانه‌ها"],
   },
   {
+    id: "mendel-peas",
+    subject: "زیست‌شناسی",
+    level: "متوسطه اول",
+    title: "وراثت مندل: گل نخود",
+    icon: "🌸",
+    intro: "والدها را انتخاب کن، مربع پانت را ببین و ۲۰ دانه بکار تا نسبت‌های مندل را بسنجی.",
+    tools: ["گل نخود","مربع پانت","گامت‌ها"],
+  },
+  {
+    id: "periodic-explorer",
+    subject: "شیمی",
+    level: "متوسطه اول",
+    title: "جدول تناوبی تعاملی (۳۶ عنصر)",
+    icon: "🧪",
+    intro: "عنصر را انتخاب کن؛ لایه‌های الکترونی، گروه، دوره و روندها را ببین.",
+    tools: ["جدول عنصرها","مدل بور","روندها"],
+  },
+  {
+    id: "fire-triangle",
+    subject: "شیمی",
+    level: "ابتدایی",
+    title: "مثلث آتش و خاموش‌کردن",
+    icon: "🔥",
+    intro: "سوخت، اکسیژن یا گرما را حذف کن و ببین آتش چطور خاموش می‌شود.",
+    tools: ["هیزم","ظرف شیشه‌ای","آب"],
+  },
+  {
+    id: "food-tests",
+    subject: "زیست‌شناسی",
+    level: "متوسطه اول",
+    title: "آزمون مواد غذایی (ید، بیورت، بندیکت)",
+    icon: "🧫",
+    intro: "با معرف‌ها نشاسته، پروتئین، قند و چربی غذاها را شناسایی کن؛ یک نمونه‌ی رمزی هم حدس بزن.",
+    tools: ["لوله‌ی آزمایش","معرف‌ها","کاغذ"],
+  },
+  {
+    id: "ear-hearing",
+    subject: "زیست‌شناسی",
+    level: "متوسطه اول",
+    title: "گوش و راه شنیدن صدا",
+    icon: "👂",
+    intro: "صدا را زیر و بم یا بلند و آرام کن و مسیر لرزش را از پرده‌ی گوش تا حلزون و مغز دنبال کن.",
+    tools: ["گوش","حلزون","عصب شنوایی"],
+  },
+  {
     id: "tides",
     subject: "زمین‌شناسی",
     level: "متوسطه اول",
@@ -43664,6 +43709,429 @@ function VlabMatterChangeExperiment({ onReading }) {
   );
 }
 
+/* ---------- وراثت مندل: نخود ---------- */
+function vlabPeaFlower(x, y, s, purple, key) {
+  const P = purple ? ["#9b5de5", "#7b3fc0", "#c8a2f4"] : ["#ffffff", "#ddd6e8", "#efeaf5"];
+  const st = purple ? "#5a2a96" : "#9a94a8";
+  return (
+    <g key={key} transform={`translate(${x},${y}) scale(${s})`}>
+      <ellipse cx="-4.6" cy="2" rx="4" ry="5.4" fill={P[1]} stroke={st} strokeWidth="0.9" transform="rotate(25 -4.6 2)" />
+      <ellipse cx="4.6" cy="2" rx="4" ry="5.4" fill={P[1]} stroke={st} strokeWidth="0.9" transform="rotate(-25 4.6 2)" />
+      <ellipse cx="0" cy="-3.4" rx="6.4" ry="6.6" fill={P[0]} stroke={st} strokeWidth="0.9" />
+      <path d="M-1.2,-8 Q0,-2 1.2,-8" fill="none" stroke={P[2]} strokeWidth="1.1" />
+      <ellipse cx="0" cy="5.2" rx="2.6" ry="3" fill={P[2]} stroke={st} strokeWidth="0.8" />
+    </g>
+  );
+}
+function vlabPeaPlant(x, y, s, purple, key) {
+  return (
+    <g key={key} transform={`translate(${x},${y}) scale(${s})`}>
+      <path d="M0,38 Q-3,22 1,8" fill="none" stroke="#3f8f3f" strokeWidth="2.6" strokeLinecap="round" />
+      <path d="M0,30 Q-14,24 -18,30 Q-8,38 0,30 Z" fill="#59b552" stroke="#2f7a2f" strokeWidth="0.9" />
+      <path d="M0,22 Q14,14 20,20 Q10,30 0,22 Z" fill="#59b552" stroke="#2f7a2f" strokeWidth="0.9" />
+      <path d="M1,14 Q-6,6 -10,10" fill="none" stroke="#3f8f3f" strokeWidth="1" />
+      {vlabPeaFlower(1, 4, 1.25, purple, "f")}
+    </g>
+  );
+}
+function VlabMendelPeasExperiment({ onReading }) {
+  const [g1, setG1] = useState(1);
+  const [g2, setG2] = useState(1);
+  const [seed, setSeed] = useState(0);
+  const [sample, setSample] = useState([]);
+  const gam = (g) => (g === 2 ? ["A", "A"] : g === 1 ? ["A", "a"] : ["a", "a"]);
+  const G1 = gam(g1), G2 = gam(g2);
+  const name = (g) => (g === 2 ? "AA" : g === 1 ? "Aa" : "aa");
+  const cells = [];
+  for (let r = 0; r < 2; r++) for (let c = 0; c < 2; c++) { const a = [G1[c], G2[r]].sort(); cells.push(a[0] + a[1]); }
+  const isP = (gt) => gt.indexOf("A") >= 0;
+  const nP = cells.filter(isP).length, nW = 4 - nP;
+  const rl = (t) => "\u2067" + t + "\u2069";
+  const ratio = rl(nW === 0 ? "همه بنفش" : nP === 0 ? "همه سفید" : nP === 3 ? "۳ بنفش : ۱ سفید" : "۱ بنفش : ۱ سفید");
+  useEffect(() => { if (onReading) onReading(`${name(g1)} × ${name(g2)} | انتظار: ${ratio} | نمونه ${sample.length}`); /* eslint-disable-next-line */ }, [g1, g2, sample.length]);
+  const plant = () => {
+    let st = (seed + 1) * 9301 + g1 * 131 + g2 * 17;
+    const rnd = () => { st = (st * 16807 + 11) % 2147483647; return st / 2147483647; };
+    setSample(Array.from({ length: 20 }, () => { const a = G1[rnd() < 0.5 ? 0 : 1], b = G2[rnd() < 0.5 ? 0 : 1]; return [a, b].sort().join(""); }));
+    setSeed(seed + 1);
+  };
+  const oP = sample.filter(isP).length, oW = sample.length - oP;
+  const GC = ({ x, y, l }) => <g><circle cx={x} cy={y} r="8" fill={l === "A" ? "#e9d9fb" : "#fff"} stroke={l === "A" ? "#7b3fc0" : "#8a8a98"} strokeWidth="1.5" /><text x={x} y={y + 3.8} fontSize="11" fontWeight="700" fill={l === "A" ? "#5a2a96" : "#555"} textAnchor="middle">{l}</text></g>;
+  return (
+    <div className="vlab-exp">
+      <svg viewBox="0 0 320 316" className="vlab-svg" style={{ direction: "ltr", background: "#f3f9ef" }}>
+        <rect width="320" height="316" rx="12" fill="#f3f9ef" />
+        <rect y="270" width="320" height="46" rx="0" fill="#e1efd4" />
+        {vlabPeaPlant(52, 16, 1, isP(name(g1)), "p1")}{vlabPeaPlant(268, 16, 1, isP(name(g2)), "p2")}
+        <text x="52" y="68" fontSize="10" fontWeight="700" fill="#3a5a2a" textAnchor="middle">والد ۱ ({name(g1)})</text>
+        <text x="268" y="68" fontSize="10" fontWeight="700" fill="#3a5a2a" textAnchor="middle">والد ۲ ({name(g2)})</text>
+        <text x="160" y="36" fontSize="22" fill="#6a8a5a" textAnchor="middle">×</text>
+        <text x="160" y="52" fontSize="8.5" fill="#6a8a5a" textAnchor="middle">گرده‌افشانی</text>
+        {/* گامت‌ها */}
+        <GC x={132} y={98} l={G1[0]} /><GC x={182} y={98} l={G1[1]} />
+        <GC x={98} y={134} l={G2[0]} /><GC x={98} y={178} l={G2[1]} />
+        <text x="157" y="84" fontSize="8" fill="#5a6a8a" textAnchor="middle">گامت‌های والد ۱</text>
+        <text x="46" y="154" fontSize="8" fill="#5a6a8a" textAnchor="middle">گامت‌های</text><text x="46" y="164" fontSize="8" fill="#5a6a8a" textAnchor="middle">والد ۲</text>
+        {/* مربع پانت */}
+        {cells.map((gt, i) => { const c = i % 2, r = Math.floor(i / 2), x = 110 + c * 50, y = 112 + r * 44; return <g key={i}><rect x={x} y={y} width="48" height="42" rx="6" fill={isP(gt) ? "#efe3fb" : "#fff"} stroke={isP(gt) ? "#7b3fc0" : "#a8a4b2"} strokeWidth="1.4" />{vlabPeaFlower(x + 24, y + 17, 1.3, isP(gt), "c")}<text x={x + 24} y={y + 38} fontSize="9.5" fontWeight="700" fill="#333" textAnchor="middle">{gt}</text></g>; })}
+        {/* افسانه */}
+        <rect x="216" y="104" width="98" height="92" rx="8" fill="#fff" stroke="#c9d6bf" />
+        <text x="265" y="120" fontSize="9" fontWeight="700" fill="#3a5a2a" textAnchor="middle">انتظار از حساب پانت</text>
+        {vlabPeaFlower(236, 142, 1.1, true, "l1")}<text x="250" y="146" fontSize="10" fill="#5a2a96" fontWeight="700">{rl(VLAB_FA_DIGITS(nP) + " از ۴")}</text>
+        {vlabPeaFlower(236, 166, 1.1, false, "l2")}<text x="250" y="170" fontSize="10" fill="#555" fontWeight="700">{rl(VLAB_FA_DIGITS(nW) + " از ۴")}</text>
+        <text x="265" y="188" fontSize="8" fill="#6a7a5a" textAnchor="middle">{ratio}</text>
+        {/* دانه‌های کاشته‌شده */}
+        <text x="160" y="214" fontSize="9" fontWeight="700" fill="#3a5a2a" textAnchor="middle">{sample.length ? "۲۰ گیاه روییده از این تلاقی" : "دکمه‌ی «بکار ۲۰ دانه» را بزن"}</text>
+        {sample.map((gt, i) => { const c = i % 10, r = Math.floor(i / 10); return vlabPeaPlant(24 + c * 30, 222 + r * 25, 0.55, isP(gt), i); })}
+        {sample.length > 0 && <text x="160" y="304" fontSize="10" fontWeight="700" fill="#2a4a1a" textAnchor="middle">دیده شد: {VLAB_FA_DIGITS(oP)} بنفش و {VLAB_FA_DIGITS(oW)} سفید</text>}
+      </svg>
+      <div className="vlab-controls"><div className="vlab-ctrl-col" style={{ flex: 1 }}>
+        <label className="vlab-ctrl-label">ژنوتیپ والد ۱</label>
+        <div className="vlab-num-row">{[2, 1, 0].map((g) => <button key={g} type="button" className={"vlab-num-btn" + (g1 === g ? " active" : "")} onClick={() => { setG1(g); setSample([]); }}>{name(g)} {g ? "" : ""}</button>)}</div>
+        <label className="vlab-ctrl-label">ژنوتیپ والد ۲</label>
+        <div className="vlab-num-row">{[2, 1, 0].map((g) => <button key={g} type="button" className={"vlab-num-btn" + (g2 === g ? " active" : "")} onClick={() => { setG2(g); setSample([]); }}>{name(g)}</button>)}</div>
+        <div className="vlab-num-row"><button type="button" className="vlab-num-btn active" onClick={plant}>🌱 بکار ۲۰ دانه</button></div>
+      </div></div>
+      <div className="vlab-readout"><b>{name(g1)} × {name(g2)}:</b> {ratio}. بنفش صفت <b>غالب</b> (A) است؛ یک الل A برای بنفش‌بودن بس است. سفید فقط وقتی دیده می‌شود که هر دو الل «a» باشند.{sample.length ? ` در نمونه‌ی ۲۰تایی ${VLAB_FA_DIGITS(oP)} بنفش و ${VLAB_FA_DIGITS(oW)} سفید دیده شد؛ نسبت واقعی در نمونه‌های کوچک کمی با پیش‌بینی فرق می‌کند، ولی هرچه نمونه بزرگ‌تر شود به آن نزدیک‌تر می‌شود.` : ""}</div>
+    </div>
+  );
+}
+
+/* ---------- جدول تناوبی تعاملی ---------- */
+const VLAB_PTX = [
+  [1, "H", "هیدروژن", 1.008, "nm", "g", 2.2], [2, "He", "هلیم", 4.003, "ng", "g", 0], [3, "Li", "لیتیم", 6.94, "al", "s", 0.98], [4, "Be", "بریلیم", 9.012, "ae", "s", 1.57],
+  [5, "B", "بور", 10.81, "mt", "s", 2.04], [6, "C", "کربن", 12.011, "nm", "s", 2.55], [7, "N", "نیتروژن", 14.007, "nm", "g", 3.04], [8, "O", "اکسیژن", 15.999, "nm", "g", 3.44],
+  [9, "F", "فلوئور", 18.998, "ha", "g", 3.98], [10, "Ne", "نئون", 20.18, "ng", "g", 0], [11, "Na", "سدیم", 22.99, "al", "s", 0.93], [12, "Mg", "منیزیم", 24.305, "ae", "s", 1.31],
+  [13, "Al", "آلومینیم", 26.982, "pt", "s", 1.61], [14, "Si", "سیلیسیم", 28.085, "mt", "s", 1.9], [15, "P", "فسفر", 30.974, "nm", "s", 2.19], [16, "S", "گوگرد", 32.06, "nm", "s", 2.58],
+  [17, "Cl", "کلر", 35.45, "ha", "g", 3.16], [18, "Ar", "آرگون", 39.948, "ng", "g", 0], [19, "K", "پتاسیم", 39.098, "al", "s", 0.82], [20, "Ca", "کلسیم", 40.078, "ae", "s", 1.0],
+  [21, "Sc", "اسکاندیم", 44.956, "tm", "s", 1.36], [22, "Ti", "تیتانیم", 47.867, "tm", "s", 1.54], [23, "V", "وانادیم", 50.942, "tm", "s", 1.63], [24, "Cr", "کروم", 51.996, "tm", "s", 1.66],
+  [25, "Mn", "منگنز", 54.938, "tm", "s", 1.55], [26, "Fe", "آهن", 55.845, "tm", "s", 1.83], [27, "Co", "کبالت", 58.933, "tm", "s", 1.88], [28, "Ni", "نیکل", 58.693, "tm", "s", 1.91],
+  [29, "Cu", "مس", 63.546, "tm", "s", 1.9], [30, "Zn", "روی", 65.38, "tm", "s", 1.65], [31, "Ga", "گالیم", 69.723, "pt", "s", 1.81], [32, "Ge", "ژرمانیم", 72.63, "mt", "s", 2.01],
+  [33, "As", "آرسنیک", 74.922, "mt", "s", 2.18], [34, "Se", "سلنیم", 78.971, "nm", "s", 2.55], [35, "Br", "برم", 79.904, "ha", "l", 2.96], [36, "Kr", "کریپتون", 83.798, "ng", "g", 0],
+];
+const VLAB_PTX_CAT = { al: ["فلز قلیایی", "#ff8a65"], ae: ["قلیایی خاکی", "#ffc24a"], tm: ["فلز واسطه", "#8fb7ff"], pt: ["فلز پس‌انتقالی", "#9fd4c9"], mt: ["شبه‌فلز", "#b8d86a"], nm: ["نافلز", "#7ee0a0"], ha: ["هالوژن", "#f08ad0"], ng: ["گاز نجیب", "#b49bf0"] };
+function vlabPtxShells(z) {
+  if (z <= 2) return [z];
+  if (z <= 10) return [2, z - 2];
+  if (z <= 18) return [2, 8, z - 10];
+  if (z <= 20) return [2, 8, 8, z - 18];
+  const T = { 21: [9, 2], 22: [10, 2], 23: [11, 2], 24: [13, 1], 25: [13, 2], 26: [14, 2], 27: [15, 2], 28: [16, 2], 29: [18, 1], 30: [18, 2] };
+  if (T[z]) return [2, 8, T[z][0], T[z][1]];
+  return [2, 8, 18, z - 28];
+}
+function vlabPtxPos(z) {
+  if (z === 1) return [0, 0]; if (z === 2) return [17, 0];
+  if (z <= 4) return [z - 3, 1]; if (z <= 10) return [z + 7, 1];
+  if (z <= 12) return [z - 11, 2]; if (z <= 18) return [z - 5, 2];
+  return [z - 19, 3];
+}
+function VlabPeriodicExplorerExperiment({ onReading }) {
+  const [z, setZ] = useState(11);
+  const [mode, setMode] = useState("cat");
+  const [hl, setHl] = useState("group");
+  const E = VLAB_PTX[z - 1];
+  const sh = vlabPtxShells(z);
+  const [ex, ey] = vlabPtxPos(z);
+  const grp = (zz) => { const [c] = vlabPtxPos(zz); return c <= 1 ? c + 1 : c >= 12 ? c - 9 : c + 1; };
+  const per = (zz) => vlabPtxPos(zz)[1] + 1;
+  useEffect(() => { if (onReading) onReading(`${E[2]} (${E[1]}) | عدد اتمی ${z} | لایه‌ها ${sh.join("،")}`); /* eslint-disable-next-line */ }, [z]);
+  const cellColor = (e) => {
+    if (mode === "cat") return VLAB_PTX_CAT[e[4]][1];
+    if (mode === "state") return e[5] === "g" ? "#9fd8ff" : e[5] === "l" ? "#ffb870" : "#d9d2c3";
+    if (e[6] === 0) return "#eeeeee";
+    return vlabMixHexColor("#fff3c4", "#d6402a", vlabClamp((e[6] - 0.8) / 3.2, 0, 1));
+  };
+  const same = (e) => hl === "group" ? grp(e[0]) === grp(z) : per(e[0]) === per(z);
+  const stateFa = E[5] === "g" ? "گاز" : E[5] === "l" ? "مایع" : "جامد";
+  const val = sh[sh.length - 1];
+  const CELL = 17.2, X0 = 5, Y0 = 6;
+  return (
+    <div className="vlab-exp">
+      <svg viewBox="0 0 320 236" className="vlab-svg" style={{ direction: "ltr", background: "#f6f8ff" }}>
+        <rect width="320" height="236" rx="12" fill="#f6f8ff" />
+        {VLAB_PTX.map((e) => { const [c, r] = vlabPtxPos(e[0]); const x = X0 + c * CELL, y = Y0 + r * CELL; const sel = e[0] === z; const h = same(e);
+          return <g key={e[0]} onClick={() => setZ(e[0])} style={{ cursor: "pointer" }}>
+            <rect x={x} y={y} width={CELL - 1} height={CELL - 1} rx="2" fill={cellColor(e)} stroke={sel ? "#1a2a6a" : h ? "#1a2a6a" : "#8a93b4"} strokeWidth={sel ? 2 : h ? 1.2 : 0.5} opacity={h || sel ? 1 : 0.82} />
+            <text x={x + 1.5} y={y + 5} fontSize="3.8" fill="#333">{e[0]}</text>
+            <text x={x + CELL / 2 - 0.5} y={y + 12.6} fontSize="7.2" fontWeight="700" fill="#1a2040" textAnchor="middle">{e[1]}</text>
+          </g>; })}
+        {[1, 2, 3, 4].map((p) => <text key={p} x="1.8" y={Y0 + (p - 1) * CELL + 10} fontSize="4.6" fill="#667" >{p}</text>)}
+        <text x="160" y="84" fontSize="7.5" fill="#667" textAnchor="middle">دوره‌ها (ردیف‌ها) از بالا به پایین  |  گروه‌ها (ستون‌ها) از چپ به راست</text>
+        {/* مدل بور */}
+        <g transform="translate(66,158)">
+          {sh.map((n, i) => <circle key={i} r={13 + i * 13} fill="none" stroke="#9ab" strokeWidth="1" strokeDasharray={i === sh.length - 1 ? "0" : "2 2"} />)}
+          <circle r="9.5" fill="#e85d5d" stroke="#8a2a2a" strokeWidth="1" /><text y="3.4" fontSize="9" fontWeight="700" fill="#fff" textAnchor="middle">{z}</text>
+          {sh.map((n, i) => Array.from({ length: n }, (_, k) => { const a = (k / n) * 6.2832 + i * 0.5; return <circle key={i + "_" + k} cx={(13 + i * 13) * Math.cos(a)} cy={(13 + i * 13) * Math.sin(a)} r="2.6" fill={i === sh.length - 1 ? "#ffd23f" : "#4a8cf0"} stroke="#1a3a8a" strokeWidth="0.6" />; }))}
+        </g>
+        <rect x="138" y="96" width="178" height="132" rx="10" fill="#fff" stroke="#c4cbe6" />
+        <text x="227" y="132" fontSize="30" fontWeight="700" fill="#1a2a6a" textAnchor="middle">{E[1]}</text>
+        <text x="227" y="150" fontSize="12" fontWeight="700" fill="#333" textAnchor="middle">{E[2]}</text>
+        <rect x="150" y="104" width="52" height="14" rx="7" fill={VLAB_PTX_CAT[E[4]][1]} /><text x="176" y="114" fontSize="8" fontWeight="700" fill="#222" textAnchor="middle">{VLAB_PTX_CAT[E[4]][0]}</text>
+        <text x="227" y="170" fontSize="8.6" fill="#444" textAnchor="middle">{"⁧"}عدد اتمی {VLAB_FA_DIGITS(z)} | جرم اتمی {VLAB_FA_DIGITS(E[3])}{"⁩"}</text>
+        <text x="227" y="184" fontSize="8.6" fill="#444" textAnchor="middle">{"⁧"}گروه {VLAB_FA_DIGITS(grp(z))} | دوره {VLAB_FA_DIGITS(per(z))} | حالت: {stateFa}{"⁩"}</text>
+        <text x="227" y="198" fontSize="8.6" fill="#444" textAnchor="middle">{"⁧"}لایه‌ها: {sh.map((n) => VLAB_FA_DIGITS(n)).join(" ، ")}{"⁩"}</text>
+        <text x="227" y="212" fontSize="8.6" fontWeight="700" fill="#8a5a00" textAnchor="middle">{"⁧"}الکترون ظرفیتی (لایه‌ی بیرونی): {VLAB_FA_DIGITS(val)}{"⁩"}</text>
+        <text x="227" y="224" fontSize="7.2" fill="#667" textAnchor="middle">{E[6] ? "الکترونگاتیوی: " + VLAB_FA_DIGITS(E[6]) : "الکترونگاتیوی: ندارد (گاز نجیب)"}</text>
+      </svg>
+      <div className="vlab-controls"><div className="vlab-ctrl-col" style={{ flex: 1 }}>
+        <label className="vlab-ctrl-label">عدد اتمی: {VLAB_FA_DIGITS(z)} — {E[2]}</label>
+        <VlabRange min={1} max={36} step={1} value={z} onChange={(e) => setZ(+e.target.value)} />
+        <label className="vlab-ctrl-label">رنگ‌آمیزی جدول</label>
+        <div className="vlab-num-row">{[["cat", "دسته‌ی عنصر"], ["state", "حالت ماده"], ["en", "الکترونگاتیوی"]].map(([k, t]) => <button key={k} type="button" className={"vlab-num-btn" + (mode === k ? " active" : "")} onClick={() => setMode(k)}>{t}</button>)}</div>
+        <label className="vlab-ctrl-label">مقایسه با هم‌خانواده‌ها</label>
+        <div className="vlab-num-row"><button type="button" className={"vlab-num-btn" + (hl === "group" ? " active" : "")} onClick={() => setHl("group")}>هم‌گروه (ستون)</button><button type="button" className={"vlab-num-btn" + (hl === "period" ? " active" : "")} onClick={() => setHl("period")}>هم‌دوره (ردیف)</button></div>
+      </div></div>
+      <div className="vlab-readout">عنصرهای <b>هم‌گروه</b> تعداد الکترون ظرفیتی یکسان و رفتار شیمیایی مشابه دارند (مثلاً سدیم و پتاسیم). شماره‌ی <b>دوره</b> برابر تعداد لایه‌های الکترونی است. در یک دوره از چپ به راست الکترونگاتیوی بیشتر می‌شود؛ در یک گروه از بالا به پایین کمتر.</div>
+    </div>
+  );
+}
+
+/* ---------- مثلث آتش ---------- */
+function VlabFireTriangleExperiment({ onReading }) {
+  const [fuel, setFuel] = useState(true);
+  const [ox, setOx] = useState(true);
+  const [heat, setHeat] = useState(true);
+  const tk = VLAB_GEO_TICK(60);
+  const fire = fuel && ox && heat;
+  const T = heat ? 420 : 25;
+  const miss = !fuel ? "سوخت" : !ox ? "اکسیژن" : !heat ? "گرما" : "";
+  useEffect(() => { if (onReading) onReading(fire ? "آتش روشن است (سه ضلع کامل)" : `آتش نیست — کمبود ${[!fuel && "سوخت", !ox && "اکسیژن", !heat && "گرما"].filter(Boolean).join(" و ")}`); /* eslint-disable-next-line */ }, [fuel, ox, heat]);
+  const fl = (k, s) => 1 + 0.12 * Math.sin(tk * 0.7 + k) * s;
+  const edge = (a, b, on, c) => <line x1={a[0]} y1={a[1]} x2={b[0]} y2={b[1]} stroke={on ? c : "#c8ccd8"} strokeWidth={on ? 6 : 3} strokeLinecap="round" strokeDasharray={on ? "0" : "4 5"} />;
+  const PH = [72, 38], PF = [24, 138], PO = [120, 138];
+  const node = (p, on, c, ic, lbl, ly) => <g><circle cx={p[0]} cy={p[1]} r="17" fill={on ? c : "#eceff6"} stroke={on ? "#333" : "#b8bccb"} strokeWidth="1.4" /><text x={p[0]} y={p[1] + 6} fontSize="16" textAnchor="middle" opacity={on ? 1 : 0.35}>{ic}</text><text x={p[0]} y={ly} fontSize="9" fontWeight="700" fill={on ? "#222" : "#999"} textAnchor="middle">{lbl}</text></g>;
+  const smoke = (!fire && fuel && heat && !ox) ? [0, 1, 2, 3].map((i) => { const k = (((tk * 0.03 + i * 0.25) % 1) + 1) % 1; return <circle key={i} cx={232 + Math.sin(i * 2 + tk * 0.1) * 7} cy={172 - k * 54} r={4 + k * 6} fill="#8a8f9c" opacity={0.5 * (1 - k)} />; }) : null;
+  const steam = (!fire && fuel && ox && !heat) ? [0, 1, 2].map((i) => { const k = (((tk * 0.04 + i * 0.33) % 1) + 1) % 1; return <circle key={i} cx={216 + i * 16} cy={176 - k * 36} r={3 + k * 5} fill="#dfeaf5" opacity={0.7 * (1 - k)} />; }) : null;
+  return (
+    <div className="vlab-exp">
+      <svg viewBox="0 0 320 250" className="vlab-svg" style={{ direction: "ltr", background: "#fff4ea" }}>
+        <defs>
+          <radialGradient id="ftGlow" cx="0.5" cy="0.6" r="0.6"><stop offset="0" stopColor="#ffb300" stopOpacity="0.55" /><stop offset="1" stopColor="#ff6d00" stopOpacity="0" /></radialGradient>
+          <linearGradient id="ftLog" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stopColor="#a0693a" /><stop offset="1" stopColor="#5a3a1c" /></linearGradient>
+        </defs>
+        <rect width="320" height="250" rx="12" fill="#fff4ea" />
+        {/* مثلث */}
+        <polygon points={`${PH} ${PF} ${PO}`} fill={fire ? "#ffd9a0" : "#f2f3f8"} opacity="0.8" />
+        {edge(PH, PF, heat && fuel, "#ff7a2a")}{edge(PF, PO, fuel && ox, "#8a5a2a")}{edge(PO, PH, ox && heat, "#3aa0e8")}
+        {fire && <text x="72" y="112" fontSize="26" textAnchor="middle">🔥</text>}
+        {node(PH, heat, "#ffb74d", "☀️", "گرما", 18)}{node(PF, fuel, "#d7b58a", "🪵", "سوخت", 168)}{node(PO, ox, "#bfe3ff", "💨", "اکسیژن", 168)}
+        <text x="72" y="190" fontSize="9" fill="#555" textAnchor="middle">دمای شعله‌ور شدن چوب ≈ ۳۰۰ درجه</text>
+        <rect x="14" y="196" width="116" height="10" rx="5" fill="#e6e8f0" /><rect x="14" y="196" width={Math.max(4, (T / 500) * 116)} height="10" rx="5" fill={T > 300 ? "#ff5a2a" : "#4a90e0"} />
+        <line x1={14 + (300 / 500) * 116} y1="192" x2={14 + (300 / 500) * 116} y2="210" stroke="#222" strokeWidth="1.4" />
+        <text x="72" y="222" fontSize="9" fontWeight="700" fill={T > 300 ? "#c0392b" : "#2a60a8"} textAnchor="middle">{"⁧"}دمای هیزم: {VLAB_FA_DIGITS(T)} درجه{"⁩"}</text>
+        {/* صحنه */}
+        <rect x="150" y="14" width="164" height="222" rx="10" fill="#2a2438" opacity="0.9" />
+        {fire && <circle cx="232" cy="150" r="70" fill="url(#ftGlow)" />}
+        <rect x="150" y="196" width="164" height="40" fill="#4a4036" />
+        {/* هیزم */}
+        {fuel && <g><rect x="196" y="186" width="72" height="12" rx="6" fill="url(#ftLog)" stroke="#3a2410" strokeWidth="1.2" transform="rotate(-12 232 192)" /><rect x="196" y="186" width="72" height="12" rx="6" fill="url(#ftLog)" stroke="#3a2410" strokeWidth="1.2" transform="rotate(12 232 192)" /><circle cx="203" cy="198" r="5" fill="#c99a62" stroke="#3a2410" /><circle cx="262" cy="198" r="5" fill="#c99a62" stroke="#3a2410" />{!heat && <path d="M200,180 q4,6 8,0 M250,182 q4,6 8,0" stroke="#7fb4ff" strokeWidth="2" fill="none" />}</g>}
+        {!fuel && <text x="232" y="190" fontSize="9" fill="#bbb" textAnchor="middle">جایی برای سوختن نیست</text>}
+        {/* شعله */}
+        {fire && <g transform={`translate(232,186) scale(${fl(0, 1)},${fl(1, 1.4)})`}>
+          <path d="M0,0 C-26,-6 -22,-38 -6,-58 C-6,-40 2,-36 4,-48 C16,-32 28,-12 0,0 Z" fill="#ff6a00" />
+          <path d="M0,0 C-16,-4 -14,-26 -2,-40 C0,-28 6,-24 8,-30 C14,-18 14,-6 0,0 Z" fill="#ffc400" />
+          <path d="M0,0 C-8,-2 -7,-14 0,-22 C6,-14 6,-4 0,0 Z" fill="#fff6c0" />
+        </g>}
+        {fire && [0, 1, 2, 3, 4].map((i) => { const k = (((tk * 0.05 + i * 0.2) % 1) + 1) % 1; return <circle key={i} cx={222 + i * 6 + Math.sin(i + tk * 0.2) * 4} cy={150 - k * 60} r="1.4" fill="#ffd54a" opacity={1 - k} />; })}
+        {fire && ox && [0, 1, 2].map((i) => <text key={i} x={176 + i * 6} y={90 + i * 24} fontSize="8" fill="#9ad8ff" opacity="0.8">O₂</text>)}
+        {smoke}{steam}
+        {/* ظرف شیشه‌ای وقتی اکسیژن نیست */}
+        {!ox && <g><rect x="190" y="104" width="84" height="94" rx="14" fill="#bfe3ff" opacity="0.28" stroke="#9ad0f0" strokeWidth="2" /><rect x="198" y="112" width="8" height="64" rx="4" fill="#fff" opacity="0.4" /><text x="232" y="98" fontSize="8.5" fill="#cfe9ff" textAnchor="middle">ظرف دربسته: هوای تازه نمی‌رسد</text></g>}
+        {!heat && <g>{[0, 1, 2, 3].map((i) => <path key={i} d={`M${208 + i * 14},${44 + ((tk * 3 + i * 17) % 60)} q-3,6 0,9 q3,-3 0,-9`} fill="#7fc4ff" />)}<text x="232" y="34" fontSize="9" fill="#cfe9ff" textAnchor="middle">آب = گرمای هیزم را می‌گیرد</text></g>}
+        <text x="232" y="228" fontSize="9" fontWeight="700" fill={fire ? "#ffd54a" : "#9aa"} textAnchor="middle">{fire ? "آتش روشن است" : `آتش نیست (کمبود ${miss})`}</text>
+      </svg>
+      <div className="vlab-controls"><div className="vlab-ctrl-col" style={{ flex: 1 }}>
+        <label className="vlab-ctrl-label">اجزای آتش (هر کدام را حذف کن)</label>
+        <div className="vlab-num-row">
+          <button type="button" className={"vlab-num-btn" + (fuel ? " active" : "")} onClick={() => setFuel(!fuel)}>🪵 سوخت (هیزم)</button>
+          <button type="button" className={"vlab-num-btn" + (ox ? " active" : "")} onClick={() => setOx(!ox)}>💨 اکسیژن (هوا)</button>
+          <button type="button" className={"vlab-num-btn" + (heat ? " active" : "")} onClick={() => setHeat(!heat)}>🌡️ گرما</button>
+        </div>
+        <div className="vlab-num-row"><button type="button" className="vlab-num-btn" onClick={() => { setFuel(true); setOx(true); setHeat(true); }}>↺ هر سه را برگردان</button></div>
+      </div></div>
+      <div className="vlab-readout">{fire ? "هر سه ضلع مثلث کامل است؛ پس آتش ادامه می‌دهد. حذف هر یک از سه ضلع، آتش را خاموش می‌کند." : !fuel ? "بدون سوخت چیزی برای سوختن نیست؛ مثل بریدن شاخه‌ها جلوی آتش جنگل یا بستن شیر گاز." : !ox ? "بدون اکسیژن سوختن ادامه نمی‌یابد؛ پتوی ضدآتش یا خاموش‌کننده‌ی CO₂ همین کار را می‌کنند." : "وقتی دما از نقطه‌ی اشتعال کمتر شود شعله نمی‌ماند؛ آب گرمای سوخت را می‌گیرد. (روی روغن داغ یا برق هرگز آب نریز.)"}</div>
+    </div>
+  );
+}
+
+/* ---------- آزمون مواد غذایی ---------- */
+const VLAB_FT_FOODS = [
+  { id: "bread", n: "نان", ic: "🍞", base: "#e6cf9f", st: 1, pr: 0, su: 0, fa: 0 },
+  { id: "milk", n: "شیر", ic: "🥛", base: "#fbfbf3", st: 0, pr: 1, su: 1, fa: 1 },
+  { id: "egg", n: "سفیده‌ی تخم‌مرغ", ic: "🥚", base: "#f3eecb", st: 0, pr: 1, su: 0, fa: 0 },
+  { id: "juice", n: "آب پرتقال", ic: "🍊", base: "#ffbe5c", st: 0, pr: 0, su: 1, fa: 0 },
+  { id: "oil", n: "روغن زیتون", ic: "🫒", base: "#d8d36a", st: 0, pr: 0, su: 0, fa: 1 },
+  { id: "potato", n: "سیب‌زمینی", ic: "🥔", base: "#ebdfb8", st: 1, pr: 0, su: 0, fa: 0 },
+];
+const VLAB_FT_TESTS = [
+  { id: "iodine", n: "ید", what: "نشاسته", key: "st", reagent: "#b8651b", pos: "#1d1b45", posName: "آبی‌سیاه", negName: "قهوه‌ای‌نارنجی (بدون تغییر)" },
+  { id: "biuret", n: "بیورت", what: "پروتئین", key: "pr", reagent: "#3f7fe0", pos: "#8e3fc4", posName: "بنفش", negName: "آبی (بدون تغییر)" },
+  { id: "benedict", n: "بندیکت", what: "قند ساده", key: "su", reagent: "#3a86d8", pos: "#d2491f", posName: "قرمز آجری", negName: "آبی (بدون تغییر)" },
+  { id: "paper", n: "کاغذ", what: "چربی", key: "fa", reagent: "#ffffff", pos: "#fff0a0", posName: "لکه‌ی شفاف ماند", negName: "لکه خشک شد" },
+];
+function vlabMix2(a, b, t) {
+  const P = (c) => (c[0] === "#" ? [parseInt(c.slice(1, 3), 16), parseInt(c.slice(3, 5), 16), parseInt(c.slice(5, 7), 16)] : c.match(/\d+/g).map(Number));
+  const A = P(a), B = P(b);
+  return `rgb(${A.map((v, k) => Math.round(v * (1 - t) + B[k] * t)).join(",")})`;
+}
+function VlabFoodTestExperiment({ onReading }) {
+  const [fi, setFi] = useState(1);
+  const [ti, setTi] = useState(0);
+  const [prog, setProg] = useState(0);
+  const [run, setRun] = useState(false);
+  const [res, setRes] = useState({});
+  const [mys, setMys] = useState(null);
+  const [guess, setGuess] = useState(null);
+  const F = VLAB_FT_FOODS[mys !== null ? mys : fi], T = VLAB_FT_TESTS[ti];
+  const pos = !!F[T.key];
+  const keyOf = (f, t) => (mys !== null ? "M" : "F" + f) + "_" + t;
+  useEffect(() => {
+    if (!run) return undefined;
+    const id = setInterval(() => setProg((x) => { if (x >= 1) { setRun(false); return 1; } return Math.min(1, x + 0.025); }), 40);
+    return () => clearInterval(id);
+  }, [run]);
+  useEffect(() => { if (prog >= 1) setRes((r) => ({ ...r, [keyOf(fi, ti)]: true })); /* eslint-disable-next-line */ }, [prog]);
+  useEffect(() => { if (onReading) onReading(`${mys !== null ? "نمونه‌ی رمزی" : F.n} | آزمون ${T.n} | ${prog >= 1 ? (pos ? "مثبت: " + T.what + " دارد" : "منفی") : "در حال انجام"}`); /* eslint-disable-next-line */ }, [fi, ti, mys, Math.round(prog * 5)]);
+  const baseC = mys !== null ? "#f4f1e4" : F.base;
+  const negC = T.id === "iodine" ? vlabMix2(baseC, T.reagent, 0.7) : vlabMix2(baseC, T.reagent, 0.75);
+  const finC = pos ? (T.id === "iodine" ? T.pos : vlabMix2(baseC, T.pos, 0.9)) : negC;
+  const cp = vlabClamp((prog - 0.3) / 0.6, 0, 1);
+  const liq = prog < 0.3 ? baseC : vlabMix2(baseC, T.id === "benedict" && cp < 0.5 ? negC : finC, T.id === "benedict" && cp < 0.5 ? vlabClamp(cp * 2 + 0.3, 0, 1) : (T.id === "benedict" ? (cp - 0.5) * 2 : cp));
+  const dropY = 36 + vlabClamp(prog / 0.3, 0, 1) * 44;
+  const TX = 100;
+  const isPaper = T.id === "paper";
+  const done = prog >= 1;
+  const selFood = (i) => { setFi(i); setProg(0); setRun(false); setMys(null); setGuess(null); };
+  const startMys = () => { setMys(Math.floor(Math.random() * 6)); setProg(0); setRun(false); setGuess(null); setRes((r) => { const n = { ...r }; Object.keys(n).forEach((k) => { if (k[0] === "M") delete n[k]; }); return n; }); };
+  const cell = (fIdx, tIdx) => { const t = VLAB_FT_TESTS[tIdx], f = VLAB_FT_FOODS[fIdx]; const d = res["F" + fIdx + "_" + tIdx]; if (!d) return <circle r="5" fill="#f0f1f6" stroke="#cdd2e2" strokeDasharray="2 2" />; const p = !!f[t.key]; return <g><circle r="6" fill={p ? t.pos : "#e4e8f2"} stroke="#555" strokeWidth="0.8" />{p && <text y="3" fontSize="8" fill={t.id === "paper" ? "#6a5a00" : "#fff"} textAnchor="middle" fontWeight="700">✓</text>}</g>; };
+  return (
+    <div className="vlab-exp">
+      <svg viewBox="0 0 320 268" className="vlab-svg" style={{ direction: "ltr", background: "#f1f6fb" }}>
+        <defs><clipPath id="ftTubeC"><path d={`M ${TX - 12},64 L ${TX - 12},112 Q ${TX - 12},126 ${TX},126 Q ${TX + 12},126 ${TX + 12},112 L ${TX + 12},64 Z`} /></clipPath></defs>
+        <rect width="320" height="268" rx="12" fill="#f1f6fb" />
+        <rect x="0" y="136" width="320" height="10" fill="#c9b99a" /><rect x="0" y="146" width="320" height="2" fill="#a8977a" />
+        <text x="228" y="18" fontSize="10" fontWeight="700" fill="#24406a" textAnchor="middle">{mys !== null ? "نمونه‌ی ناشناس ❓" : F.ic + " " + F.n} — آزمون {T.n}</text>
+        {/* نمونه */}
+        {!isPaper && <g>
+          {T.id === "benedict" && <g><rect x={TX - 34} y="92" width="68" height="44" rx="6" fill="#bfe0ff" opacity="0.6" stroke="#6aa8d8" />{[0, 1, 2, 3, 4].map((i) => <circle key={i} cx={TX - 24 + i * 12} cy={128 - ((prog * 60 + i * 11) % 30)} r="2" fill="#fff" opacity={prog > 0.3 ? 0.9 : 0} />)}<text x={TX} y="88" fontSize="7.5" fill="#2a60a8" textAnchor="middle">حمام آب گرم</text></g>}
+          <g clipPath="url(#ftTubeC)"><rect x={TX - 12} y="82" width="24" height="50" fill={liq} />{F.id === "oil" && mys === null && <rect x={TX - 12} y="82" width="24" height="3" fill="#fff" opacity="0.3" />}</g>
+          <path d={`M ${TX - 12},60 L ${TX - 12},112 Q ${TX - 12},126 ${TX},126 Q ${TX + 12},126 ${TX + 12},112 L ${TX + 12},60`} fill="none" stroke="#6a8aa8" strokeWidth="1.8" /><rect x={TX - 14} y="58" width="28" height="4" rx="2" fill="#6a8aa8" />
+          <rect x={TX - 8} y="84" width="3" height="36" rx="1.5" fill="#fff" opacity="0.4" />
+        </g>}
+        {isPaper && <g><rect x={TX - 34} y="62" width="68" height="68" rx="3" fill="#fbf7ea" stroke="#b8a878" strokeWidth="1.2" transform="rotate(-3 100 96)" /><circle cx={TX} cy="96" r="15" fill={prog < 0.3 ? "#cfe6ff" : pos ? "#fff0a0" : "#cfe6ff"} opacity={prog < 0.3 ? 0.8 : pos ? 0.85 : 0.8 * (1 - cp)} stroke={pos && prog >= 0.3 ? "#d8c25a" : "none"} strokeWidth="1" /><text x={TX} y="125" fontSize="7.5" fill="#6a6040" textAnchor="middle">کاغذ + یک قطره نمونه</text></g>}
+        {/* قطره‌چکان */}
+        {!isPaper && <g>{prog < 0.3 && <circle cx={TX} cy={dropY} r="3.2" fill={T.reagent} stroke="#222" strokeWidth="0.6" />}<path d={`M ${TX - 3},12 L ${TX - 3},38 L ${TX},46 L ${TX + 3},38 L ${TX + 3},12 Z`} fill="#dfe8f4" stroke="#6a8aa8" strokeWidth="1" /><ellipse cx={TX} cy="10" rx="6" ry="5" fill="#d9534f" stroke="#7a2a28" /></g>}
+        {/* شیشه‌ی معرف */}
+        {!isPaper && <g transform="translate(206,66)"><rect x="-16" y="12" width="32" height="50" rx="6" fill={T.reagent} opacity="0.85" stroke="#445" strokeWidth="1.4" /><rect x="-8" y="2" width="16" height="12" rx="2" fill="#e8e8ee" stroke="#445" /><rect x="-12" y="26" width="24" height="20" rx="2" fill="#fff" opacity="0.9" /><text y="39" fontSize="7.5" fontWeight="700" fill="#223" textAnchor="middle">{T.n}</text></g>}
+        {isPaper && <text x="206" y="100" fontSize="9" fill="#445" textAnchor="middle">چربی روی کاغذ لکه‌ی<tspan x="206" dy="12">شفاف و ماندگار می‌گذارد</tspan></text>}
+        {/* نتیجه */}
+        <rect x="14" y="150" width="292" height="16" rx="8" fill={!done ? "#e8edf6" : pos ? "#e1f4e1" : "#f6e9e4"} />
+        <text x="160" y="161.5" fontSize="9.5" fontWeight="700" fill={!done ? "#6a748a" : pos ? "#1f6b2a" : "#8a3a24"} textAnchor="middle">{!done ? "دکمه‌ی «افزودن معرف» را بزن" : pos ? `مثبت — ${T.posName}: ${T.what} دارد` : `منفی — ${T.negName}`}</text>
+        {/* دفتر نتایج */}
+        <text x="160" y="182" fontSize="8.5" fontWeight="700" fill="#24406a" textAnchor="middle">دفتر آزمایش (✓ = ماده وجود دارد)</text>
+        {VLAB_FT_FOODS.map((f, i) => <text key={f.id} x={90 + i * 38} y="196" fontSize="14" textAnchor="middle">{f.ic}</text>)}
+        {VLAB_FT_TESTS.map((t, j) => <g key={t.id}><text x="64" y={216 + j * 16} fontSize="8" fill="#334" textAnchor="end" fontWeight="700">{t.what}</text>{VLAB_FT_FOODS.map((f, i) => <g key={f.id} transform={`translate(${90 + i * 38},${213 + j * 16})`}>{cell(i, j)}</g>)}</g>)}
+        {mys !== null && <g><rect x="244" y="190" width="68" height="14" rx="7" fill="#fff6d6" stroke="#d8c25a" /><text x="278" y="200" fontSize="8" fontWeight="700" fill="#7a5a00" textAnchor="middle">حالت نمونه‌ی رمزی</text></g>}
+      </svg>
+      <div className="vlab-controls"><div className="vlab-ctrl-col" style={{ flex: 1 }}>
+        <label className="vlab-ctrl-label">ماده‌ی غذایی</label>
+        <div className="vlab-num-row" style={{ flexWrap: "wrap" }}>{VLAB_FT_FOODS.map((f, i) => <button key={f.id} type="button" className={"vlab-num-btn" + (mys === null && fi === i ? " active" : "")} onClick={() => selFood(i)}>{f.ic} {f.n}</button>)}</div>
+        <label className="vlab-ctrl-label">آزمون</label>
+        <div className="vlab-num-row" style={{ flexWrap: "wrap" }}>{VLAB_FT_TESTS.map((t, i) => <button key={t.id} type="button" className={"vlab-num-btn" + (ti === i ? " active" : "")} onClick={() => { setTi(i); setProg(0); setRun(false); }}>{t.n} ({t.what})</button>)}</div>
+        <div className="vlab-num-row"><button type="button" className="vlab-num-btn active" onClick={() => { setProg(0); setRun(true); }}>💧 افزودن معرف</button><button type="button" className="vlab-num-btn" onClick={startMys}>🎲 نمونه‌ی رمزی</button></div>
+        {mys !== null && <div><label className="vlab-ctrl-label">حدس تو چیست؟</label><div className="vlab-num-row" style={{ flexWrap: "wrap" }}>{VLAB_FT_FOODS.map((f, i) => <button key={f.id} type="button" className={"vlab-num-btn" + (guess === i ? " active" : "")} onClick={() => setGuess(i)}>{f.ic}</button>)}</div></div>}
+      </div></div>
+      {mys !== null && guess !== null && <div className="vlab-readout"><b>{guess === mys ? "آفرین! درست بود." : "این نبود."}</b> نمونه‌ی رمزی «{VLAB_FT_FOODS[mys].n}» بود{guess !== mys ? "؛ از نتیجه‌های دفترت دوباره بررسی کن." : "."}</div>}
+      <div className="vlab-readout">{T.id === "iodine" ? "ید با نشاسته آبی‌سیاه می‌شود." : T.id === "biuret" ? "معرف بیورت در حضور پروتئین بنفش می‌شود." : T.id === "benedict" ? "معرف بندیکت با قندهای ساده و گرما قرمز آجری می‌شود." : "چربی روی کاغذ لکه‌ی شفاف و ماندگار می‌گذارد؛ لکه‌ی آب خشک می‌شود."} هر ماده‌ی غذایی ممکن است چند ماده‌ی مغذی داشته باشد؛ برای شناخت آن باید چند آزمون را با هم انجام داد.</div>
+    </div>
+  );
+}
+
+/* ---------- گوش و شنیدن ---------- */
+function VlabEarHearingExperiment({ onReading }) {
+  const [s, setS] = useState(45);
+  const [db, setDb] = useState(60);
+  const tk = VLAB_GEO_TICK(40);
+  const f = Math.round(50 * Math.pow(320, s / 100));
+  const a01 = vlabClamp((db - 20) / 100, 0.04, 1);
+  const ph = tk * (0.22 + (s / 100) * 0.7);
+  const disp = a01 * 6 * Math.sin(ph);
+  const danger = db > 85;
+  const level = db >= 100 ? "بسیار خطرناک" : db > 85 ? "خطرناک (آسیب سلول مویی)" : db > 70 ? "بلند" : db > 40 ? "معمولی" : "آرام";
+  useEffect(() => { if (onReading) onReading(`${f} هرتز | ${db} دسی‌بل | ${level}`); /* eslint-disable-next-line */ }, [s, db]);
+  const CX = 248, CY = 108;
+  const sp = (u) => { const a = u * 5 * Math.PI + 0.4, r = 38 - 30 * u; return [CX + r * Math.cos(a), CY + r * Math.sin(a)]; };
+  const spiral = Array.from({ length: 61 }, (_, i) => { const p = sp(i / 60); return (i ? "L" : "M") + p[0].toFixed(1) + "," + p[1].toFixed(1); }).join(" ");
+  const u0 = 1 - s / 100;
+  const pk = sp(u0);
+  const waveSp = 7 + 24 * (1 - s / 100);
+  const arcs = [0, 1, 2, 3].map((i) => { const k = ((((tk * 0.9 + i * waveSp * 1) % (waveSp * 4)) + waveSp * 4) % (waveSp * 4)); const x = 26 + k * 0.28; return <path key={i} d={`M ${x},${84} Q ${x + 9},108 ${x},132`} fill="none" stroke={danger ? "#ef5350" : "#4a90e0"} strokeWidth={1 + a01 * 2.2} opacity={0.25 + 0.7 * (1 - k / (waveSp * 4)) * a01 + 0.2} />; });
+  const pulses = [0, 1, 2].map((i) => { const k = (((tk * (0.012 + a01 * 0.03) + i / 3) % 1) + 1) % 1; const x = 248 + 52 * k, y = 108 - 64 * k; return <circle key={i} cx={x - (k > 0.5 ? 0 : 0)} cy={y} r={2 + a01 * 1.6} fill="#ffd23f" stroke="#a87a00" strokeWidth="0.6" />; });
+  return (
+    <div className="vlab-exp">
+      <svg viewBox="0 0 320 262" className="vlab-svg" style={{ direction: "ltr", background: "#fdf3ee" }}>
+        <defs>
+          <radialGradient id="eaCoch" cx="0.5" cy="0.5" r="0.6"><stop offset="0" stopColor="#ffe3ea" /><stop offset="1" stopColor="#f6aebf" /></radialGradient>
+          <linearGradient id="eaBone" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stopColor="#fff7e0" /><stop offset="1" stopColor="#e2c98e" /></linearGradient>
+        </defs>
+        <rect width="320" height="262" rx="12" fill="#fdf3ee" />
+        <path d="M 66,70 Q 100,56 180,60 L 292,66 Q 306,110 292,152 L 180,158 Q 100,162 66,146 Z" fill="#f1dccb" stroke="#d6b79c" strokeWidth="1.2" />
+        <text x="14" y="112" fontSize="20" textAnchor="middle">🔊</text>
+        {arcs}
+        {/* لاله */}
+        <path d="M 66,86 Q 36,86 38,112 Q 40,138 66,134 Q 52,124 54,110 Q 54,96 66,92 Z" fill="#f2c9a8" stroke="#b9805a" strokeWidth="1.4" />
+        <path d="M 60,100 Q 48,104 52,118" fill="none" stroke="#b9805a" strokeWidth="1" />
+        {/* مجرا */}
+        <rect x="64" y="99" width="64" height="16" fill="#efc7a6" stroke="#b9805a" strokeWidth="1.2" />
+        <rect x="66" y="102" width="60" height="10" fill="#fbe3d0" />
+        {/* پرده‌ی گوش */}
+        <path d={`M 128,90 Q ${128 + disp * 1.3},107 128,124`} fill="none" stroke="#c97a7a" strokeWidth="3" strokeLinecap="round" />
+        {/* گوش میانی */}
+        <rect x="130" y="92" width="64" height="32" rx="10" fill="#fff8ec" stroke="#d6b79c" strokeDasharray="3 3" />
+        <g transform={`translate(${disp * 0.9},0)`}>
+          <path d="M 128,102 L 146,108" stroke="url(#eaBone)" strokeWidth="4" strokeLinecap="round" /><path d="M 128,102 L 146,108" stroke="#8a7650" strokeWidth="1" fill="none" />
+          <circle cx="148" cy="108" r="5.5" fill="url(#eaBone)" stroke="#8a7650" strokeWidth="1.2" />
+          <path d="M 152,106 Q 166,100 170,112 L 164,118" fill="none" stroke="#8a7650" strokeWidth="5" strokeLinecap="round" /><path d="M 152,106 Q 166,100 170,112 L 164,118" fill="none" stroke="#f3e6c2" strokeWidth="3" strokeLinecap="round" />
+          <path d="M 170,112 L 190,108" stroke="#8a7650" strokeWidth="4" strokeLinecap="round" /><path d="M 170,112 L 190,108" stroke="#f3e6c2" strokeWidth="2" strokeLinecap="round" />
+          <rect x="188" y="100" width="5" height="16" rx="2" fill="#f3e6c2" stroke="#8a7650" strokeWidth="1.1" />
+        </g>
+        <ellipse cx="198" cy="108" rx="2.4" ry="8" fill="#fff" stroke="#b07a8a" strokeWidth="1" />
+        {/* حلزون */}
+        <circle cx={CX} cy={CY} r="42" fill="url(#eaCoch)" stroke="#c76a86" strokeWidth="1.6" />
+        <path d={spiral} fill="none" stroke="#fff" strokeWidth="7.5" strokeLinecap="round" opacity="0.85" />
+        <path d={spiral} fill="none" stroke="#c76a86" strokeWidth="1" strokeDasharray="1.5 2" />
+        <circle cx={pk[0]} cy={pk[1]} r={4 + a01 * 5 + 1.2 * Math.sin(ph * 2)} fill={danger ? "#ef5350" : "#ffd23f"} opacity="0.9" stroke="#8a2a2a" strokeWidth="1" />
+        {/* عصب */}
+        <path d="M 248,108 Q 284,84 300,46" fill="none" stroke="#e0b800" strokeWidth="4" strokeLinecap="round" opacity="0.8" />
+        {pulses}
+        <text x="300" y="40" fontSize="20" textAnchor="middle">🧠</text>
+        {/* برچسب‌ها */}
+        <text x="44" y="150" fontSize="8" fill="#6a4a30" textAnchor="middle">لاله‌ی گوش</text>
+        <text x="96" y="90" fontSize="8" fill="#6a4a30" textAnchor="middle">مجرای گوش</text>
+        <text x="128" y="140" fontSize="8" fill="#a04a4a" textAnchor="middle">پرده‌ی گوش</text>
+        <text x="164" y="86" fontSize="8" fill="#6a5a30" textAnchor="middle">سه استخوانچه</text>
+        <text x="248" y="166" fontSize="8.5" fontWeight="700" fill="#a0405c" textAnchor="middle">حلزون (گوش درونی)</text>
+        <text x="262" y="74" fontSize="7.5" fill="#8a6a00" textAnchor="middle">عصب شنوایی</text>
+        {/* شدت */}
+        <rect x="16" y="184" width="288" height="68" rx="10" fill="#fff" stroke="#e6d4c6" />
+        <text x="160" y="199" fontSize="9" fontWeight="700" fill="#5a3a2a" textAnchor="middle">{"⁧"}{VLAB_FA_DIGITS(f)} هرتز | {VLAB_FA_DIGITS(db)} دسی‌بل — {level}{"⁩"}</text>
+        <rect x="30" y="208" width="260" height="10" rx="5" fill="#e6e6e6" /><rect x="30" y="208" width="105" height="10" rx="5" fill="#8ad08a" /><rect x="135" y="208" width="65" height="10" fill="#ffd966" /><rect x="200" y="208" width="90" height="10" rx="5" fill="#ef7a6a" />
+        <circle cx={30 + ((db - 20) / 100) * 260} cy="213" r="6.5" fill="#fff" stroke="#222" strokeWidth="2" />
+        <text x="30" y="232" fontSize="7.5" fill="#667">۲۰ (زمزمه)</text><text x="160" y="232" fontSize="7.5" fill="#667" textAnchor="middle">۷۰ (خیابان)</text><text x="290" y="232" fontSize="7.5" fill="#667" textAnchor="end">۱۲۰ (آژیر/هدفون بلند)</text>
+        <text x="160" y="246" fontSize="8" fill="#6a4a30" textAnchor="middle">{s > 66 ? "بسامد زیر: نزدیک دریچه‌ی حلزون (قاعده) تحریک می‌شود" : s < 33 ? "بسامد بم: نزدیک نوک حلزون تحریک می‌شود" : "بسامد میانی: وسط حلزون تحریک می‌شود"}</text>
+      </svg>
+      <div className="vlab-controls"><div className="vlab-ctrl-col" style={{ flex: 1 }}>
+        <label className="vlab-ctrl-label">بسامد (زیر و بمی): {VLAB_FA_DIGITS(f)} هرتز</label>
+        <VlabRange min={0} max={100} step={1} value={s} onChange={(e) => setS(+e.target.value)} />
+        <label className="vlab-ctrl-label">شدت صدا: {VLAB_FA_DIGITS(db)} دسی‌بل</label>
+        <VlabRange min={20} max={120} step={1} value={db} onChange={(e) => setDb(+e.target.value)} />
+        <div className="vlab-num-row"><button type="button" className="vlab-num-btn" onClick={() => { setS(12); setDb(55); }}>🥁 صدای بم</button><button type="button" className="vlab-num-btn" onClick={() => { setS(88); setDb(55); }}>🐦 صدای زیر</button><button type="button" className="vlab-num-btn" onClick={() => { setS(50); setDb(105); }}>🎧 هدفون بلند</button></div>
+      </div></div>
+      <div className="vlab-readout">صدا از لاله به مجرا می‌رود، پرده‌ی گوش را می‌لرزاند، سه استخوانچه (چکشی، سندانی، رکابی) لرزش را تقویت می‌کنند و به مایع حلزون می‌رسانند. هر بسامد یک نقطه از حلزون را بیشتر تکان می‌دهد و سلول‌های مویی همان‌جا پیام عصبی می‌سازند.{danger ? " ⚠ صدای بالای ۸۵ دسی‌بل اگر طولانی باشد، سلول‌های مویی را برای همیشه از بین می‌برد." : ""}</div>
+    </div>
+  );
+}
+
 const VLAB_SOLID_AREAS = [
   { n: "نوک میخ", a: 0.1, w: 3 },
   { n: "پاشنه‌ی کفش", a: 10, w: 14 },
@@ -48693,6 +49161,11 @@ const VLAB_COMPONENTS = {
   "meander": VlabMeanderExperiment,
   "seasons": VlabSeasonsExperiment,
   "tides": VlabTidesExperiment,
+  "ear-hearing": VlabEarHearingExperiment,
+  "food-tests": VlabFoodTestExperiment,
+  "fire-triangle": VlabFireTriangleExperiment,
+  "periodic-explorer": VlabPeriodicExplorerExperiment,
+  "mendel-peas": VlabMendelPeasExperiment,
   "matter-change": VlabMatterChangeExperiment,
   "carbon-flow": VlabCarbonFlowExperiment,
   "five-senses": VlabFiveSensesExperiment,
@@ -49034,6 +49507,11 @@ const VLAB_GUIDE = {
   "five-senses": { goals: ["پنج حس و اندام هر کدام را بشناسی.","بدانی پیام حسی از عصب به مغز می‌رسد."], challenges: ["با لیمو کدام حس‌ها کار می‌کنند؟","یخ را با کدام اندام حس می‌کنیم؟"], misconception: "فکر می‌کنیم چشم یا گوش خودشان می‌فهمند؛ اما همه‌ی حس‌ها باید به مغز برسند تا معنا پیدا کنند.", check: { q: "برای حس کردن سردی یخ از کدام اندام استفاده می‌کنیم؟", a: "پوست." } },
   "carbon-flow": { goals: ["مسیر کربن میان هوا، گیاه، جانور و خاک را دنبال کنی.","اثر سوخت فسیلی و جنگل را بر کربن‌دی‌اکسید هوا ببینی."], challenges: ["با ۰٪ سوخت فسیلی هوا چه می‌شود؟","چند درصد درخت لازم است تا هوا ثابت بماند؟"], misconception: "فکر می‌کنیم فقط کارخانه‌ها کربن‌دی‌اکسید می‌سازند؛ اما تنفس همه‌ی جانداران و تجزیه هم آن را آزاد می‌کنند و گیاهان و اقیانوس آن را برمی‌دارند.", check: { q: "کدام فرایند گیاهان کربن‌دی‌اکسید هوا را برمی‌دارد؟", a: "فتوسنتز." } },
   "matter-change": { goals: ["فرق تغییر فیزیکی و شیمیایی را از روی ذره‌ها بفهمی.","نشانه‌های تغییر شیمیایی را بشناسی."], challenges: ["ذوب یخ چرا فیزیکی است؟","در سوختن شمع چه مواد تازه‌ای پدید می‌آید؟"], misconception: "فکر می‌کنیم هر تغییری که چیزی ناپدید شود شیمیایی است؛ اما حل‌شدن شکر فیزیکی است چون مولکول‌های شکر هنوز هستند.", check: { q: "ذوب شدن یخ تغییر فیزیکی است یا شیمیایی؟", a: "فیزیکی." } },
+  "mendel-peas": { goals: ["غالب و نهفته را از روی ژنوتیپ تشخیص بدهی.","نسبت ۳ به ۱ را با مربع پانت پیش‌بینی کنی."], challenges: ["چه تلاقی‌ای فقط گل سفید می‌دهد؟","Aa × aa چه نسبتی می‌دهد؟"], misconception: "فکر می‌کنیم صفت غالب همیشه در جمعیت بیشتر است؛ در حالی که غالب فقط یعنی با یک الل نمایان می‌شود.", check: { q: "Aa × Aa چه نسبتی از گل بنفش به سفید می‌دهد؟", a: "۳ به ۱." } },
+  "periodic-explorer": { goals: ["گروه و دوره را روی جدول بخوانی.","ارتباط ظرفیت و گروه را بفهمی."], challenges: ["دو عنصر هم‌گروه پیدا کن.","الکترونگاتیوی در یک دوره چه روندی دارد؟"], misconception: "فکر می‌کنیم عنصرهای هم‌دوره شبیه‌اند؛ در حالی که شباهت شیمیایی بیشتر به هم‌گروه‌بودن است.", check: { q: "عنصرهای یک دوره چه چیزی مشترک دارند؟", a: "تعداد لایه‌های الکترونی." } },
+  "fire-triangle": { goals: ["سه شرط لازم آتش را بشناسی.","راه‌های خاموش‌کردن را به سه ضلع مثلث ربط بدهی."], challenges: ["با حذف کدام ضلع آتش خاموش می‌شود؟","چرا روی روغن داغ آب نمی‌ریزیم؟"], misconception: "فکر می‌کنیم آتش را فقط با آب می‌شود خاموش کرد؛ ولی هر راهی که یکی از سه ضلع را بردارد کار می‌کند.", check: { q: "سه چیز لازم برای آتش چیست؟", a: "سوخت، اکسیژن و گرما." } },
+  "food-tests": { goals: ["هر معرف را به ماده‌ی مغذی‌اش ربط بدهی.","با ترکیب آزمون‌ها نمونه‌ی ناشناس را بشناسی."], challenges: ["کدام غذا فقط نشاسته دارد؟","نمونه‌ی رمزی را با چند آزمون شناسایی کن."], misconception: "فکر می‌کنیم یک آزمون کافی است؛ ولی غذاهایی مثل شیر چند ماده‌ی مغذی دارند و به چند آزمون نیاز است.", check: { q: "معرف ید با چه ماده‌ای آبی‌سیاه می‌شود؟", a: "نشاسته." } },
+  "ear-hearing": { goals: ["مسیر صدا تا مغز را بگویی.","رابطه‌ی بسامد و محل تحریک حلزون را بفهمی."], challenges: ["صدای زیر کجای حلزون را تحریک می‌کند؟","چرا هدفون بلند خطرناک است؟"], misconception: "فکر می‌کنیم گوش‌ها صدا را مستقیم به مغز می‌دهند؛ در حالی که لرزش‌ها ابتدا به پیام عصبی تبدیل می‌شوند.", check: { q: "سه استخوانچه‌ی گوش میانی چه نام دارند؟", a: "چکشی، سندانی و رکابی." } },
   "tides": { goals: ["کشش گرانشی ماه و خورشید باعث جزر و مد می‌شود.", "هم‌راستایی سه جرم کشند بزرگ و حالت عمودی کشند کوچک می‌دهد."], challenges: ["در چه فازهایی کشند بزرگ است؟", "چرا دو برآمدگی آب داریم؟", "در تربیع، دامنه‌ی کشند را چقدر می‌بینی؟"], misconception: "فکر می‌کنیم فقط یک برآمدگی رو به ماه داریم؛ اما یک برآمدگی هم در سمت مقابل پدید می‌آید.", check: { q: "در ماه نو یا ماه کامل کشند بزرگ است یا کوچک؟", a: "بزرگ." } },
 
   "res-color": { goals: ["هر رنگ نمایانگر یک رقم است و نوار سوم ضریب ده‌به‌توان است.", "مقدار مقاومت را از روی رنگ‌ها بخوانی."], challenges: ["مقاومتی با مقدار ۴٫۷ کیلواهم بساز. چه رنگ‌هایی لازم است؟", "نوار سوم را یک رنگ جلوتر ببر؛ مقاومت چند برابر می‌شود؟", "کوچک‌ترین و بزرگ‌ترین مقدار ممکن برای مقاومت ±۵٪ را حساب کن."], misconception: "گاهی فکر می‌کنیم نوار سوم هم یک رقم است؛ اما ضریب است و تعداد صفرها را مشخص می‌کند.", check: { q: "نوارها قهوه‌ای، مشکی، قرمز هستند. مقاومت چند اهم است؟", a: "۱۰ × ۱۰۰ = ۱۰۰۰ اهم (۱ کیلواهم)." } },

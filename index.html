@@ -43234,7 +43234,7 @@ function VlabEclipseExperiment({ onReading }) {
         <defs>
           <radialGradient id="ecSun" cx="0.5" cy="0.5" r="0.5"><stop offset="0" stopColor="#fff6c0" /><stop offset="0.5" stopColor="#ffc93c" /><stop offset="1" stopColor="#ff8a1c" stopOpacity="0.1" /></radialGradient>
           <radialGradient id="ecEarth" cx="0.35" cy="0.35" r="0.8"><stop offset="0" stopColor="#8fd0ff" /><stop offset="0.6" stopColor="#2e7ad1" /><stop offset="1" stopColor="#12306a" /></radialGradient>
-          <clipPath id="ecMoonC"><circle cx={mx} cy={my} r="6.5" /></clipPath>
+          <clipPath id="ecMoonC"><circle cx={mx} cy={my} r="8.5" /></clipPath>
         </defs>
         <rect width="320" height="250" rx="12" fill="#03060f" />
         {[[30, 20], [90, 140], [150, 30], [200, 150], [290, 24], [300, 150], [120, 20], [60, 150]].map((s, i) => <circle key={i} cx={s[0]} cy={s[1]} r="0.9" fill="#fff" opacity="0.6" />)}
@@ -43244,17 +43244,17 @@ function VlabEclipseExperiment({ onReading }) {
         {[-30, -15, 0, 15, 30].map((y, i) => <line key={i} x1="64" y1={EY + y} x2="100" y2={EY + y} stroke="#ffe08a" strokeWidth="1" opacity="0.35" />)}
         <circle cx={EX} cy={EY} r={OR} fill="none" stroke="#6b7cb8" strokeDasharray="3 4" opacity="0.7" />
         {/* سایه‌ی زمین */}
-        <path d={`M ${EX},${EY - 13} L ${EX + 80},${EY - 4} L ${EX + 80},${EY + 4} L ${EX},${EY + 13} Z`} fill="#000" opacity="0.55" />
+        <path d={`M ${EX},${EY - 20} L ${EX + 70},${EY - 5} L ${EX + 70},${EY + 5} L ${EX},${EY + 20} Z`} fill="#000" opacity="0.55" />
         {/* سایه‌ی ماه */}
-        {nearNew && <path d={`M ${mx},${my - 6} L ${EX + 2},${EY - (solar ? 1.6 : 0.8)} L ${EX + 2},${EY + (solar ? 1.6 : 0.8)} L ${mx},${my + 6} Z`} fill="#000" opacity="0.5" />}
-        <circle cx={EX} cy={EY} r="13" fill="url(#ecEarth)" />
-        <path d={`M ${EX},${EY - 13} A 13 13 0 0 1 ${EX},${EY + 13} Z`} fill="#000" opacity="0.5" />
-        {solar && <circle cx={EX - 12} cy={EY} r={solarTotal ? 2.4 : 4} fill="#000" opacity="0.8" />}
-        <text x={EX} y={EY + 30} fontSize="9" fill="#bcd9ff" textAnchor="middle">زمین</text>
+        {nearNew && <path d={`M ${mx},${my - 8} L ${EX - 10},${EY - (solar ? 5 : 2)} L ${EX - 10},${EY + (solar ? 5 : 2)} L ${mx},${my + 8} Z`} fill="#000" opacity="0.5" />}
+        <circle cx={EX} cy={EY} r="20" fill="url(#ecEarth)" />
+        <path d={`M ${EX},${EY - 20} A 20 20 0 0 1 ${EX},${EY + 20} Z`} fill="#000" opacity="0.5" />
+        {solar && <g><circle cx={EX - 19} cy={EY} r="11" fill="#000" opacity="0.28" /><circle cx={EX - 19} cy={EY} r={solarTotal ? 6 : 4} fill="#000" opacity="0.9" stroke="#ffd23f" strokeWidth="1" /><path d={`M ${EX - 14},${EY - 36} L ${EX - 19},${EY - 12}`} stroke="#ffd23f" strokeWidth="1.2" /><text x={EX - 6} y={EY - 40} fontSize="9" fill="#ffd23f" textAnchor="middle" fontWeight="700">سایه‌ی ماه روی زمین</text></g>}
+        <text x={EX} y={EY + 34} fontSize="9" fill="#bcd9ff" textAnchor="middle">زمین</text>
         {/* ماه */}
-        <circle cx={mx} cy={my} r="6.5" fill="#2a2d38" stroke="#9aa3c0" strokeWidth="0.6" />
-        <g clipPath="url(#ecMoonC)"><rect x={mx - 6.5} y={my - 7} width="6.5" height="14" fill={lunar ? "#a8341f" : "#e9e6dc"} opacity={lunar ? 0.9 : moonLit} /></g>
-        <text x={mx} y={my - 11} fontSize="8" fill="#e9e6dc" textAnchor="middle">ماه</text>
+        <circle cx={mx} cy={my} r="8.5" fill="#2a2d38" stroke="#9aa3c0" strokeWidth="0.6" />
+        <g clipPath="url(#ecMoonC)"><rect x={mx - 8.5} y={my - 9} width="8.5" height="18" fill={lunar ? "#a8341f" : "#e9e6dc"} opacity={lunar ? 0.9 : moonLit} /></g>
+        <text x={mx} y={my - 13} fontSize="8" fill="#e9e6dc" textAnchor="middle">ماه</text>
         <text x="160" y="16" fontSize="12" fontWeight="700" fill={solar || lunar ? "#ffd98a" : "#cfd6ea"} textAnchor="middle">{state}</text>
         <text x="160" y="156" fontSize="8.5" fill="#9aa3c0" textAnchor="middle">نمای از بالا — اندازه‌ها و فاصله‌ها برای دیده‌شدن بزرگ‌نمایی شده</text>
         {/* نمودار ارتفاع ماه از صفحه‌ی مدار زمین */}

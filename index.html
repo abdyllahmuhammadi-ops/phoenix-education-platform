@@ -24802,6 +24802,24 @@ const VLAB_EXPERIMENTS = [
     tools: ["مدار زمین", "محور کج زمین", "طول روز"],
   },
   {
+    id: "eclipse",
+    subject: "زمین‌شناسی",
+    level: "متوسطه اول",
+    title: "خورشیدگرفتگی و ماه‌گرفتگی",
+    icon: "🌘",
+    intro: "ماه را در مدارش بچرخان و ببین چرا هر ماه نو و ماه کامل گرفت ندارد: کجی مدار ماه همه‌چیز را عوض می‌کند.",
+    tools: ["خورشید", "زمین", "ماه"],
+  },
+  {
+    id: "gut-journey",
+    subject: "زیست‌شناسی",
+    level: "متوسطه اول",
+    title: "دستگاه گوارش و هضم غذا",
+    icon: "🍞",
+    intro: "یک غذا انتخاب کن و لقمه را از دهان تا روده دنبال کن؛ ببین کدام آنزیم کجا کار می‌کند و مواد مغذی کجا جذب می‌شوند.",
+    tools: ["دهان تا روده", "آنزیم‌ها", "جذب مواد مغذی"],
+  },
+  {
     id: "tides",
     subject: "زمین‌شناسی",
     level: "متوسطه اول",
@@ -43162,6 +43180,192 @@ function VlabForceSumExperiment({ onReading }) {
 }
 
 /* ---------- ف۳. فشار جامد ---------- */
+/* ---------- خورشیدگرفتگی و ماه‌گرفتگی ---------- */
+function VlabEclipseExperiment({ onReading }) {
+  const [th, setTh] = useState(0);
+  const [node, setNode] = useState(0);
+  const rad = (th * Math.PI) / 180;
+  const EX = 248, EY = 92, OR = 54;
+  const mx = EX - OR * Math.cos(rad), my = EY + OR * Math.sin(rad) * 0.0 + OR * Math.sin(rad);
+  const h = 5.1 * Math.sin(((th - node) * Math.PI) / 90); // ارتفاع ماه از صفحه‌ی مدار زمین (درجه)
+  const dNew = Math.min(th % 360, 360 - (th % 360));
+  const dFull = Math.abs((th % 360) - 180);
+  const nearNew = dNew < 9, nearFull = dFull < 9;
+  const solar = nearNew && Math.abs(h) < 1.6;
+  const solarTotal = solar && Math.abs(h) < 0.7 && dNew < 4;
+  const lunar = nearFull && Math.abs(h) < 1.3;
+  const lunarTotal = lunar && Math.abs(h) < 0.6 && dFull < 4;
+  const state = solar ? (solarTotal ? "خورشیدگرفتگی کامل" : "خورشیدگرفتگی جزئی") : lunar ? (lunarTotal ? "ماه‌گرفتگی کامل" : "ماه‌گرفتگی جزئی") : nearNew ? "ماه نو — ولی سایه به زمین نمی‌رسد" : nearFull ? "ماه کامل — ولی در سایه‌ی زمین نمی‌افتد" : "گرفتی رخ نمی‌دهد";
+  useEffect(() => { if (onReading) onReading(`موقعیت ماه ${th}° | ارتفاع از صفحه‌ی مدار ${h.toFixed(1)}° | ${state}`); /* eslint-disable-next-line */ }, [th, node]);
+  const moonLit = lunar ? (lunarTotal ? 0.08 : 0.45) : 1;
+  const hy = 218 - h * 6; // نقطه‌ی روی نمودار
+  const gx = (a) => 20 + (a / 360) * 280;
+  const curve = Array.from({ length: 73 }, (_, i) => { const a = i * 5, hh = 5.1 * Math.sin(((a - node) * Math.PI) / 90); return (i ? "L" : "M") + gx(a).toFixed(1) + "," + (218 - hh * 6).toFixed(1); }).join(" ");
+  return (
+    <div className="vlab-exp">
+      <svg viewBox="0 0 320 250" className="vlab-svg" style={{ direction: "ltr", background: "#03060f" }}>
+        <defs>
+          <radialGradient id="ecSun" cx="0.5" cy="0.5" r="0.5"><stop offset="0" stopColor="#fff6c0" /><stop offset="0.5" stopColor="#ffc93c" /><stop offset="1" stopColor="#ff8a1c" stopOpacity="0.1" /></radialGradient>
+          <radialGradient id="ecEarth" cx="0.35" cy="0.35" r="0.8"><stop offset="0" stopColor="#8fd0ff" /><stop offset="0.6" stopColor="#2e7ad1" /><stop offset="1" stopColor="#12306a" /></radialGradient>
+          <clipPath id="ecMoonC"><circle cx={mx} cy={my} r="6.5" /></clipPath>
+        </defs>
+        <rect width="320" height="250" rx="12" fill="#03060f" />
+        {[[30, 20], [90, 140], [150, 30], [200, 150], [290, 24], [300, 150], [120, 20], [60, 150]].map((s, i) => <circle key={i} cx={s[0]} cy={s[1]} r="0.9" fill="#fff" opacity="0.6" />)}
+        <circle cx="34" cy={EY} r="40" fill="url(#ecSun)" />
+        <circle cx="34" cy={EY} r="22" fill="#ffd54a" />
+        <text x="34" y="150" fontSize="9" fill="#ffe08a" textAnchor="middle">خورشید</text>
+        {[-30, -15, 0, 15, 30].map((y, i) => <line key={i} x1="64" y1={EY + y} x2="100" y2={EY + y} stroke="#ffe08a" strokeWidth="1" opacity="0.35" />)}
+        <circle cx={EX} cy={EY} r={OR} fill="none" stroke="#6b7cb8" strokeDasharray="3 4" opacity="0.7" />
+        {/* سایه‌ی زمین */}
+        <path d={`M ${EX},${EY - 13} L ${EX + 80},${EY - 4} L ${EX + 80},${EY + 4} L ${EX},${EY + 13} Z`} fill="#000" opacity="0.55" />
+        {/* سایه‌ی ماه */}
+        {nearNew && <path d={`M ${mx},${my - 6} L ${EX + 2},${EY - (solar ? 1.6 : 0.8)} L ${EX + 2},${EY + (solar ? 1.6 : 0.8)} L ${mx},${my + 6} Z`} fill="#000" opacity="0.5" />}
+        <circle cx={EX} cy={EY} r="13" fill="url(#ecEarth)" />
+        <path d={`M ${EX},${EY - 13} A 13 13 0 0 1 ${EX},${EY + 13} Z`} fill="#000" opacity="0.5" />
+        {solar && <circle cx={EX - 12} cy={EY} r={solarTotal ? 2.4 : 4} fill="#000" opacity="0.8" />}
+        <text x={EX} y={EY + 30} fontSize="9" fill="#bcd9ff" textAnchor="middle">زمین</text>
+        {/* ماه */}
+        <circle cx={mx} cy={my} r="6.5" fill="#2a2d38" stroke="#9aa3c0" strokeWidth="0.6" />
+        <g clipPath="url(#ecMoonC)"><rect x={mx - 6.5} y={my - 7} width="6.5" height="14" fill={lunar ? "#a8341f" : "#e9e6dc"} opacity={lunar ? 0.9 : moonLit} /></g>
+        <text x={mx} y={my - 11} fontSize="8" fill="#e9e6dc" textAnchor="middle">ماه</text>
+        <text x="160" y="16" fontSize="12" fontWeight="700" fill={solar || lunar ? "#ffd98a" : "#cfd6ea"} textAnchor="middle">{state}</text>
+        <text x="160" y="156" fontSize="8.5" fill="#9aa3c0" textAnchor="middle">نمای از بالا — اندازه‌ها و فاصله‌ها برای دیده‌شدن بزرگ‌نمایی شده</text>
+        {/* نمودار ارتفاع ماه از صفحه‌ی مدار زمین */}
+        <line x1="20" y1="218" x2="300" y2="218" stroke="#6b7cb8" /><rect x="20" y={218 - 9.6} width="280" height="19.2" fill="#ffd98a" opacity="0.1" />
+        <path d={curve} fill="none" stroke="#7be0a4" strokeWidth="1.8" />
+        <text x="160" y="176" fontSize="8.5" fill="#9aa3c0" textAnchor="middle">ارتفاع ماه بالا یا پایین صفحه‌ی مدار زمین (نوار روشن = باند گرفت)</text>
+        
+        {[0, 180, 360].map((a) => <g key={a}><line x1={gx(a)} y1="212" x2={gx(a)} y2="224" stroke="#6b7cb8" /><text x={gx(a)} y="236" fontSize="8" fill="#bcd9ff" textAnchor="middle">{a === 0 ? "ماه نو" : a === 180 ? "ماه کامل" : "ماه نو"}</text></g>)}
+        <circle cx={gx(th)} cy={hy} r="5.5" fill={solar || lunar ? "#ffd23f" : "#fff"} stroke="#ff6b6b" strokeWidth="2" />
+      </svg>
+      <div className="vlab-controls"><div className="vlab-ctrl-col" style={{ flex: 1 }}>
+        <label className="vlab-ctrl-label">موقعیت ماه در مدار (درجه): {VLAB_FA_DIGITS(th)}</label>
+        <VlabRange min={0} max={360} step={1} value={th} onChange={(e) => setTh(+e.target.value)} />
+        <label className="vlab-ctrl-label">جهت گره‌های مدار ماه (فصل گرفت): {VLAB_FA_DIGITS(node)}</label>
+        <VlabRange min={0} max={180} step={5} value={node} onChange={(e) => setNode(+e.target.value)} />
+        <div className="vlab-num-row"><button type="button" className="vlab-num-btn active" onClick={() => setTh(0)}>🌑 ماه نو</button><button type="button" className="vlab-num-btn active" onClick={() => setTh(180)}>🌕 ماه کامل</button></div>
+      </div></div>
+      <div className="vlab-readout">
+        در ماه نو، ماه میان زمین و خورشید است و در ماه کامل، زمین میان آن دو. اما مدار ماه حدود ۵ درجه نسبت به مدار زمین کج است؛ پس بیشتر ماه‌ها سایه از بالا یا پایین می‌گذرد و فقط وقتی ماه نو یا کامل نزدیک نقطه‌ی برخورد دو مدار بیفتد، <b>گرفت</b> رخ می‌دهد.
+      </div>
+    </div>
+  );
+}
+
+/* ---------- دستگاه گوارش و هضم غذا ---------- */
+const VLAB_DIG_PATH = [[160, 34], [160, 84], [166, 100], [176, 114], [168, 134], [150, 146], [122, 168], [198, 176], [122, 186], [198, 196], [122, 206], [190, 214], [214, 220], [226, 200], [226, 156], [100, 156], [100, 214], [100, 226], [128, 236]];
+const VLAB_DIG_STAGE_AT = [0, 1, 2, 2, 2, 2, 3, 3, 3, 3, 3, 3, 4, 4, 4, 4, 4, 5, 5]; // مرحله‌ی هر نقطه‌ی مسیر
+const VLAB_DIG_STAGES = ["دهان", "مری", "معده", "روده‌ی باریک", "روده‌ی بزرگ", "دفع"];
+const VLAB_DIG_FOODS = [
+  { id: "bread", n: "نان", ic: "🍞", c: "#e8c37a", kind: "نشاسته", dig: [0.02, 0.8], txt: [
+    "آمیلاز بزاق شروع به شکستن نشاسته به قندهای کوچک‌تر می‌کند؛ جویدن کار را آسان می‌کند.",
+    "حرکت دودی مری لقمه را پایین می‌برد؛ هضم شیمیایی انجام نمی‌شود.",
+    "اسید معده آمیلاز را از کار می‌اندازد؛ هضم نشاسته موقتاً متوقف می‌ماند.",
+    "آمیلاز پانکراس هضم را کامل می‌کند و گلوکز از دیواره‌ی روده وارد خون می‌شود.",
+    "باقی‌مانده کم است؛ آب و املاح جذب می‌شود.",
+    "پسماند دفع می‌شود." ] },
+  { id: "meat", n: "گوشت", ic: "🍗", c: "#c9835a", kind: "پروتئین", dig: [0.22, 0.8], txt: [
+    "در دهان فقط خرد می‌شود؛ آنزیمی برای هضم پروتئین در بزاق نیست.",
+    "مری لقمه را پایین می‌برد؛ هضمی انجام نمی‌شود.",
+    "اسید معده (pH حدود ۲) و آنزیم پپسین پروتئین را به قطعه‌های کوتاه می‌شکنند.",
+    "آنزیم‌های پانکراس قطعه‌ها را به آمینواسید می‌رسانند و از روده جذب می‌شوند.",
+    "آب و املاح باقی‌مانده جذب می‌شود.",
+    "پسماند دفع می‌شود." ] },
+  { id: "oil", n: "روغن", ic: "🧈", c: "#ffd54a", kind: "چربی", dig: [0.42, 0.8], txt: [
+    "چربی در دهان هضم نمی‌شود.",
+    "مری آن را پایین می‌برد؛ هضمی انجام نمی‌شود.",
+    "چربی روی محتویات معده شناور می‌ماند؛ هضم مهمی ندارد.",
+    "صفرا چربی را به قطره‌های ریز می‌شکند و لیپاز آن را به اسیدچرب و گلیسرول می‌رساند؛ سپس جذب می‌شود.",
+    "باقی‌مانده کم است؛ آب جذب می‌شود.",
+    "پسماند دفع می‌شود." ] },
+  { id: "fruit", n: "سبزی و میوه", ic: "🥦", c: "#7bc96f", kind: "فیبر و ویتامین", dig: [0.3, 0.55], txt: [
+    "جویدن لیف‌ها را خرد می‌کند و قندهای ساده و ویتامین‌ها آزاد می‌شوند.",
+    "مری لقمه را پایین می‌برد.",
+    "فیبر هضم نمی‌شود؛ بخشی از ویتامین‌ها و قند میوه آزاد می‌شود.",
+    "ویتامین‌ها و قند میوه جذب می‌شوند؛ فیبر بدون هضم ادامه می‌دهد.",
+    "باکتری‌های مفید بخشی از فیبر را تخمیر می‌کنند؛ فیبر آب را نگه می‌دارد و مدفوع را نرم می‌کند.",
+    "فیبر هضم‌نشده دفع می‌شود؛ برای سلامت روده لازم است." ] },
+];
+const VLAB_DIG_TP = [0, 0.05, 0.12, 0.2, 0.28, 0.34, 0.38, 0.44, 0.5, 0.56, 0.62, 0.7, 0.74, 0.78, 0.84, 0.9, 0.95, 0.98, 1];
+function vlabDigPos(t) {
+  const P = VLAB_DIG_PATH, T = VLAB_DIG_TP, tt = vlabClamp(t, 0, 1);
+  let i = 1; while (i < P.length - 1 && T[i] < tt) i++;
+  const f = vlabClamp((tt - T[i - 1]) / Math.max(1e-6, T[i] - T[i - 1]), 0, 1);
+  return { x: P[i - 1][0] + (P[i][0] - P[i - 1][0]) * f, y: P[i - 1][1] + (P[i][1] - P[i - 1][1]) * f, seg: i - 1, stage: VLAB_DIG_STAGE_AT[f > 0.5 ? i : i - 1] };
+}
+function VlabGutJourneyExperiment({ onReading }) {
+  const [fi, setFi] = useState(0);
+  const [t, setT] = useState(0);
+  const [play, setPlay] = useState(false);
+  const F = VLAB_DIG_FOODS[fi];
+  useEffect(() => {
+    if (!play) return undefined;
+    const id = setInterval(() => setT((x) => { if (x >= 1) { setPlay(false); return 1; } return Math.min(1, x + 0.004); }), 40);
+    return () => clearInterval(id);
+  }, [play]);
+  const pos = vlabDigPos(t);
+  const st = pos.stage;
+  const digFrac = vlabClamp((t - F.dig[0]) / (F.dig[1] - F.dig[0]), 0, 1) * (F.id === "fruit" ? 0.25 : 1);
+  const absorbed = F.id === "fruit" ? digFrac * 0.9 : vlabClamp((t - 0.45) / 0.35, 0, 1) * digFrac;
+  useEffect(() => { if (onReading) onReading(`${F.n} | ${VLAB_DIG_STAGES[st]} | تجزیه ${Math.round(digFrac * 100)}٪ | جذب ${Math.round(absorbed * 100)}٪`); /* eslint-disable-next-line */ }, [fi, st, Math.round(digFrac * 20)]);
+  const ph = [6.8, 6.8, 2, 8, 7, 7][st];
+  const enz = st === 0 ? (F.id === "bread" ? "آمیلاز بزاق" : "—") : st === 2 ? (F.id === "meat" ? "پپسین + اسید" : F.id === "oil" ? "—" : "اسید معده") : st === 3 ? (F.id === "bread" ? "آمیلاز پانکراس" : F.id === "meat" ? "تریپسین" : F.id === "oil" ? "صفرا + لیپاز" : "—") : "—";
+  const hot = (k) => (st === k ? 1 : 0.45);
+  const SI = "M122,168 L198,176 L122,186 L198,196 L122,206 L190,214";
+  const LI = "M214,220 L226,200 L226,156 L100,156 L100,214 L100,226";
+  const sizeR = 6.5 - absorbed * 3.6;
+  const dots = Array.from({ length: Math.round(absorbed * 10) }, (_, i) => ({ x: 206 + ((i * 9 + t * 160) % 36), y: 168 + ((i * 11) % 38) }));
+  return (
+    <div className="vlab-exp">
+      <svg viewBox="0 0 320 262" className="vlab-svg" style={{ direction: "ltr", background: "#fff6ec" }}>
+        <defs>
+          <linearGradient id="dgSt" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stopColor="#f2928a" /><stop offset="1" stopColor="#c8574d" /></linearGradient>
+          <radialGradient id="dgFace" cx="0.4" cy="0.35" r="0.8"><stop offset="0" stopColor="#ffe2c4" /><stop offset="1" stopColor="#e8b58a" /></radialGradient>
+        </defs>
+        <rect width="320" height="262" rx="12" fill="#fff6ec" />
+        {/* سر و دهان */}
+        <circle cx="160" cy="20" r="16" fill="url(#dgFace)" stroke="#a87a50" strokeWidth="1.2" opacity={hot(0)} />
+        <ellipse cx="160" cy="26" rx="6" ry={st === 0 ? 3.4 : 2} fill="#8a2a2a" /><circle cx="154" cy="16" r="1.4" fill="#333" /><circle cx="166" cy="16" r="1.4" fill="#333" />
+        {/* مری */}
+        <path d="M160,36 L160,84 Q162,96 168,104" fill="none" stroke="#f0a99a" strokeWidth="9" strokeLinecap="round" opacity={hot(1)} />
+        <path d="M160,36 L160,84 Q162,96 168,104" fill="none" stroke="#fff" strokeWidth="1.4" strokeDasharray="2 6" opacity="0.7" />
+        {/* معده */}
+        <path d="M158,96 Q140,100 142,128 Q146,152 170,148 Q196,142 188,112 Q182,92 164,96 Z" fill="url(#dgSt)" stroke="#8a2f28" strokeWidth="1.6" opacity={hot(2)} />
+        <path d="M150,112 Q160,106 172,112 M148,126 Q164,120 182,126 M152,140 Q166,134 180,140" fill="none" stroke="#a63a30" strokeWidth="1" opacity="0.6" />
+        {/* روده‌ی باریک */}
+        <path d={SI} fill="none" stroke="#f2b6a0" strokeWidth="11" strokeLinecap="round" strokeLinejoin="round" opacity={hot(3)} />
+        <path d={SI} fill="none" stroke="#fff" strokeWidth="1.3" strokeDasharray="3 6" opacity="0.65" strokeLinecap="round" />
+        {/* روده‌ی بزرگ */}
+        <path d={LI} fill="none" stroke="#d99a6c" strokeWidth="14" strokeLinecap="round" strokeLinejoin="round" opacity={hot(4)} />
+        <path d={LI} fill="none" stroke="#fff" strokeWidth="1.3" strokeDasharray="2 7" opacity="0.5" strokeLinecap="round" />
+        <path d="M100,226 L128,236" stroke="#c9885a" strokeWidth="9" strokeLinecap="round" opacity={hot(5)} />
+        {/* مویرگ و جذب */}
+        <path d="M214,164 Q232,180 214,210" fill="none" stroke="#d6403a" strokeWidth="3" opacity="0.8" /><text x="276" y="190" fontSize="8" fill="#b02a24" textAnchor="middle">مویرگ‌های خون</text>
+        {dots.map((d, i) => <circle key={i} cx={d.x} cy={d.y} r="2.2" fill={F.c} stroke="#6a4f10" strokeWidth="0.5" />)}
+        {/* لقمه */}
+        <circle cx={pos.x} cy={pos.y} r={Math.max(2.8, sizeR)} fill={F.c} stroke="#5a3a1c" strokeWidth="1.4" />
+        {/* برچسب‌ها */}
+        {[["دهان", 56, 20, 0], ["مری", 232, 64, 1], ["معده", 232, 124, 2], ["روده‌ی باریک", 46, 190, 3], ["روده‌ی بزرگ", 270, 156, 4]].map((q) => (
+          <g key={q[0]}><rect x={q[1] - 34} y={q[2] - 9} width="68" height="16" rx="8" fill={st === q[3] ? "#ffd23f" : "#fff"} stroke="#c9a56a" opacity="0.95" /><text x={q[1]} y={q[2] + 3} fontSize="9" textAnchor="middle" fill="#3a2a1a" fontWeight={st === q[3] ? 700 : 400}>{q[0]}</text></g>
+        ))}
+        <text x="160" y="256" fontSize="9" fill="#7a5a3a" textAnchor="middle">{"مرحله‌ی فعلی: " + VLAB_DIG_STAGES[st]}</text>
+      </svg>
+      <VlabMeterRow height={130} meters={[{ label: "اسیدیته‌ی محیط (pH)", unit: "", value: ph, ranges: [3, 8, 14], maj: 7, decimals: 1 }, { label: "تجزیه‌ی غذا", unit: "%", value: digFrac * 100, ranges: [100], maj: 5, decimals: 0 }, { label: "جذب‌شده در خون", unit: "%", value: absorbed * 100, ranges: [100], maj: 5, decimals: 0 }]} />
+      <div className="vlab-controls"><div className="vlab-ctrl-col" style={{ flex: 1 }}>
+        <label className="vlab-ctrl-label">غذا را انتخاب کن</label>
+        <div className="vlab-num-row" style={{ flexWrap: "wrap" }}>{VLAB_DIG_FOODS.map((f, i) => <button key={f.id} type="button" className={"vlab-num-btn" + (fi === i ? " active" : "")} onClick={() => { setFi(i); setT(0); setPlay(false); }}>{f.ic} {f.n}</button>)}</div>
+        <label className="vlab-ctrl-label">مسیر غذا در بدن: {VLAB_DIG_STAGES[st]}</label>
+        <VlabRange min={0} max={100} step={1} value={Math.round(t * 100)} onChange={(e) => { setPlay(false); setT(+e.target.value / 100); }} />
+        <div className="vlab-num-row"><button type="button" className="vlab-num-btn active" onClick={() => { if (t >= 1) setT(0); setPlay((p) => !p); }}>{play ? "⏸ ایست" : "▶ بخور و دنبال کن"}</button></div>
+      </div></div>
+      <div className="vlab-readout">
+        <b>{VLAB_DIG_STAGES[st]}</b> — {F.txt[st]} <span style={{ opacity: 0.8 }}>{enz !== "—" ? " (آنزیم: " + enz + ")" : ""}</span>
+      </div>
+      <div className="vlab-readout">{"ماده‌ی اصلی این غذا: " + F.kind + ". بیشترین هضم و تقریباً همه‌ی جذب مواد مغذی در روده‌ی باریک رخ می‌دهد؛ روده‌ی بزرگ بیشتر آب را جذب می‌کند."}</div>
+    </div>
+  );
+}
+
 const VLAB_SOLID_AREAS = [
   { n: "نوک میخ", a: 0.1, w: 3 },
   { n: "پاشنه‌ی کفش", a: 10, w: 14 },
@@ -48171,6 +48375,8 @@ const VLAB_COMPONENTS = {
   "meander": VlabMeanderExperiment,
   "seasons": VlabSeasonsExperiment,
   "tides": VlabTidesExperiment,
+  "eclipse": VlabEclipseExperiment,
+  "gut-journey": VlabGutJourneyExperiment,
 
   "res-color": VlabResistorColorExperiment,
   "volt-divider": VlabVoltageDividerExperiment,
@@ -48502,6 +48708,8 @@ const VLAB_GUIDE = {
   "topo-map": { goals: ["خطوط تراز نقاط هم‌ارتفاع را به هم وصل می‌کنند.", "خطوط نزدیک یعنی شیب تند؛ دور یعنی شیب ملایم."], challenges: ["سمت پرشیب و کم‌شیب تپه را از روی نقشه تشخیص بده.", "با بالا آوردن سطح آب، کدام بخش‌ها زیر آب می‌روند؟", "شیب را بین دو خط تراز حساب کن."], misconception: "فکر می‌کنیم خط تراز یک «جاده» است؛ در حالی که هیچ‌گاه از ارتفاع دیگری عبور نمی‌کند.", check: { q: "اگر خطوط تراز به هم بسیار نزدیک باشند، شیب چگونه است؟", a: "تند." } },
   "meander": { goals: ["بیرون پیچ فرسایش و درون پیچ رسوب دارد.", "با گذر زمان پیچ‌ها بزرگ می‌شوند و بریده می‌شوند."], challenges: ["دامنه‌ی پیچ را در زمان‌های ۱۰٪ و ۸۰٪ مقایسه کن.", "جریان قوی‌تر چه تغییری ایجاد می‌کند؟", "دریاچه‌ی نعل‌اسبی چگونه ساخته می‌شود؟"], misconception: "فکر می‌کنیم رودخانه همیشه در همان مسیر می‌ماند؛ ولی در دشت‌ها مسیرش به‌مرور جابه‌جا می‌شود.", check: { q: "در پیچ رودخانه، رسوب در درون پیچ است یا بیرون؟", a: "درون پیچ." } },
   "seasons": { goals: ["فصل‌ها به‌دلیل کجی محور زمین پدید می‌آیند، نه فاصله از خورشید.", "در تابستان شمالی، روز در نیمکره‌ی شمالی بلندتر است."], challenges: ["طول روز تهران را در اول هر چهار فصل بنویس.", "در استوا طول روز در سال تغییر می‌کند؟", "نیمکره‌ی جنوبی در اول تیر چه فصلی است؟"], misconception: "فکر می‌کنیم تابستان به این دلیل است که زمین به خورشید نزدیک‌تر است؛ ولی کجی محور عامل اصلی است.", check: { q: "طول روز در اول فروردین و اول پاییز تقریباً چقدر است؟", a: "حدود ۱۲ ساعت (اعتدال)." } },
+  "gut-journey": { goals: ["مسیر غذا را از دهان تا روده بشناسی.", "بدانی هر ماده‌ی مغذی کجا و با چه آنزیمی هضم می‌شود."], challenges: ["نشاسته از کجا هضم را شروع می‌کند؟", "چرا معده اسیدی است؟", "بیشترین جذب در کدام بخش است؟"], misconception: "فکر می‌کنیم غذا در معده کاملاً هضم و جذب می‌شود؛ اما بیشتر هضم و تقریباً همه‌ی جذب در روده‌ی باریک رخ می‌دهد.", check: { q: "هضم نشاسته از کدام عضو آغاز می‌شود؟", a: "دهان." } },
+  "eclipse": { goals: ["جای ماه، زمین و خورشید را برای گرفت پیدا کنی.", "بفهمی چرا گرفت هر ماه رخ نمی‌دهد."], challenges: ["در ماه نو، گرفت کی رخ می‌دهد؟", "چرا ماه‌گرفتگی فقط شب دیده می‌شود؟", "اگر مدار ماه کج نبود چه می‌شد؟"], misconception: "فکر می‌کنیم در هر ماه نو خورشیدگرفتگی رخ می‌دهد؛ اما کجی مدار ماه معمولاً سایه را از زمین دور نگه می‌دارد.", check: { q: "ماه‌گرفتگی در کدام فاز ماه رخ می‌دهد؟", a: "ماه کامل." } },
   "tides": { goals: ["کشش گرانشی ماه و خورشید باعث جزر و مد می‌شود.", "هم‌راستایی سه جرم کشند بزرگ و حالت عمودی کشند کوچک می‌دهد."], challenges: ["در چه فازهایی کشند بزرگ است؟", "چرا دو برآمدگی آب داریم؟", "در تربیع، دامنه‌ی کشند را چقدر می‌بینی؟"], misconception: "فکر می‌کنیم فقط یک برآمدگی رو به ماه داریم؛ اما یک برآمدگی هم در سمت مقابل پدید می‌آید.", check: { q: "در ماه نو یا ماه کامل کشند بزرگ است یا کوچک؟", a: "بزرگ." } },
 
   "res-color": { goals: ["هر رنگ نمایانگر یک رقم است و نوار سوم ضریب ده‌به‌توان است.", "مقدار مقاومت را از روی رنگ‌ها بخوانی."], challenges: ["مقاومتی با مقدار ۴٫۷ کیلواهم بساز. چه رنگ‌هایی لازم است؟", "نوار سوم را یک رنگ جلوتر ببر؛ مقاومت چند برابر می‌شود؟", "کوچک‌ترین و بزرگ‌ترین مقدار ممکن برای مقاومت ±۵٪ را حساب کن."], misconception: "گاهی فکر می‌کنیم نوار سوم هم یک رقم است؛ اما ضریب است و تعداد صفرها را مشخص می‌کند.", check: { q: "نوارها قهوه‌ای، مشکی، قرمز هستند. مقاومت چند اهم است؟", a: "۱۰ × ۱۰۰ = ۱۰۰۰ اهم (۱ کیلواهم)." } },

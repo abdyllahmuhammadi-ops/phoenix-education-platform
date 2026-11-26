@@ -43098,14 +43098,22 @@ function VlabForceSumExperiment({ onReading }) {
   return (
     <div className="vlab-exp">
       <svg viewBox="0 0 320 200" className="vlab-svg" style={{ direction: "ltr", background: "#0b3a5e" }}>
-        <rect width="320" height="200" rx="12" fill="#0e4a78" />
-        {[0, 1, 2, 3].map((i) => <path key={i} d={`M 0,${40 + i * 45} q 40,-8 80,0 t 80,0 t 80,0 t 80,0`} stroke="#fff" strokeOpacity="0.12" fill="none" />)}
-        {/* قایق از بالا */}
-        <path d={`M ${cx - 24},${cy} Q ${cx},${cy - 26} ${cx + 24},${cy} Q ${cx},${cy + 26} ${cx - 24},${cy} Z`} fill="#c9873a" stroke="#6b4513" strokeWidth="2" />
-        <circle cx={cx} cy={cy} r="3" fill="#333" />
+        <defs>
+          <linearGradient id="fsSea" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stopColor="#1d78b5" /><stop offset="1" stopColor="#0a3a63" /></linearGradient>
+          <linearGradient id="fsHull" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stopColor="#e0a24e" /><stop offset="1" stopColor="#a8682a" /></linearGradient>
+        </defs>
+        <rect width="320" height="200" rx="12" fill="url(#fsSea)" />
+        {[0, 1, 2, 3, 4].map((i) => <path key={i} d={`M 0,${24 + i * 40} q 40,-8 80,0 t 80,0 t 80,0 t 80,0`} stroke="#fff" strokeOpacity="0.16" fill="none" />)}
+        <g transform={`rotate(${R > 1 ? (Math.atan2(ar.y - cy, ar.x - cx) * 180) / Math.PI : 0} ${cx} ${cy})`}>
+          <path d={`M ${cx - 30},${cy - 11} Q ${cx - 6},${cy - 17} ${cx + 18},${cy - 12} Q ${cx + 34},${cy - 4} ${cx + 38},${cy} Q ${cx + 34},${cy + 4} ${cx + 18},${cy + 12} Q ${cx - 6},${cy + 17} ${cx - 30},${cy + 11} Z`} fill="url(#fsHull)" stroke="#5b3510" strokeWidth="2" strokeLinejoin="round" />
+          <path d={`M ${cx - 24},${cy - 7} Q ${cx - 4},${cy - 12} ${cx + 16},${cy - 8} Q ${cx + 26},${cy - 3} ${cx + 28},${cy} Q ${cx + 26},${cy + 3} ${cx + 16},${cy + 8} Q ${cx - 4},${cy + 12} ${cx - 24},${cy + 7} Z`} fill="#7a4a1c" stroke="#5b3510" strokeWidth="1" />
+          {[-14, -2, 10].map((x, i) => <line key={i} x1={cx + x} y1={cy - 10} x2={cx + x} y2={cy + 10} stroke="#c58a46" strokeWidth="2.4" />)}
+        </g>
+        <circle cx={cx} cy={cy} r="3.4" fill="#2b2b2b" stroke="#ffd98a" strokeWidth="1.2" />
         {/* خطوط راهنمای متوازی‌الاضلاع */}
         <line x1={a1.x} y1={a1.y} x2={ar.x} y2={ar.y} stroke="#fff" strokeDasharray="4 4" opacity="0.6" />
         <line x1={a2.x} y1={a2.y} x2={ar.x} y2={ar.y} stroke="#fff" strokeDasharray="4 4" opacity="0.6" />
+        {[a1, a2].map((q, i) => <g key={i}><line x1={cx} y1={cy} x2={q.x} y2={q.y} stroke="#e8d3a4" strokeWidth="4.2" strokeLinecap="round" /><line x1={cx} y1={cy} x2={q.x} y2={q.y} stroke="#8a6a35" strokeWidth="4.2" strokeDasharray="1.4 3" /><circle cx={q.x} cy={q.y} r="6.5" fill="#f1c9a4" stroke="#8a5530" strokeWidth="1.4" /></g>)}
         <Arrow x2={a1.x} y2={a1.y} c="#ffd23f" />
         <Arrow x2={a2.x} y2={a2.y} c="#7dffa8" />
         <Arrow x2={ar.x} y2={ar.y} c="#ff6b6b" w={4} />
@@ -46601,19 +46609,31 @@ const VLAB_D_SHAPES = [["مثلث", 3], ["چهارضلعی", 4], ["پنج‌ضل
 function VlabShapeSortExperiment({ onReading }) {
   const [n, setN] = useState(4);
   const name = (VLAB_D_SHAPES.find((s) => s[1] === n) || [n + "‌ضلعی"])[0];
-  const pts = Array.from({ length: n }, (_, i) => { const a = (i / n) * 2 * Math.PI - Math.PI / 2; return [110 + 60 * Math.cos(a), 95 + 60 * Math.sin(a)]; });
+  const pts = Array.from({ length: n }, (_, i) => { const a = (i / n) * 2 * Math.PI - Math.PI / 2; return [109 + 70 * Math.cos(a), 95 + 70 * Math.sin(a)]; });
   useEffect(() => { if (onReading) onReading(`${name}: ${n} ضلع، ${n} رأس`); /* eslint-disable-next-line */ }, [n]);
   const sumAng = (n - 2) * 180;
   return (
     <div className="vlab-exp">
       <svg viewBox="0 0 320 190" className="vlab-svg" style={{ direction: "ltr", background: "#fbf7ec" }}>
         <rect width="320" height="190" rx="12" fill="#fbf7ec" />
-        <polygon points={pts.map((p) => p.join(",")).join(" ")} fill="#ffe08a" stroke="#6b4513" strokeWidth="3" />
-        {pts.map((p, i) => <circle key={i} cx={p[0]} cy={p[1]} r="5" fill="#c0392b" />)}
+        <defs><radialGradient id="ssBg" cx="0.35" cy="0.4" r="0.8"><stop offset="0" stopColor="#fffdf5" /><stop offset="1" stopColor="#f1e8cf" /></radialGradient></defs>
+        <rect x="6" y="6" width="206" height="178" rx="10" fill="url(#ssBg)" stroke="#e3d5ac" />
+        {pts.slice(1, n - 1).map((p, i) => <polygon key={i} points={[pts[0], pts[i + 1], pts[i + 2]].map((q) => q.join(",")).join(" ")} fill={`hsl(${38 + i * 38},85%,${72 - (i % 2) * 6}%)`} opacity="0.9" />)}
+        {pts.slice(2, n - 1).map((p, i) => <line key={i} x1={pts[0][0]} y1={pts[0][1]} x2={p[0]} y2={p[1]} stroke="#6b4513" strokeWidth="1.4" strokeDasharray="4 3" />)}
+        <polygon points={pts.map((p) => p.join(",")).join(" ")} fill="none" stroke="#6b4513" strokeWidth="3.2" strokeLinejoin="round" />
+        {pts.map((p, i) => {
+          const pr = pts[(i + n - 1) % n], nx = pts[(i + 1) % n], r = 15;
+          const da = Math.atan2(pr[1] - p[1], pr[0] - p[0]), db = Math.atan2(nx[1] - p[1], nx[0] - p[0]);
+          const cr = (pr[0] - p[0]) * (nx[1] - p[1]) - (pr[1] - p[1]) * (nx[0] - p[0]);
+          return <g key={i}><path d={`M${p[0] + r * Math.cos(da)},${p[1] + r * Math.sin(da)} A${r},${r} 0 0 ${cr > 0 ? 1 : 0} ${p[0] + r * Math.cos(db)},${p[1] + r * Math.sin(db)}`} fill="none" stroke="#c0392b" strokeWidth="1.8" /><circle cx={p[0]} cy={p[1]} r="4.6" fill="#c0392b" stroke="#fff" strokeWidth="1.4" /></g>;
+        })}
         <text x="245" y="60" fontSize="16" fill="#33291a" textAnchor="middle" fontWeight="700">{name}</text>
         <text x="245" y="86" fontSize="11" fill="#33291a" textAnchor="middle">{VLAB_FA_DIGITS(n)} ضلع (پاره‌خط)</text>
         <text x="245" y="106" fontSize="11" fill="#c0392b" textAnchor="middle">{VLAB_FA_DIGITS(n)} رأس (گوشه)</text>
         <text x="245" y="132" fontSize="11" fill="#1b7d3a" textAnchor="middle">مجموع زاویه‌ها: {VLAB_FA_DIGITS(sumAng)}°</text>
+        <text x="245" y="152" fontSize="10" fill="#6b4513" textAnchor="middle">{"تقسیم به " + VLAB_FA_DIGITS(n - 2) + " مثلث"}</text>
+        <text x="245" y="170" fontSize="10" fill="#6b4513" textAnchor="middle">{"هر زاویه (منتظم): " + VLAB_FA_DIGITS(Math.round((sumAng / n) * 10) / 10) + "°"}</text>
+        {{ 3: "⚠️", 4: "🪟", 6: "🐝", 8: "🛑" }[n] ? <text x="245" y="38" fontSize="22" textAnchor="middle">{{ 3: "⚠️", 4: "🪟", 6: "🐝", 8: "🛑" }[n]}</text> : null}
       </svg>
       <div className="vlab-controls"><div className="vlab-ctrl-col" style={{ flex: 1 }}>
         <label className="vlab-ctrl-label">تعداد ضلع‌ها: {VLAB_FA_DIGITS(n)}</label>

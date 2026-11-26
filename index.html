@@ -25491,7 +25491,7 @@ const VLAB_EXPERIMENTS = [
     level: "متوسطه اول",
     title: "هوازدگی یخ‌زدگی",
     icon: "🪨",
-    intro: "شب‌های یخ‌بندان پیاپی را شبیه‌سازی کن و شکستن صخره را ببین.",
+    intro: "آب در ترک صخره یخ می‌زند، منبسط می‌شود و ترک را بازتر می‌کند؛ با تکرار، صخره از هم می‌پاشد.",
     tools: ["صخره", "آب", "یخ‌بندان"],
   },
   {
@@ -25538,6 +25538,78 @@ const VLAB_EXPERIMENTS = [
     icon: "🥚",
     intro: "اجسام را در آب بینداز، آب شور هم امتحان کن.",
     tools: ["ظرف آب", "شش جسم", "نمک"],
+  },
+  {
+    id: "pulley-system",
+    subject: "فیزیک",
+    level: "متوسطه اول",
+    title: "قرقره و مزیت مکانیکی",
+    icon: "⚙️",
+    intro: "تعداد رشته‌های طناب را عوض کن و ببین نیروی لازم چقدر کم می‌شود و در عوض چقدر باید طناب بکشی.",
+    tools: ["قرقره‌ی ثابت و متحرک", "طناب", "نیروسنج", "بار"],
+  },
+  {
+    id: "liquid-pressure",
+    subject: "فیزیک",
+    level: "متوسطه اول",
+    title: "فشار مایعات و عمق",
+    icon: "💧",
+    intro: "مایع از سوراخ‌های مخزن بیرون می‌زند؛ ببین چرا سوراخ پایین‌تر با فشار بیشتری می‌پاشد.",
+    tools: ["مخزن با سه سوراخ", "سه مایع", "خط‌کش"],
+  },
+  {
+    id: "bulb-circuits",
+    subject: "برق و الکترونیک",
+    level: "متوسطه اول",
+    title: "مدار لامپ‌ها: متوالی و موازی",
+    icon: "💡",
+    intro: "سه لامپ را یک بار پشت سر هم و یک بار موازی ببند و یکی را بردار.",
+    tools: ["باتری", "سه لامپ", "سیم"],
+  },
+  {
+    id: "parallel-lines",
+    subject: "ریاضی",
+    level: "متوسطه اول",
+    title: "خطوط موازی و مورب",
+    icon: "📐",
+    intro: "مورب را بچرخان و زاویه‌های متناظر، یک‌درمیان و داخلی هم‌طرف را مقایسه کن.",
+    tools: ["دو خط موازی", "خط مورب", "زاویه‌سنج"],
+  },
+  {
+    id: "area-shapes",
+    subject: "ریاضی",
+    level: "متوسطه اول",
+    title: "مساحت متوازی‌الاضلاع، مثلث و ذوزنقه",
+    icon: "📏",
+    intro: "شکل را ببُر و جابه‌جا کن تا فرمول مساحت را خودت کشف کنی.",
+    tools: ["شبکه‌ی مربعی", "برش و چرخش", "سه شکل"],
+  },
+  {
+    id: "percent-shop",
+    subject: "ریاضی",
+    level: "متوسطه اول",
+    title: "درصد و تخفیف",
+    icon: "🏷️",
+    intro: "قیمت و درصد تخفیف را عوض کن و ببین چقدر می‌پردازی.",
+    tools: ["شبکه‌ی صدخانه", "برچسب قیمت", "نوار درصد"],
+  },
+  {
+    id: "heart-chambers",
+    subject: "زیست‌شناسی",
+    level: "متوسطه اول",
+    title: "قلب و گردش خون",
+    icon: "❤️",
+    intro: "قلب را در حال تپش ببین و مسیر خون آبی و قرمز را دنبال کن.",
+    tools: ["قلب چهارحفره‌ای", "شش‌ها", "بدن", "ضربان‌سنج"],
+  },
+  {
+    id: "mixture-separation",
+    subject: "شیمی",
+    level: "متوسطه اول",
+    title: "جداسازی مخلوط‌ها",
+    icon: "🧪",
+    intro: "برای هر مخلوط روش مناسب جداسازی را پیدا کن.",
+    tools: ["پنج مخلوط", "پنج روش", "شبیه‌ساز"],
   },
 ];
 
@@ -35397,6 +35469,16 @@ function VlabReactionTimeExperiment({ onReading }) {
 }
 
 const VLAB_EVERYDAY = {
+  "area-shapes": { title: "کاشی‌کاری", text: "برای کاشی‌کاری زمین‌های غیرمستطیلی از همین فرمول‌ها مساحت را حساب می‌کنیم.", art: <g><text x="52" y="58" fontSize="40" textAnchor="middle">📏</text></g> },
+  "percent-shop": { title: "فروشگاه", text: "هنگام حراج با درصد تخفیف قیمت‌ها را مقایسه می‌کنیم.", art: <g><text x="52" y="58" fontSize="40" textAnchor="middle">🏷️</text></g> },
+  "heart-chambers": { title: "ورزش", text: "هنگام دویدن ضربان بالا می‌رود تا اکسیژن بیشتری به ماهیچه‌ها برسد.", art: <g><text x="52" y="58" fontSize="40" textAnchor="middle">❤️</text></g> },
+  "mixture-separation": { title: "تصفیه‌ی آب", text: "در آب‌شیرین‌کن‌ها از تبخیر و تقطیر برای گرفتن آب شیرین استفاده می‌کنند.", art: <g><text x="52" y="58" fontSize="40" textAnchor="middle">🧪</text></g> },
+
+  "pulley-system": { title: "جرثقیل و بالابر", text: "جرثقیل‌ها با چند قرقره بارهای سنگین را با نیروی کم بالا می‌برند.", art: <g><text x="52" y="58" fontSize="40" textAnchor="middle">⚙️</text></g> },
+  "liquid-pressure": { title: "سد", text: "دیوار سد در پایین ضخیم‌تر است چون فشار آب در عمق بیشتر است.", art: <g><text x="52" y="58" fontSize="40" textAnchor="middle">💧</text></g> },
+  "bulb-circuits": { title: "سری چراغ تزئینی", text: "در سری‌های قدیمی با سوختن یک لامپ همه خاموش می‌شدند.", art: <g><text x="52" y="58" fontSize="40" textAnchor="middle">💡</text></g> },
+  "parallel-lines": { title: "ریل راه‌آهن", text: "ریل‌های موازی را تراورس‌ها به‌صورت مورب یا عمود قطع می‌کنند.", art: <g><text x="52" y="58" fontSize="40" textAnchor="middle">📐</text></g> },
+
   "soil-layers": { title: "باغچه", text: "کود را روی خاک رویی می‌ریزیم چون ریشه‌ها آنجا هستند.", art: <g><text x="52" y="58" fontSize="40" textAnchor="middle">🌱</text></g> },
   "fossil-layers": { title: "معدن و کوه", text: "در برش جاده‌ها لایه‌های رسوبی دیده می‌شوند.", art: <g><text x="52" y="58" fontSize="40" textAnchor="middle">🐚</text></g> },
   "fold-mountain": { title: "البرز و زاگرس", text: "این کوه‌ها بر اثر برخورد صفحه‌های زمین ساخته شده‌اند.", art: <g><text x="52" y="58" fontSize="40" textAnchor="middle">⛰️</text></g> },
@@ -42165,6 +42247,29 @@ function VlabBatteryPackExperiment({ onReading }) {
 /* ============================================================
    ققنوس — ۱۰ آزمایش تازه‌ی «زمین‌شناسی»
    ============================================================ */
+/* توقف حرکت: زمان‌سنج‌هایی که داخل آزمایش ساخته می‌شوند هنگام «توقف» می‌ایستند (بیرون از آزمایش، چیزی تغییر نمی‌کند) */
+(function () {
+  if (window.__vlabPatched) return; window.__vlabPatched = true;
+  const si = window.setInterval.bind(window), st = window.setTimeout.bind(window), ct = window.clearTimeout.bind(window), raf = window.requestAnimationFrame.bind(window), craf = window.cancelAnimationFrame.bind(window);
+  const tm = {}, fm = {}; let n = 1e9;
+  window.setInterval = function (fn, ms, ...a) {
+    if (window.__vlabInLab && typeof fn === "function") { const f = fn; fn = function (...q) { if (window.__vlabPause) return; return f.apply(this, q); }; }
+    return si(fn, ms, ...a);
+  };
+  window.setTimeout = function (fn, ms, ...a) {
+    if (!(window.__vlabInLab && typeof fn === "function")) return st(fn, ms, ...a);
+    const id = ++n; const w = function () { if (window.__vlabPause) { tm[id] = st(w, 150); return; } delete tm[id]; return fn.apply(this, a); };
+    tm[id] = st(w, ms); return id;
+  };
+  window.clearTimeout = function (id) { if (id in tm) { ct(tm[id]); delete tm[id]; } else ct(id); };
+  window.requestAnimationFrame = function (fn) {
+    if (!(window.__vlabInLab && typeof fn === "function")) return raf(fn);
+    const id = ++n; const step = function (t) { if (window.__vlabPause) { fm[id] = raf(step); return; } delete fm[id]; fn(t); };
+    fm[id] = raf(step); return id;
+  };
+  window.cancelAnimationFrame = function (id) { if (id in fm) { craf(fm[id]); delete fm[id]; } else craf(id); };
+})();
+
 const VLAB_GEO_TICK = (ms) => {
   const [tk, setTk] = useState(0);
   useEffect(() => {
@@ -45818,29 +45923,90 @@ function VlabProportionGraphExperiment({ onReading }) {
 
 /* ---------- د۶. هوازدگی یخ‌زدگی ---------- */
 function VlabWeatheringExperiment({ onReading }) {
-  const [cycles, setCycles] = useState(0);
-  const [water, setWater] = useState(60);
-  const crack = Math.min(40, cycles * (water / 100) * 4);
-  useEffect(() => { if (onReading) onReading(`${cycles} بار یخ‌زدن | شکاف ${crack.toFixed(0)}`); /* eslint-disable-next-line */ }, [cycles, water]);
-  const split = crack >= 36;
+  const [T, setT] = useState(0);
+  const [water, setWater] = useState(80);
+  const [play, setPlay] = useState(false);
+  useEffect(() => { if (!play) return; const id = setInterval(() => setT((x) => { if (x >= 15) { setPlay(false); return 15; } return Math.min(15, x + 0.04); }), 40); return () => clearInterval(id); }, [play]);
+  const g = 3.4 * (water / 100), W0 = 1.5, LIM = 24;
+  let kb = null; for (let k = 0; k <= 14; k++) { if (W0 + 0.9 * g * k + g >= LIM) { kb = k + 0.5; break; } }
+  const k0 = Math.floor(T), f = T - k0;
+  const temp = 2 + 8 * Math.cos(2 * Math.PI * f);
+  const iceProg = temp < 0 ? Math.min(1, -temp / 5) : 0;
+  const ph = f < 0.31 ? 0 : f < 0.5 ? iceProg : f < 0.69 ? Math.max(0.9, iceProg) : 0.9;
+  const w = Math.min(LIM + 6, W0 + 0.9 * g * k0 + g * ph);
+  const broken = kb !== null && T >= kb;
+  const sb = broken ? Math.min(1, (T - kb) * 2.5) : 0;
+  const lvl = Math.min(1, water / 100) * (f < 0.25 && k0 === 0 ? f / 0.25 : 1);
+  const frozen = iceProg > 0.05;
+  useEffect(() => { if (onReading) onReading(`${k0} شبانه‌روز | دما ${temp.toFixed(0)}°C | پهنای ترک ${w.toFixed(1)}${broken ? " | شکست" : ""}`); /* eslint-disable-next-line */ }, [Math.round(T * 4), water]);
+  const ys = [56, 76, 96, 116, 136, 156, 176], zz = [0, 3, -3, 2, -2, 3, 0];
+  const half = (i) => (w * (1 - 0.85 * (ys[i] - 56) / 120)) / 2;
+  const Lc = ys.map((y, i) => [160 - half(i) + zz[i], y]), Rc = ys.map((y, i) => [160 + half(i) + zz[i], y]);
+  const leftPts = [[56, 208], [66, 112], [100, 70], [136, 56], ...Lc, [160, 180], [160, 208]];
+  const rightPts = [[160, 208], [160, 180], ...Rc.slice().reverse(), [186, 56], [224, 62], [258, 98], [266, 208]];
+  const P = (arr) => arr.map((q) => q.join(",")).join(" ");
+  const fillTop = 176 - 120 * lvl;
+  const crackPoly = [...Lc, ...Rc.slice().reverse()];
+  const night = f >= 0.5 && f < 1 && temp < 4;
+  const dayBg = temp > 1 ? "#cfe9ff" : "#9fb4d8";
+  const speck = Array.from({ length: 34 }, (_, i) => [64 + ((i * 53) % 196), 70 + ((i * 37) % 130), 1 + (i % 3) * 0.6]);
+  const phaseTxt = frozen ? "شب: آب یخ می‌زند، ۹ درصد منبسط می‌شود و ترک را باز می‌کند" : temp < 3 && f > 0.5 ? "صبح: یخ آب می‌شود، اما ترک پهن‌تر مانده است" : f < 0.25 && k0 >= 0 ? "روز: آب به ترک نفوذ می‌کند" : "روز: آب درون ترک مایع است";
+  const th = Math.max(0, Math.min(1, (temp + 8) / 20));
   return (
     <div className="vlab-exp">
-      <svg viewBox="0 0 320 180" className="vlab-svg" style={{ direction: "ltr", background: "#dbe9f4" }}>
-        <rect width="320" height="180" rx="12" fill="#dbe9f4" />
-        <rect y="150" width="320" height="30" fill="#8d6e63" />
-        <g transform={split ? "translate(-10,0)" : ""}><polygon points="80,150 90,70 150,60 160,150" fill="#8a8f98" stroke="#33291a" strokeWidth="2" /></g>
-        <g transform={split ? "translate(14,4) rotate(6 200 150)" : ""}><polygon points="160,150 150,60 210,75 230,150" fill="#9aa0a8" stroke="#33291a" strokeWidth="2" /></g>
-        {!split && <path d={`M 152,60 L ${152 + crack * 0.1},${60 + crack * 1.6}`} stroke="#222" strokeWidth={1 + crack * 0.12} />}
-        {!split && <path d={`M 152,${60 + crack * 1.6} l 4,10`} stroke="#4fc3f7" strokeWidth={Math.max(1, water / 15)} />}
-        <text x="160" y="22" fontSize="11" fill="#33291a" textAnchor="middle" fontWeight="700">{cycles ? `${VLAB_FA_DIGITS(cycles)} شب یخ‌بندان` : "شب‌ها هنوز یخ نزده"}</text>
-        <text x="160" y="40" fontSize="10" fill={split ? "#c0392b" : "#1e6fd9"} textAnchor="middle">{split ? "صخره شکست!" : `پهنای ترک: ${VLAB_FA_DIGITS(crack.toFixed(0))}`}</text>
-        <text x="160" y="172" fontSize="9" fill="#fff" textAnchor="middle">آب هنگام یخ‌زدن حدود ۹٪ حجمش بیشتر می‌شود</text>
+      <svg viewBox="0 0 320 250" className="vlab-svg" style={{ direction: "ltr", background: dayBg }}>
+        <defs>
+          <linearGradient id="wxRock" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stopColor="#a2a8b2" /><stop offset="1" stopColor="#5d6573" /></linearGradient>
+          <clipPath id="wxClip"><rect x="100" y={fillTop} width="120" height="200" /></clipPath>
+        </defs>
+        <rect width="320" height="250" rx="12" fill={dayBg} />
+        <text x="30" y="34" fontSize="22" textAnchor="middle">{f < 0.5 ? "☀️" : "🌙"}</text>
+        <rect x="0" y="206" width="320" height="44" fill="#8d7b5f" />
+        {broken && Array.from({ length: 9 }, (_, i) => <polygon key={i} points={`${66 + i * 22},208 ${74 + i * 22},${198 - (i % 3) * 5} ${84 + i * 22},208`} fill={i % 2 ? "#7b828e" : "#9aa1ad"} stroke="#4a5058" strokeWidth="1" opacity={sb} />)}
+        <g transform={broken ? `translate(${-sb * 44},${sb * 12}) rotate(${-sb * 9} 110 208)` : ""}>
+          <polygon points={P(leftPts)} fill="url(#wxRock)" stroke="#3f4650" strokeWidth="2.2" strokeLinejoin="round" />
+          {[96, 132, 168].map((y, i) => <path key={i} d={`M 60,${y + 2} Q 100,${y - 6} 150,${y + 3}`} stroke="#4b525d" strokeWidth="1" fill="none" opacity="0.5" />)}
+          {speck.filter((q) => q[0] < 140).map((q, i) => <circle key={i} cx={q[0]} cy={q[1]} r={q[2]} fill="#3f4650" opacity="0.35" />)}
+        </g>
+        <g transform={broken ? `translate(${sb * 44},${sb * 12}) rotate(${sb * 9} 212 208)` : ""}>
+          <polygon points={P(rightPts)} fill="url(#wxRock)" stroke="#3f4650" strokeWidth="2.2" strokeLinejoin="round" />
+          {[96, 132, 168].map((y, i) => <path key={i} d={`M 170,${y + 3} Q 220,${y - 6} 262,${y + 2}`} stroke="#4b525d" strokeWidth="1" fill="none" opacity="0.5" />)}
+          {speck.filter((q) => q[0] >= 180).map((q, i) => <circle key={i} cx={q[0]} cy={q[1]} r={q[2]} fill="#3f4650" opacity="0.35" />)}
+        </g>
+        {!broken && w > 0 && <g clipPath="url(#wxClip)">
+          <polygon points={P(crackPoly)} fill={frozen ? "#e6f6ff" : "#3d9be0"} opacity={frozen ? 1 : 0.9} />
+          {frozen && Array.from({ length: 7 }, (_, i) => <line key={i} x1={158 + zz[i]} y1={ys[i]} x2={162 + zz[i]} y2={ys[i] + 12} stroke="#9bd4f5" strokeWidth="1.2" />)}
+        </g>}
+        {!broken && !frozen && lvl > 0 && Array.from({ length: 3 }, (_, i) => <circle key={i} cx={160 + zz[i + 1]} cy={fillTop + 6 + i * 22} r="1.6" fill="#fff" opacity="0.8" />)}
+        {!broken && frozen && iceProg > 0.3 && <g stroke="#c62828" strokeWidth="2.4" fill="none" strokeLinecap="round"><path d="M 150,100 l -14,0 m 4,-4 l -4,4 l 4,4" /><path d="M 170,100 l 14,0 m -4,-4 l 4,4 l -4,4" /></g>}
+        {/* دماسنج */}
+        <g transform="translate(286,40)">
+          <rect x="-6" y="0" width="12" height="110" rx="6" fill="#fff" stroke="#6b7a99" strokeWidth="1.6" />
+          <rect x="-3.5" y={104 - 100 * th} width="7" height={100 * th + 2} rx="3.5" fill={temp < 0 ? "#2f80ed" : "#e53935"} />
+          <circle cx="0" cy="116" r="9" fill={temp < 0 ? "#2f80ed" : "#e53935"} stroke="#6b7a99" strokeWidth="1.6" />
+          <line x1="-10" y1={104 - 100 * ((0 + 8) / 20)} x2="10" y2={104 - 100 * ((0 + 8) / 20)} stroke="#33415c" strokeDasharray="2 2" />
+          <text x="0" y="142" fontSize="10" fill="#33415c" textAnchor="middle" fontWeight="700">{temp < 0 ? "منفی " + VLAB_FA_DIGITS(Math.round(-temp)) : VLAB_FA_DIGITS(Math.round(temp))} درجه</text>
+        </g>
+        <rect x="8" y="56" width="74" height="46" rx="8" fill="#fff" opacity="0.88" />
+        <text x="45" y="71" fontSize="8" fill="#33415c" textAnchor="middle" fontWeight="700">۱۰۰ واحد آب</text>
+        <text x="45" y="83" fontSize="8" fill="#33415c" textAnchor="middle">هنگام یخ‌زدن می‌شود</text>
+        <text x="45" y="96" fontSize="9" fill="#1565c0" textAnchor="middle" fontWeight="700">۱۰۹ واحد یخ</text>
+        <rect x="40" y="2" width="240" height="22" rx="11" fill="#fff" opacity="0.9" />
+        <text x="160" y="17" fontSize="10" fill={broken ? "#c62828" : "#33415c"} textAnchor="middle" fontWeight="700">{broken ? "صخره از هم پاشید!" : `شبانه‌روز ${VLAB_FA_DIGITS(k0 + 1)} ؛ پهنای ترک ${VLAB_FA_DIGITS(w.toFixed(1))} واحد`}</text>
+        <rect x="12" y="222" width="296" height="22" rx="8" fill="#fff" opacity="0.92" />
+        <text x="160" y="237" fontSize="9" fill="#33415c" textAnchor="middle">{broken ? "تکرار یخ‌زدن و آب‌شدن، صخره را خرد کرد" : phaseTxt}</text>
       </svg>
       <div className="vlab-controls"><div className="vlab-ctrl-col" style={{ flex: 1 }}>
-        <label className="vlab-ctrl-label">آب درون شکاف: {VLAB_FA_DIGITS(water)}٪</label><VlabRange min={10} max={100} step={5} value={water} onChange={(e) => { setWater(+e.target.value); setCycles(0); }} />
-        <div className="vlab-num-row"><button type="button" className="vlab-num-btn active" onClick={() => setCycles((c) => c + 1)}>❄️ یک شب یخ‌بندان</button><button type="button" className="vlab-num-btn" onClick={() => setCycles(0)}>از نو</button></div>
+        <label className="vlab-ctrl-label">گذر شبانه‌روزها: {VLAB_FA_DIGITS(T.toFixed(1))}</label>
+        <VlabRange min={0} max={15} step={0.05} value={T} onChange={(e) => { setPlay(false); setT(+e.target.value); }} />
+        <label className="vlab-ctrl-label">آب درون ترک: {VLAB_FA_DIGITS(water)} درصد</label>
+        <VlabRange min={20} max={100} step={5} value={water} onChange={(e) => setWater(+e.target.value)} />
+        <div className="vlab-num-row"><button type="button" className="vlab-num-btn active" onClick={() => { if (T >= 15) setT(0); setPlay((x) => !x); }}>{play ? "⏸ توقف" : "▶ پخش شبانه‌روزها"}</button><button type="button" className="vlab-num-btn" onClick={() => { setPlay(false); setT(0); }}>⏮ از نو</button></div>
       </div></div>
-      <div className="vlab-readout">آب به درون شکاف نفوذ می‌کند، شب یخ می‌زند و منبسط می‌شود و شکاف را بازتر می‌کند؛ روز آب می‌شود و دوباره نفوذ می‌کند. تکرار، صخره را خرد می‌کند (هوازدگی فیزیکی). مدل ساده است و پهنا مقیاس نسبی دارد.</div>
+      <div className="vlab-readout">
+        در روز، آب باران یا برف‌آب‌شده از ترک‌های ریز صخره پایین می‌رود. شب که دما زیر صفر می‌شود، آب یخ می‌زند و حجمش حدود <b>۹ درصد زیاد</b> می‌شود؛ یخ مثل گوه به دیواره‌های ترک فشار می‌آورد و آن را کمی بازتر می‌کند. روز بعد یخ آب می‌شود، اما ترک پهن‌تر مانده و آب بیشتری در آن جا می‌گیرد. با تکرار <b>صدها بار</b> (اینجا چند بار) صخره سرانجام تکه‌تکه می‌شود و واریزه‌ها پای آن جمع می‌شوند. این را <b>هوازدگی فیزیکی</b> می‌گویند. (مدل آموزشی: پهنا و تعداد شب‌ها مقیاس واقعی ندارند.)
+      </div>
+      <VlabFormulaCheck title="حجم یخ" fa="حجم یخ ≈ حجم آب × ۱٫۰۹" en="" legend="۲۰۰ سانتی‌مترمکعب آب در ترک یخ می‌زند" subst="200 × 1.09 = ?" label="حجم یخ:" answer={218} unit="سانتی‌مترمکعب" decimals={0} />
     </div>
   );
 }
@@ -45976,7 +46142,585 @@ function VlabSinkFloatKidsExperiment({ onReading }) {
   );
 }
 
+/* ============================================================
+   ققنوس — دسته‌ی متوسطه اول (الف): قرقره، فشار مایع، مدار لامپ، خطوط موازی
+   ============================================================ */
+
+/* ---------- ۱. قرقره و مزیت مکانیکی ---------- */
+function VlabPulleySystemExperiment({ onReading }) {
+  const [n, setN] = useState(2);
+  const [W, setW] = useState(100);
+  const [pull, setPull] = useState(40);
+  const rise = pull / n, F = W / n;
+  const S = 1.4, r = 9, sp = 18;
+  const yTop = 46, yb = 196 - rise * S;
+  const cx = 100 - ((n - 1) * sp) / 2;
+  const xs = Array.from({ length: n }, (_, i) => cx + i * sp);
+  const down = (i) => (n % 2 === 0 ? i % 2 === 0 : i % 2 === 1);
+  const handY = 150 + pull * S;
+  const goff = 28, gx = xs[n - 1] + goff / 2;
+  useEffect(() => { if (onReading) onReading(`${n} رشته | نیروی لازم ${F.toFixed(0)} N | بار ${rise.toFixed(0)} cm بالا رفت`); /* eslint-disable-next-line */ }, [n, W, pull]);
+  const loops = [];
+  for (let i = 0; i < n - 1; i++) loops.push({ x: (xs[i] + xs[i + 1]) / 2, top: !down(i) });
+  const topX0 = Math.min(...xs) - 14, topX1 = xs[n - 1] + goff + 12;
+  const botX0 = xs[0] - 14, botX1 = xs[n - 1] + 14;
+  const bw = 46;
+  return (
+    <div className="vlab-exp">
+      <svg viewBox="0 0 320 300" className="vlab-svg" style={{ direction: "ltr", background: "#eef2fb" }}>
+        <defs>
+          <linearGradient id="plMetal" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stopColor="#cfd8e6" /><stop offset="1" stopColor="#7f8da6" /></linearGradient>
+          <linearGradient id="plLoad" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stopColor="#ffb74d" /><stop offset="1" stopColor="#e65100" /></linearGradient>
+        </defs>
+        <rect width="320" height="300" rx="12" fill="#eef2fb" />
+        <rect x="40" y="10" width="220" height="12" rx="3" fill="#5b6479" />
+        {Array.from({ length: 12 }, (_, i) => <line key={i} x1={46 + i * 18} y1="10" x2={40 + i * 18} y2="4" stroke="#5b6479" strokeWidth="2" />)}
+        <rect x={topX0} y="22" width={topX1 - topX0} height="36" rx="6" fill="url(#plMetal)" stroke="#4a5568" strokeWidth="1.5" />
+        <rect x={botX0} y={yb - 12} width={botX1 - botX0} height="24" rx="6" fill="url(#plMetal)" stroke="#4a5568" strokeWidth="1.5" />
+        {/* طناب */}
+        <g stroke="#b8860b" strokeWidth="3" fill="none" strokeLinecap="round">
+          {xs.map((x, i) => <line key={i} x1={x} y1={yTop} x2={x} y2={yb} />)}
+          {loops.map((l, i) => l.top ? <path key={i} d={`M ${l.x - sp / 2},${yTop} A ${sp / 2},${sp / 2} 0 0 1 ${l.x + sp / 2},${yTop}`} /> : <path key={i} d={`M ${l.x - sp / 2},${yb} A ${sp / 2},${sp / 2} 0 0 0 ${l.x + sp / 2},${yb}`} />)}
+          <path d={`M ${xs[n - 1]},${yTop} A ${goff / 2},${goff / 2} 0 0 1 ${xs[n - 1] + goff},${yTop} L ${xs[n - 1] + goff},${handY}`} />
+        </g>
+        {n % 2 === 0 ? <circle cx={xs[0]} cy={yTop} r="3.5" fill="#333" /> : <circle cx={xs[0]} cy={yb} r="3.5" fill="#333" />}
+        {/* چرخ‌ها */}
+        {loops.filter((l) => l.top).map((l, i) => <g key={"t" + i}><circle cx={l.x} cy={yTop} r={r - 1.5} fill="#e9eef7" stroke="#4a5568" strokeWidth="1.5" /><circle cx={l.x} cy={yTop} r="2" fill="#4a5568" /></g>)}
+        {loops.filter((l) => !l.top).map((l, i) => <g key={"b" + i}><circle cx={l.x} cy={yb} r={r - 1.5} fill="#e9eef7" stroke="#4a5568" strokeWidth="1.5" /><circle cx={l.x} cy={yb} r="2" fill="#4a5568" /></g>)}
+        <g><circle cx={gx} cy={yTop} r={goff / 2 - 1.5} fill="#e9eef7" stroke="#4a5568" strokeWidth="1.5" /><circle cx={gx} cy={yTop} r="2" fill="#4a5568" /></g>
+        {/* بار */}
+        <line x1={(botX0 + botX1) / 2} y1={yb + 12} x2={(botX0 + botX1) / 2} y2={yb + 30} stroke="#4a5568" strokeWidth="2.5" />
+        <rect x={(botX0 + botX1) / 2 - bw / 2} y={yb + 30} width={bw} height="40" rx="6" fill="url(#plLoad)" stroke="#8a3200" strokeWidth="2" />
+        <text x={(botX0 + botX1) / 2} y={yb + 54} fontSize="9" fill="#fff" textAnchor="middle" fontWeight="700">{VLAB_FA_DIGITS(W)} نیوتن</text>
+        {/* دست و نیروسنج */}
+        <g transform={`translate(${xs[n - 1] + goff},${handY})`}>
+          <rect x="-16" y="0" width="32" height="26" rx="6" fill="#fff" stroke="#2e7d32" strokeWidth="2" />
+          <text x="0" y="17" fontSize="11" fill="#2e7d32" textAnchor="middle" fontWeight="700">{VLAB_FA_DIGITS(F.toFixed(0))}</text>
+          <text x="0" y="42" fontSize="14" textAnchor="middle">✋</text>
+        </g>
+        {/* اطلاعات */}
+        <rect x="236" y="70" width="76" height="88" rx="10" fill="#fff" stroke="#c9d3e6" />
+        <text x="274" y="88" fontSize="9" fill="#5b6479" textAnchor="middle">تعداد رشته‌ی نگه‌دارنده</text>
+        <text x="274" y="108" fontSize="18" fill="#1e6fd9" textAnchor="middle" fontWeight="700">{VLAB_FA_DIGITS(n)}</text>
+        <text x="274" y="126" fontSize="9" fill="#5b6479" textAnchor="middle">نیروی لازم = وزن ÷ {VLAB_FA_DIGITS(n)}</text>
+        <text x="274" y="142" fontSize="9" fill="#2e7d32" textAnchor="middle" fontWeight="700">{VLAB_FA_DIGITS(F.toFixed(0))} نیوتن</text>
+        <text x="274" y="153" fontSize="7.5" fill="#8a8aa0" textAnchor="middle">(بدون اصطکاک)</text>
+      </svg>
+      <div className="vlab-controls"><div className="vlab-ctrl-col" style={{ flex: 1 }}>
+        <label className="vlab-ctrl-label">تعداد رشته‌های طناب که بار را نگه می‌دارند: {VLAB_FA_DIGITS(n)}</label>
+        <div className="vlab-num-row">{[1, 2, 3, 4].map((k) => <button key={k} type="button" className={"vlab-num-btn" + (n === k ? " active" : "")} onClick={() => setN(k)}>{VLAB_FA_DIGITS(k)}</button>)}</div>
+        <label className="vlab-ctrl-label">وزن بار: {VLAB_FA_DIGITS(W)} نیوتن</label>
+        <VlabRange min={20} max={200} step={10} value={W} onChange={(e) => setW(+e.target.value)} />
+        <label className="vlab-ctrl-label">طول طنابِ کشیده‌شده: {VLAB_FA_DIGITS(pull)} سانتی‌متر</label>
+        <VlabRange min={0} max={80} step={2} value={pull} onChange={(e) => setPull(+e.target.value)} />
+      </div></div>
+      <div className="vlab-readout">
+        با {VLAB_FA_DIGITS(n)} رشته، نیروی لازم <b>{VLAB_FA_DIGITS(F.toFixed(0))} نیوتن</b> است (کمتر از وزن بار)، اما باید <b>{VLAB_FA_DIGITS(pull)} سانتی‌متر</b> طناب بکشی تا بار فقط <b>{VLAB_FA_DIGITS(rise.toFixed(1))} سانتی‌متر</b> بالا برود. کار ورودی ({VLAB_FA_DIGITS((F * pull / 100).toFixed(1))} ژول) با کار خروجی ({VLAB_FA_DIGITS((W * rise / 100).toFixed(1))} ژول) برابر است؛ قرقره کار را کم نمی‌کند، فقط نیرو را کم و مسیر را بلندتر می‌کند. (مدل ایده‌آل: بدون اصطکاک و بدون وزن قرقره.)
+      </div>
+      <VlabFormulaCheck title="نیروی لازم" fa="نیروی لازم = وزن بار ÷ تعداد رشته‌ها" en="F = W / n" legend="مزیت مکانیکی ایده‌آل = تعداد رشته‌های نگه‌دارنده" subst={`${W} ÷ ${n} = ?`} label="F:" answer={F} unit="نیوتن" decimals={1} />
+    </div>
+  );
+}
+
+/* ---------- ۲. فشار مایعات ---------- */
+const VLAB_F_LIQ = [{ n: "آب", rho: 1000, c: "#4aa3df" }, { n: "روغن", rho: 800, c: "#e0a82e" }, { n: "آب نمک", rho: 1200, c: "#3bb8a8" }];
+function VlabLiquidPressureExperiment({ onReading }) {
+  const [H, setH] = useState(80);
+  const [li, setLi] = useState(0);
+  const tk = VLAB_GEO_TICK(30);
+  const L = VLAB_F_LIQ[li];
+  const k = 1.6, gy = 205, tx0 = 28, tx1 = 108;
+  const holes = [10, 30, 55];
+  const jets = holes.map((y) => { const h = H - y; if (h <= 0) return null; const R = 2 * Math.sqrt(h * y); const p = (L.rho * 10 * (h / 100)) / 1000; return { y, h, R, p }; });
+  useEffect(() => { if (onReading) onReading(`${L.n} | عمق ${H} cm`); /* eslint-disable-next-line */ }, [H, li]);
+  const deepP = jets[0] ? jets[0].p : 0;
+  return (
+    <div className="vlab-exp">
+      <svg viewBox="0 0 320 240" className="vlab-svg" style={{ direction: "ltr", background: "#eef6fb" }}>
+        <defs><linearGradient id="lpL" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stopColor={L.c} stopOpacity="0.55" /><stop offset="1" stopColor={L.c} stopOpacity="0.95" /></linearGradient></defs>
+        <rect width="320" height="240" rx="12" fill="#eef6fb" />
+        <rect x="0" y={gy} width="320" height="35" fill="#c9b99a" /><line x1="0" y1={gy} x2="320" y2={gy} stroke="#8d7b58" strokeWidth="2" />
+        {Array.from({ length: 11 }, (_, i) => <g key={i}><line x1={tx1 + i * 20} y1={gy} x2={tx1 + i * 20} y2={gy + (i % 5 === 0 ? 8 : 4)} stroke="#6b5a3a" /></g>)}
+        <text x={tx1 + 50} y={gy + 22} fontSize="8" fill="#5a4a2a" textAnchor="middle">۵۰ سانتی‌متر</text><text x={tx1 + 150} y={gy + 22} fontSize="8" fill="#5a4a2a" textAnchor="middle">۱۵۰</text>
+        <rect x={tx0} y={gy - 100 * k} width={tx1 - tx0} height={100 * k} fill="none" stroke="#33415c" strokeWidth="3" />
+        <rect x={tx0 + 1.5} y={gy - H * k} width={tx1 - tx0 - 3} height={H * k - 1} fill="url(#lpL)" />
+        <line x1={tx0 + 1.5} y1={gy - H * k} x2={tx1 - 1.5} y2={gy - H * k} stroke="#fff" strokeWidth="1.5" />
+        <text x={tx0 + 40} y={gy - 100 * k - 6} fontSize="9" fill="#33415c" textAnchor="middle">ارتفاع مایع {VLAB_FA_DIGITS(H)} سانتی‌متر</text>
+        {jets.map((j, i) => {
+          if (!j) return <rect key={i} x={tx1 - 3} y={gy - holes[i] * k - 3} width="6" height="6" fill="#33415c" />;
+          const y0 = gy - j.y * k, Rp = j.R * k;
+          const pts = Array.from({ length: 31 }, (_, q) => { const u = q / 30; return `${(tx1 + Rp * u).toFixed(1)},${(y0 + (gy - y0) * u * u).toFixed(1)}`; }).join(" ");
+          return <g key={i}>
+            <polyline points={pts} fill="none" stroke={L.c} strokeWidth="4" strokeLinecap="round" opacity="0.35" />
+            <polyline points={pts} fill="none" stroke="#fff" strokeWidth="1.6" strokeLinecap="round" strokeDasharray="5 7" strokeDashoffset={-(tk * 2)} />
+            <ellipse cx={tx1 + Rp + 3} cy={gy - 1} rx={5 + (tk % 8) * 0.4} ry="1.6" fill={L.c} opacity="0.7" />
+            <rect x={tx1 - 3} y={y0 - 3} width="6" height="6" rx="1" fill="#33415c" />
+            <line x1={tx0} y1={y0} x2={tx1} y2={y0} stroke="#fff" strokeOpacity="0.45" strokeDasharray="2 3" />
+            <text x={tx0 + 4} y={y0 - 3} fontSize="8" fill="#0d2b4a" fontWeight="700">فشار {VLAB_FA_DIGITS(j.p.toFixed(1))} کیلوپاسکال</text>
+          </g>;
+        })}
+        <text x="248" y="40" fontSize="10" fill="#33415c" textAnchor="middle" fontWeight="700">هرچه عمق بیشتر،</text>
+        <text x="248" y="55" fontSize="10" fill="#33415c" textAnchor="middle" fontWeight="700">فشار بیشتر</text>
+        <text x="248" y="72" fontSize="8" fill="#7a869c" textAnchor="middle">(سطح مایع با شیر ثابت می‌ماند)</text>
+        <rect x="196" y="84" width="104" height="58" rx="8" fill="#fff" stroke="#c9d3e6" /><text x="248" y="99" fontSize="8.5" fill="#33415c" textAnchor="middle" fontWeight="700">برد پرتاب (سانتی‌متر)</text>{jets.map((j, i) => <text key={i} x="248" y={113 + i * 12} fontSize="8.5" fill="#33415c" textAnchor="middle">{["سوراخ پایین", "سوراخ میانی", "سوراخ بالا"][i]}: {j ? VLAB_FA_DIGITS(j.R.toFixed(0)) : "بسته"}</text>)}
+      </svg>
+      <div className="vlab-controls"><div className="vlab-ctrl-col" style={{ flex: 1 }}>
+        <label className="vlab-ctrl-label">ارتفاع مایع: {VLAB_FA_DIGITS(H)} سانتی‌متر</label>
+        <VlabRange min={20} max={100} step={5} value={H} onChange={(e) => setH(+e.target.value)} />
+        <div className="vlab-num-row">{VLAB_F_LIQ.map((x, i) => <button key={i} type="button" className={"vlab-num-btn" + (li === i ? " active" : "")} onClick={() => setLi(i)}>{x.n}</button>)}</div>
+      </div></div>
+      <div className="vlab-readout">
+        فشار مایع در هر نقطه به <b>عمق</b> و <b>چگالی مایع</b> بستگی دارد (P = ρ × g × h). سوراخ پایین‌تر فشار بیشتری دارد و مایع با سرعت بیشتری بیرون می‌زند. جالب است که برد پرتاب، با تغییر مایع عوض نمی‌شود، چون هم فشار و هم جرمی که باید شتاب بگیرد با چگالی بزرگ می‌شوند. (g را ۱۰ گرفته‌ایم؛ مدل بدون اصطکاک و لزجت.)
+      </div>
+      <VlabFormulaCheck title="فشار در پایین‌ترین سوراخ" fa="فشار = چگالی × ۱۰ × عمق" en="P = ρ g h" legend={`چگالی ${L.n} = ${L.rho} کیلوگرم بر مترمکعب؛ عمق را به متر بنویس؛ جواب به کیلوپاسکال`} subst={`${L.rho} × 10 × ${((H - 10) / 100).toFixed(2)} ÷ 1000 = ?`} label="P:" answer={(L.rho * 10 * ((H - 10) / 100)) / 1000} unit="کیلوپاسکال" decimals={1} />
+    </div>
+  );
+}
+
+/* ---------- ۳. مدار لامپ‌ها: متوالی و موازی ---------- */
+function VlabBulbCircuitsExperiment({ onReading }) {
+  const [mode, setMode] = useState("series");
+  const [cells, setCells] = useState(1);
+  const [ok, setOk] = useState([true, true, true]);
+  const tk = VLAB_GEO_TICK(30);
+  const V = 1.5 * cells, R = 5, P0 = 0.45;
+  const nOk = ok.filter(Boolean).length;
+  let I = 0, P = [0, 0, 0];
+  if (mode === "series") { if (nOk === 3) { I = V / (3 * R); P = [1, 2, 3].map(() => I * I * R); } }
+  else { P = ok.map((o) => (o ? (V * V) / R : 0)); I = ok.reduce((s, o) => s + (o ? V / R : 0), 0); }
+  const br = P.map((p) => Math.min(1.3, p / P0));
+  const over = br.some((b) => b > 1.05);
+  useEffect(() => { if (onReading) onReading(`${mode === "series" ? "متوالی" : "موازی"} | ${V} V | جریان ${I.toFixed(2)} A`); /* eslint-disable-next-line */ }, [mode, cells, ok]);
+  const rect = [[50, 40], [270, 40], [270, 170], [50, 170]];
+  const along = (pts, s) => { let tot = 0; const seg = []; for (let i = 0; i < pts.length; i++) { const a = pts[i], b = pts[(i + 1) % pts.length]; const l = Math.hypot(b[0] - a[0], b[1] - a[1]); seg.push([a, b, l]); tot += l; } let d = ((s % tot) + tot) % tot; for (const [a, b, l] of seg) { if (d <= l) return [a[0] + ((b[0] - a[0]) * d) / l, a[1] + ((b[1] - a[1]) * d) / l]; d -= l; } return pts[0]; };
+  const bx = mode === "series" ? [120, 170, 220] : [140, 190, 240];
+  const by = mode === "series" ? [40, 40, 40] : [105, 105, 105];
+  const dots = [];
+  if (I > 0) {
+    const sp = tk * (1 + I * 5);
+    if (mode === "series") for (let q = 0; q < 16; q++) { const [x, y] = along(rect, q * 40 + sp); dots.push([x, y]); }
+    else ok.forEach((o, bi) => { if (!o) return; const path = [[50, 40], [bx[bi], 40], [bx[bi], 170], [50, 170]]; for (let q = 0; q < 8; q++) { const [x, y] = along(path, q * 56 + sp); dots.push([x, y]); } });
+  }
+  const bulb = (i) => {
+    const x = bx[i], y = by[i], b = br[i], alive = ok[i];
+    return <g key={i} onClick={() => setOk((o) => o.map((v, j) => (j === i ? !v : v)))} style={{ cursor: "pointer" }}>
+      {b > 0 && alive && <circle cx={x} cy={y - 8} r={20 + b * 14} fill="#ffe66d" opacity={Math.min(0.55, b * 0.45)} />}
+      <rect x={x - 8} y={y + 6} width="16" height="11" rx="2" fill="#7f8da6" stroke="#4a5568" />
+      <g transform={alive ? "" : `translate(18,-14) rotate(22 ${x} ${y})`} opacity={alive ? 1 : 0.55}>
+        <circle cx={x} cy={y - 8} r="14" fill={alive ? `rgb(255,${Math.round(244 - Math.min(1, b) * 14)},${Math.round(232 - Math.min(1, b) * 150)})` : "#eef"} stroke={alive ? "#8a7a3a" : "#8a8aa0"} strokeWidth="1.8" strokeDasharray={alive ? "" : "3 2"} />
+        <path d={`M ${x - 4},${y + 4} L ${x - 4},${y - 6} L ${x},${y - 12} L ${x + 4},${y - 6} L ${x + 4},${y + 4}`} stroke={b > 0 ? "#ff8f00" : "#777"} strokeWidth="1.6" fill="none" />
+      </g>
+      <text x={x} y={y + 31} fontSize="9" fill="#33415c" textAnchor="middle" fontWeight="700">{alive ? (mode === "series" && nOk < 3 ? "خاموش" : VLAB_FA_DIGITS(Math.round(b * 100)) + "٪") : "برداشته شد"}</text>
+    </g>;
+  };
+  return (
+    <div className="vlab-exp">
+      <svg viewBox="0 0 320 210" className="vlab-svg" style={{ direction: "ltr", background: "#f3f6fd" }}>
+        <rect width="320" height="210" rx="12" fill="#f3f6fd" />
+        {/* سیم‌ها */}
+        <g stroke="#4a5568" strokeWidth="3" fill="none" strokeLinecap="round" strokeLinejoin="round">
+          {mode === "series" ? <><polyline points="50,95 50,40 114,40" /><polyline points="126,40 164,40" /><polyline points="176,40 214,40" /><polyline points="226,40 270,40 270,170 50,170 50,115" /></> : <><polyline points="50,95 50,40 270,40 270,170 50,170 50,115" />{bx.map((x, i) => <g key={i}><line x1={x} y1="40" x2={x} y2="82" /><line x1={x} y1="122" x2={x} y2="170" /></g>)}</>}
+        </g>
+        {/* باتری */}
+        <g>{Array.from({ length: cells }, (_, i) => <g key={i}><line x1="38" y1={100 + i * 0} x2="62" y2={100} stroke="none" /></g>)}
+          <rect x="36" y="95" width="28" height="20" rx="3" fill="#fff" stroke="#4a5568" strokeWidth="2" />
+          {Array.from({ length: cells }, (_, i) => <g key={i}><line x1={44 + i * 6} y1="98" x2={44 + i * 6} y2="112" stroke="#d32f2f" strokeWidth="3" /><line x1={47 + i * 6} y1="101" x2={47 + i * 6} y2="109" stroke="#1565c0" strokeWidth="2" /></g>)}
+          <text x="72" y="108" fontSize="8.5" fill="#33415c" textAnchor="start" fontWeight="700">باتری {VLAB_FA_DIGITS(V.toFixed(1))} ولت</text>
+        </g>
+        {dots.map((d, i) => <circle key={i} cx={d[0]} cy={d[1]} r="2.6" fill="#1e88e5" opacity="0.9" />)}
+        {[0, 1, 2].map(bulb)}
+        <text x="160" y="196" fontSize="9" fill={over ? "#c62828" : "#5b6479"} textAnchor="middle" fontWeight="700">{over ? "⚠️ ولتاژ بیشتر از حدّ مجاز لامپ؛ ممکن است بسوزد" : I > 0 ? `جریان کل: ${vlabMFa(I, 2)} آمپر` : "مدار باز است؛ جریانی نمی‌گذرد"}</text>
+      </svg>
+      <div className="vlab-controls"><div className="vlab-ctrl-col" style={{ flex: 1 }}>
+        <div className="vlab-num-row"><button type="button" className={"vlab-num-btn" + (mode === "series" ? " active" : "")} onClick={() => setMode("series")}>متوالی (پشت سر هم)</button><button type="button" className={"vlab-num-btn" + (mode === "parallel" ? " active" : "")} onClick={() => setMode("parallel")}>موازی (شاخه‌شاخه)</button></div>
+        <label className="vlab-ctrl-label">تعداد باتری ۱٫۵ ولتی: {VLAB_FA_DIGITS(cells)}</label>
+        <div className="vlab-num-row">{[1, 2, 3].map((k) => <button key={k} type="button" className={"vlab-num-btn" + (cells === k ? " active" : "")} onClick={() => setCells(k)}>{VLAB_FA_DIGITS(k)}</button>)}</div>
+        <div className="vlab-ctrl-label">روی هر لامپ بزن تا آن را از سرپیچ برداری یا دوباره ببندی.</div>
+      </div></div>
+      <div className="vlab-readout">
+        در مدار <b>متوالی</b> ولتاژ بین لامپ‌ها تقسیم می‌شود، پس هر سه کم‌نور می‌سوزند؛ با برداشتن یک لامپ مدار باز می‌شود و <b>همه</b> خاموش می‌شوند. در مدار <b>موازی</b> هر لامپ ولتاژ کامل باتری را می‌گیرد و پرنور است؛ با برداشتن یکی، <b>بقیه روشن می‌مانند</b> (برق خانه همین‌طور است)، ولی جریان کل بیشتر می‌شود و باتری زودتر تمام می‌شود. (هر لامپ ۵ اهم و مناسب ۱٫۵ ولت است؛ مدل ایده‌آل.)
+      </div>
+      <VlabFormulaCheck title="جریان کل مدار" fa={mode === "series" ? "جریان = ولتاژ ÷ (۳ × مقاومت هر لامپ)" : "جریان = تعداد لامپ‌های سالم × (ولتاژ ÷ مقاومت)"} en="I = V / R" legend="مقاومت هر لامپ ۵ اهم؛ جواب به آمپر" subst={mode === "series" ? `${V} ÷ (3 × 5) = ?` : `${nOk} × (${V} ÷ 5) = ?`} label="I:" answer={mode === "series" ? V / (3 * R) : nOk * (V / R)} unit="آمپر" decimals={2} />
+    </div>
+  );
+}
+
+/* ---------- ۴. خطوط موازی و مورب ---------- */
+const VLAB_F_PAIRS = [
+  { n: "متناظر", rel: "eq", a: ["t", "NE"], b: ["b", "NE"], d: "هم‌جهت و هم‌جایگاه‌اند و مساوی‌اند." },
+  { n: "یک‌درمیان داخلی", rel: "eq", a: ["t", "SE"], b: ["b", "NW"], d: "بین دو خط، در دو طرف مورب‌اند و مساوی‌اند." },
+  { n: "داخلی هم‌طرف", rel: "sum", a: ["t", "SE"], b: ["b", "NE"], d: "بین دو خط و هم‌طرف‌اند؛ مجموعشان ۱۸۰ درجه است." },
+  { n: "متقابل به رأس", rel: "eq", a: ["t", "NE"], b: ["t", "SW"], d: "روبه‌روی هم در یک نقطه‌اند و مساوی‌اند." },
+];
+function VlabParallelLinesExperiment({ onReading }) {
+  const [th, setTh] = useState(60);
+  const [pi, setPi] = useState(0);
+  const P = VLAB_F_PAIRS[pi];
+  useEffect(() => { if (onReading) onReading(`θ=${th}° | ${P.n}`); /* eslint-disable-next-line */ }, [th, pi]);
+  const y1 = 66, y2 = 128, rad = (d) => (d * Math.PI) / 180, cot = 1 / Math.tan(rad(th));
+  const xb = 150 - 31 * cot, xt = 150 + 31 * cot;
+  const ctr = { t: [xt, y1], b: [xb, y2] };
+  const rng = { NE: [0, th], NW: [th, 180], SW: [180, 180 + th], SE: [180 + th, 360] };
+  const val = (q) => (q === "NE" || q === "SW" ? th : 180 - th);
+  const pt = (c, r, a) => [c[0] + r * Math.cos(rad(a)), c[1] - r * Math.sin(rad(a))];
+  const sector = (c, q, r) => { const [a0, a1] = rng[q]; const p0 = pt(c, r, a0), p1 = pt(c, r, a1); return `M ${c[0]},${c[1]} L ${p0[0]},${p0[1]} A ${r},${r} 0 ${a1 - a0 > 180 ? 1 : 0} 0 ${p1[0]},${p1[1]} Z`; };
+  const lab = (c, q, r) => { const [a0, a1] = rng[q]; return pt(c, r, (a0 + a1) / 2); };
+  const all = [];
+  ["t", "b"].forEach((w) => ["NE", "NW", "SW", "SE"].forEach((q) => all.push([w, q])));
+  const isSel = (w, q) => (P.a[0] === w && P.a[1] === q) || (P.b[0] === w && P.b[1] === q);
+  const va = val(P.a[1]), vb = val(P.b[1]);
+  return (
+    <div className="vlab-exp">
+      <svg viewBox="0 0 320 230" className="vlab-svg" style={{ direction: "ltr", background: "#f6f8fd" }}>
+        <rect width="320" height="230" rx="12" fill="#f6f8fd" />
+        <line x1="14" y1={y1} x2="306" y2={y1} stroke="#33415c" strokeWidth="2.5" /><line x1="14" y1={y2} x2="306" y2={y2} stroke="#33415c" strokeWidth="2.5" />
+        {[y1, y2].map((y) => <g key={y}><path d={`M 288,${y - 5} l 7,5 l -7,5`} stroke="#33415c" strokeWidth="1.6" fill="none" /><path d={`M 280,${y - 5} l 7,5 l -7,5`} stroke="#33415c" strokeWidth="1.6" fill="none" /></g>)}
+        <line x1={xt + 40 * Math.cos(rad(th))} y1={y1 - 40 * Math.sin(rad(th))} x2={xb - 40 * Math.cos(rad(th))} y2={y2 + 40 * Math.sin(rad(th))} stroke="#c62828" strokeWidth="2.5" />
+        {all.map(([w, q]) => { const c = ctr[w]; const sel = isSel(w, q); const lp = lab(c, q, 40); const col = P.a[0] === w && P.a[1] === q ? "#1e88e5" : "#2e9d5a"; return <g key={w + q}>
+          <path d={sector(c, q, sel ? 30 : 18)} fill={sel ? col : "none"} opacity={sel ? 0.5 : 0.8} stroke={sel ? col : "#b6c2d9"} strokeWidth={sel ? 2 : 1} />
+          <text x={lp[0]} y={lp[1] + 3} fontSize={sel ? 10 : 8} fill={sel ? col : "#7a869c"} textAnchor="middle" fontWeight={sel ? 700 : 400}>{VLAB_FA_DIGITS(val(q))}°</text>
+        </g>; })}
+        <circle cx={xt} cy={y1} r="3" fill="#c62828" /><circle cx={xb} cy={y2} r="3" fill="#c62828" />
+        <text x="26" y={y1 - 8} fontSize="9" fill="#5b6479">خط اول</text><text x="26" y={y2 + 16} fontSize="9" fill="#5b6479">خط دوم (موازی)</text>
+        <text x={Math.min(290, Math.max(36, xt + 46 * Math.cos(rad(th))))} y={y1 - 46 * Math.sin(rad(th)) - 6} fontSize="9" fill="#c62828" fontWeight="700">خط مورب</text>
+        <rect x="40" y="188" width="240" height="34" rx="10" fill="#fff" stroke="#c9d3e6" />
+        <text x="160" y="203" fontSize="10.5" fill="#33415c" textAnchor="middle" fontWeight="700">{P.n}: {VLAB_FA_DIGITS(va)} درجه و {VLAB_FA_DIGITS(vb)} درجه</text>
+        <text x="160" y="217" fontSize="9" fill={P.rel === "eq" ? "#2e9d5a" : "#e65100"} textAnchor="middle">{P.rel === "eq" ? "مساوی‌اند" : `مجموع = ${VLAB_FA_DIGITS(va + vb)} درجه`}</text>
+      </svg>
+      <div className="vlab-controls"><div className="vlab-ctrl-col" style={{ flex: 1 }}>
+        <label className="vlab-ctrl-label">زاویه‌ی مورب با خط: {VLAB_FA_DIGITS(th)}°</label>
+        <VlabRange min={30} max={150} step={5} value={th} onChange={(e) => setTh(+e.target.value)} />
+        <div className="vlab-num-row">{VLAB_F_PAIRS.map((x, i) => <button key={i} type="button" className={"vlab-num-btn" + (pi === i ? " active" : "")} onClick={() => setPi(i)}>{x.n}</button>)}</div>
+      </div></div>
+      <div className="vlab-readout">
+        وقتی دو خط <b>موازی</b> را یک خط مورب قطع می‌کند، هشت زاویه پدید می‌آید که فقط دو اندازه دارند: θ و ۱۸۰−θ. زاویه‌های <b>{P.n}</b> {P.d} زاویه‌ی مورب را عوض کن و ببین رابطه همیشه برقرار است.
+      </div>
+      <VlabFormulaCheck title="زاویه‌ی داخلی هم‌طرف" fa="مجموع دو زاویه‌ی داخلی هم‌طرف = ۱۸۰°" en="" legend="اگر یکی θ باشد، دیگری چند است؟" subst={`180 − ${th} = ?`} label="زاویه‌ی دیگر:" answer={180 - th} unit="°" decimals={0} />
+    </div>
+  );
+}
+
+/* ============================================================
+   ققنوس — متوسطه اول (ب): مساحت، درصد، قلب، جداسازی مخلوط
+   ============================================================ */
+
+/* ---------- ۵. مساحت با برش و جابه‌جایی ---------- */
+function VlabAreaShapesExperiment({ onReading }) {
+  const [mode, setMode] = useState(0);
+  const [b, setB] = useState(6);
+  const [h, setH] = useState(4);
+  const [s, setS] = useState(2);
+  const [t, setT] = useState(0);
+  const [play, setPlay] = useState(false);
+  useEffect(() => { if (!play) return; const id = setInterval(() => setT((x) => { if (x >= 1) { setPlay(false); return 1; } return Math.min(1, x + 0.02); }), 40); return () => clearInterval(id); }, [play]);
+  const a = s; // قاعده‌ی کوچکِ ذوزنقه
+  const ext = mode === 0 ? b + s : mode === 1 ? Math.max(b, s) + Math.abs(b - s) + 0.01 + Math.min(b, s) : a + b + 1;
+  const u = Math.min(18, 246 / Math.max(ext, b + s, 4), 140 / h);
+  const ox = 58, oy = 176 - (140 - Math.min(140, h * u)) / 2;
+  const P = (x, y) => `${(ox + x * u).toFixed(1)},${(oy - y * u).toFixed(1)}`;
+  const poly = (pts) => pts.map((q) => P(q[0], q[1])).join(" ");
+  const area = mode === 0 ? b * h : mode === 1 ? (b * h) / 2 : ((a + b) * h) / 2;
+  useEffect(() => { if (onReading) onReading(`مساحت = ${area}`); /* eslint-disable-next-line */ }, [mode, b, h, s]);
+  const grid = [];
+  const W = mode === 2 ? a + b + 1 : b + s;
+  for (let i = 0; i <= Math.ceil(W); i++) grid.push(<line key={"v" + i} x1={ox + i * u} y1={oy} x2={ox + i * u} y2={oy - h * u} stroke="#cfd9ec" strokeWidth="0.7" />);
+  for (let j = 0; j <= h; j++) grid.push(<line key={"h" + j} x1={ox} y1={oy - j * u} x2={ox + Math.ceil(W) * u} y2={oy - j * u} stroke="#cfd9ec" strokeWidth="0.7" />);
+  let shapes = null;
+  if (mode === 0) {
+    const mv = b * t;
+    shapes = <g>
+      <polygon points={poly([[s, 0], [b, 0], [b + s, h], [s, h]])} fill="#7cc4f5" stroke="#1e6fd9" strokeWidth="2" />
+      <polygon points={poly([[mv, 0], [s + mv, 0], [s + mv, h]])} fill="#ffb74d" stroke="#c46a00" strokeWidth="2" />
+      {t === 0 && <line x1={ox + s * u} y1={oy} x2={ox + s * u} y2={oy - h * u} stroke="#c62828" strokeWidth="2" strokeDasharray="4 3" />}
+    </g>;
+  } else if (mode === 1) {
+    const mx = (b + s) / 2, my = h / 2, ang = 180 * t;
+    shapes = <g>
+      <polygon points={poly([[0, 0], [b, 0], [s, h]])} fill="#7cc4f5" stroke="#1e6fd9" strokeWidth="2" />
+      <g transform={`rotate(${-ang} ${ox + mx * u} ${oy - my * u})`}><polygon points={poly([[0, 0], [b, 0], [s, h]])} fill="#ffb74d" fillOpacity="0.85" stroke="#c46a00" strokeWidth="2" /></g>
+    </g>;
+  } else {
+    const x1 = 1, mx = (b + x1 + a) / 2, my = h / 2, ang = 180 * t;
+    shapes = <g>
+      <polygon points={poly([[0, 0], [b, 0], [x1 + a, h], [x1, h]])} fill="#7cc4f5" stroke="#1e6fd9" strokeWidth="2" />
+      <g transform={`rotate(${-ang} ${ox + (b + x1 + a) / 2 * u} ${oy - my * u})`}><polygon points={poly([[0, 0], [b, 0], [x1 + a, h], [x1, h]])} fill="#ffb74d" fillOpacity="0.85" stroke="#c46a00" strokeWidth="2" /></g>
+    </g>;
+  }
+  const title = mode === 0 ? "متوازی‌الاضلاع ← مستطیل" : mode === 1 ? "مثلث + کپی‌اش ← متوازی‌الاضلاع" : "ذوزنقه + کپی‌اش ← متوازی‌الاضلاع";
+  const formula = mode === 0 ? "مساحت = قاعده × ارتفاع" : mode === 1 ? "مساحت = ½ × قاعده × ارتفاع" : "مساحت = ½ × (دو قاعده) × ارتفاع";
+  const sLab = mode === 2 ? "قاعده‌ی کوچک" : "میزان کج‌شدن";
+  return (
+    <div className="vlab-exp">
+      <svg viewBox="0 0 320 220" className="vlab-svg" style={{ direction: "ltr", background: "#f4f7fd" }}>
+        <rect width="320" height="220" rx="12" fill="#f4f7fd" />
+        <text x="160" y="20" fontSize="11" fill="#33415c" textAnchor="middle" fontWeight="700">{title}</text>
+        {grid}{shapes}
+        <line x1={ox} y1={oy + 10} x2={ox + b * u} y2={oy + 10} stroke="#33415c" strokeWidth="1.5" /><text x={ox + (b * u) / 2} y={oy + 24} fontSize="9" fill="#33415c" textAnchor="middle">قاعده = {VLAB_FA_DIGITS(b)}</text>
+        <line x1={ox - 10} y1={oy} x2={ox - 10} y2={oy - h * u} stroke="#c62828" strokeWidth="1.5" /><text x={ox - 14} y={oy - (h * u) / 2} fontSize="9" fill="#c62828" textAnchor="end">ارتفاع {VLAB_FA_DIGITS(h)}</text>
+        <rect x="196" y="190" width="116" height="24" rx="8" fill="#fff" stroke="#c9d3e6" /><text x="254" y="206" fontSize="10.5" fill="#1b5e20" textAnchor="middle" fontWeight="700">مساحت = {VLAB_FA_DIGITS(area)} مربع</text>
+      </svg>
+      <div className="vlab-controls"><div className="vlab-ctrl-col" style={{ flex: 1 }}>
+        <div className="vlab-num-row">{["متوازی‌الاضلاع", "مثلث", "ذوزنقه"].map((x, i) => <button key={i} type="button" className={"vlab-num-btn" + (mode === i ? " active" : "")} onClick={() => { setMode(i); setT(0); setPlay(false); }}>{x}</button>)}</div>
+        <label className="vlab-ctrl-label">قاعده: {VLAB_FA_DIGITS(b)}</label><VlabRange min={2} max={10} step={1} value={b} onChange={(e) => setB(+e.target.value)} />
+        <label className="vlab-ctrl-label">ارتفاع: {VLAB_FA_DIGITS(h)}</label><VlabRange min={2} max={8} step={1} value={h} onChange={(e) => setH(+e.target.value)} />
+        <label className="vlab-ctrl-label">{sLab}: {VLAB_FA_DIGITS(s)}</label><VlabRange min={1} max={mode === 2 ? 8 : 4} step={1} value={Math.min(s, mode === 2 ? 8 : 4)} onChange={(e) => setS(+e.target.value)} />
+        <label className="vlab-ctrl-label">برش و جابه‌جایی: {VLAB_FA_DIGITS(Math.round(t * 100))}٪</label><VlabRange min={0} max={100} step={1} value={Math.round(t * 100)} onChange={(e) => { setPlay(false); setT(+e.target.value / 100); }} />
+        <div className="vlab-num-row"><button type="button" className="vlab-num-btn active" onClick={() => { setT(0); setPlay(true); }}>▶ نمایش خودکار</button></div>
+      </div></div>
+      <div className="vlab-readout">
+        {mode === 0 ? "مثلثی را که از کنار متوازی‌الاضلاع بریده‌ای به سمت دیگر ببر؛ مستطیلی با همان قاعده و ارتفاع می‌شود. پس مساحت متوازی‌الاضلاع = قاعده × ارتفاع است. «میزان کج‌شدن» را عوض کن: شکل کج‌تر می‌شود ولی مساحت تغییر نمی‌کند." : mode === 1 ? "دو مثلث هم‌اندازه (یکی را ۱۸۰ درجه بچرخان) یک متوازی‌الاضلاع می‌سازند؛ پس مساحت مثلث نصف قاعده × ارتفاع است. رأس مثلث را جابه‌جا کن: تا ارتفاع ثابت است، مساحت عوض نمی‌شود." : "دو ذوزنقه‌ی مساوی (یکی چرخیده) متوازی‌الاضلاعی با قاعده‌ی «مجموع دو قاعده» می‌سازند؛ پس مساحت ذوزنقه = نصفِ (مجموع دو قاعده) × ارتفاع است."} (هر مربع شبکه یک واحد مربع است.)
+      </div>
+      <VlabFormulaCheck title="مساحت" fa={formula} en="" legend={mode === 2 ? `قاعده‌ها ${b} و ${a}` : `قاعده ${b} و ارتفاع ${h}`} subst={mode === 0 ? `${b} × ${h} = ?` : mode === 1 ? `½ × ${b} × ${h} = ?` : `½ × (${a} + ${b}) × ${h} = ?`} label="مساحت:" answer={area} unit="مربع" decimals={1} />
+    </div>
+  );
+}
+
+/* ---------- ۶. درصد و تخفیف ---------- */
+function VlabPercentShopExperiment({ onReading }) {
+  const [price, setPrice] = useState(200);
+  const [d, setD] = useState(25);
+  const fa = (n) => Math.round(n).toLocaleString("fa-IR");
+  const full = price * 1000, off = (full * d) / 100, pay = full - off;
+  useEffect(() => { if (onReading) onReading(`تخفیف ${d}٪ از ${full} → ${pay}`); /* eslint-disable-next-line */ }, [price, d]);
+  return (
+    <div className="vlab-exp">
+      <svg viewBox="0 0 320 196" className="vlab-svg" style={{ direction: "ltr", background: "#fff8ee" }}>
+        <defs><linearGradient id="psTag" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stopColor="#ffd54f" /><stop offset="1" stopColor="#ff9800" /></linearGradient></defs>
+        <rect width="320" height="196" rx="12" fill="#fff8ee" />
+        <text x="76" y="18" fontSize="10" fill="#6d4c41" textAnchor="middle" fontWeight="700">صد خانه = قیمت کامل</text>
+        {Array.from({ length: 100 }, (_, i) => { const row = 9 - Math.floor(i / 10), col = i % 10; const on = i < d; return <rect key={i} x={16 + col * 12} y={28 + row * 12} width="11" height="11" rx="2" fill={on ? "#ef5350" : "#c8e6c9"} stroke="#fff" strokeWidth="0.8" />; })}
+        <text x="76" y="162" fontSize="9" fill="#c62828" textAnchor="middle">{VLAB_FA_DIGITS(d)} خانه‌ی قرمز = {VLAB_FA_DIGITS(d)} درصد تخفیف</text>
+        <g transform="translate(166,30)">
+          <path d="M 0,0 L 134,0 L 134,92 L 0,92 L -14,46 Z" fill="url(#psTag)" stroke="#e65100" strokeWidth="2" />
+          <circle cx="-2" cy="46" r="4" fill="#fff8ee" stroke="#e65100" />
+          <text x="68" y="18" fontSize="9" fill="#5d3000" textAnchor="middle">قیمت اصلی</text>
+          <text x="68" y="34" fontSize="11" fill="#5d3000" textAnchor="middle">{fa(full)} تومان</text><line x1="14" y1="31" x2="122" y2="31" stroke="#b71c1c" strokeWidth="1.6" />
+          <text x="68" y="52" fontSize="9" fill="#b71c1c" textAnchor="middle" fontWeight="700">تخفیف {VLAB_FA_DIGITS(d)} درصد = {fa(off)}</text>
+          <text x="68" y="70" fontSize="9" fill="#1b5e20" textAnchor="middle">قیمت پرداختی</text>
+          <text x="68" y="86" fontSize="13" fill="#1b5e20" textAnchor="middle" fontWeight="700">{fa(pay)} تومان</text>
+        </g>
+        <g transform="translate(166,134)">
+          <rect x="0" y="0" width="134" height="14" rx="7" fill="#c8e6c9" /><rect x="0" y="0" width={(134 * (100 - d)) / 100} height="14" rx="7" fill="#43a047" /><rect x={(134 * (100 - d)) / 100} y="0" width={(134 * d) / 100} height="14" rx="0" fill="#ef5350" />
+          <text x="0" y="26" fontSize="8.5" fill="#1b5e20">می‌پردازی: {VLAB_FA_DIGITS(100 - d)} درصد</text><text x="0" y="39" fontSize="8.5" fill="#c62828">صرفه‌جویی: {VLAB_FA_DIGITS(d)} درصد</text>
+          <text x="67" y="56" fontSize="9" fill="#6d4c41" textAnchor="middle">هر ۱ درصد برابر {fa(full / 100)} تومان است</text>
+        </g>
+        {d >= 50 && <text x="300" y="24" fontSize="18" textAnchor="end">🎉</text>}
+      </svg>
+      <div className="vlab-controls"><div className="vlab-ctrl-col" style={{ flex: 1 }}>
+        <label className="vlab-ctrl-label">قیمت کالا: {fa(full)} تومان</label>
+        <VlabRange min={20} max={500} step={10} value={price} onChange={(e) => setPrice(+e.target.value)} />
+        <label className="vlab-ctrl-label">درصد تخفیف: {VLAB_FA_DIGITS(d)}٪</label>
+        <VlabRange min={0} max={90} step={5} value={d} onChange={(e) => setD(+e.target.value)} />
+      </div></div>
+      <div className="vlab-readout">«درصد» یعنی «از هر صد». ۲۵٪ یعنی از هر صد قسمت، ۲۵ قسمت. برای محاسبه‌ی تخفیف، قیمت را بر ۱۰۰ تقسیم و در درصد ضرب می‌کنیم؛ بعد از قیمت کم می‌کنیم. اکنون: {fa(full)} × {VLAB_FA_DIGITS(d)} ÷ ۱۰۰ = {fa(off)} تومان تخفیف و {fa(pay)} تومان قیمت پرداختی.</div>
+      <VlabFormulaCheck title="قیمت پرداختی" fa="قیمت پرداختی = قیمت × (۱۰۰ − درصد تخفیف) ÷ ۱۰۰" en="" legend="جواب را به تومان بنویس" subst={`${full} × (100 − ${d}) ÷ 100 = ?`} label="پرداختی:" answer={pay} unit="تومان" decimals={0} />
+    </div>
+  );
+}
+
+/* ---------- ۷. قلب و گردش خون ---------- */
+const VLAB_F_HEART_PATHS = [
+  { c: "#2b6cb0", pts: [[96, 214], [96, 70], [114, 80]] },
+  { c: "#2b6cb0", pts: [[148, 112], [161, 98], [161, 50], [72, 58]] },
+  { c: "#2b6cb0", pts: [[161, 50], [248, 58]] },
+  { c: "#d32f2f", pts: [[254, 100], [224, 90]] },
+  { c: "#d32f2f", pts: [[64, 104], [68, 26], [196, 26], [196, 64]] },
+  { c: "#d32f2f", pts: [[216, 128], [240, 128], [240, 212]] },
+];
+function VlabHeartChambersExperiment({ onReading }) {
+  const [bpm, setBpm] = useState(72);
+  const [slow, setSlow] = useState(true);
+  const tk = VLAB_GEO_TICK(30);
+  const sec = tk * 0.03 * (slow ? 0.25 : 1);
+  const ph = (sec * bpm / 60) % 1;
+  const atria = ph < 0.12, vent = ph >= 0.12 && ph < 0.45;
+  const sa = atria ? 0.9 : 1, sv = vent ? 0.88 : 1;
+  const label = atria ? "انقباض دهلیزها" : vent ? "انقباض بطن‌ها (خون به شش‌ها و بدن)" : "استراحت (قلب از خون پر می‌شود)";
+  const co = (bpm * 70) / 1000;
+  useEffect(() => { if (onReading) onReading(`${bpm} ضربان در دقیقه | برون‌ده ${co.toFixed(1)} L/min`); /* eslint-disable-next-line */ }, [bpm]);
+  const along = (pts, f) => { const L = []; let tot = 0; for (let i = 0; i < pts.length - 1; i++) { const l = Math.hypot(pts[i + 1][0] - pts[i][0], pts[i + 1][1] - pts[i][1]); L.push(l); tot += l; } let d = ((f % 1) + 1) % 1 * tot; for (let i = 0; i < L.length; i++) { if (d <= L[i]) return [pts[i][0] + (pts[i + 1][0] - pts[i][0]) * d / L[i], pts[i][1] + (pts[i + 1][1] - pts[i][1]) * d / L[i]]; d -= L[i]; } return pts[pts.length - 1]; };
+  const flow = sec * bpm / 60 * 0.9;
+  const ch = (cx, cy, rx, ry, sc, fill, dark, name) => <g transform={`translate(${cx},${cy}) scale(${sc}) translate(${-cx},${-cy})`}><ellipse cx={cx} cy={cy} rx={rx} ry={ry} fill={fill} stroke={dark} strokeWidth="2.5" /><text x={cx} y={cy - 1} fontSize="8" fill="#fff" textAnchor="middle" fontWeight="700">{name[0]}</text><text x={cx} y={cy + 9} fontSize="8" fill="#fff" textAnchor="middle" fontWeight="700">{name[1]}</text></g>;
+  return (
+    <div className="vlab-exp">
+      <svg viewBox="0 0 320 262" className="vlab-svg" style={{ direction: "ltr", background: "#fdf4f4" }}>
+        <rect width="320" height="262" rx="12" fill="#fdf4f4" />
+        {/* شش‌ها */}
+        {[[22, 60], [254, 60]].map((q, i) => <g key={i}><rect x={q[0]} y={q[1]} width="44" height="80" rx="18" fill="#f4b6c2" stroke="#d17a8e" strokeWidth="2" /><text x={q[0] + 22} y={q[1] + 44} fontSize="9" fill="#8a3a50" textAnchor="middle" fontWeight="700">شش</text></g>)}
+        {/* بدن */}
+        <rect x="50" y="214" width="220" height="34" rx="12" fill="#e8e0f5" stroke="#8d7bbf" strokeWidth="2" /><text x="160" y="236" fontSize="10" fill="#4a3b78" textAnchor="middle" fontWeight="700">بدن (مغز، ماهیچه‌ها و اندام‌ها)</text>
+        {/* رگ‌ها */}
+        {VLAB_F_HEART_PATHS.map((p, i) => <polyline key={i} points={p.pts.map((q) => q.join(",")).join(" ")} fill="none" stroke={p.c} strokeWidth="7" strokeLinecap="round" strokeLinejoin="round" opacity="0.45" />)}
+        {VLAB_F_HEART_PATHS.map((p, i) => Array.from({ length: 5 }, (_, k) => { const [x, y] = along(p.pts, flow + k / 5 + i * 0.13); return <circle key={i + "-" + k} cx={x} cy={y} r="2.6" fill={p.c} />; }))}
+        {/* قلب */}
+        {ch(135, 142, 27, 36, sv, "#3b82c4", "#1d4f87", ["بطن", "راست"])}
+        {ch(190, 142, 30, 40, sv, "#d94141", "#8d1d1d", ["بطن", "چپ"])}
+        {ch(128, 90, 26, 21, sa, "#5a9bd5", "#1d4f87", ["دهلیز", "راست"])}
+        {ch(194, 90, 26, 21, sa, "#e56464", "#8d1d1d", ["دهلیز", "چپ"])}
+        <rect x="104" y="108" width="14" height="4" rx="2" fill="#fff" opacity="0.9" /><rect x="205" y="108" width="14" height="4" rx="2" fill="#fff" opacity="0.9" />
+        <text x="76" y="118" fontSize="7.5" fill="#2b6cb0" textAnchor="middle">سیاهرگ‌ها</text>
+        <text x="266" y="204" fontSize="7.5" fill="#b71c1c" textAnchor="middle">سرخرگ آئورت</text>
+        <rect x="40" y="2" width="240" height="18" rx="9" fill="#fff" opacity="0.85" /><text x="160" y="15" fontSize="9.5" fill={atria || vent ? "#b71c1c" : "#33415c"} textAnchor="middle" fontWeight="700">{label}</text>
+        <text x="160" y="256" fontSize="7.5" fill="#7a6f8a" textAnchor="middle">آبی = خون پراکسیژن‌کم ، قرمز = خون پراکسیژن‌دار (نمای روبه‌رو؛ ساده‌شده)</text>
+      </svg>
+      <div className="vlab-controls"><div className="vlab-ctrl-col" style={{ flex: 1 }}>
+        <label className="vlab-ctrl-label">ضربان قلب: {VLAB_FA_DIGITS(bpm)} بار در دقیقه</label>
+        <VlabRange min={50} max={180} step={2} value={bpm} onChange={(e) => setBpm(+e.target.value)} />
+        <div className="vlab-num-row">{[[60, "استراحت"], [100, "راه رفتن"], [160, "دویدن"]].map((x) => <button key={x[0]} type="button" className={"vlab-num-btn" + (bpm === x[0] ? " active" : "")} onClick={() => setBpm(x[0])}>{x[1]}</button>)}<button type="button" className={"vlab-num-btn" + (slow ? " active" : "")} onClick={() => setSlow(!slow)}>🐢 حرکت آهسته</button></div>
+      </div></div>
+      <div className="vlab-readout">
+        قلب دو پمپ کنار هم است. خون <b style={{ color: "#2b6cb0" }}>آبی</b> (کم‌اکسیژن) از بدن به دهلیز و بطن راست می‌رسد و به <b>شش‌ها</b> می‌رود؛ از آنجا خون <b style={{ color: "#c62828" }}>قرمز</b> (پراکسیژن) به دهلیز و بطن چپ برمی‌گردد و بطن چپ که ماهیچه‌ی ضخیم‌تری دارد، آن را به <b>سراسر بدن</b> می‌فرستد. با {VLAB_FA_DIGITS(bpm)} ضربان در دقیقه و حدود ۷۰ میلی‌لیتر خون در هر ضربان، قلب در دقیقه حدود <b>{VLAB_FA_DIGITS(co.toFixed(1))} لیتر</b> خون پمپ می‌کند. (مدل ساده؛ مقدارها تقریبی‌اند.)
+      </div>
+      <VlabFormulaCheck title="برون‌ده‌ی قلب" fa="خونی که در دقیقه پمپ می‌شود = ضربان × حجم هر ضربان" en="" legend="حجم هر ضربان ≈ ۷۰ میلی‌لیتر؛ جواب را به لیتر بنویس" subst={`${bpm} × 70 ÷ 1000 = ?`} label="برون‌ده:" answer={co} unit="لیتر در دقیقه" decimals={1} />
+    </div>
+  );
+}
+
+/* ---------- ۸. جداسازی مخلوط‌ها ---------- */
+const VLAB_F_MIX = ["ماسه و آب", "نمک و آب", "آهن‌ریزه و ماسه", "روغن و آب", "الکل و آب"];
+const VLAB_F_METH = ["صافی", "تبخیر", "آهن‌ربا", "قیف جداکننده", "تقطیر"];
+const VLAB_F_RES = [
+  [[1, "ماسه روی صافی می‌ماند و آب رد می‌شود.", "اختلاف: اندازه‌ی ذرات"], [2, "آب بخار می‌شود و ماسه می‌ماند،", "اما آب از دست می‌رود."], [0, "ماسه آهنربایی نیست؛", "چیزی جذب نمی‌شود."], [0, "ماسه و آب دو لایه‌ی مایع نمی‌سازند؛", "ماسه ته‌نشین می‌شود نه جدا."], [2, "آب بخار و در لوله مایع می‌شود،", "ولی برای ماسه روش پرهزینه‌ای است."]],
+  [[0, "نمک در آب حل شده و از صافی", "همراه آب رد می‌شود."], [1, "آب بخار می‌شود و بلورهای نمک می‌مانند.", "اختلاف: نقطه‌ی جوش"], [0, "نمک آهنربایی نیست؛", "چیزی جذب نمی‌شود."], [0, "محلول یکنواخت است و", "لایه‌ی جدا ندارد."], [1, "آب خالص جمع می‌شود و نمک می‌ماند.", "هم آب و هم نمک به دست می‌آید."]],
+  [[0, "هر دو جامدند؛ آبی نیست و", "صافی کاری نمی‌کند."], [0, "گرما، آهن و ماسه را", "از هم جدا نمی‌کند."], [1, "آهن به آهنربا می‌چسبد و ماسه نه.", "اختلاف: خاصیت مغناطیسی"], [0, "مخلوط جامد است؛", "قیف مایع می‌خواهد."], [0, "مایعی برای تقطیر نیست.", ""]],
+  [[0, "هر دو مایع از صافی رد می‌شوند.", ""], [0, "هر دو گرم می‌شوند و", "به‌خوبی جدا نمی‌شوند."], [0, "روغن و آب آهنربایی نیستند.", ""], [1, "روغن سبک‌تر روی آب است؛ شیر را باز می‌کنیم.", "اختلاف: چگالی"], [2, "آب زودتر بخار می‌شود و جدا می‌شود،", "اما قیف ساده‌تر و ارزان‌تر است."]],
+  [[0, "هر دو مایع از صافی رد می‌شوند.", ""], [0, "هر دو بخار می‌شوند؛", "چیزی نمی‌ماند."], [0, "الکل و آب آهنربایی نیستند.", ""], [0, "الکل و آب کاملاً مخلوط می‌شوند", "و لایه نمی‌سازند."], [1, "الکل (جوش ۷۸°) زودتر بخار و جدا می‌شود.", "اختلاف: نقطه‌ی جوش"]],
+];
+function VlabMixtureSeparationExperiment({ onReading }) {
+  const [mi, setMi] = useState(0);
+  const [ki, setKi] = useState(0);
+  const [p, setP] = useState(0);
+  const [run, setRun] = useState(true);
+  useEffect(() => { setP(0); setRun(true); }, [mi, ki]);
+  useEffect(() => { if (!run) return; const id = setInterval(() => setP((x) => { if (x >= 1) { setRun(false); return 1; } return Math.min(1, x + 0.025); }), 40); return () => clearInterval(id); }, [run, mi, ki]);
+  const R = VLAB_F_RES[mi][ki], st = R[0];
+  useEffect(() => { if (onReading) onReading(`${VLAB_F_MIX[mi]} با ${VLAB_F_METH[ki]}: ${st === 1 ? "جدا می‌شود" : st === 2 ? "ممکن ولی نه بهینه" : "جدا نمی‌شود"}`); /* eslint-disable-next-line */ }, [mi, ki]);
+  const liq = ["#8fcbf0", "#b9dff5", "#e0e0e0", "#8fcbf0", "#d9c7ee"][mi];
+  const dots = (n, x0, y0, w, hh, col, seed) => Array.from({ length: n }, (_, i) => <circle key={seed + i} cx={x0 + ((i * 37 + seed * 11) % 100) / 100 * w} cy={y0 + ((i * 53 + seed * 7) % 100) / 100 * hh} r="1.8" fill={col} />);
+  /* ظرف مخلوط (قبل) */
+  const before = () => {
+    if (mi === 2) return <g><path d="M 22,150 Q 22,176 48,176 L 82,176 Q 108,176 108,150 Z" fill="#e9ddc4" stroke="#6b5a3a" strokeWidth="2" />{dots(26, 28, 152, 74, 18, "#c9a46a", 3)}{dots(14, 28, 152, 74, 18, "#455a64", 9)}</g>;
+    return <g>
+      <path d="M 24,70 L 24,170 Q 24,178 32,178 L 98,178 Q 106,178 106,170 L 106,70" fill="none" stroke="#33415c" strokeWidth="2.5" />
+      {mi === 3 ? <><rect x="26" y="130" width="78" height="46" fill="#8fcbf0" /><rect x="26" y="104" width="78" height="26" fill="#e8b84a" /></> : <rect x="26" y="104" width="78" height="72" fill={liq} />}
+      {mi === 0 && dots(30, 28, 150, 74, 24, "#b38b4d", 5)}
+      {mi === 1 && dots(24, 30, 108, 70, 64, "#fff", 2)}
+    </g>;
+  };
+  const ax = 150;
+  const drop = (x, y0, y1, col) => [0, 1, 2].map((k) => { const f = (((p * 5 + k / 3) % 1)); return <circle key={k} cx={x} cy={y0 + (y1 - y0) * f} r="2.2" fill={col} opacity={p > 0 && p < 1 ? 1 : 0} />; });
+  const after = () => {
+    const mixCol = mi === 3 ? null : liq;
+    if (ki === 0) { // صافی
+      const passes = mi === 0 || mi === 1 || mi === 3 || mi === 4;
+      return <g>
+        <polygon points={`${ax + 46},70 ${ax + 126},70 ${ax + 86},118`} fill="#fff" stroke="#33415c" strokeWidth="2" /><polygon points={`${ax + 52},74 ${ax + 120},74 ${ax + 86},112`} fill="#faf6e8" stroke="#c9bf9a" />
+        <rect x={ax + 82} y="118" width="8" height="14" fill="none" stroke="#33415c" strokeWidth="2" />
+        {mi === 0 && <path d={`M ${ax + 62},${108 - 14 * p} Q ${ax + 86},${96 - 26 * p} ${ax + 110},${108 - 14 * p} L ${ax + 100},108 L ${ax + 72},108 Z`} fill="#b38b4d" />}
+        {mi === 2 && <g>{dots(18, ax + 62, 92, 48, 16, "#c9a46a", 3)}{dots(10, ax + 62, 92, 48, 16, "#455a64", 9)}</g>}
+        {passes && p > 0 && drop(ax + 86, 134, 166, mi === 1 ? "#b9dff5" : mi === 4 ? "#d9c7ee" : "#8fcbf0")}
+        <path d={`M ${ax + 52},150 L ${ax + 52},182 Q ${ax + 52},190 ${ax + 60},190 L ${ax + 112},190 Q ${ax + 120},190 ${ax + 120},182 L ${ax + 120},150`} fill="none" stroke="#33415c" strokeWidth="2.5" />
+        {passes && <rect x={ax + 54} y={190 - 36 * p} width="64" height={36 * p} fill={mi === 3 ? "#8fcbf0" : liq} />}
+        {mi === 3 && passes && <rect x={ax + 54} y={190 - 36 * p - 10 * p} width="64" height={10 * p} fill="#e8b84a" />}
+        {mi === 1 && passes && dots(14, ax + 58, 190 - 34 * p, 52, 30 * p, "#fff", 4)}
+      </g>;
+    }
+    if (ki === 1) { // تبخیر
+      const lvl = (mi === 2 ? 0 : mi === 3 ? 0.55 : 1) * (1 - p * (mi === 2 ? 0 : 0.95));
+      return <g>
+        <path d={`M ${ax + 44},130 Q ${ax + 86},182 ${ax + 128},130 Z`} fill="#e7e1d3" stroke="#6b5a3a" strokeWidth="2" />
+        {mi !== 2 && <path d={`M ${ax + 50},${150 - 14 * lvl * 0.8} Q ${ax + 86},${150 - 14 * lvl * 0.8 + 6} ${ax + 122},${150 - 14 * lvl * 0.8} L ${ax + 120},152 Q ${ax + 86},176 ${ax + 52},152 Z`} fill={mi === 3 ? "#e8b84a" : liq} opacity={mi === 3 ? 0.9 : 0.9 * (0.3 + 0.7 * lvl)} />}
+        {mi === 0 && <ellipse cx={ax + 86} cy="160" rx={22 * p + 4} ry={5 * p + 1} fill="#b38b4d" />}
+        {mi === 1 && Array.from({ length: 10 }, (_, i) => <rect key={i} x={ax + 62 + i * 5} y={160 - (i % 3) * 3} width="3.4" height="3.4" fill="#fff" stroke="#9aa" strokeWidth="0.5" opacity={p} />)}
+        {mi === 2 && <g>{dots(18, ax + 62, 146, 48, 12, "#c9a46a", 3)}{dots(10, ax + 62, 146, 48, 12, "#455a64", 9)}</g>}
+        {mi === 3 && <ellipse cx={ax + 86} cy="160" rx="22" ry="4" fill="#e8b84a" opacity={0.4 + 0.5 * p} />}
+        <path d={`M ${ax + 76},196 Q ${ax + 80},182 ${ax + 86},190 Q ${ax + 92},180 ${ax + 96},196 Z`} fill="#ff9800" style={{ filter: "drop-shadow(0 0 5px #ffb300)" }} />
+        {mi !== 2 && Array.from({ length: 4 }, (_, i) => <path key={i} d={`M ${ax + 66 + i * 12},${126 - ((p * 40 + i * 9) % 30)} q 4,-6 0,-12 q -4,-6 0,-12`} fill="none" stroke="#9fb0cc" strokeWidth="1.8" opacity={p > 0.02 && p < 0.98 ? 0.8 : 0} />)}
+      </g>;
+    }
+    if (ki === 2) { // آهن‌ربا
+      const up = mi === 2 ? p : 0;
+      return <g>
+        <path d={`M ${ax + 66},64 L ${ax + 66},84 Q ${ax + 66},98 ${ax + 86},98 Q ${ax + 106},98 ${ax + 106},84 L ${ax + 106},64`} fill="none" stroke="#c62828" strokeWidth="9" /><rect x={ax + 61} y="60" width="10" height="10" fill="#1565c0" /><rect x={ax + 101} y="60" width="10" height="10" fill="#1565c0" />
+        <path d={`M ${ax + 44},${mi >= 3 ? 130 : 160} L ${ax + 46},186 Q ${ax + 48},192 ${ax + 56},192 L ${ax + 116},192 Q ${ax + 124},192 ${ax + 126},186 L ${ax + 128},${mi >= 3 ? 130 : 160}`} fill={mi >= 3 ? liq : "#e9ddc4"} stroke="#33415c" strokeWidth="2.5" />
+        {mi === 2 && <g>{dots(20, ax + 52, 168, 66, 18, "#c9a46a", 3)}{Array.from({ length: 9 }, (_, i) => { const x0 = ax + 56 + ((i * 37) % 100) / 100 * 60, y0 = 170 + (i % 3) * 5; return <circle key={i} cx={x0 + (ax + 86 - x0) * up * 0.8} cy={y0 + ((106 + (i % 3) * 5) - y0) * up} r="2.4" fill="#455a64" />; })}</g>}
+        {mi === 0 && dots(18, ax + 54, 170, 64, 16, "#b38b4d", 5)}
+        {mi === 1 && dots(14, ax + 54, 170, 64, 18, "#fff", 2)}
+      </g>;
+    }
+    if (ki === 3) { // قیف جداکننده
+      const lay = mi === 3;
+      const drain = lay ? p : 0;
+      return <g>
+        <path d={`M ${ax + 58},64 L ${ax + 114},64 L ${ax + 100},124 L ${ax + 72},124 Z`} fill="none" stroke="#33415c" strokeWidth="2.5" />
+        {lay ? <><polygon points={`${ax + 70},${116 - 0} ${ax + 102},116 ${ax + 98},${140 - 0} ${ax + 74},140`} fill="none" /><rect x={ax + 61} y="64" width="50" height="26" fill="none" /><path d={`M ${ax + 62},${96} L ${ax + 110},${96} L ${ax + 102},124 L ${ax + 70},124 Z`} fill="#8fcbf0" opacity={1 - drain * 0.95} /><path d={`M ${ax + 59},68 L ${ax + 113},68 L ${ax + 110},96 L ${ax + 62},96 Z`} fill="#e8b84a" /></> : <path d={`M ${ax + 60},70 L ${ax + 112},70 L ${ax + 100},124 L ${ax + 72},124 Z`} fill={liq} opacity="0.9" />}
+        <rect x={ax + 82} y="124" width="8" height="16" fill="#b0bec5" stroke="#33415c" strokeWidth="1.5" /><rect x={ax + 74} y="132" width="24" height="4" rx="2" fill={lay ? "#43a047" : "#c62828"} />
+        {lay && p > 0 && p < 1 && drop(ax + 86, 142, 168, "#8fcbf0")}
+        <path d={`M ${ax + 56},156 L ${ax + 58},188 Q ${ax + 60},194 ${ax + 66},194 L ${ax + 106},194 Q ${ax + 112},194 ${ax + 114},188 L ${ax + 116},156`} fill="none" stroke="#33415c" strokeWidth="2.5" />
+        {lay && <rect x={ax + 60} y={194 - 30 * drain} width="52" height={30 * drain} fill="#8fcbf0" />}
+        <text x={ax + 86} y="58" fontSize="8" fill="#5b6479" textAnchor="middle">{lay ? "روغن روی آب است" : ""}</text>
+      </g>;
+    }
+    /* تقطیر */
+    const dist = mi !== 2;
+    const lv = dist ? 1 - 0.8 * p : 0;
+    const rcv = dist ? p : 0;
+    const rcvCol = mi === 4 ? "#d9c7ee" : "#c5e6ff";
+    return <g>
+      <path d={`M ${ax + 6},112 L ${ax + 6},130 Q ${ax + 6},176 ${ax + 38},176 Q ${ax + 70},176 ${ax + 70},130 L ${ax + 70},112 L ${ax + 52},112 L ${ax + 52},96 L ${ax + 24},96 L ${ax + 24},112 Z`} fill="none" stroke="#33415c" strokeWidth="2.5" />
+      {dist && <path d={`M ${ax + 10},${176 - 56 * lv} Q ${ax + 38},${176 - 56 * lv + 6} ${ax + 66},${176 - 56 * lv} L ${ax + 66},140 Q ${ax + 62},172 ${ax + 38},172 Q ${ax + 14},172 ${ax + 10},140 Z`} fill={mi === 3 ? "#8fcbf0" : liq} opacity="0.9" />}
+      {dist && mi === 3 && <rect x={ax + 12} y={152} width="52" height="18" fill="#e8b84a" opacity="0.9" />}
+      {mi === 1 && <g>{Array.from({ length: 6 }, (_, i) => <rect key={i} x={ax + 20 + i * 6} y={166} width="4" height="4" fill="#fff" stroke="#9aa" strokeWidth="0.5" opacity={p} />)}</g>}
+      {mi === 0 && <ellipse cx={ax + 38} cy={170} rx="20" ry="3" fill="#b38b4d" opacity={p} />}
+      {mi === 2 && <g>{dots(14, ax + 18, 158, 40, 12, "#c9a46a", 3)}{dots(8, ax + 18, 158, 40, 12, "#455a64", 9)}</g>}
+      <rect x={ax + 22} y="100" width="32" height="6" fill="#fff" stroke="#33415c" strokeWidth="1.2" />
+      <path d={`M ${ax + 38},96 L ${ax + 38},80 L ${ax + 86},80 L ${ax + 128},118`} fill="none" stroke="#33415c" strokeWidth="2.5" />
+      <path d={`M ${ax + 90},84 L ${ax + 126},116`} stroke="#4aa3df" strokeWidth="10" opacity="0.35" /><text x={ax + 106} y="92" fontSize="7.5" fill="#1e6fd9" textAnchor="middle">آب سرد</text>
+      <path d={`M ${ax + 112},146 L ${ax + 112},184 Q ${ax + 112},192 ${ax + 120},192 L ${ax + 154},192 Q ${ax + 162},192 ${ax + 162},184 L ${ax + 162},146`} fill="none" stroke="#33415c" strokeWidth="2.5" />
+      <line x1={ax + 128} y1="118" x2={ax + 136} y2="146" stroke="#33415c" strokeWidth="2.5" />
+      <rect x={ax + 114} y={192 - 40 * rcv} width="46" height={40 * rcv} fill={rcvCol} />
+      {dist && p > 0 && p < 1 && drop(ax + 136, 126, 150, rcvCol)}
+      <path d={`M ${ax + 30},196 Q ${ax + 34},184 ${ax + 38},192 Q ${ax + 42},182 ${ax + 46},196 Z`} fill="#ff9800" style={{ filter: "drop-shadow(0 0 5px #ffb300)" }} />
+    </g>;
+  };
+  return (
+    <div className="vlab-exp">
+      <svg viewBox="0 0 320 262" className="vlab-svg" style={{ direction: "ltr", background: "#f4f7fd" }}>
+        <rect width="320" height="262" rx="12" fill="#f4f7fd" />
+        <text x="65" y="26" fontSize="10.5" fill="#33415c" textAnchor="middle" fontWeight="700">{VLAB_F_MIX[mi]}</text><text x="65" y="40" fontSize="8" fill="#7a869c" textAnchor="middle">(مخلوط)</text>
+        <text x="236" y="26" fontSize="10.5" fill="#33415c" textAnchor="middle" fontWeight="700">روش: {VLAB_F_METH[ki]}</text>
+        <text x="130" y="140" fontSize="20" fill="#9aa8c4" textAnchor="middle">⟶</text>
+        {before()}{after()}
+        <rect x="14" y="210" width="292" height="46" rx="12" fill={st === 1 ? "#e3f6e8" : st === 2 ? "#fff3d6" : "#fde6e6"} stroke={st === 1 ? "#43a047" : st === 2 ? "#f9a825" : "#e57373"} strokeWidth="2" />
+        <text x="30" y="239" fontSize="20">{st === 1 ? "✅" : st === 2 ? "⚠️" : "❌"}</text>
+        <text x="172" y="229" fontSize="10" fill="#33415c" textAnchor="middle" fontWeight="700">{R[1].replace(/[.]$/, "")}</text>
+        <text x="172" y="244" fontSize="9" fill="#5b6479" textAnchor="middle">{R[2].replace(/[.]$/, "")}</text>
+      </svg>
+      <div className="vlab-controls"><div className="vlab-ctrl-col" style={{ flex: 1 }}>
+        <label className="vlab-ctrl-label">مخلوط را انتخاب کن:</label>
+        <div className="vlab-num-row">{VLAB_F_MIX.map((x, i) => <button key={i} type="button" className={"vlab-num-btn" + (mi === i ? " active" : "")} onClick={() => setMi(i)}>{x}</button>)}</div>
+        <label className="vlab-ctrl-label">روش جداسازی را انتخاب کن:</label>
+        <div className="vlab-num-row">{VLAB_F_METH.map((x, i) => <button key={i} type="button" className={"vlab-num-btn" + (ki === i ? " active" : "")} onClick={() => setKi(i)}>{x}</button>)}</div>
+        <div className="vlab-num-row"><button type="button" className="vlab-num-btn" onClick={() => { setP(0); setRun(true); }}>🔁 دوباره نشان بده</button></div>
+      </div></div>
+      <div className="vlab-readout">
+        هر روش جداسازی بر پایه‌ی <b>یک تفاوت</b> میان اجزای مخلوط کار می‌کند: اندازه‌ی ذرات (صافی)، نقطه‌ی جوش (تبخیر و تقطیر)، خاصیت مغناطیسی (آهن‌ربا) یا چگالی (قیف جداکننده). روش مناسب را برای هر مخلوط پیدا کن؛ گاهی چند روش ممکن است، ولی یکی ساده‌تر و ارزان‌تر است (⚠️).
+      </div>
+    </div>
+  );
+}
+
 const VLAB_COMPONENTS = {
+  "area-shapes": VlabAreaShapesExperiment,
+  "percent-shop": VlabPercentShopExperiment,
+  "heart-chambers": VlabHeartChambersExperiment,
+  "mixture-separation": VlabMixtureSeparationExperiment,
+
+  "pulley-system": VlabPulleySystemExperiment,
+  "liquid-pressure": VlabLiquidPressureExperiment,
+  "bulb-circuits": VlabBulbCircuitsExperiment,
+  "parallel-lines": VlabParallelLinesExperiment,
+
   "soil-layers": VlabSoilLayersExperiment,
   "fossil-layers": VlabFossilLayersExperiment,
   "fold-mountain": VlabFoldMountainExperiment,
@@ -46299,6 +47043,16 @@ const VLAB_COMPONENTS = {
 /* راهنمای یادگیری (پیش‌نویس، در انتظار بازبینی معلم) — با الهام از اصول PhET: هدف‌های کم و مشخص، چالش‌های باز («همه‌ی راه‌ها را پیدا کن»)،
    پیش‌بینی و مقایسه، ارتباط با زندگی، و برداشت‌های نادرست رایج. هر آزمایش: goals، challenges، misconception (اختیاری)، check:{q,a} */
 const VLAB_GUIDE = {
+  "area-shapes": { goals: ["مساحت سه شکل را از راه برش بسازی.", "بدانی چرا مثلث نصف است."], challenges: ["متوازی‌الاضلاع را کج‌تر کن؛ مساحت عوض می‌شود؟", "رأس مثلث را جابه‌جا کن.", "ذوزنقه را به متوازی‌الاضلاع تبدیل کن."], misconception: "با کج‌تر شدن متوازی‌الاضلاع مساحتش بیشتر می‌شود؛ در حقیقت اگر قاعده و ارتفاع ثابت باشد مساحت ثابت می‌ماند.", check: { q: "مساحت مثلثی با قاعده‌ی ۶ و ارتفاع ۴؟", a: "۱۲." } },
+  "percent-shop": { goals: ["درصد را «از هر صد» بفهمی.", "تخفیف و قیمت پرداختی را حساب کنی."], challenges: ["۲۵٪ تخفیف روی ۲۰۰ هزار تومان.", "تخفیف ۵۰٪ را ببین.", "هر ۱٪ چند تومان است؟"], misconception: "تخفیف ۵۰٪ و ۵۰٪ دوباره یعنی همه‌چیز رایگان؛ در حقیقت تخفیف دوم از قیمت تازه حساب می‌شود.", check: { q: "۲۰٪ از ۵۰۰ چند است؟", a: "۱۰۰." } },
+  "heart-chambers": { goals: ["چهار حفره‌ی قلب را بشناسی.", "مسیر خون را دنبال کنی."], challenges: ["حرکت آهسته را روشن کن و انقباض‌ها را ببین.", "ضربان را ۱۶۰ کن.", "برون‌ده‌ی قلب را حساب کن."], misconception: "خون چپ و راست قلب با هم مخلوط می‌شوند؛ در حقیقت دیواره‌ی بین دو طرف جدا نگهشان می‌دارد.", check: { q: "کدام بطن ماهیچه‌ی ضخیم‌تری دارد؟", a: "بطن چپ." } },
+  "mixture-separation": { goals: ["هر روش را بر اساس تفاوتش بشناسی.", "روش مناسب را انتخاب کنی."], challenges: ["نمک و آب را با صافی امتحان کن.", "روغن و آب را با قیف جدا کن.", "الکل و آب را تقطیر کن."], misconception: "صافی هر مخلوطی را جدا می‌کند؛ در حقیقت فقط جامدِ نامحلول از مایع را.", check: { q: "برای جدا کردن نمک از آب نمک کدام روش؟", a: "تبخیر یا تقطیر." } },
+
+  "pulley-system": { goals: ["بفهمی قرقره نیرو را کم می‌کند.", "بدانی کار ورودی و خروجی برابرند."], challenges: ["با ۴ رشته نیروی لازم را بخوان.", "بار ۲۰۰ نیوتنی را با ۴ رشته بالا ببر.", "طناب را ۸۰ سانتی‌متر بکش و بالا رفتن بار را ببین."], misconception: "قرقره کار را کم می‌کند؛ در حقیقت فقط نیرو را کم می‌کند و مسیر را بلندتر.", check: { q: "با ۲ رشته برای بار ۱۰۰ نیوتنی چه نیرویی لازم است؟", a: "۵۰ نیوتن." } },
+  "liquid-pressure": { goals: ["رابطه‌ی فشار و عمق را بفهمی.", "فشار مایع را حساب کنی."], challenges: ["ارتفاع مایع را ۱۰۰ کن.", "مایع را روغن کن.", "کدام سوراخ دورتر می‌پاشد؟"], misconception: "سوراخ بالاتر دورتر می‌پاشد؛ در حقیقت فشار پایین بیشتر است ولی برد به ارتفاع سوراخ هم بستگی دارد.", check: { q: "با ۴ برابر شدن عمق فشار چند برابر می‌شود؟", a: "۴ برابر." } },
+  "bulb-circuits": { goals: ["مدار متوالی و موازی را فرق بگذاری.", "بدانی چرا برق خانه موازی است."], challenges: ["در متوالی یک لامپ را بردار.", "در موازی یک لامپ را بردار.", "۳ باتری را با موازی امتحان کن."], misconception: "در هر مدار با برداشتن یک لامپ بقیه روشن می‌مانند؛ در حقیقت فقط در مدار موازی.", check: { q: "چرا لوازم خانه موازی بسته می‌شوند؟", a: "تا هرکدام ولتاژ کامل بگیرد و مستقل کار کند." } },
+  "parallel-lines": { goals: ["نام زاویه‌ها را بدانی.", "رابطه‌ی مساوی یا مکمل را ببینی."], challenges: ["زاویه‌ی ۳۰° بگذار و ۸ زاویه را بخوان.", "داخلی هم‌طرف را ببین.", "وقتی مورب عمود شود چه می‌شود؟"], misconception: "همه‌ی زاویه‌ها با هم مساوی‌اند؛ در حقیقت فقط دو مقدار θ و ۱۸۰−θ.", check: { q: "اگر یک زاویه‌ی داخلی ۷۰° باشد، هم‌طرفش؟", a: "۱۱۰°." } },
+
   "soil-layers": { goals: ["لایه‌های خاک را نام ببری.", "بدانی ریشه و آب کجا می‌روند."], challenges: ["لایه‌ی مغذی کدام است؟", "باران را روشن کن.", "سنگ بستر چه نقشی دارد؟"], misconception: "خاک یک ماده‌ی یکنواخت است؛ در حقیقت چند لایه دارد.", check: { q: "گیاهان بیشتر از کدام لایه مواد غذایی می‌گیرند؟", a: "خاک رویی." } },
   "fossil-layers": { goals: ["سن نسبی را بفهمی.", "ترتیب لایه‌ها را بخوانی."], challenges: ["قدیمی‌ترین فسیل کدام است؟", "لایه‌ی ۱ جوان‌تر است یا ۴؟", "اگر لایه‌ها چین بخورند چه می‌شود؟"], misconception: "فسیل بالایی همیشه قدیمی‌تر است؛ در حقیقت پایینی قدیمی‌تر است.", check: { q: "کدام لایه معمولاً قدیمی‌تر است؟", a: "لایه‌ی پایینی." } },
   "fold-mountain": { goals: ["چین‌خوردگی را توضیح دهی.", "رابطه‌ی فشار و ارتفاع را ببینی."], challenges: ["فشار را به ۸۰٪ برسان.", "طول لایه‌ها چه شد؟", "البرز چگونه ساخته شد؟"], misconception: "کوه‌ها یک‌شبه ساخته می‌شوند؛ در حقیقت طی میلیون‌ها سال.", check: { q: "با فشار بیشتر، ارتفاع چین‌ها چه می‌شود؟", a: "بیشتر." } },
@@ -46496,6 +47250,7 @@ function StudentVirtualLabView({ onBack, grade, studentCode, schoolCode }) {
   const [subjectFilter, setSubjectFilter] = useState("همه");
   const [levelFilter, setLevelFilter] = useState("همه");
   const [activeId, setActiveId] = useState(null);
+  if (typeof window !== "undefined" && activeId) window.__vlabInLab = true;
   const [reading, setReading] = useState("");
   const [reportText, setReportText] = useState("");
   const [saveMsg, setSaveMsg] = useState("");
@@ -46509,6 +47264,8 @@ function StudentVirtualLabView({ onBack, grade, studentCode, schoolCode }) {
   const [predMatch, setPredMatch] = useState("");
   const [resetKey, setResetKey] = useState(0);
   const [animPaused, setAnimPaused] = useState(false);
+  useEffect(() => { window.__vlabPause = animPaused; }, [animPaused]);
+  useEffect(() => () => { window.__vlabInLab = false; window.__vlabPause = false; }, []);
   const [fbVote, setFbVote] = useState("");
   const [fbText, setFbText] = useState("");
   const [fbMsg, setFbMsg] = useState("");
@@ -46936,7 +47693,7 @@ function StudentVirtualLabView({ onBack, grade, studentCode, schoolCode }) {
             </div>
             <div className="vlab-toolbar" role="toolbar" aria-label="ابزارهای آزمایش">
               <button type="button" className="vlab-tb-btn" onClick={() => setResetKey((k) => k + 1)}>🔄 بازنشانی آزمایش</button>
-              <button type="button" className={"vlab-tb-btn" + (animPaused ? " on" : "")} aria-pressed={animPaused} onClick={() => setAnimPaused((p) => !p)}>{animPaused ? "▶ ادامه‌ی حرکت" : "⏸ توقف حرکت"}</button>
+              <button type="button" className={"vlab-tb-btn" + (animPaused ? " on" : "")} aria-pressed={animPaused} title="همه‌ی حرکت‌های این آزمایش را نگه می‌دارد تا با دقت نگاه کنی؛ دوباره بزن تا ادامه پیدا کند" onClick={() => setAnimPaused((p) => !p)}>{animPaused ? "▶ ادامه‌ی حرکت" : "⏸ توقف حرکت"}</button>
               <button type="button" className="vlab-tb-btn" onClick={() => { try { window.print(); } catch (e) {} }}>🖨 برگه‌ی فعالیت (چاپ)</button>
             </div>
             <div ref={labBoxRef}>

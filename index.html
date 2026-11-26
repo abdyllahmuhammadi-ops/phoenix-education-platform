@@ -47126,11 +47126,29 @@ function VlabHeartChambersExperiment({ onReading }) {
         <path d="M 24,72 C 20,112 24,162 40,186 C 56,202 98,198 110,178 L 114,104 C 110,72 92,52 66,52 C 44,52 28,60 24,72 Z" fill="url(#hcLung)" stroke="#c9707f" strokeWidth="2.2" />
         <path d="M 296,72 C 300,112 296,162 282,186 C 268,202 236,200 226,188 C 214,162 214,132 212,104 C 214,74 232,52 258,52 C 280,52 292,60 296,72 Z" fill="url(#hcLung)" stroke="#c9707f" strokeWidth="2.2" />
         <path d="M 30,110 Q 70,104 110,126 M 36,150 Q 72,140 108,150 M 290,112 Q 252,108 214,130" fill="none" stroke="#c9707f" strokeWidth="1.2" opacity="0.6" />
+        {/* رگ‌های درون شش‌ها: سرخرگ (آبی) → مویرگ‌های کیسه‌های هوایی (آبی به قرمز) → سیاهرگ (قرمز) */}
+        <defs><linearGradient id="hcCap" x1="0" y1="0" x2="1" y2="0"><stop offset="0" stopColor="#3b82c4" /><stop offset="1" stopColor="#d94141" /></linearGradient></defs>
+        {[[[102, 130], [80, 98], [58, 84]], [[102, 130], [64, 118], [40, 112]], [[102, 130], [56, 146], [38, 168]], [[102, 130], [86, 164], [70, 178]], [[238, 132], [262, 100], [276, 84]], [[238, 132], [270, 126], [286, 128]], [[238, 132], [262, 156], [270, 176]]].map((b, i) => (
+          <g key={"v" + i}>
+            <polyline points={b.map((q) => q.join(",")).join(" ")} fill="none" stroke="#3b82c4" strokeWidth="2.4" strokeLinecap="round" strokeLinejoin="round" opacity="0.85" />
+            <polyline points={b.map((q, k) => [q[0] + (k ? 5 : 3), q[1] + (k ? 5 : 3)].join(",")).join(" ")} fill="none" stroke="#d94141" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" opacity="0.8" />
+            <ellipse cx={b[2][0] + 3} cy={b[2][1] + 3} rx="7" ry="6" fill="#fff" fillOpacity="0.85" stroke="url(#hcCap)" strokeWidth="2.6" />
+          </g>
+        ))}
+        <g>
+          <circle cx="62" cy="132" r="30" fill="#fff" fillOpacity="0.95" stroke="#8c98d6" strokeWidth="1.6" />
+          <ellipse cx="62" cy="132" rx="14" ry="12" fill="#eaf6ff" stroke="#e58aa0" strokeWidth="1.4" />
+          <ellipse cx="62" cy="132" rx="20" ry="18" fill="none" stroke="url(#hcCap)" strokeWidth="5" />
+          <text x="62" y="135" fontSize="8" fill="#4a5a7a" textAnchor="middle" fontWeight="700">هوا</text>
+          <path d="M 46,118 L 52,124" stroke="#1f9d4a" strokeWidth="2.2" strokeLinecap="round" /><polygon points="53,126 47,124 51,120" fill="#1f9d4a" />
+          <path d="M 72,126 L 80,118" stroke="#e08a1f" strokeWidth="2.2" strokeLinecap="round" /><polygon points="82,116 76,118 80,122" fill="#e08a1f" />
+        </g>
+        <VlabPill x="58" y="212" text="اکسیژن وارد خون" size={8.5} fill="#d3f5dc" color="#126b30" /><VlabPill x="58" y="230" text="کربن‌دی‌اکسید خارج" size={8.5} fill="#ffe6c2" color="#8a4b00" />
         <rect x="155" y="28" width="10" height="40" rx="4" fill="#dfe9f5" stroke="#8aa0c0" strokeWidth="1.6" />
         {[34, 41, 48, 55, 62].map((y) => <line key={y} x1="155" y1={y} x2="165" y2={y} stroke="#8aa0c0" strokeWidth="1" />)}
         <path d="M 160,68 L 118,96 L 90,104 M 118,96 L 96,124 M 160,68 L 208,92 L 240,100 M 208,92 L 232,126" fill="none" stroke="#dfe9f5" strokeWidth="5" strokeLinecap="round" strokeLinejoin="round" opacity="0.95" />
         <path d="M 160,68 L 118,96 L 90,104 M 118,96 L 96,124 M 160,68 L 208,92 L 240,100 M 208,92 L 232,126" fill="none" stroke="#8aa0c0" strokeWidth="1.2" strokeLinecap="round" strokeLinejoin="round" />
-        <VlabPill x="62" y="168" text="شش راست" size={10} fill="#fff" color="#8a3a50" /><VlabPill x="262" y="168" text="شش چپ" size={10} fill="#fff" color="#8a3a50" />
+        <VlabPill x="62" y="84" text="شش راست" size={10} fill="#fff" color="#8a3a50" /><VlabPill x="262" y="196" text="شش چپ" size={10} fill="#fff" color="#8a3a50" />
         {/* سر و بدن */}
         <rect x="26" y="2" width="84" height="22" rx="10" fill="#e8e0f5" stroke="#8d7bbf" strokeWidth="1.8" /><text x="68" y="17" fontSize="9.5" fill="#4a3b78" textAnchor="middle" fontWeight="700">سر و دست‌ها</text>
         <rect x="50" y="244" width="236" height="24" rx="11" fill="#e8e0f5" stroke="#8d7bbf" strokeWidth="1.8" /><text x="196" y="260" fontSize="10.5" fill="#4a3b78" textAnchor="middle" fontWeight="700">بدن (مغز، ماهیچه‌ها و اندام‌ها)</text>
@@ -47155,7 +47173,7 @@ function VlabHeartChambersExperiment({ onReading }) {
         {tube("M 174,150 L 172,100 L 180,70 Q 190,58 210,60 Q 232,64 238,88 L 240,244", RED, 10)}
         {/* حباب‌های خون */}
         {flows.map((p, i) => Array.from({ length: 6 }, (_, k) => { const [x, y] = along(p.pts, flow + k / 6 + i * 0.09); return <circle key={i + "-" + k} cx={x} cy={y} r="2.5" fill={p.c} stroke="#fff" strokeWidth="0.8" />; }))}
-        {num(130, 124, "۱")}{num(140, 198, "۲")}{num(184, 120, "۳")}{num(198, 200, "۴")}{num(110, 80, "۵")}{num(226, 138, "۶")}{num(222, 54, "۷")}{num(106, 52, "۸")}{num(158, 164, "۹")}{num(48, 118, "۱۰")}
+        {num(130, 124, "۱")}{num(140, 198, "۲")}{num(184, 120, "۳")}{num(198, 200, "۴")}{num(110, 80, "۵")}{num(226, 138, "۶")}{num(222, 54, "۷")}{num(106, 52, "۸")}{num(158, 164, "۹")}{num(34, 66, "۱۰")}{num(36, 108, "۱۱")}
         <rect x="40" y="30" width="0" height="0" />
         <VlabPill x="160" y="283" text={label} size={9.5} fill={atria || vent ? "#ffd6d0" : "#ffffff"} color={atria || vent ? "#a3200f" : "#33415c"} />
       </svg>
@@ -47165,7 +47183,7 @@ function VlabHeartChambersExperiment({ onReading }) {
         <div className="vlab-num-row">{[[60, "استراحت"], [100, "راه رفتن"], [160, "دویدن"]].map((x) => <button key={x[0]} type="button" className={"vlab-num-btn" + (bpm === x[0] ? " active" : "")} onClick={() => setBpm(x[0])}>{x[1]}</button>)}<button type="button" className={"vlab-num-btn" + (slow ? " active" : "")} onClick={() => setSlow(!slow)}>🐢 حرکت آهسته</button></div>
       </div></div>
       <div className="vlab-readout">
-        {[["۱", "دهلیز راست: خون کم‌اکسیژن از بزرگ‌سیاهرگ‌ها می‌گیرد", BLUE], ["۲", "بطن راست: خون را به سرخرگ ششی و شش‌ها می‌فرستد", BLUE], ["۳", "دهلیز چپ: خون پراکسیژن را از سیاهرگ‌های ششی می‌گیرد", RED], ["۴", "بطن چپ (دیواره‌ی ضخیم‌تر): خون را به سرخرگ آئورت و بدن می‌فرستد", RED], ["۵", "سرخرگ ششی: خون کم‌اکسیژن را به شش‌ها می‌برد", BLUE], ["۶", "سیاهرگ‌های ششی: خون پراکسیژن را از شش‌ها به قلب برمی‌گردانند", RED], ["۷", "سرخرگ آئورت: خون پراکسیژن را به سراسر بدن می‌رساند", RED], ["۸", "بزرگ‌سیاهرگ‌ها: خون کم‌اکسیژن بدن را به قلب می‌آورند", BLUE], ["۹", "دریچه‌ها: خون را فقط یک‌طرفه عبور می‌دهند", "#888"], ["۱۰", "شش‌ها: اکسیژن وارد خون و کربن‌دی‌اکسید از آن خارج می‌شود", "#e58aa0"]].map((x) => <div key={x[0]} style={{ display: "flex", alignItems: "center", gap: 6, margin: "2px 0" }}><span style={{ minWidth: 20, height: 18, borderRadius: 9, background: "#26335f", color: "#fff", fontSize: 11, display: "inline-flex", alignItems: "center", justifyContent: "center", flex: "none" }}>{x[0]}</span><span style={{ width: 10, height: 10, borderRadius: 3, background: x[2], flex: "none" }} /><span>{x[1]}</span></div>)}
+        {[["۱", "دهلیز راست: خون کم‌اکسیژن از بزرگ‌سیاهرگ‌ها می‌گیرد", BLUE], ["۲", "بطن راست: خون را به سرخرگ ششی و شش‌ها می‌فرستد", BLUE], ["۳", "دهلیز چپ: خون پراکسیژن را از سیاهرگ‌های ششی می‌گیرد", RED], ["۴", "بطن چپ (دیواره‌ی ضخیم‌تر): خون را به سرخرگ آئورت و بدن می‌فرستد", RED], ["۵", "سرخرگ ششی: خون کم‌اکسیژن را به شش‌ها می‌برد", BLUE], ["۶", "سیاهرگ‌های ششی: خون پراکسیژن را از شش‌ها به قلب برمی‌گردانند", RED], ["۷", "سرخرگ آئورت: خون پراکسیژن را به سراسر بدن می‌رساند", RED], ["۸", "بزرگ‌سیاهرگ‌ها: خون کم‌اکسیژن بدن را به قلب می‌آورند", BLUE], ["۹", "دریچه‌ها: خون را فقط یک‌طرفه عبور می‌دهند", "#888"], ["۱۰", "شش‌ها: هوا از نای و نایژه‌ها به کیسه‌های هوایی می‌رسد", "#e58aa0"], ["۱۱", "کیسه‌ی هوایی (بزرگنمایی): مویرگ‌ها دور آن‌اند؛ خون آبی (سرخرگ ششی) اکسیژن می‌گیرد، کربن‌دی‌اکسید می‌دهد و قرمز می‌شود و با سیاهرگ ششی به دهلیز چپ می‌رود", "#d94141"]].map((x) => <div key={x[0]} style={{ display: "flex", alignItems: "center", gap: 6, margin: "2px 0" }}><span style={{ minWidth: 20, height: 18, borderRadius: 9, background: "#26335f", color: "#fff", fontSize: 11, display: "inline-flex", alignItems: "center", justifyContent: "center", flex: "none" }}>{x[0]}</span><span style={{ width: 10, height: 10, borderRadius: 3, background: x[2], flex: "none" }} /><span>{x[1]}</span></div>)}
         <div style={{ marginTop: 6 }}>با {VLAB_FA_DIGITS(bpm)} ضربان در دقیقه و حدود ۷۰ میلی‌لیتر خون در هر ضربان، قلب در دقیقه حدود <b>{VLAB_FA_DIGITS(co.toFixed(1))} لیتر</b> خون پمپ می‌کند. (مدل ساده؛ مقدارها تقریبی‌اند.)</div>
       </div>
       <VlabFormulaCheck title="برون‌ده‌ی قلب" fa="خونی که در دقیقه پمپ می‌شود = ضربان × حجم هر ضربان" en="" legend="حجم هر ضربان ≈ ۷۰ میلی‌لیتر؛ جواب را به لیتر بنویس" subst={`${bpm} × 70 ÷ 1000 = ?`} label="برون‌ده:" answer={co} unit="لیتر در دقیقه" decimals={1} />

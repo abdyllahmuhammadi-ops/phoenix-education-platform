@@ -25328,6 +25328,96 @@ const VLAB_EXPERIMENTS = [
     intro: "یک جاندار را از زنجیره بردار و اثرش بر بقیه را ببین.",
     tools: ["گیاه", "ملخ", "قورباغه", "مار", "عقاب"],
   },
+  {
+    id: "fraction-compare",
+    subject: "ریاضی",
+    level: "ابتدایی",
+    title: "مقایسه‌ی کسرها",
+    icon: "🍕",
+    intro: "دو پیتزا را با کسرهای مختلف مقایسه کن.",
+    tools: ["دو پیتزا", "کسر", "نشان > < ="],
+  },
+  {
+    id: "angle-types",
+    subject: "ریاضی",
+    level: "ابتدایی",
+    title: "زاویه‌ها",
+    icon: "📐",
+    intro: "زاویه را باز و بسته کن و نوع آن را بشناس.",
+    tools: ["دو ضلع", "کمان زاویه", "زاویه‌ی ۹۰"],
+  },
+  {
+    id: "bar-chart",
+    subject: "ریاضی",
+    level: "ابتدایی",
+    title: "نمودار میله‌ای",
+    icon: "📊",
+    intro: "رأی‌ها را اضافه کن و نمودار میله‌ای را بخوان.",
+    tools: ["میوه‌ها", "نمودار", "رأی"],
+  },
+  {
+    id: "decimal-grid",
+    subject: "ریاضی",
+    level: "ابتدایی",
+    title: "اعداد اعشاری",
+    icon: "🟩",
+    intro: "مربع صدخانه‌ای را رنگ کن و عدد اعشاری را ببین.",
+    tools: ["مربع ۱۰۰ خانه", "دهم", "صدم"],
+  },
+  {
+    id: "spinner-prob",
+    subject: "ریاضی",
+    level: "ابتدایی",
+    title: "احتمال: چرخنده",
+    icon: "🎯",
+    intro: "چرخنده را چندین بار بچرخان و نتیجه را با احتمال مقایسه کن.",
+    tools: ["چرخنده", "قطعه‌ی قرمز", "شمارنده"],
+  },
+  {
+    id: "integers-thermo",
+    subject: "ریاضی",
+    level: "متوسطه اول",
+    title: "عددهای صحیح و دما",
+    icon: "🌡️",
+    intro: "دما را بالا و پایین ببر و جمع عددهای مثبت و منفی را ببین.",
+    tools: ["دماسنج عمودی", "عدد منفی", "جمع"],
+  },
+  {
+    id: "ratio-recipe",
+    subject: "ریاضی",
+    level: "متوسطه اول",
+    title: "نسبت و تناسب",
+    icon: "🍚",
+    intro: "دستور پختن را برای تعداد نفرات مختلف تنظیم کن.",
+    tools: ["دستور غذا", "نسبت", "ضریب"],
+  },
+  {
+    id: "joints-kids",
+    subject: "زیست‌شناسی",
+    level: "ابتدایی",
+    title: "مفصل‌ها و حرکت",
+    icon: "🦴",
+    intro: "سه نوع مفصل را امتحان کن و دامنه‌ی حرکت هرکدام را ببین.",
+    tools: ["استخوان", "مفصل", "عضله"],
+  },
+  {
+    id: "seismic-waves",
+    subject: "زمین‌شناسی",
+    level: "متوسطه اول",
+    title: "موج‌های زلزله",
+    icon: "🌋",
+    intro: "زلزله را از فاصله‌های مختلف ببین و فاصله را از اختلاف رسیدن P و S پیدا کن.",
+    tools: ["کانون", "ایستگاه لرزه‌نگاری", "موج P و S"],
+  },
+  {
+    id: "prism-spectrum",
+    subject: "فیزیک",
+    level: "متوسطه اول",
+    title: "منشور و طیف نور",
+    icon: "🌈",
+    intro: "نور سفید را از منشور بگذران و هفت‌رنگ را ببین.",
+    tools: ["منشور", "نور سفید", "طیف"],
+  },
 ];
 
 function vlabClamp(v, min, max) {
@@ -35186,6 +35276,17 @@ function VlabReactionTimeExperiment({ onReading }) {
 }
 
 const VLAB_EVERYDAY = {
+  "fraction-compare": { title: "تقسیم کیک", text: "اگر کیک را بین ۳ نفر تقسیم کنیم، سهم هر نفر از تقسیم بین ۴ نفر بیشتر است.", art: <g><text x="52" y="58" fontSize="40" textAnchor="middle">🍕</text></g> },
+  "angle-types": { title: "گوشه‌ی کتاب", text: "گوشه‌ی کتاب و دفتر زاویه‌ی قائمه است.", art: <g><text x="52" y="58" fontSize="40" textAnchor="middle">📐</text></g> },
+  "bar-chart": { title: "رأی‌گیری کلاس", text: "با نمودار می‌فهمیم اکثر دانش‌آموزان چه میوه‌ای دوست دارند.", art: <g><text x="52" y="58" fontSize="40" textAnchor="middle">📊</text></g> },
+  "decimal-grid": { title: "قیمت‌ها", text: "۲٫۵ کیلوگرم یعنی دو کیلو و نیم.", art: <g><text x="52" y="58" fontSize="40" textAnchor="middle">🟩</text></g> },
+  "spinner-prob": { title: "بازی با تاس", text: "هر وجه تاس احتمال ۱/۶ دارد؛ ولی در ۶ بار انداختن لزوماً یک بار نمی‌آید.", art: <g><text x="52" y="58" fontSize="40" textAnchor="middle">🎯</text></g> },
+  "integers-thermo": { title: "هوای سرد", text: "دمای تهران در زمستان ممکن است −۵ درجه باشد.", art: <g><text x="52" y="58" fontSize="40" textAnchor="middle">🌡️</text></g> },
+  "ratio-recipe": { title: "آشپزی", text: "وقتی میهمان زیاد می‌شود، مقدارها را با همان نسبت زیاد می‌کنیم.", art: <g><text x="52" y="58" fontSize="40" textAnchor="middle">🍚</text></g> },
+  "joints-kids": { title: "خم شدن زانو", text: "با زانو راه می‌رویم و می‌نشینیم.", art: <g><text x="52" y="58" fontSize="40" textAnchor="middle">🦴</text></g> },
+  "seismic-waves": { title: "هشدار زلزله", text: "سامانه‌های هشدار با موج P چند ثانیه پیش از رسیدن موج ویرانگر S هشدار می‌دهند.", art: <g><text x="52" y="58" fontSize="40" textAnchor="middle">🌋</text></g> },
+  "prism-spectrum": { title: "رنگین‌کمان", text: "قطره‌های باران مثل منشور نور خورشید را به طیف تجزیه می‌کنند.", art: <g><text x="52" y="58" fontSize="40" textAnchor="middle">🌈</text></g> },
+
   "number-line": { title: "پله‌ی ساختمان", text: "بالا رفتن از پله مثل جمع و پایین آمدن مثل تفریق است.", art: <g><text x="52" y="58" fontSize="40" textAnchor="middle">➕</text></g> },
   "multiply-array": { title: "تخم‌مرغ در طبقه", text: "یک طبقه‌ی تخم‌مرغ با ۳ ردیف و ۶ ستون ۱۸ تخم‌مرغ دارد.", art: <g><text x="52" y="58" fontSize="40" textAnchor="middle">🔢</text></g> },
   "clock-time": { title: "زنگ مدرسه", text: "زنگ تفریح ساعت ۱۰ تمام است؛ هر دو عقربه کنار هم‌اند؟", art: <g><text x="52" y="58" fontSize="40" textAnchor="middle">🕒</text></g> },
@@ -44976,7 +45077,350 @@ function VlabFoodChainKidsExperiment({ onReading }) {
   );
 }
 
+/* ============================================================
+   ققنوس — دسته‌ی ج: ابتدایی و متوسطه‌ی اول
+   ============================================================ */
+
+/* ---------- ج۱. مقایسه‌ی کسرها ---------- */
+function VlabFractionCompareExperiment({ onReading }) {
+  const [n1, setN1] = useState(1);
+  const [d1, setD1] = useState(2);
+  const [n2, setN2] = useState(2);
+  const [d2, setD2] = useState(5);
+  const a = Math.min(n1, d1), b = Math.min(n2, d2);
+  const v1 = a / d1, v2 = b / d2;
+  const sign = Math.abs(v1 - v2) < 1e-9 ? "=" : v1 > v2 ? ">" : "<";
+  useEffect(() => { if (onReading) onReading(`${a}/${d1} ${sign} ${b}/${d2}`); /* eslint-disable-next-line */ }, [n1, d1, n2, d2]);
+  const Pizza = ({ cx, n, d, c }) => (<g>{Array.from({ length: d }, (_, i) => { const a0 = (i / d) * 2 * Math.PI - Math.PI / 2, a1 = ((i + 1) / d) * 2 * Math.PI - Math.PI / 2; const R = 46; return <path key={i} d={`M ${cx},90 L ${cx + R * Math.cos(a0)},${90 + R * Math.sin(a0)} A ${R},${R} 0 0 1 ${cx + R * Math.cos(a1)},${90 + R * Math.sin(a1)} Z`} fill={i < n ? c : "#fff"} stroke="#33291a" strokeWidth="1.5" />; })}</g>);
+  return (
+    <div className="vlab-exp">
+      <svg viewBox="0 0 320 190" className="vlab-svg" style={{ direction: "ltr", background: "#0b1330" }}>
+        <rect width="320" height="190" rx="12" fill="#fbf7ec" />
+        <Pizza cx={70} n={a} d={d1} c="#ffb74d" /><Pizza cx={250} n={b} d={d2} c="#4fc3f7" />
+        <text x="160" y="104" fontSize="44" fill={sign === "=" ? "#1b7d3a" : "#c0392b"} textAnchor="middle" fontWeight="700">{sign}</text>
+        <text x="70" y="168" fontSize="15" fill="#33291a" textAnchor="middle" fontWeight="700">{VLAB_FA_DIGITS(a)}/{VLAB_FA_DIGITS(d1)}</text>
+        <text x="250" y="168" fontSize="15" fill="#33291a" textAnchor="middle" fontWeight="700">{VLAB_FA_DIGITS(b)}/{VLAB_FA_DIGITS(d2)}</text>
+        <text x="160" y="22" fontSize="10" fill="#7a6b50" textAnchor="middle">کدام پیتزا بیشتر است؟</text>
+      </svg>
+      <div className="vlab-controls"><div className="vlab-ctrl-col" style={{ flex: 1 }}>
+        <label className="vlab-ctrl-label">کسر اول: {VLAB_FA_DIGITS(a)} از {VLAB_FA_DIGITS(d1)}</label>
+        <VlabRange min={0} max={d1} step={1} value={a} onChange={(e) => setN1(+e.target.value)} />
+        <VlabRange min={2} max={12} step={1} value={d1} onChange={(e) => { setD1(+e.target.value); setN1((x) => Math.min(x, +e.target.value)); }} />
+        <label className="vlab-ctrl-label">کسر دوم: {VLAB_FA_DIGITS(b)} از {VLAB_FA_DIGITS(d2)}</label>
+        <VlabRange min={0} max={d2} step={1} value={b} onChange={(e) => setN2(+e.target.value)} />
+        <VlabRange min={2} max={12} step={1} value={d2} onChange={(e) => { setD2(+e.target.value); setN2((x) => Math.min(x, +e.target.value)); }} />
+      </div></div>
+      <div className="vlab-readout">
+        برای مقایسه‌ی کسرها باید ببینیم چه <b>مقدار از کل</b> را نشان می‌دهند، نه اینکه صورت یا مخرج بزرگ‌تر باشد. مثلاً ۱/۲ از ۲/۵ بزرگ‌تر است، با اینکه ۵ از ۲ بزرگ‌تر است. اکنون: {VLAB_FA_DIGITS(v1.toFixed(2))} {sign} {VLAB_FA_DIGITS(v2.toFixed(2))}.
+      </div>
+      <VlabFormulaCheck title="مقدار کسر" fa="مقدار کسر = صورت ÷ مخرج" en="" legend="کسر اول را به عدد اعشاری تبدیل کن" subst={`${a} ÷ ${d1} = ?`} label="مقدار:" answer={v1} unit="" decimals={2} />
+    </div>
+  );
+}
+
+/* ---------- ج۲. زاویه‌ها ---------- */
+function VlabAngleTypesExperiment({ onReading }) {
+  const [ang, setAng] = useState(60);
+  const kind = ang === 0 ? "صفر" : ang < 90 ? "تند (حاده)" : ang === 90 ? "قائمه" : ang < 180 ? "باز (منفرجه)" : ang === 180 ? "نیم‌صفحه" : "بزرگ‌تر از نیم‌صفحه";
+  useEffect(() => { if (onReading) onReading(`زاویه ${ang}° → ${kind}`); /* eslint-disable-next-line */ }, [ang]);
+  const cx = 110, cy = 140, L = 90, r = (ang * Math.PI) / 180;
+  const ex = cx + L * Math.cos(r), ey = cy - L * Math.sin(r);
+  const arc = `M ${cx + 34},${cy} A 34,34 0 ${ang > 180 ? 1 : 0} 0 ${cx + 34 * Math.cos(r)},${cy - 34 * Math.sin(r)}`;
+  return (
+    <div className="vlab-exp">
+      <svg viewBox="0 0 320 180" className="vlab-svg" style={{ direction: "ltr", background: "#0b1330" }}>
+        <rect width="320" height="180" rx="12" fill="#fbf7ec" />
+        <line x1={cx} y1={cy} x2={cx + L} y2={cy} stroke="#33291a" strokeWidth="3" />
+        <line x1={cx} y1={cy} x2={ex} y2={ey} stroke="#c0392b" strokeWidth="3" />
+        <path d={arc} fill="#ffd23f" fillOpacity="0.4" stroke="#b8860b" strokeWidth="2" />
+        {ang === 90 && <rect x={cx} y={cy - 16} width="16" height="16" fill="none" stroke="#1b7d3a" strokeWidth="2" />}
+        <circle cx={cx} cy={cy} r="4" fill="#33291a" />
+        <text x="250" y="60" fontSize="26" fill="#33291a" textAnchor="middle" fontWeight="700">{VLAB_FA_DIGITS(ang)}°</text>
+        <text x="250" y="90" fontSize="12" fill={ang === 90 ? "#1b7d3a" : "#c0392b"} textAnchor="middle" fontWeight="700">{kind}</text>
+        <text x="250" y="116" fontSize="9" fill="#7a6b50" textAnchor="middle">گوشه‌ی کتاب = ۹۰°</text>
+      </svg>
+      <div className="vlab-controls"><div className="vlab-ctrl-col" style={{ flex: 1 }}>
+        <label className="vlab-ctrl-label">اندازه‌ی زاویه: {VLAB_FA_DIGITS(ang)}°</label>
+        <VlabRange min={0} max={270} step={5} value={ang} onChange={(e) => setAng(+e.target.value)} />
+        <div className="vlab-num-row">{[30, 90, 120, 180].map((v) => <button key={v} type="button" className="vlab-num-btn" onClick={() => setAng(v)}>{VLAB_FA_DIGITS(v)}°</button>)}</div>
+      </div></div>
+      <div className="vlab-readout">
+        زاویه‌ی <b>تند</b> کوچک‌تر از ۹۰°، زاویه‌ی <b>قائمه</b> دقیقاً ۹۰° (مثل گوشه‌ی کتاب) و زاویه‌ی <b>باز</b> بزرگ‌تر از ۹۰° و کوچک‌تر از ۱۸۰° است.
+      </div>
+      <VlabFormulaCheck title="زاویه‌ی مکمل" fa="مکمل = ۹۰° − زاویه (برای زاویه‌ی تند)" en="" legend="دو زاویه‌ی مکمل با هم ۹۰° می‌شوند" subst={`مکمل ${ang <= 90 ? ang : 60}° = ?`} label="مکمل:" answer={90 - (ang <= 90 ? ang : 60)} unit="°" decimals={0} />
+    </div>
+  );
+}
+
+/* ---------- ج۳. نمودار میله‌ای ---------- */
+const VLAB_K_FRUITS = [["سیب", "🍎", "#e53935"], ["موز", "🍌", "#fbc02d"], ["پرتقال", "🍊", "#fb8c00"], ["انگور", "🍇", "#8e24aa"]];
+function VlabBarChartExperiment({ onReading }) {
+  const [v, setV] = useState([5, 3, 6, 2]);
+  const add = (i, d) => setV((p) => p.map((x, j) => (j === i ? Math.max(0, Math.min(10, x + d)) : x)));
+  const tot = v.reduce((a, b) => a + b, 0), mx = Math.max(...v), mn = Math.min(...v);
+  useEffect(() => { if (onReading) onReading(`مجموع ${tot} | بیشترین ${VLAB_K_FRUITS[v.indexOf(mx)][0]}`); /* eslint-disable-next-line */ }, [v]);
+  return (
+    <div className="vlab-exp">
+      <svg viewBox="0 0 320 190" className="vlab-svg" style={{ direction: "ltr", background: "#0b1330" }}>
+        <rect width="320" height="190" rx="12" fill="#fbf7ec" />
+        <line x1="36" y1="150" x2="305" y2="150" stroke="#33291a" /><line x1="36" y1="150" x2="36" y2="16" stroke="#33291a" />
+        {[0, 2, 4, 6, 8, 10].map((t) => <g key={t}><line x1="33" y1={150 - t * 12} x2="305" y2={150 - t * 12} stroke="#e5dcc6" /><text x="30" y={153 - t * 12} fontSize="8" fill="#33291a" textAnchor="end">{VLAB_FA_DIGITS(t)}</text></g>)}
+        {v.map((x, i) => <g key={i}><rect x={52 + i * 64} y={150 - x * 12} width="40" height={x * 12} fill={VLAB_K_FRUITS[i][2]} stroke="#33291a" /><text x={72 + i * 64} y="168" fontSize="9" fill="#33291a" textAnchor="middle">{VLAB_K_FRUITS[i][0]}</text><text x={72 + i * 64} y={146 - x * 12} fontSize="10" fill="#33291a" textAnchor="middle" fontWeight="700">{VLAB_FA_DIGITS(x)}</text></g>)}
+        <text x="160" y="184" fontSize="9" fill="#1b7d3a" textAnchor="middle" fontWeight="700">محبوب‌ترین: {VLAB_K_FRUITS[v.indexOf(mx)][0]} — کم‌طرفدارترین: {VLAB_K_FRUITS[v.indexOf(mn)][0]} — مجموع رأی‌ها: {VLAB_FA_DIGITS(tot)}</text>
+      </svg>
+      <div className="vlab-controls"><div className="vlab-ctrl-col" style={{ flex: 1 }}>
+        <div className="vlab-num-row" style={{ flexWrap: "wrap" }}>{VLAB_K_FRUITS.map((f, i) => <span key={i} style={{ display: "inline-flex", gap: 2 }}><button type="button" className="vlab-num-btn" onClick={() => add(i, -1)}>−</button><button type="button" className="vlab-num-btn active" onClick={() => add(i, 1)}>{f[1]} {f[0]} +۱</button></span>)}</div>
+      </div></div>
+      <div className="vlab-readout">
+        نمودار میله‌ای داده‌ها را <b>مقایسه‌پذیر</b> می‌کند: بلندترین میله بیشترین رأی را دارد. اختلاف بیشترین و کمترین رأی: <b>{VLAB_FA_DIGITS(mx - mn)}</b>.
+      </div>
+      <VlabFormulaCheck title="مجموع رأی‌ها" fa="مجموع = جمع ارتفاع همه‌ی میله‌ها" en="" legend="" subst={`${v.join(" + ")} = ?`} label="مجموع:" answer={tot} unit="" decimals={0} />
+    </div>
+  );
+}
+
+/* ---------- ج۴. عددهای اعشاری ---------- */
+function VlabDecimalGridExperiment({ onReading }) {
+  const [n, setN] = useState(37);
+  useEffect(() => { if (onReading) onReading(`${n} از ۱۰۰ = ${(n / 100).toFixed(2)}`); /* eslint-disable-next-line */ }, [n]);
+  const tenths = Math.floor(n / 10), hund = n % 10;
+  return (
+    <div className="vlab-exp">
+      <svg viewBox="0 0 320 190" className="vlab-svg" style={{ direction: "ltr", background: "#0b1330" }}>
+        <rect width="320" height="190" rx="12" fill="#fbf7ec" />
+        {Array.from({ length: 100 }, (_, i) => { const row = Math.floor(i / 10), col = i % 10, idx = row * 10 + col; const on = idx < n; return <rect key={i} x={20 + col * 15} y={20 + row * 15} width="14" height="14" fill={on ? (row < tenths ? "#4fc3f7" : "#ffb74d") : "#fff"} stroke="#33291a" strokeWidth="0.6" />; })}
+        <text x="240" y="50" fontSize="30" fill="#33291a" textAnchor="middle" fontWeight="700">{VLAB_FA_DIGITS((n / 100).toFixed(2)).replace(".", "٫")}</text>
+        <text x="240" y="74" fontSize="11" fill="#33291a" textAnchor="middle">{VLAB_FA_DIGITS(n)} صدم</text>
+        <text x="240" y="100" fontSize="10" fill="#1e6fd9" textAnchor="middle">{VLAB_FA_DIGITS(tenths)} دهم (ستون‌های کامل)</text>
+        <text x="240" y="118" fontSize="10" fill="#c77a00" textAnchor="middle">+ {VLAB_FA_DIGITS(hund)} صدم (خانه‌های باقی)</text>
+        <text x="240" y="150" fontSize="8" fill="#7a6b50" textAnchor="middle">کل = ۱ ، ردیف = ۰٫۱ ، خانه = ۰٫۰۱</text>
+      </svg>
+      <div className="vlab-controls"><div className="vlab-ctrl-col" style={{ flex: 1 }}>
+        <label className="vlab-ctrl-label">خانه‌های رنگی: {VLAB_FA_DIGITS(n)} از ۱۰۰</label>
+        <VlabRange min={0} max={100} step={1} value={n} onChange={(e) => setN(+e.target.value)} />
+      </div></div>
+      <div className="vlab-readout">
+        عدد اعشاری راهی برای نوشتن کسرهایی با مخرج ۱۰ و ۱۰۰ است: {VLAB_FA_DIGITS(n)} خانه از ۱۰۰ خانه همان <b>{VLAB_FA_DIGITS((n / 100).toFixed(2)).replace(".", "٫")}</b> است. رقم اول بعد از ممیز «دهم» و رقم دوم «صدم» است.
+      </div>
+      <VlabFormulaCheck title="تبدیل به اعشار" fa="عدد اعشاری = تعداد خانه‌ها ÷ ۱۰۰" en="" legend="" subst={`${n} ÷ 100 = ?`} label="عدد اعشاری:" answer={n / 100} unit="" decimals={2} />
+    </div>
+  );
+}
+
+/* ---------- ج۵. چرخنده و احتمال ---------- */
+function VlabSpinnerProbExperiment({ onReading }) {
+  const [red, setRed] = useState(2);
+  const [n, setN] = useState(0);
+  const [hits, setHits] = useState(0);
+  const total = 8;
+  const p = red / total;
+  const spin = (times) => { let h = 0; for (let i = 0; i < times; i++) if (Math.random() < p) h++; setN((x) => x + times); setHits((x) => x + h); };
+  useEffect(() => { setN(0); setHits(0); }, [red]);
+  useEffect(() => { if (onReading) onReading(`احتمال قرمز ${red}/8 | ${hits} از ${n} بار`); /* eslint-disable-next-line */ }, [red, n]);
+  return (
+    <div className="vlab-exp">
+      <svg viewBox="0 0 320 190" className="vlab-svg" style={{ direction: "ltr", background: "#0b1330" }}>
+        <rect width="320" height="190" rx="12" fill="#fbf7ec" />
+        {Array.from({ length: total }, (_, i) => { const a0 = (i / total) * 2 * Math.PI - Math.PI / 2, a1 = ((i + 1) / total) * 2 * Math.PI - Math.PI / 2, R = 62; return <path key={i} d={`M 90,95 L ${90 + R * Math.cos(a0)},${95 + R * Math.sin(a0)} A ${R},${R} 0 0 1 ${90 + R * Math.cos(a1)},${95 + R * Math.sin(a1)} Z`} fill={i < red ? "#e53935" : "#4fc3f7"} stroke="#fff" strokeWidth="2" />; })}
+        <polygon points="90,24 83,8 97,8" fill="#33291a" />
+        <text x="230" y="44" fontSize="12" fill="#33291a" textAnchor="middle" fontWeight="700">احتمال قرمز = {VLAB_FA_DIGITS(red)}/۸</text>
+        <text x="230" y="70" fontSize="10" fill="#33291a" textAnchor="middle">تعداد چرخاندن: {VLAB_FA_DIGITS(n)}</text>
+        <text x="230" y="88" fontSize="10" fill="#c0392b" textAnchor="middle">قرمز آمد: {VLAB_FA_DIGITS(hits)} بار</text>
+        <text x="230" y="108" fontSize="10" fill="#1b7d3a" textAnchor="middle" fontWeight="700">نسبت واقعی: {n ? VLAB_FA_DIGITS((hits / n).toFixed(2)) : "—"}</text>
+        <text x="230" y="124" fontSize="10" fill="#7a6b50" textAnchor="middle">نسبت نظری: {VLAB_FA_DIGITS(p.toFixed(2))}</text>
+      </svg>
+      <div className="vlab-controls"><div className="vlab-ctrl-col" style={{ flex: 1 }}>
+        <label className="vlab-ctrl-label">قطعه‌های قرمز از ۸ قطعه: {VLAB_FA_DIGITS(red)}</label>
+        <VlabRange min={0} max={8} step={1} value={red} onChange={(e) => setRed(+e.target.value)} />
+        <div className="vlab-num-row">{[1, 10, 100, 1000].map((t) => <button key={t} type="button" className="vlab-num-btn active" onClick={() => spin(t)}>🎯 {VLAB_FA_DIGITS(t)} بار</button>)}</div>
+      </div></div>
+      <div className="vlab-readout">
+        احتمال یعنی «چقدر شانس رخ دادن». اگر ۲ قطعه از ۸ قطعه قرمز باشد، احتمال قرمز ۲/۸ است. با چرخاندن‌های <b>کم</b>، نتیجه‌ی واقعی با نظری فرق می‌کند؛ ولی با چرخاندن‌های <b>زیاد</b> به آن نزدیک می‌شود.
+      </div>
+      <VlabFormulaCheck title="احتمال" fa="احتمال = حالت‌های مطلوب ÷ همه‌ی حالت‌ها" en="" legend="" subst={`${red} ÷ 8 = ?`} label="احتمال:" answer={p} unit="" decimals={3} />
+    </div>
+  );
+}
+
+/* ---------- ج۶. عددهای صحیح (دما و آسانسور) ---------- */
+function VlabIntegersExperiment({ onReading }) {
+  const [t, setT] = useState(5);
+  const [mv, setMv] = useState(-8);
+  const res = t + mv;
+  useEffect(() => { if (onReading) onReading(`${t} ${mv >= 0 ? "+" : "−"} ${Math.abs(mv)} = ${res}`); /* eslint-disable-next-line */ }, [t, mv]);
+  const Y = (v) => 95 - v * 3.2;
+  return (
+    <div className="vlab-exp">
+      <svg viewBox="0 0 320 190" className="vlab-svg" style={{ direction: "ltr", background: "#0b1330" }}>
+        <rect width="320" height="190" rx="12" fill="#eaf2f8" />
+        <line x1="60" y1="10" x2="60" y2="180" stroke="#33291a" strokeWidth="2" />
+        {Array.from({ length: 27 }, (_, i) => { const v = -13 + i; return <g key={v}><line x1="56" y1={Y(v)} x2="64" y2={Y(v)} stroke="#33291a" />{v % 5 === 0 && <text x="50" y={Y(v) + 3} fontSize="9" fill="#33291a" textAnchor="end">{VLAB_FA_DIGITS(v)}</text>}</g>; })}
+        <line x1="56" y1={Y(0)} x2="150" y2={Y(0)} stroke="#33291a" strokeWidth="2" /><text x="152" y={Y(0) + 3} fontSize="8" fill="#33291a">صفر (یخ‌زدن)</text>
+        <circle cx="80" cy={Y(vlabClamp(t, -13, 13))} r="6" fill="#1e6fd9" stroke="#fff" strokeWidth="2" />
+        <path d={`M 100,${Y(t)} L 100,${Y(vlabClamp(res, -13, 13))}`} stroke={mv >= 0 ? "#1b7d3a" : "#c0392b"} strokeWidth="3" />
+        <circle cx="100" cy={Y(vlabClamp(res, -13, 13))} r="7" fill="#ffd23f" stroke="#6b4513" strokeWidth="2" />
+        <text x="235" y="50" fontSize="12" fill="#33291a" textAnchor="middle">دمای اول: {VLAB_FA_DIGITS(t)}°</text>
+        <text x="235" y="72" fontSize="12" fill={mv >= 0 ? "#1b7d3a" : "#c0392b"} textAnchor="middle">{mv >= 0 ? "گرم‌تر شد" : "سردتر شد"}: {VLAB_FA_DIGITS(Math.abs(mv))} درجه</text>
+        <text x="235" y="104" fontSize="22" fill="#33291a" textAnchor="middle" fontWeight="700">{VLAB_FA_DIGITS(res)}°</text>
+      </svg>
+      <div className="vlab-controls"><div className="vlab-ctrl-col" style={{ flex: 1 }}>
+        <label className="vlab-ctrl-label">دمای شروع: {VLAB_FA_DIGITS(t)}°</label>
+        <VlabRange min={-10} max={10} step={1} value={t} onChange={(e) => setT(+e.target.value)} />
+        <label className="vlab-ctrl-label">تغییر دما: {VLAB_FA_DIGITS(mv)}</label>
+        <VlabRange min={-12} max={12} step={1} value={mv} onChange={(e) => setMv(+e.target.value)} />
+      </div></div>
+      <div className="vlab-readout">
+        عددهای بالای صفر <b>مثبت</b> و پایین صفر <b>منفی</b>‌اند. جمع با عدد منفی یعنی پایین رفتن. از ۵ درجه اگر ۸ درجه سرد شود، به <b>−۳</b> می‌رسیم.
+      </div>
+      <VlabFormulaCheck title="دمای تازه" fa="دمای تازه = دمای اول + تغییر" en="" legend="تغییر منفی یعنی سردتر شدن" subst={`${t} + (${mv}) = ?`} label="دمای تازه:" answer={res} unit="°" decimals={0} />
+    </div>
+  );
+}
+
+/* ---------- ج۷. نسبت و تناسب (دستور غذا) ---------- */
+function VlabRatioRecipeExperiment({ onReading }) {
+  const [ppl, setPpl] = useState(4);
+  const base = [["برنج", 300, "گرم"], ["آب", 600, "میلی‌لیتر"], ["روغن", 20, "گرم"], ["نمک", 5, "گرم"]];
+  const f = ppl / 2;
+  useEffect(() => { if (onReading) onReading(`برای ${ppl} نفر: ضریب ${f}`); /* eslint-disable-next-line */ }, [ppl]);
+  return (
+    <div className="vlab-exp">
+      <svg viewBox="0 0 320 180" className="vlab-svg" style={{ direction: "ltr", background: "#0b1330" }}>
+        <rect width="320" height="180" rx="12" fill="#fbf7ec" />
+        <text x="160" y="22" fontSize="12" fill="#33291a" textAnchor="middle" fontWeight="700">دستور پلو برای {VLAB_FA_DIGITS(ppl)} نفر (دستور اصلی: ۲ نفر)</text>
+        {base.map((b, i) => <g key={i}><rect x="20" y={36 + i * 32} width="280" height="26" rx="6" fill="#fff" stroke="#d9cfb8" /><text x="296" y={54 + i * 32} fontSize="11" fill="#33291a" textAnchor="end" fontWeight="700">{b[0]}</text><rect x="28" y={44 + i * 32} width={Math.min(150, (b[1] * f) / 700 * 150)} height="10" rx="4" fill="#ffb74d" /><text x="190" y={54 + i * 32} fontSize="10" fill="#c77a00" fontWeight="700">{VLAB_FA_DIGITS(b[1] * f)} {b[2]}</text></g>)}
+        <text x="160" y="172" fontSize="9" fill="#7a6b50" textAnchor="middle">نسبت برنج به آب همیشه {VLAB_FA_DIGITS(1)} به {VLAB_FA_DIGITS(2)} می‌ماند</text>
+      </svg>
+      <div className="vlab-controls"><div className="vlab-ctrl-col" style={{ flex: 1 }}>
+        <label className="vlab-ctrl-label">شمار نفرات: {VLAB_FA_DIGITS(ppl)}</label>
+        <VlabRange min={1} max={12} step={1} value={ppl} onChange={(e) => setPpl(+e.target.value)} />
+      </div></div>
+      <div className="vlab-readout">
+        وقتی شمار نفرات ۲ برابر می‌شود، <b>همه‌ی مقدارها ۲ برابر</b> می‌شوند؛ این یعنی تناسب. نسبت برنج به آب ثابت می‌ماند (۱ به ۲)، حتی اگر مقدارها عوض شوند.
+      </div>
+      <VlabFormulaCheck title="تناسب" fa="مقدار تازه = مقدار اصلی × (شمار نفرات ÷ ۲)" en="" legend="برای برنج: ۳۰۰ گرم برای ۲ نفر" subst={`${300} × (${ppl} ÷ 2) = ?`} label="برنج:" answer={300 * f} unit="گرم" decimals={0} />
+    </div>
+  );
+}
+
+/* ---------- ج۸. مفصل‌ها و حرکت ---------- */
+const VLAB_K_JOINTS = [{ n: "لولایی (آرنج، زانو)", r: 140, c: "#4fc3f7" }, { n: "کروی (شانه، ران)", r: 300, c: "#ffb74d" }, { n: "ثابت (جمجمه)", r: 0, c: "#a1887f" }];
+function VlabJointsExperiment({ onReading }) {
+  const [ji, setJi] = useState(0);
+  const [ang, setAng] = useState(40);
+  const J = VLAB_K_JOINTS[ji];
+  const a = Math.min(ang, J.r);
+  useEffect(() => { if (onReading) onReading(`${J.n}: حداکثر حرکت ${J.r}° | اکنون ${a}°`); /* eslint-disable-next-line */ }, [ji, ang]);
+  const cx = 110, cy = 100, L = 62, rad = (a * Math.PI) / 180;
+  return (
+    <div className="vlab-exp">
+      <svg viewBox="0 0 320 190" className="vlab-svg" style={{ direction: "ltr", background: "#0b1330" }}>
+        <rect width="320" height="190" rx="12" fill="#fbf7ec" />
+        <rect x={cx - 10} y="20" width="20" height={cy - 20} rx="9" fill="#eee" stroke="#33291a" strokeWidth="2" />
+        <g transform={`rotate(${a} ${cx} ${cy})`}><rect x={cx - 9} y={cy} width="18" height={L + 20} rx="8" fill="#eee" stroke="#33291a" strokeWidth="2" /></g>
+        {ji === 0 && <path d={`M ${cx - 16},40 Q ${cx - 40 - Math.sin(rad) * 8},${cy} ${cx - 8 + Math.sin(rad) * 30},${cy + 26}`} stroke="#c0392b" strokeWidth="7" fill="none" strokeLinecap="round" opacity="0.7" />}
+        <circle cx={cx} cy={cy} r={ji === 1 ? 14 : ji === 2 ? 5 : 11} fill={J.c} stroke="#33291a" strokeWidth="2" />
+        <text x="230" y="60" fontSize="11" fill="#33291a" textAnchor="middle" fontWeight="700">{J.n}</text>
+        <text x="230" y="88" fontSize="12" fill="#c0392b" textAnchor="middle" fontWeight="700">{J.r ? `حرکت تا ${VLAB_FA_DIGITS(J.r)}°` : "بدون حرکت"}</text>
+        <text x="230" y="112" fontSize="10" fill="#7a6b50" textAnchor="middle">اکنون: {VLAB_FA_DIGITS(Math.round(a))}°</text>
+        <text x="160" y="180" fontSize="9" fill="#7a6b50" textAnchor="middle">عضله‌ی قرمز استخوان را می‌کشد و مفصل حرکت را ممکن می‌کند</text>
+      </svg>
+      <div className="vlab-controls"><div className="vlab-ctrl-col" style={{ flex: 1 }}>
+        <div className="vlab-num-row">{VLAB_K_JOINTS.map((x, i) => <button key={i} type="button" className={"vlab-num-btn" + (ji === i ? " active" : "")} onClick={() => setJi(i)}>{x.n}</button>)}</div>
+        <label className="vlab-ctrl-label">چرخاندن استخوان: {VLAB_FA_DIGITS(ang)}°</label>
+        <VlabRange min={0} max={180} step={5} value={ang} onChange={(e) => setAng(+e.target.value)} />
+      </div></div>
+      <div className="vlab-readout">
+        مفصل جایی است که دو استخوان به هم می‌رسند. مفصل <b>لولایی</b> مثل در فقط در یک جهت خم می‌شود؛ مفصل <b>کروی</b> در همه‌ی جهت‌ها می‌چرخد؛ مفصل <b>ثابت</b> (جمجمه) اصلاً حرکت نمی‌کند و از مغز محافظت می‌کند.
+      </div>
+    </div>
+  );
+}
+
+/* ---------- ج۹. موج‌های زلزله ---------- */
+function VlabSeismicWavesExperiment({ onReading }) {
+  const [dist, setDist] = useState(200);
+  const [t, setT] = useState(0);
+  const vP = 8, vS = 4.5;
+  const tP = dist / vP, tS = dist / vS, gap = tS - tP;
+  useEffect(() => { if (t > 0 && t < tS + 8) { const id = setTimeout(() => setT((x) => x + (tS + 8) / 90), 40); return () => clearTimeout(id); } }, [t, tS]);
+  useEffect(() => { if (onReading) onReading(`فاصله ${dist} km | اختلاف رسیدن S و P = ${gap.toFixed(1)} s`); /* eslint-disable-next-line */ }, [dist]);
+  const sx = 30, ex = 290;
+  const px = sx + ((vlabClamp(t * vP, 0, dist)) / 1000) * (ex - sx) * 1.0 * (1000 / Math.max(dist, 1)) * (dist / 1000) / (dist / 1000) * 0 + sx + (vlabClamp(t / tP, 0, 1)) * (ex - sx - 0);
+  const sxp = sx + vlabClamp(t / tS, 0, 1) * (ex - sx);
+  const gx = (tt) => 20 + (tt / (tS + 8)) * 280;
+  return (
+    <div className="vlab-exp">
+      <svg viewBox="0 0 320 200" className="vlab-svg" style={{ direction: "ltr", background: "#0b1330" }}>
+        <rect width="320" height="200" rx="12" fill="#0b1330" />
+        <rect x="14" y="26" width="292" height="28" rx="4" fill="#6b4f2a" />
+        <polygon points="24,26 30,10 36,26" fill="#ff6b6b" /><text x="30" y="68" fontSize="8" fill="#ffb3b3" textAnchor="middle">کانون</text>
+        <circle cx={ex} cy="40" r="7" fill="#7dffa8" /><text x={ex} y="68" fontSize="8" fill="#bfe8cf" textAnchor="middle">ایستگاه ({VLAB_FA_DIGITS(dist)} km)</text>
+        {t > 0 && <><circle cx={vlabClamp(sx + (t / tP) * (ex - sx), sx, ex)} cy="40" r="4" fill="#4fc3f7" /><circle cx={vlabClamp(sx + (t / tS) * (ex - sx), sx, ex)} cy="40" r="4" fill="#ffd23f" /></>}
+        <text x="14" y="86" fontSize="8" fill="#4fc3f7">● موج اول (P، سریع‌تر)</text><text x="150" y="86" fontSize="8" fill="#ffd23f">● موج دوم (S، کندتر)</text>
+        {/* لرزه‌نگاشت */}
+        <line x1="20" y1="140" x2="300" y2="140" stroke="#445" />
+        <path d={Array.from({ length: 141 }, (_, i) => { const tt = (i / 140) * (tS + 8); let a = 0; if (tt > tP && tt < tP + 3) a = 8 * Math.sin((tt - tP) * 9); if (tt > tS) a = 22 * Math.sin((tt - tS) * 5) * Math.exp(-(tt - tS) * 0.25); const shown = t >= tt || t === 0 ? a : 0; return (i ? "L" : "M") + gx(tt).toFixed(1) + "," + (140 - (t === 0 ? 0 : a * (t >= tt ? 1 : 0))).toFixed(1); }).join(" ")} fill="none" stroke="#7dffa8" strokeWidth="1.8" />
+        <line x1={gx(tP)} y1="108" x2={gx(tP)} y2="172" stroke="#4fc3f7" strokeDasharray="3 3" /><line x1={gx(tS)} y1="108" x2={gx(tS)} y2="172" stroke="#ffd23f" strokeDasharray="3 3" />
+        <text x="160" y="190" fontSize="10" fill="#ffe08a" textAnchor="middle" fontWeight="700">اختلاف رسیدن دو موج = {VLAB_FA_DIGITS(gap.toFixed(1))} ثانیه</text>
+      </svg>
+      <div className="vlab-controls"><div className="vlab-ctrl-col" style={{ flex: 1 }}>
+        <label className="vlab-ctrl-label">فاصله‌ی ایستگاه تا کانون (km): {VLAB_FA_DIGITS(dist)}</label>
+        <VlabRange min={50} max={600} step={10} value={dist} onChange={(e) => { setDist(+e.target.value); setT(0); }} />
+        <div className="vlab-num-row"><button type="button" className="vlab-num-btn active" onClick={() => setT(0.01)}>🌋 زلزله رخ بده</button></div>
+      </div></div>
+      <div className="vlab-readout">
+        زلزله موج‌های <b>P</b> (سریع) و <b>S</b> (کندتر و ویرانگرتر) می‌فرستد. هرچه ایستگاه دورتر باشد، فاصله‌ی زمانی رسیدن این دو بیشتر است؛ لرزه‌شناسان از همین اختلاف، فاصله‌ی کانون را می‌فهمند. (سرعت‌ها: P ≈ ۸ و S ≈ ۴٫۵ km/s، مدل ساده.)
+      </div>
+      <VlabFormulaCheck title="فاصله از اختلاف زمان" fa="فاصله = اختلاف زمان ÷ (۱/vS − ۱/vP)" en="d = Δt / (1/vS − 1/vP)" legend="vP = ۸ و vS = ۴٫۵ km/s" subst={`d = ${gap.toFixed(2)} ÷ (1/4.5 − 1/8) = ?`} label="فاصله:" answer={dist} unit="km" decimals={0} />
+    </div>
+  );
+}
+
+/* ---------- ج۱۰. منشور و رنگین‌کمان ---------- */
+const VLAB_K_COLORS = [["قرمز", "#e53935", 1.513], ["نارنجی", "#fb8c00", 1.516], ["زرد", "#fdd835", 1.519], ["سبز", "#43a047", 1.523], ["آبی", "#1e88e5", 1.528], ["بنفش", "#8e24aa", 1.532]];
+function VlabPrismSpectrumExperiment({ onReading }) {
+  const [inc, setInc] = useState(50);
+  const [white, setWhite] = useState(true);
+  useEffect(() => { if (onReading) onReading(`زاویه‌ی تابش ${inc}°`); /* eslint-disable-next-line */ }, [inc]);
+  const apex = 60;
+  const dev = (n) => { const i1 = (inc * Math.PI) / 180; const r1 = Math.asin(Math.sin(i1) / n); const r2 = (apex * Math.PI) / 180 - r1; const s = n * Math.sin(r2); if (Math.abs(s) > 1) return null; const i2 = Math.asin(s); return ((i1 + i2 - (apex * Math.PI) / 180) * 180) / Math.PI; };
+  const cols = white ? VLAB_K_COLORS : [VLAB_K_COLORS[3]];
+  return (
+    <div className="vlab-exp">
+      <svg viewBox="0 0 320 190" className="vlab-svg" style={{ direction: "ltr", background: "#0b1330" }}>
+        <rect width="320" height="190" rx="12" fill="#0b1330" />
+        <polygon points="130,140 160,60 190,140" fill="#a5d6f2" fillOpacity="0.45" stroke="#cfe9ff" strokeWidth="2" />
+        <line x1="20" y1={104 + (inc - 50) * 0.5} x2="145" y2="100" stroke="#fff" strokeWidth="3" style={{ filter: "drop-shadow(0 0 4px #fff)" }} />
+        {cols.map((c, i) => { const d = dev(c[2]); if (d === null) return null; const dm = dev(1.523); const ang = ((((dm === null ? d : dm) + (inc - 50) * 0.2 - 8) + (d - (dm === null ? d : dm)) * 5 + 3) * Math.PI) / 180; const x0 = 175, y0 = 100; return <line key={i} x1={x0} y1={y0} x2={x0 + 115 * Math.cos(ang)} y2={y0 + 115 * Math.sin(ang) * 1.0 + 8 * (i - 2.5) * 0} stroke={c[1]} strokeWidth="3" strokeLinecap="round" />; })}
+        <text x="160" y="22" fontSize="10" fill="#ffe08a" textAnchor="middle" fontWeight="700">{white ? "نور سفید ← هفت‌رنگ (طیف)" : "نور تک‌رنگ (سبز)"}</text>
+        <text x="160" y="178" fontSize="9" fill="#aab3cc" textAnchor="middle">رنگ بنفش بیشتر از قرمز خم می‌شود</text>
+      </svg>
+      <div className="vlab-controls"><div className="vlab-ctrl-col" style={{ flex: 1 }}>
+        <label className="vlab-ctrl-label">زاویه‌ی تابش: {VLAB_FA_DIGITS(inc)}°</label>
+        <VlabRange min={30} max={80} step={1} value={inc} onChange={(e) => setInc(+e.target.value)} />
+        <div className="vlab-num-row"><button type="button" className={"vlab-num-btn" + (white ? " active" : "")} onClick={() => setWhite(true)}>نور سفید</button><button type="button" className={"vlab-num-btn" + (!white ? " active" : "")} onClick={() => setWhite(false)}>نور سبز</button></div>
+      </div></div>
+      <div className="vlab-readout">
+        نور سفید از چند رنگ تشکیل شده است. هر رنگ در شیشه کمی متفاوت خم می‌شود (بنفش بیشتر، قرمز کمتر)، پس از منشور هفت‌رنگ بیرون می‌آید. رنگین‌کمان هم همین‌طور از شکست نور خورشید در قطره‌های باران پدید می‌آید.
+      </div>
+      <VlabFormulaCheck title="شکست در سطح اول" fa="sin r = sin i ÷ n" en="Snell: sin i = n sin r" legend="n شیشه برای نور سبز ≈ ۱٫۵۲۳" subst={`r = sin⁻¹(sin ${inc}° ÷ 1.523) = ?`} label="زاویه‌ی شکست:" answer={(Math.asin(Math.sin((inc * Math.PI) / 180) / 1.523) * 180) / Math.PI} unit="°" decimals={1} />
+    </div>
+  );
+}
+
 const VLAB_COMPONENTS = {
+  "fraction-compare": VlabFractionCompareExperiment,
+  "angle-types": VlabAngleTypesExperiment,
+  "bar-chart": VlabBarChartExperiment,
+  "decimal-grid": VlabDecimalGridExperiment,
+  "spinner-prob": VlabSpinnerProbExperiment,
+  "integers-thermo": VlabIntegersExperiment,
+  "ratio-recipe": VlabRatioRecipeExperiment,
+  "joints-kids": VlabJointsExperiment,
+  "seismic-waves": VlabSeismicWavesExperiment,
+  "prism-spectrum": VlabPrismSpectrumExperiment,
+
   "number-line": VlabNumberLineExperiment,
   "multiply-array": VlabMultiplyArrayExperiment,
   "clock-time": VlabClockTimeExperiment,
@@ -45275,6 +45719,17 @@ const VLAB_COMPONENTS = {
 /* راهنمای یادگیری (پیش‌نویس، در انتظار بازبینی معلم) — با الهام از اصول PhET: هدف‌های کم و مشخص، چالش‌های باز («همه‌ی راه‌ها را پیدا کن»)،
    پیش‌بینی و مقایسه، ارتباط با زندگی، و برداشت‌های نادرست رایج. هر آزمایش: goals، challenges، misconception (اختیاری)، check:{q,a} */
 const VLAB_GUIDE = {
+  "fraction-compare": { goals: ["کسر را بخشی از کل ببینی.", "دو کسر را مقایسه کنی."], challenges: ["۱/۲ و ۲/۵ را مقایسه کن.", "دو کسر برابر بساز.", "کدام بزرگ‌تر است: ۳/۴ یا ۵/۸؟"], misconception: "کسری که مخرجش بزرگ‌تر است بزرگ‌تر است؛ در واقع برعکس است.", check: { q: "۱/۳ بزرگ‌تر است یا ۱/۴؟", a: "۱/۳." } },
+  "angle-types": { goals: ["زاویه‌ی تند، قائمه و باز را بشناسی.", "اندازه‌ی زاویه را بخوانی."], challenges: ["زاویه‌ی قائمه بساز.", "زاویه‌ی تند و باز بساز.", "مکمل ۳۰° چند است؟"], misconception: "هرچه ضلع‌ها بلندتر باشند زاویه بزرگ‌تر است؛ در حقیقت فقط باز بودن مهم است.", check: { q: "زاویه‌ی ۱۲۰° چه نوعی است؟", a: "باز (منفرجه)." } },
+  "bar-chart": { goals: ["نمودار میله‌ای را بخوانی.", "بیشترین و کمترین را بگویی."], challenges: ["محبوب‌ترین میوه کدام است؟", "اختلاف بیشترین و کمترین چند است؟", "نمودار را عوض کن."], misconception: "میله‌ی بلندتر یعنی اندازه‌ی بزرگ‌تر میله؛ در واقع یعنی تعداد بیشتر.", check: { q: "اگر سیب ۵ و موز ۳ باشد، اختلاف؟", a: "۲." } },
+  "decimal-grid": { goals: ["دهم و صدم را بشناسی.", "کسر را به اعشار تبدیل کنی."], challenges: ["۳۷ خانه چه عددی است؟", "۵۰ خانه چند است؟", "۰٫۰۹ یعنی چه؟"], misconception: "۰٫۵ از ۰٫۵۰ بیشتر است؛ در واقع برابرند.", check: { q: "۲۵ خانه از ۱۰۰ چه عددی است؟", a: "۰٫۲۵." } },
+  "spinner-prob": { goals: ["احتمال را کسری بنویسی.", "فرق نتیجه‌ی کم و زیاد را ببینی."], challenges: ["۱۰ و ۱۰۰۰ بار بچرخان.", "قطعه‌ی قرمز را زیاد کن.", "احتمال همه‌ی قرمز چند است؟"], misconception: "اگر احتمال ۲/۸ است، در ۸ بار دقیقاً ۲ بار قرمز می‌آید؛ در حقیقت فقط به‌طور میانگین.", check: { q: "احتمال آبی وقتی ۲ از ۸ قرمز است؟", a: "۶/۸." } },
+  "integers-thermo": { goals: ["عدد منفی را بشناسی.", "جمع صحیح را انجام دهی."], challenges: ["از ۵ درجه ۸ درجه سردتر کن.", "از ۲- درجه ۵ درجه گرم‌تر کن.", "چه چیزی صفر می‌شود؟"], misconception: "عدد منفی همیشه کوچک‌تر از صفر نیست؛ در حقیقت همیشه کوچک‌تر است ولی بزرگی‌اش جدا است.", check: { q: "۵ + (−۸) چند است؟", a: "−۳." } },
+  "ratio-recipe": { goals: ["نسبت را بنویسی.", "تناسب را برای تغییر مقدارها به کار ببری."], challenges: ["دستور را برای ۶ نفر بنویس.", "نسبت برنج به آب چقدر است؟", "برای ۱ نفر چه مقدار لازم است؟"], misconception: "اگر نفرات دو برابر شوند فقط برنج دو برابر می‌شود؛ در حقیقت همه‌ی مقدارها.", check: { q: "۳۰۰ گرم برنج برای ۲ نفر؛ برای ۶ نفر؟", a: "۹۰۰ گرم." } },
+  "joints-kids": { goals: ["انواع مفصل را بشناسی.", "نقش عضله و استخوان را بدانی."], challenges: ["آرنج را خم کن.", "شانه را بچرخان.", "چرا جمجمه حرکت ندارد؟"], misconception: "مفصل فقط در پا هست؛ در واقع در سراسر بدن است.", check: { q: "آرنج چه نوع مفصلی دارد؟", a: "لولایی." } },
+  "seismic-waves": { goals: ["موج P و S را بشناسی.", "فاصله را از اختلاف زمان حساب کنی."], challenges: ["فاصله را دو برابر کن.", "اختلاف زمان چه می‌شود؟", "کدام موج زودتر می‌رسد؟"], misconception: "همه‌ی موج‌های زلزله هم‌زمان می‌رسند؛ در حقیقت موج P زودتر می‌رسد.", check: { q: "کدام موج سریع‌تر است؟", a: "موج P." } },
+  "prism-spectrum": { goals: ["بدانی نور سفید ترکیب رنگ‌هاست.", "شکست هر رنگ را مقایسه کنی."], challenges: ["نور سبز را امتحان کن.", "زاویه را عوض کن.", "کدام رنگ بیشتر خم می‌شود؟"], misconception: "منشور رنگ می‌سازد؛ در حقیقت رنگ‌ها را از هم جدا می‌کند.", check: { q: "کدام رنگ بیشتر از همه خم می‌شود؟", a: "بنفش." } },
+
   "number-line": { goals: ["جمع را جلو رفتن و تفریق را عقب آمدن ببینی.", "عددهای منفی را بشناسی."], challenges: ["۶+۵ را حساب کن.", "۳−۸ را امتحان کن؛ به کجا می‌رسی؟", "جای دو عدد را در جمع عوض کن."], misconception: "در جمع جای عددها مهم است؛ در حقیقت جواب تغییر نمی‌کند.", check: { q: "۹−۵ چند است؟", a: "۴." } },
   "multiply-array": { goals: ["ضرب را جمع تکراری بدانی.", "جابه‌جایی در ضرب را ببینی."], challenges: ["۳×۴ و ۴×۳ را مقایسه کن.", "۵×۵ چند نقطه دارد؟", "۱۰×۱۰ چند است؟"], misconception: "ضرب همیشه عدد را بزرگ‌تر می‌کند؛ در حقیقت ضرب در ۱ آن را تغییر نمی‌دهد.", check: { q: "۶×۴ چند است؟", a: "۲۴." } },
   "clock-time": { goals: ["ساعت و دقیقه را بخوانی.", "تمام، ربع و نیم را بشناسی."], challenges: ["ساعت ۳ و نیم را بساز.", "ربع به ۸ را بساز.", "هر عدد روی ساعت چند دقیقه است؟"], misconception: "عقربه‌ی بلند ساعت را می‌گوید؛ در حقیقت عقربه‌ی کوتاه ساعت است.", check: { q: "عقربه‌ی بلند روی ۶ یعنی چند دقیقه؟", a: "۳۰ دقیقه (نیم)." } },

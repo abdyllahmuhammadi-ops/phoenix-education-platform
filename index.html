@@ -25599,8 +25599,8 @@ const VLAB_EXPERIMENTS = [
     level: "متوسطه اول",
     title: "قلب و گردش خون",
     icon: "❤️",
-    intro: "قلب را در حال تپش ببین و مسیر خون آبی و قرمز را دنبال کن.",
-    tools: ["قلب چهارحفره‌ای", "شش‌ها", "بدن", "ضربان‌سنج"],
+    intro: "چهار حفره، دریچه‌ها و رگ‌های قلب را در هر مرحله‌ی ضربان ببین و با نوار قلب مقایسه کن.",
+    tools: ["قلب چهارحفره‌ای", "دریچه‌ها", "نوار قلب"],
   },
   {
     id: "mixture-separation",
@@ -47128,113 +47128,416 @@ const VLAB_F_HEART_PATHS = [
   { c: "#d32f2f", pts: [[64, 104], [68, 26], [196, 26], [196, 64]] },
   { c: "#d32f2f", pts: [[216, 128], [240, 128], [240, 212]] },
 ];
+const VLAB_HC_CSS = `.hcy{font-family:var(--font);color:var(--fg);font-size:15px;line-height:1.7}
+.hcy{--bg:#f1f4f9; --card:#ffffff; --fg:#17202f; --muted:#5a667b; --line:#d9e0eb;
+  --canvas:#eaf0f8; --blue:#2f5fd0; --red:#d12a3a;
+  --ecg-bg:#fff6f6; --ecg-grid:#f2cdd0; --ecg-grid2:#e6a9ae; --ecg-line:#17202f;
+  --p1:#f08a00; --p2:#d6336c; --p3:#d12a3a; --p4:#7048c9; --p5:#2f7bd9;
+  --chip:#eef2f8; --on:#1f9d55; --off:#8591a6;
+  --font:'Vazirmatn',Tahoma,'Segoe UI',sans-serif;}
+.hcy *{box-sizing:border-box}
+.hcy .wrap{max-width:760px;margin:0 auto;display:flex;flex-direction:column;gap:14px}
+.hcy h1{font-size:24px;font-weight:800;margin:0;text-wrap:balance}
+.hcy .sub{margin:0;color:var(--muted);font-size:14px}
+.hcy .card{background:var(--card);border:1px solid var(--line);border-radius:14px;padding:12px}
+.hcy .top{display:flex;flex-wrap:wrap;gap:10px;align-items:center;justify-content:space-between;margin-bottom:8px}
+.hcy .phase-now{display:flex;align-items:center;gap:8px;font-weight:800;font-size:18px;min-width:0}
+.hcy .dot{width:12px;height:12px;border-radius:50%;flex:none;background:var(--p1)}
+.hcy .ctrls{display:flex;gap:6px;flex-wrap:wrap}
+.hcy button{font:600 13px var(--font);color:var(--fg);background:var(--chip);border:1px solid var(--line);border-radius:9px;padding:6px 12px;cursor:pointer}
+.hcy button:focus-visible{outline:2px solid var(--blue);outline-offset:2px}
+.hcy button.on{background:var(--fg);color:var(--bg);border-color:var(--fg)}
+.hcy svg{display:block;width:100%;height:auto}
+.hcy #heart{background:var(--canvas);border-radius:10px}
+.hcy .lbl{font:600 12px var(--font);fill:var(--fg)}
+.hcy .lbl2{font:600 11px var(--font);fill:var(--muted)}
+.hcy .ch{font:800 13px var(--font);fill:#fff;stroke:rgba(10,15,30,.55);stroke-width:3;paint-order:stroke;text-anchor:middle}
+.hcy .bd circle{fill:#fff;stroke:#17202f;stroke-width:1.6}
+.hcy .bd text{font:800 13px var(--font);fill:#17202f;text-anchor:middle}
+.hcy #heart[data-hl] [data-k]{opacity:.2}
+.hcy #heart[data-hl="1"] [data-k="1"],.hcy #heart[data-hl="2"] [data-k="2"],.hcy #heart[data-hl="3"] [data-k="3"],.hcy #heart[data-hl="4"] [data-k="4"],.hcy #heart[data-hl="5"] [data-k="5"],.hcy #heart[data-hl="6"] [data-k="6"],.hcy #heart[data-hl="7"] [data-k="7"],.hcy #heart[data-hl="8"] [data-k="8"],.hcy #heart[data-hl="9"] [data-k="9"],.hcy #heart[data-hl="10"] [data-k="10"],.hcy #heart[data-hl="11"] [data-k="11"],.hcy #heart[data-hl="12"] [data-k="12"]{opacity:1}
+.hcy #heart .hlo{opacity:0}
+.hcy #heart[data-hl="10"] .hlo[data-k="10"]{opacity:1}
+.hcy #heart[data-hl="6"] .bd[data-k="6"] circle,.hcy #heart[data-hl="7"] .bd[data-k="7"] circle,.hcy #heart[data-hl="8"] .bd[data-k="8"] circle,.hcy #heart[data-hl="9"] .bd[data-k="9"] circle,.hcy #heart[data-hl="1"] .bd[data-k="1"] circle,.hcy #heart[data-hl="2"] .bd[data-k="2"] circle,.hcy #heart[data-hl="3"] .bd[data-k="3"] circle,.hcy #heart[data-hl="4"] .bd[data-k="4"] circle,.hcy #heart[data-hl="5"] .bd[data-k="5"] circle,.hcy #heart[data-hl="10"] .bd[data-k="10"] circle,.hcy #heart[data-hl="11"] .bd[data-k="11"] circle,.hcy #heart[data-hl="12"] .bd[data-k="12"] circle{fill:#ffd54a}
+.hcy .ecgh{display:flex;justify-content:space-between;align-items:baseline;gap:8px;margin-bottom:6px;font-weight:800}
+.hcy .ecgh small{font-weight:400;color:var(--muted)}
+.hcy .chips{display:grid;grid-template-columns:repeat(5,1fr);gap:6px;margin-top:10px}
+.hcy .chip{display:flex;flex-direction:column;gap:2px;text-align:center;padding:6px 4px;border-radius:10px;border:2px solid transparent;background:var(--chip);font-size:12px;line-height:1.4;font-weight:600;cursor:pointer;color:var(--fg)}
+.hcy .chip i{display:block;height:5px;border-radius:3px;margin-bottom:3px}
+.hcy .chip.act{border-color:var(--fg)}
+.hcy .bar{display:flex;height:8px;border-radius:4px;overflow:hidden;margin-top:10px;position:relative;direction:ltr}
+.hcy .bar span{display:block;height:100%;opacity:.85}
+.hcy .bar b{position:absolute;top:-3px;bottom:-3px;width:3px;background:var(--fg);border-radius:2px}
+.hcy .grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:8px}
+.hcy .st{background:var(--chip);border-radius:10px;padding:8px 10px;min-width:0}
+.hcy .st small{display:block;color:var(--muted);font-size:12px}
+.hcy .st div{display:flex;align-items:center;gap:6px;font-weight:600}
+.hcy .st u{width:10px;height:10px;border-radius:50%;background:var(--off);flex:none;text-decoration:none}
+.hcy .st u.on{background:var(--on)}
+.hcy .st u.act{background:var(--p3)}
+.hcy .desc{margin:10px 0 0;font-size:14.5px}
+.hcy .legend{display:grid;grid-template-columns:repeat(auto-fit,minmax(260px,1fr));gap:6px;margin-top:8px}
+.hcy .lg{display:flex;gap:8px;align-items:flex-start;text-align:right;padding:6px 8px;border-radius:10px;background:var(--chip);border:2px solid transparent;font-weight:400;font-size:13px;line-height:1.55;width:100%}
+.hcy .lg.act{border-color:var(--fg)}
+.hcy .lg b{flex:none;width:22px;height:22px;border-radius:50%;background:#fff;color:#17202f;border:1.6px solid #17202f;display:grid;place-items:center;font-size:12px}
+.hcy .lg span{min-width:0}
+.hcy .key{display:flex;flex-wrap:wrap;gap:12px;font-size:13px;color:var(--muted);margin-top:8px}
+.hcy .key i{display:inline-block;width:12px;height:12px;border-radius:3px;vertical-align:-2px;margin-inline-end:5px}
+.hcy h2{font-size:16px;margin:0 0 4px;font-weight:800}
+.hcy .chips{grid-template-columns:repeat(5,1fr)}@media (max-width:520px){.hcy .chip{font-size:11px}}`;
+const VLAB_HC_HTML = `<div class="wrap">
+  <div>
+    <p class="sub">قلب از روبه‌رو دیده می‌شود، پس سمت راست بدن در سمت چپ تصویر است. هر ضربان ≈ ۰٫۸ ثانیه طول می‌کشد (۷۵ ضربان در دقیقه).</p>
+  </div>
+
+  <div class="card">
+    <div class="top">
+      <div class="phase-now"><span class="dot" id="pdot"></span><span id="pname">…</span></div>
+      <div class="ctrls">
+        <button id="bPlay" type="button">⏸ توقف</button>
+        <button type="button" class="spd" data-s="8">آهسته</button>
+        <button type="button" class="spd" data-s="4">متوسط</button>
+        <button type="button" class="spd" data-s="0.8">واقعی</button>
+      </div>
+    </div>
+    <svg id="heart" viewBox="0 -16 640 508" style="direction:ltr" role="img" aria-label="قلب با چهار حفره و دریچه‌ها"></svg>
+    <div class="key">
+      <span><i style="background:#3d70e0"></i>خون کم‌اکسیژن</span>
+      <span><i style="background:#e23743"></i>خون پر‌اکسیژن</span>
+      <span><i style="background:#f08a00"></i>جهت انقباض</span>
+      <span><i style="background:#f5e3b3;border:1px solid #8a6a2c"></i>دریچه</span>
+    </div>
+  </div>
+
+  <div class="card">
+    <div class="ecgh"><span>نوار قلب (ECG)</span><small id="ecgnote">با هر انقباض، موج مربوط به آن کامل می‌شود</small></div>
+    <svg id="ecg" viewBox="0 0 640 170" style="direction:ltr" role="img" aria-label="نوار قلب"></svg>
+    <div class="bar" id="bar"></div>
+    <div class="chips" id="chips"></div>
+  </div>
+
+  <div class="card">
+    <h2>در این لحظه چه می‌شود؟</h2>
+    <div class="grid" id="stg"></div>
+    <p class="desc" id="desc"></p>
+  </div>
+
+  <div class="card">
+    <h2>اجزای قلب</h2>
+    <div class="sub">روی هر مورد بزن تا در تصویر پررنگ شود.</div>
+    <div class="legend" id="legend"></div>
+    <p class="sub" style="margin-top:10px">سرخرگ ششی آبی است چون خون کم‌اکسیژن را به ریه می‌برد و سیاهرگ ششی قرمز است چون خون پر‌اکسیژن را از ریه برمی‌گرداند. نام سرخرگ و سیاهرگ از جهت جریان خون می‌آید (سرخرگ از قلب دور می‌کند، سیاهرگ به قلب می‌آورد)، نه از رنگ خون.</p>
+  </div>
+</div>`;
+function vlabHeartCycleInit(root, report) {
+const NS='http://www.w3.org/2000/svg';
+const $=s=>root.querySelector(s);
+const FA=n=>String(n).replace(/\d/g,d=>'۰۱۲۳۴۵۶۷۸۹'[d]);
+const clamp=(v,a,b)=>Math.min(b,Math.max(a,v));
+const sm=(a,b,t)=>{const x=clamp((t-a)/(b-a),0,1);return x*x*(3-2*x)};
+const lerp=(a,b,t)=>a+(b-a)*t;
+const BLUE='#3d70e0',BLUE_D='#1c3d93',RED='#e23743',RED_D='#8e1621';
+
+/* ---------- phases ---------- */
+const PH=[
+ {n:'انقباض دهلیزها',c:'var(--p1)',d:0.10,mid:0.09,atria:['منقبض می‌شوند','act'],vent:['شل؛ خون بیشتری می‌گیرند','on'],av:['باز','on'],sl:['بسته',''],snd:'—',
+  t:'دهلیزها منقبض می‌شوند و باقی‌ماندهٔ خونشان را از دریچه‌های سه‌لخت و دولخت به بطن‌ها می‌رانند (حدود ۲۰ تا ۳۰ درصد پرشدن بطن). روی نوار، موج P دیده می‌شود.'},
+ {n:'انقباض هم‌حجم بطن‌ها',c:'var(--p2)',d:0.08,mid:0.18,atria:['شل',''],vent:['شروع انقباض','act'],av:['بسته',''],sl:['بسته',''],snd:'لَپ (صدای اول)',
+  t:'موج QRS: بطن‌ها تحریک می‌شوند و انقباض را شروع می‌کنند. فشار بطن‌ها بالا می‌رود ولی هنوز از فشار سرخرگ‌ها بیشتر نیست. هر چهار دریچه بسته‌اند و حجم خون ثابت است. بسته شدن دریچه‌های سه‌لخت و دولخت صدای «لَپ» را می‌سازد.'},
+ {n:'خروج خون از بطن‌ها',c:'var(--p3)',d:0.28,mid:0.36,atria:['شل؛ از سیاهرگ‌ها پر می‌شوند',''],vent:['منقبض','act'],av:['بسته',''],sl:['باز','on'],snd:'—',
+  t:'فشار بطن‌ها از فشار سرخرگ‌ها بیشتر می‌شود و دریچه‌های سینی باز می‌شوند. خون بطن راست به سرخرگ ششی و خون بطن چپ به آئورت می‌رود. موج T نشان می‌دهد بطن‌ها دارند آمادهٔ استراحت می‌شوند.'},
+ {n:'استراحت هم‌حجم بطن‌ها',c:'var(--p4)',d:0.08,mid:0.54,atria:['شل و پر',''],vent:['شل می‌شوند',''],av:['بسته',''],sl:['بسته می‌شوند',''],snd:'دَب (صدای دوم)',
+  t:'بطن‌ها شل می‌شوند و فشارشان پایین می‌آید. خونِ سرخرگ‌ها کمی برمی‌گردد و دریچه‌های سینی را می‌بندد؛ صدای «دَب» همین است. هر چهار دریچه بسته‌اند.'},
+ {n:'پر شدن بطن‌ها',c:'var(--p5)',d:0.46,mid:0.80,atria:['شل؛ خون از آن‌ها عبور می‌کند',''],vent:['شل؛ در حال پر شدن','on'],av:['باز','on'],sl:['بسته',''],snd:'—',
+  t:'فشار بطن‌ها از فشار دهلیزها کمتر می‌شود و دریچه‌های سه‌لخت و دولخت باز می‌شوند. بیشتر خون (حدود ۷۰ تا ۸۰ درصد) بدون انقباض دهلیزها وارد بطن‌ها می‌شود.'}
+];
+const PHI=t=>(t<0.04||t>=0.58)?4:t<0.14?0:t<0.22?1:t<0.50?2:3;
+
+/* ---------- cardiac state ---------- */
+function state(t){
+  const tt=t<0.04?t+1:t;
+  let V,A;
+  if(t<0.04||t>=0.58) V=0.45+0.47*(1-Math.exp(-4*(tt-0.58)/0.46))/(1-Math.exp(-4));
+  else if(t<0.14) V=0.92+0.08*sm(0.04,0.14,t);
+  else if(t<0.22) V=1;
+  else if(t<0.50){const x=(t-0.22)/0.28;V=1-0.55*(1-Math.pow(1-x,1.5))}
+  else V=0.45;
+  if(t<0.04||t>=0.52) A=1.0-0.2*(tt-0.52)/0.52;
+  else if(t<0.14) A=0.80-0.30*sm(0.04,0.14,t);
+  else if(t<0.22) A=0.50+0.08*(t-0.14)/0.08;
+  else A=0.58+0.42*(t-0.22)/0.30;
+  const c=sm(0.14,0.22,t)*(1-sm(0.46,0.54,t));
+  const aAct=(t>=0.04&&t<0.14)?Math.sin(Math.PI*(t-0.04)/0.10):0;
+  let oav; if(t>=0.62||t<0.12)oav=1; else if(t<0.15)oav=1-sm(0.12,0.15,t); else if(t<0.58)oav=0; else oav=sm(0.58,0.62,t);
+  const osl=sm(0.22,0.25,t)*(1-sm(0.47,0.50,t));
+  const ej=(t>=0.22&&t<0.50)?Math.sin(Math.PI*(t-0.22)/0.28):0;
+  return {V,A,c,aAct,oav,osl,ej,ph:PHI(t)};
+}
+function mkWarp(k,s){
+  if(k==='RV'||k==='LV'){const ax=k==='RV'?300:345,y0=246,vn=(s.V-0.45)/0.55,kx=0.60+0.40*vn,ky=0.76+0.24*vn;
+    return (x,y)=>{const u=clamp((y-y0)/150,0,1);const sx=1-(1-kx)*Math.pow(u,0.6);return [ax+(x-ax)*sx,y0+(y-y0)*(y>y0?ky:1)]}}
+  const ax=k==='RA'?243:407,y0=238,an=(s.A-0.5)/0.5,kx=0.78+0.22*an,ky=0.82+0.18*an;
+  return (x,y)=>{const u=clamp((y0-y)/95,0,1);const sx=1-(1-kx)*Math.pow(u,0.7);return [ax+(x-ax)*sx,y0+(y-y0)*(y<y0?ky:1)]};
+}
+const ID=(x,y)=>[x,y];
+function P(cmds,w){return cmds.map(c=>{if(c[0]==='Z')return'Z';let s=c[0];for(let i=1;i<c.length;i+=2){const p=w(c[i],c[i+1]);s+=(i>1?' ':'')+p[0].toFixed(1)+','+p[1].toFixed(1)}return s}).join(' ')}
+
+/* ---------- static geometry ---------- */
+const RA_C=[['M',210,238],['L',210,186],['C',210,166,224,157,242,157],['C',260,157,276,167,276,188],['L',276,238],['Z']];
+const LA_C=[['M',374,238],['L',374,190],['C',374,168,390,157,407,157],['C',426,157,438,168,438,190],['L',438,238],['Z']];
+const RV_C=[['M',210,246],['L',314,246],['C',318,296,328,344,340,386],['C',296,384,250,356,226,320],['C',214,298,210,274,210,246],['Z']];
+const LV_C=[['M',330,246],['L',440,246],['C',452,290,444,352,406,382],['C',388,396,368,394,358,390],['C',346,352,336,300,330,246],['Z']];
+const RA_O='M200,246 L200,184 C200,156 218,146 242,146 C266,146 286,156 286,186 L286,246 Z';
+const LA_O='M364,246 L364,188 C364,158 386,146 406,146 C430,146 448,158 448,188 L448,246 Z';
+const RV_O='M200,244 L322,244 C326,300 338,356 352,406 C300,410 244,380 216,332 C204,306 200,276 200,244 Z';
+const LV_O='M322,244 L450,244 C466,292 458,364 410,396 C388,410 366,410 352,406 C338,356 326,300 322,244 Z';
+const PAP={RV:[[[228,332],[234,312]],[[326,334],[310,314]]],LV:[[[350,334],[362,314]],[[438,332],[424,312]]]};
+const TRI={aL:[214,242],aR:[282,242],cL:[245,252],cR:[251,252],oL:[224,278],oR:[272,278]};
+const MIT={aL:[368,242],aR:[438,242],cL:[401,252],cR:[405,252],oL:[378,282],oR:[430,282]};
+
+function tube(d,w,col,dk,k,extra){return `<g data-k="${k}" ${extra||''}><path d="${d}" fill="none" stroke="${dk}" stroke-width="${w+4}" stroke-linecap="butt" stroke-linejoin="round"/><path d="${d}" fill="none" stroke="${col}" stroke-width="${w}" stroke-linecap="butt" stroke-linejoin="round"/></g>`}
+const svg=$('#heart');
+const D_V1='M128,124 L352,124 C376,124 388,140 390,162', D_V2='M128,138 L368,138 C392,138 404,150 406,164';
+const D_V3='M500,172 L430,172', D_V4='M500,206 L430,206';
+const D_AO='M347,252 L347,120 C347,76 380,52 430,52 C520,52 612,70 612,120 L612,462';
+let h='';
+h+=`<defs>
+<linearGradient id="gB" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#3d70e0"/><stop offset="1" stop-color="#2a4eb4"/></linearGradient>
+<linearGradient id="gR" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#e23743"/><stop offset="1" stop-color="#b81f2c"/></linearGradient>
+<linearGradient id="gM" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#fff" stop-opacity=".22"/><stop offset="1" stop-color="#000" stop-opacity=".18"/></linearGradient>
+</defs>`;
+/* lungs */
+const LUNGR='M136,84 C100,66 48,74 26,120 C6,172 4,262 20,322 C32,354 72,360 106,348 C128,340 138,322 138,302 L138,128 C138,108 138,94 136,84 Z';
+const LUNGL='M492,90 C534,66 592,84 600,140 C610,200 608,290 596,330 C584,356 540,360 516,346 C500,336 492,322 494,304 C498,284 514,276 500,256 C488,240 486,206 486,160 L486,122 C486,106 486,98 492,90 Z';
+function cap(x0,y0,cl,sign){return ''}
+let lungs=`<g data-k="12"><path d="${LUNGR}" fill="#f4b8bf" fill-opacity=".6" stroke="#d98f97" stroke-width="2"/><path d="${LUNGL}" fill="#f4b8bf" fill-opacity=".6" stroke="#d98f97" stroke-width="2"/>
+<g fill="none" stroke="#d98f97" stroke-width="1.6" stroke-dasharray="5 3"><path d="M138,176 C100,174 60,168 14,146"/><path d="M138,236 C100,236 60,250 10,268"/><path d="M486,206 C524,210 568,232 606,266"/></g>`;
+[[128,102,128,124,128,138,[[62,142],[46,212],[66,286]]],[500,112,500,172,500,206,[[552,140],[564,214],[548,292]]]].forEach(L=>{
+  L[6].forEach(a=>{lungs+=`<path d="M${L[0]},${L[1]} Q${(L[0]+a[0])/2},${a[1]-24} ${a[0]},${a[1]-8}" fill="none" stroke="#3d70e0" stroke-width="2.2"/><path d="M${a[0]},${a[1]+8} Q${(L[0]+a[0])/2},${a[1]+30} ${L[0]},${a[1]<200?L[3]:L[5]}" fill="none" stroke="#e23743" stroke-width="2.2"/><circle cx="${a[0]}" cy="${a[1]}" r="9" fill="#fff" fill-opacity=".85" stroke="#d98f97" stroke-width="1.4"/><circle cx="${a[0]}" cy="${a[1]}" r="3.4" fill="#cfe0ff"/>`});
+});
+lungs+=`<text class="lbl" x="72" y="96" text-anchor="middle">ریهٔ راست</text><text class="lbl2" x="72" y="109" text-anchor="middle">سه بخش</text><text class="lbl" x="548" y="106" text-anchor="middle">ریهٔ چپ</text><text class="lbl2" x="548" y="119" text-anchor="middle">دو بخش</text>
+<text class="lbl2" x="72" y="318" text-anchor="middle" style="font-size:10px">اکسیژن وارد خون</text><text class="lbl2" x="72" y="332" text-anchor="middle" style="font-size:10px">کربن‌دی‌اکسید خارج</text><text class="lbl2" x="548" y="322" text-anchor="middle" style="font-size:10px">اکسیژن وارد خون</text><text class="lbl2" x="548" y="336" text-anchor="middle" style="font-size:10px">کربن‌دی‌اکسید خارج</text></g>`;
+h+=lungs;
+/* lungs-side vessels (behind) */
+h+=tube(D_V1,12,RED,RED_D,4)+tube(D_V2,12,RED,RED_D,4);
+h+=tube('M300,126 C288,104 270,102 128,102',22,BLUE,BLUE_D,3)+tube('M300,126 C312,108 340,112 500,112',22,BLUE,BLUE_D,3);
+/* myocardium */
+h+=`<g id="myo"><path id="oRA" d="${RA_O}"/><path id="oLA" d="${LA_O}"/><path id="oRV" d="${RV_O}"/><path id="oLV" d="${LV_O}"/>
+<path id="auR" d="M202,172 C186,170 182,150 196,146 C206,143 214,150 216,158 Z"/><path id="auL" d="M446,172 C462,170 466,150 452,146 C442,143 434,150 432,158 Z"/></g>
+<g id="myoShade" fill="url(#gM)" pointer-events="none"><path d="${RA_O}"/><path d="${LA_O}"/><path d="${RV_O}"/><path d="${LV_O}"/></g>
+<g stroke="#fff" stroke-opacity=".16" stroke-width="1.4" fill="none" pointer-events="none"><path d="M206,262 C214,320 244,368 300,398"/><path d="M214,258 C222,310 250,352 296,382"/><path d="M456,262 C462,330 430,384 372,402"/><path d="M446,258 C450,322 424,372 372,394"/></g>`;
+/* big vessels over myocardium */
+h+=tube('M243,34 L243,160',26,BLUE,BLUE_D,1)+tube('M190,468 L190,224 C190,210 198,206 220,206',24,BLUE,BLUE_D,2);
+h+=tube(D_V3,12,RED,RED_D,4)+tube(D_V4,12,RED,RED_D,4);
+h+=tube('M300,252 L300,126',28,BLUE,BLUE_D,3);
+h+=tube(D_AO,28,RED,RED_D,5)+tube('M392,60 L392,24',11,RED,RED_D,5)+tube('M426,54 L426,16',11,RED,RED_D,5)+tube('M462,60 L462,26',11,RED,RED_D,5);
+/* cavities */
+h+=`<path id="cRA" fill="url(#gB)"/><path id="cRV" fill="url(#gB)"/><path id="cLA" fill="url(#gR)"/><path id="cLV" fill="url(#gR)"/>
+<path class="hlo" data-k="10" d="M318,248 C324,300 334,344 346,388" fill="none" stroke="#ffd54a" stroke-width="12" stroke-linecap="round" opacity="0"/>`;
+/* papillary + chordae */
+h+=`<g data-k="11" id="gPap"><path id="pRL" fill="#8f2c3a"/><path id="pRR" fill="#8f2c3a"/><path id="pLL" fill="#8f2c3a"/><path id="pLR" fill="#8f2c3a"/>
+<path id="chRL" stroke="#e9dcb9" stroke-width="1.1" fill="none"/><path id="chRR" stroke="#e9dcb9" stroke-width="1.1" fill="none"/><path id="chLL" stroke="#e9dcb9" stroke-width="1.1" fill="none"/><path id="chLR" stroke="#e9dcb9" stroke-width="1.1" fill="none"/></g>`;
+h+=`<g id="parts"></g>`;
+/* valves */
+function leaf(id,k){return `<g data-k="${k}"><path id="${id}L0" fill="none" stroke="#7a5a1f" stroke-width="7" stroke-linecap="round"/><path id="${id}R0" fill="none" stroke="#7a5a1f" stroke-width="7" stroke-linecap="round"/><path id="${id}L" fill="none" stroke="#f5e3b3" stroke-width="4" stroke-linecap="round"/><path id="${id}R" fill="none" stroke="#f5e3b3" stroke-width="4" stroke-linecap="round"/></g>`}
+h+=leaf('vT',6)+leaf('vM',7)+leaf('vP',8)+leaf('vA',9);
+/* contraction arrows */
+function arrows(id,list){return `<g id="${id}" opacity="0" pointer-events="none">`+list.map(a=>`<g transform="translate(${a[0]} ${a[1]}) rotate(${a[2]})"><path d="M-11,-7 L5,0 L-11,7 Z" fill="#f08a00" stroke="#fff" stroke-width="1.4" stroke-linejoin="round"/></g>`).join('')+`</g>`}
+h+=arrows('arV',[[190,300,0],[206,366,-35],[470,300,180],[446,382,215],[330,428,-90],[326,262,90]])+arrows('arA',[[186,198,0],[460,200,180],[243,134,90],[407,134,90]]);
+/* labels */
+h+=`<text class="ch" x="243" y="214">دهلیز راست</text><text class="ch" x="407" y="214">دهلیز چپ</text><text class="ch" x="262" y="352">بطن راست</text><text class="ch" x="392" y="346">بطن چپ</text>`;
+h+=`<text class="lbl2" x="243" y="20" text-anchor="middle">از بالای بدن</text><text class="lbl2" x="190" y="488" text-anchor="middle">از پایین بدن</text><text class="lbl2" x="612" y="486" text-anchor="middle">به بدن</text><text class="lbl2" x="426" y="-4" text-anchor="middle">به سر و دست‌ها</text>`;
+/* badges */
+const BD=[[1,243,70],[2,190,390],[3,300,176],[4,462,172],[4,172,131],[5,612,300],[12,34,300],[12,590,300],[6,150,264,222,244],[7,492,264,432,244],[8,300,276],[9,347,276],[10,326,322],[11,150,342,232,318]];
+h+=BD.map(b=>(b[3]?`<line x1="${b[1]}" y1="${b[2]}" x2="${b[3]}" y2="${b[4]}" stroke="#17202f" stroke-width="1.4" data-k="${b[0]}"/>`:'')+`<g class="bd" data-k="${b[0]}"><circle cx="${b[1]}" cy="${b[2]}" r="11"/><text x="${b[1]}" y="${b[2]+5}">${FA(b[0])}</text></g>`).join('');
+svg.innerHTML=h;
+const G=id=>root.querySelector('#'+id);
+
+/* ---------- blood particles ---------- */
+const RVp=[[246,250,'RV'],[250,285,'RV'],[262,322,'RV'],[286,348,'RV'],[302,330,'RV'],[302,290,'RV'],[300,250,'RV']];
+const LVp=[[400,250,'LV'],[396,290,'LV'],[386,336,'LV'],[368,352,'LV'],[352,330,'LV'],[348,290,'LV'],[347,250,'LV']];
+const chains=[
+ {col:'#cfe0ff',n:15,pts:[[243,34,''],[243,100,''],[243,150,''],[243,162,'RA'],[240,190,'RA'],[244,226,'RA'],[246,240,'RA',  'AV'],...RVp.slice(0,-1),[300,250,'RV','SL'],[300,240,''],[300,160,''],[300,126,''],[330,114,''],[400,112,''],[500,112,'']]},
+ {col:'#cfe0ff',n:15,pts:[[190,466,''],[190,226,''],[200,208,''],[222,206,'RA'],[234,214,'RA'],[246,230,'RA'],[246,240,'RA','AV'],...RVp.slice(0,-1),[300,250,'RV','SL'],[300,240,''],[300,160,''],[300,126,''],[270,106,''],[200,102,''],[128,102,'']]},
+ {col:'#ffd3d6',n:14,pts:[[500,172,''],[470,172,''],[432,172,''],[420,176,'LA'],[410,206,'LA'],[404,232,'LA'],[402,240,'LA','AV'],...LVp.slice(0,-1),[347,250,'LV','SL'],[347,240,''],[347,120,''],[365,80,''],[430,52,''],[520,54,''],[590,72,''],[612,112,''],[612,462,'']]},
+ {col:'#ffd3d6',n:14,pts:[[500,206,''],[470,206,''],[432,206,''],[420,210,'LA'],[410,222,'LA'],[404,232,'LA'],[402,240,'LA','AV'],...LVp.slice(0,-1),[347,250,'LV','SL'],[347,240,''],[347,120,''],[365,80,''],[430,52,''],[520,54,''],[590,72,''],[612,112,''],[612,462,'']]},
+ {col:'#ffd3d6',n:12,pts:[[128,124,''],[352,124,''],[380,134,''],[390,162,''],[396,172,'LA'],[404,200,'LA'],[404,232,'LA'],[402,240,'LA','AV'],...LVp.slice(0,-1),[347,250,'LV','SL'],[347,240,''],[347,120,''],[365,80,''],[410,54,''],[426,40,''],[426,18,'']]},
+ {col:'#ffd3d6',n:12,pts:[[128,138,''],[368,138,''],[392,142,''],[406,164,''],[408,174,'LA'],[408,204,'LA'],[404,232,'LA'],[402,240,'LA','AV'],...LVp.slice(0,-1),[347,250,'LV','SL'],[347,240,''],[347,120,''],[365,80,''],[392,60,''],[392,40,''],[392,24,'']]}
+];
+const pg=G('parts');
+chains.forEach(ch=>{
+  ch.cum=[0];ch.gates=[];
+  for(let i=1;i<ch.pts.length;i++){const a=ch.pts[i-1],b=ch.pts[i];ch.cum.push(ch.cum[i-1]+Math.hypot(b[0]-a[0],b[1]-a[1]))}
+  ch.pts.forEach((p,i)=>{if(p[3])ch.gates.push({d:ch.cum[i],t:p[3]})});
+  ch.L=ch.cum[ch.cum.length-1];
+  ch.ps=[];
+  for(let j=0;j<ch.n;j++){const e=document.createElementNS(NS,'circle');e.setAttribute('r','2.5');e.setAttribute('fill',ch.col);e.setAttribute('stroke','rgba(0,0,0,.25)');e.setAttribute('stroke-width','.6');pg.appendChild(e);
+    ch.ps.push({d:(j+Math.random()*0.7)/ch.n*ch.L,off:Math.random()*20,e})}
+});
+function segAt(ch,d){let i=0;while(i<ch.cum.length-2&&ch.cum[i+1]<d)i++;return i}
+function stepParticles(dt,s,vis){
+  const av=s.oav>0.5,sl=s.osl>0.5;
+  const art=0.3+0.7*s.ej+0.2*Math.exp(-Math.max(0,(window.__t||0)-0.5)*5)*0;
+  chains.forEach(ch=>{
+    ch.ps.forEach(p=>{
+      const i=segAt(ch,p.d),tag=ch.pts[i][2],bn=ch.pts[i+1][2];
+      let v;
+      if(tag==='RA'||tag==='LA') v=40+120*s.aAct;
+      else if(tag==='RV'||tag==='LV') v=(av?95:22)+(sl?180:0);
+      else{const isVein=ch.pts[i][1]>=0&&(ch.cum[i]<ch.gates[0].d); v=isVein?55:(40+130*art)}
+      let dn=p.d+v*vis*dt;
+      for(const g of ch.gates){
+        const closed=g.t==='AV'?!av:!sl;
+        if(closed&&p.d<=g.d+0.01){dn=Math.min(dn,Math.max(p.d,g.d-p.off))}
+      }
+      if(dn>=ch.L){dn-=ch.L}
+      p.d=dn;
+    });
+  });
+}
+function drawParticles(W){
+  chains.forEach(ch=>ch.ps.forEach(p=>{
+    const i=segAt(ch,p.d),a=ch.pts[i],b=ch.pts[i+1],f=(p.d-ch.cum[i])/((ch.cum[i+1]-ch.cum[i])||1);
+    let x=lerp(a[0],b[0],f),y=lerp(a[1],b[1],f);
+    const tag=a[2];
+    if(tag&&W[tag]){const q=W[tag](x,y);x=q[0];y=q[1]}
+    p.e.setAttribute('cx',x.toFixed(1));p.e.setAttribute('cy',y.toFixed(1));
+    const edge=Math.min(p.d,ch.L-p.d);p.e.setAttribute('opacity',clamp(edge/25,0,0.95).toFixed(2));
+  }));
+}
+
+/* ---------- ECG ---------- */
+const ecg=$('#ecg'),EW=640,BASE=112,AMP=78;
+const g=(t,m,s,a)=>a*Math.exp(-((t-m)*(t-m))/(2*s*s));
+const ecgv=t=>g(t,0.05,0.022,0.13)+g(t,0.125,0.007,-0.12)+g(t,0.150,0.011,1.0)+g(t,0.178,0.009,-0.25)+g(t,0.40,0.04,0.30);
+const PCOL=['#f08a00','#d6336c','#d12a3a','#7048c9','#2f7bd9'];
+(function(){
+  let s=`<defs><clipPath id="clipE"><rect id="cl1" x="0" y="0" width="0" height="170"/><rect id="cl2" x="0" y="0" width="0" height="170"/></clipPath></defs>`;
+  s+=`<rect width="640" height="170" rx="8" fill="var(--ecg-bg)"/>`;
+  const bands=[[0,0.04,4],[0.04,0.14,0],[0.14,0.22,1],[0.22,0.50,2],[0.50,0.58,3],[0.58,1,4]];
+  for(let k=0;k<2;k++)bands.forEach((b,i)=>{s+=`<rect class="bnd" data-c="${k}" data-p="${b[2]}" x="${(k*320+b[0]*320).toFixed(1)}" y="0" width="${((b[1]-b[0])*320).toFixed(1)}" height="170" fill="${PCOL[b[2]]}" opacity=".12"/>`});
+  for(let x=0;x<=640;x+=10){s+=`<line x1="${x}" y1="0" x2="${x}" y2="170" stroke="${x%50===0?'var(--ecg-grid2)':'var(--ecg-grid)'}" stroke-width="${x%50===0?1:.6}"/>`}
+  for(let y=2;y<=170;y+=10){s+=`<line x1="0" y1="${y}" x2="640" y2="${y}" stroke="${(y-2)%50===0?'var(--ecg-grid2)':'var(--ecg-grid)'}" stroke-width="${(y-2)%50===0?1:.6}"/>`}
+  let d='';for(let x=0;x<=640;x+=1.5){const t=((x%320)/320);d+=(x?'L':'M')+x.toFixed(1)+','+(BASE-AMP*ecgv(t)).toFixed(1)}
+  s+=`<g clip-path="url(#clipE)"><path d="${d}" fill="none" stroke="var(--ecg-line)" stroke-width="2.2" stroke-linejoin="round" stroke-linecap="round"/>`;
+  for(let k=0;k<2;k++){const o=k*320;
+    s+=`<text x="${o+0.05*320}" y="${BASE-AMP*0.13-9}" class="lbl" text-anchor="middle" style="font-weight:800">P</text><text x="${o+0.15*320}" y="${BASE-AMP-8}" class="lbl" text-anchor="middle" style="font-weight:800">QRS</text><text x="${o+0.40*320}" y="${BASE-AMP*0.3-9}" class="lbl" text-anchor="middle" style="font-weight:800">T</text>`}
+  s+=`</g><line id="cur" x1="0" y1="0" x2="0" y2="170" stroke="var(--fg)" stroke-width="1" stroke-dasharray="3 3" opacity=".55"/><circle id="curd" r="4.5" fill="#d12a3a" stroke="#fff" stroke-width="1.5"/>`;
+  s+=`<text x="632" y="162" class="lbl2" text-anchor="end">یک ضربان ≈ ۰٫۸ ثانیه</text>`;
+  ecg.innerHTML=s;
+})();
+
+/* ---------- UI ---------- */
+const chips=$('#chips'),bar=$('#bar'),stg=$('#stg');
+PH.forEach((p,i)=>{const b=document.createElement('button');b.type='button';b.className='chip';b.dataset.i=i;b.innerHTML=`<i style="background:${PCOL[i]}"></i>${p.n}`;b.onclick=()=>hold(i);chips.appendChild(b);
+  const sp=document.createElement('span');sp.style.width=(p.d*100)+'%';sp.style.background=PCOL[i];bar.appendChild(sp)});
+const barCur=document.createElement('b');bar.appendChild(barCur);
+[['atria','دهلیزها'],['vent','بطن‌ها'],['av','دریچه‌های سه‌لخت و دولخت'],['sl','دریچه‌های سینی (ششی و آئورتی)'],['snd','صدای قلب']].forEach(r=>{
+  const d=document.createElement('div');d.className='st';d.innerHTML=`<small>${r[1]}</small><div><u id="u_${r[0]}"></u><span id="v_${r[0]}"></span></div>`;stg.appendChild(d)});
+const LEG=[
+ [1,'سیاهرگ زبرین','خون کم‌اکسیژنِ نیمهٔ بالای بدن را به دهلیز راست می‌آورد.'],
+ [2,'سیاهرگ زیرین','خون کم‌اکسیژنِ نیمهٔ پایین بدن را به دهلیز راست می‌آورد.'],
+ [3,'سرخرگ ششی','از بطن راست شروع می‌شود، به دو شاخه تقسیم می‌شود و خون کم‌اکسیژن را به ریه‌ها می‌برد.'],
+ [4,'سیاهرگ‌های ششی (چهار تا)','خون پر‌اکسیژن را از ریه‌ها به دهلیز چپ می‌آورند.'],
+ [5,'سرخرگ آئورت','خون پر‌اکسیژن را از بطن چپ به سر، دست‌ها و بقیهٔ بدن می‌رساند.'],
+ [6,'دریچهٔ سه‌لخت','بین دهلیز راست و بطن راست؛ خون فقط به سمت بطن می‌گذرد.'],
+ [7,'دریچهٔ دولخت (میترال)','بین دهلیز چپ و بطن چپ.'],
+ [8,'دریچهٔ سینی ششی','خروجی بطن راست؛ بعد از ضربان از برگشت خون جلوگیری می‌کند.'],
+ [9,'دریچهٔ سینی آئورتی','خروجی بطن چپ؛ بعد از ضربان از برگشت خون جلوگیری می‌کند.'],
+ [10,'دیوارهٔ بین دو بطن','خون کم‌اکسیژن (راست) را از خون پر‌اکسیژن (چپ) جدا نگه می‌دارد.'],
+ [11,'طناب‌های وتری و ماهیچه‌های پاپیلری','هنگام انقباض بطن، دریچهٔ سه‌لخت و دولخت را نگه می‌دارند تا به سمت دهلیز برنگردد.'],
+ [12,'شش‌ها (ریه‌ها)','خون کم‌اکسیژن از سرخرگ ششی به حبابک‌ها می‌رسد؛ اکسیژن وارد خون و کربن‌دی‌اکسید خارج می‌شود و خون پر‌اکسیژن با سیاهرگ‌های ششی به دهلیز چپ برمی‌گردد. ریهٔ راست سه بخش و ریهٔ چپ دو بخش دارد.']
+];
+const lg=$('#legend');
+LEG.forEach(l=>{const b=document.createElement('button');b.type='button';b.className='lg';b.dataset.k=l[0];b.innerHTML=`<b>${FA(l[0])}</b><span><strong>${l[1]}</strong>: ${l[2]}</span>`;
+  b.onclick=()=>{const on=svg.dataset.hl==String(l[0]);if(on){svg.removeAttribute('data-hl')}else svg.dataset.hl=l[0];
+    lg.querySelectorAll('.lg').forEach(x=>x.classList.toggle('act',x.dataset.k==svg.dataset.hl))};lg.appendChild(b)});
+
+/* ---------- main loop ---------- */
+let T=0.9,mode='play',cyc=8,vis=1,lastPh=-1;
+window.__t=0;
+const bPlay=$('#bPlay');
+function setBtn(){bPlay.textContent=mode==='play'?'⏸ توقف':'▶ ادامه'}
+bPlay.onclick=()=>{mode=mode==='play'?'pause':'play';if(mode==='play'){chips.querySelectorAll('.chip').forEach(c=>c.classList.remove('act'))}setBtn()};
+root.querySelectorAll('.spd').forEach(b=>b.onclick=()=>{cyc=+b.dataset.s;vis=cyc>=8?1:cyc>=4?1.5:2.4;root.querySelectorAll('.spd').forEach(x=>x.classList.toggle('on',x===b));if(mode!=='play'){mode='play';setBtn()}});
+root.querySelector('.spd[data-s="8"]').classList.add('on');
+function hold(i){T=Math.floor(T)+PH[i].mid;mode='hold';setBtn();chips.querySelectorAll('.chip').forEach(c=>c.classList.toggle('act',+c.dataset.i===i))}
+function mix(a,b,t){return a.map((v,i)=>Math.round(lerp(v,b[i],t)))}
+function render(){
+  const t=((T%1)+1)%1,s=state(t);window.__t=t;
+  const W={RV:mkWarp('RV',s),LV:mkWarp('LV',s),RA:mkWarp('RA',s),LA:mkWarp('LA',s)};
+  G('cRA').setAttribute('d',P(RA_C,W.RA));G('cLA').setAttribute('d',P(LA_C,W.LA));G('cRV').setAttribute('d',P(RV_C,W.RV));G('cLV').setAttribute('d',P(LV_C,W.LV));
+  const mv=(a,k)=>{const m=mix([196,92,104],[130,34,52],k);return `rgb(${m})`};
+  const vc=mv(0,s.c),ac=mv(0,s.aAct*0.9);
+  ['oRV','oLV'].forEach(i=>G(i).setAttribute('fill',vc));['oRA','oLA','auR','auL'].forEach(i=>G(i).setAttribute('fill',ac));
+  G('arV').setAttribute('opacity',(s.c*(1-sm(0.40,0.5,t))).toFixed(2));G('arA').setAttribute('opacity',s.aAct.toFixed(2));
+  /* valves */
+  const fl=(a,b,o)=>[lerp(a[0],b[0],o),lerp(a[1],b[1],o)];
+  function av(id,V,o){
+    const tl=fl(V.cL,V.oL,o),tr=fl(V.cR,V.oR,o);
+    const dL=`M${V.aL} Q${(V.aL[0]+tl[0])/2-o*4},${(V.aL[1]+tl[1])/2-6*(1-o)} ${tl}`;
+    const dR=`M${V.aR} Q${(V.aR[0]+tr[0])/2+o*4},${(V.aR[1]+tr[1])/2-6*(1-o)} ${tr}`;
+    ['L','R'].forEach((q,i)=>{const d=i?dR:dL;G(id+q).setAttribute('d',d);G(id+q+'0').setAttribute('d',d)});
+    return [tl,tr];
+  }
+  const [tL,tR]=av('vT',TRI,s.oav),[mL,mR]=av('vM',MIT,s.oav);
+  function sl(id,aL,aR,cT,oL,oR,cc,oc,o){
+    const tL=fl(cT,oL,o),tR=fl(cT,oR,o),cl=fl(cc[0],oc[0],o),cr=fl(cc[1],oc[1],o);
+    const dL=`M${aL} Q${cl} ${tL}`,dR=`M${aR} Q${cr} ${tR}`;
+    ['L','R'].forEach((q,i)=>{const d=i?dR:dL;G(id+q).setAttribute('d',d);G(id+q+'0').setAttribute('d',d)});
+  }
+  sl('vP',[286,246],[314,246],[300,258],[283,233],[317,233],[[287,258],[313,258]],[[283,240],[317,240]],s.osl);
+  sl('vA',[333,246],[361,246],[347,258],[330,233],[364,233],[[334,258],[360,258]],[[330,240],[364,240]],s.osl);
+  /* papillary + chordae */
+  function pap(id,p,w){const b=w(...p[0]),t=w(...p[1]);G(id).setAttribute('d',`M${b[0]-7},${b[1]} Q${t[0]-3},${t[1]+6} ${t[0]},${t[1]} Q${t[0]+3},${t[1]+6} ${b[0]+7},${b[1]} Z`);return t}
+  const cRL=pap('pRL',PAP.RV[0],W.RV),cRR=pap('pRR',PAP.RV[1],W.RV),cLL=pap('pLL',PAP.LV[0],W.LV),cLR=pap('pLR',PAP.LV[1],W.LV);
+  const ch=(id,a,b)=>G(id).setAttribute('d',`M${a[0]},${a[1]} L${b[0]},${b[1]}`);
+  ch('chRL',tL,cRL);ch('chRR',tR,cRR);ch('chLL',mL,cLL);ch('chLR',mR,cLR);
+  drawParticles(W);
+  /* ECG */
+  const n=Math.floor(T),cx=(((n%2)+2)%2+t)/2*EW,gap=26;
+  G('cl1').setAttribute('width',cx.toFixed(1));G('cl2').setAttribute('x',Math.min(EW,cx+gap).toFixed(1));G('cl2').setAttribute('width',Math.max(0,EW-cx-gap).toFixed(1));
+  G('cur').setAttribute('x1',cx.toFixed(1));G('cur').setAttribute('x2',cx.toFixed(1));
+  G('curd').setAttribute('cx',cx.toFixed(1));G('curd').setAttribute('cy',(BASE-AMP*ecgv(t)).toFixed(1));
+  const cyc2=((n%2)+2)%2;
+  ecg.querySelectorAll('.bnd').forEach(r=>r.setAttribute('opacity',(+r.dataset.c===cyc2&&+r.dataset.p===s.ph)?'.34':'.11'));
+  barCur.style.left=(((t-0.04+1)%1)*100)+'%';
+  if(s.ph!==lastPh){lastPh=s.ph;const p=PH[s.ph];if(report)report('مرحله: '+p.n);
+    $('#pname').textContent=p.n;$('#pdot').style.background=PCOL[s.ph];$('#desc').textContent=p.t;
+    [['atria',p.atria],['vent',p.vent],['av',p.av],['sl',p.sl]].forEach(r=>{G('v_'+r[0]).textContent=r[1][0];G('u_'+r[0]).className=r[1][1]});
+    G('v_snd').textContent=p.snd;G('u_snd').className=p.snd!=='—'?'act':'';
+    if(mode==='play')chips.querySelectorAll('.chip').forEach(c=>c.classList.toggle('act',+c.dataset.i===s.ph));
+  }
+  return s;
+}
+let dead=false,raf=0;
+let last=performance.now();
+function loop(now){
+  const dt=Math.min(0.05,(now-last)/1000);last=now;
+  if(mode==='play')T+=dt/cyc;
+  const s=render();
+  if(mode!=='pause')stepParticles(dt,s,vis);
+  if(!dead)raf=requestAnimationFrame(loop);
+}
+raf=requestAnimationFrame(loop);
+return ()=>{dead=true;cancelAnimationFrame(raf)};
+}
 function VlabHeartChambersExperiment({ onReading }) {
-  const [bpm, setBpm] = useState(72);
-  const [slow, setSlow] = useState(true);
-  const tk = VLAB_GEO_TICK(30);
-  const sec = tk * 0.03 * (slow ? 0.25 : 1);
-  const ph = (sec * bpm / 60) % 1;
-  const atria = ph < 0.13, vent = ph >= 0.13 && ph < 0.46;
-  const label = atria ? "انقباض دهلیزها: خون به بطن‌ها می‌رود" : vent ? "انقباض بطن‌ها: خون به شش‌ها و بدن می‌رود" : "استراحت: دهلیزها از خون پر می‌شوند";
-  const co = (bpm * 70) / 1000;
-  useEffect(() => { if (onReading) onReading(`${bpm} ضربان در دقیقه | برون‌ده ${co.toFixed(1)} L/min`); /* eslint-disable-next-line */ }, [bpm]);
-  const along = (pts, f) => { const L = []; let tot = 0; for (let i = 0; i < pts.length - 1; i++) { const l = Math.hypot(pts[i + 1][0] - pts[i][0], pts[i + 1][1] - pts[i][1]); L.push(l); tot += l; } let d = (((f % 1) + 1) % 1) * tot; for (let i = 0; i < L.length; i++) { if (d <= L[i]) return [pts[i][0] + ((pts[i + 1][0] - pts[i][0]) * d) / L[i], pts[i][1] + ((pts[i + 1][1] - pts[i][1]) * d) / L[i]]; d -= L[i]; } return pts[pts.length - 1]; };
-  const flow = (sec * bpm) / 60 * 0.55;
-  const BLUE = "#3b82c4", RED = "#d94141";
-  const sA = atria ? 0.93 : 1, sV = vent ? 0.92 : 1;
-  const sc = (cx, cy, k, kids) => <g transform={`translate(${cx},${cy}) scale(${k}) translate(${-cx},${-cy})`}>{kids}</g>;
-  // مسیرهای جریان خون
-  const flows = [
-    { c: BLUE, pts: [[56, 256], [118, 256], [120, 230], [122, 160], [130, 128], [138, 150], [140, 190], [150, 152], [150, 108], [140, 98], [118, 108], [100, 128]] },
-    { c: RED, pts: [[100, 130], [126, 124], [158, 124], [184, 126], [184, 160], [190, 200], [176, 150], [172, 100], [180, 70], [206, 60], [230, 74], [240, 100], [240, 244]] },
-    { c: BLUE, pts: [[150, 150], [152, 100], [200, 98], [236, 118]] },
-    { c: RED, pts: [[238, 136], [214, 124], [190, 126]] },
-    { c: BLUE, pts: [[70, 24], [112, 34], [122, 70], [130, 118]] },
-    { c: RED, pts: [[206, 62], [206, 12], [112, 12]] },
-  ];
-  const valve = (x1, x2, y, open) => open
-    ? <g><path d={`M ${x1},${y} L ${x1 + 4},${y + 11}`} stroke="#fff" strokeWidth="3" strokeLinecap="round" /><path d={`M ${x2},${y} L ${x2 - 4},${y + 11}`} stroke="#fff" strokeWidth="3" strokeLinecap="round" /></g>
-    : <path d={`M ${x1},${y} L ${(x1 + x2) / 2},${y + 6} L ${x2},${y}`} fill="none" stroke="#fff" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round" />;
-  const semi = (cx, y, open) => open
-    ? <g><path d={`M ${cx - 6},${y} L ${cx - 6},${y - 6}`} stroke="#fff" strokeWidth="3" strokeLinecap="round" /><path d={`M ${cx + 6},${y} L ${cx + 6},${y - 6}`} stroke="#fff" strokeWidth="3" strokeLinecap="round" /></g>
-    : <path d={`M ${cx - 6},${y} Q ${cx},${y - 6} ${cx + 6},${y}`} fill="none" stroke="#fff" strokeWidth="3" strokeLinecap="round" />;
-  const num = (x, y, n) => <g><circle cx={x} cy={y} r="8" fill="#26335f" stroke="#fff" strokeWidth="1.4" /><text x={x} y={y + 3.6} fontSize="10.5" fontWeight="700" fill="#fff" textAnchor="middle">{n}</text></g>;
-  const tube = (d, c, w = 9) => <g><path d={d} fill="none" stroke="#fff" strokeWidth={w + 3} strokeLinecap="round" strokeLinejoin="round" opacity="0.8" /><path d={d} fill="none" stroke={c} strokeWidth={w} strokeLinecap="round" strokeLinejoin="round" opacity="0.55" /></g>;
+  const ref = React.useRef(null);
+  const cb = React.useRef(onReading); cb.current = onReading;
+  useEffect(() => {
+    ref.current.innerHTML = VLAB_HC_HTML;
+    const stop = vlabHeartCycleInit(ref.current, (t) => { if (cb.current) cb.current(t); });
+    return () => { if (stop) stop(); };
+  }, []);
   return (
     <div className="vlab-exp">
-      <svg viewBox="0 0 320 292" className="vlab-svg" style={{ direction: "ltr", background: "#fdf4f4" }}>
-        <defs>
-          <linearGradient id="hcLung" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stopColor="#f8c9d2" /><stop offset="1" stopColor="#ee9fb0" /></linearGradient>
-        </defs>
-        <rect width="320" height="292" rx="12" fill="#fdf4f4" />
-        {/* ریه‌ها کنار قلب + نای */}
-        <path d="M 24,72 C 20,112 24,162 40,186 C 56,202 98,198 110,178 L 114,104 C 110,72 92,52 66,52 C 44,52 28,60 24,72 Z" fill="url(#hcLung)" stroke="#c9707f" strokeWidth="2.2" />
-        <path d="M 296,72 C 300,112 296,162 282,186 C 268,202 236,200 226,188 C 214,162 214,132 212,104 C 214,74 232,52 258,52 C 280,52 292,60 296,72 Z" fill="url(#hcLung)" stroke="#c9707f" strokeWidth="2.2" />
-        <path d="M 30,110 Q 70,104 110,126 M 36,150 Q 72,140 108,150 M 290,112 Q 252,108 214,130" fill="none" stroke="#c9707f" strokeWidth="1.2" opacity="0.6" />
-        {/* رگ‌های درون شش‌ها: سرخرگ (آبی) → مویرگ‌های کیسه‌های هوایی (آبی به قرمز) → سیاهرگ (قرمز) */}
-        <defs><linearGradient id="hcCap" x1="0" y1="0" x2="1" y2="0"><stop offset="0" stopColor="#3b82c4" /><stop offset="1" stopColor="#d94141" /></linearGradient></defs>
-        {[[[102, 130], [80, 98], [58, 84]], [[102, 130], [64, 118], [40, 112]], [[102, 130], [56, 146], [38, 168]], [[102, 130], [86, 164], [70, 178]], [[238, 132], [262, 100], [276, 84]], [[238, 132], [270, 126], [286, 128]], [[238, 132], [262, 156], [270, 176]]].map((b, i) => (
-          <g key={"v" + i}>
-            <polyline points={b.map((q) => q.join(",")).join(" ")} fill="none" stroke="#3b82c4" strokeWidth="2.4" strokeLinecap="round" strokeLinejoin="round" opacity="0.85" />
-            <polyline points={b.map((q, k) => [q[0] + (k ? 5 : 3), q[1] + (k ? 5 : 3)].join(",")).join(" ")} fill="none" stroke="#d94141" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" opacity="0.8" />
-            <ellipse cx={b[2][0] + 3} cy={b[2][1] + 3} rx="7" ry="6" fill="#fff" fillOpacity="0.85" stroke="url(#hcCap)" strokeWidth="2.6" />
-          </g>
-        ))}
-        <g>
-          <circle cx="62" cy="132" r="30" fill="#fff" fillOpacity="0.95" stroke="#8c98d6" strokeWidth="1.6" />
-          <ellipse cx="62" cy="132" rx="14" ry="12" fill="#eaf6ff" stroke="#e58aa0" strokeWidth="1.4" />
-          <ellipse cx="62" cy="132" rx="20" ry="18" fill="none" stroke="url(#hcCap)" strokeWidth="5" />
-          <text x="62" y="135" fontSize="8" fill="#4a5a7a" textAnchor="middle" fontWeight="700">هوا</text>
-          <path d="M 46,118 L 52,124" stroke="#1f9d4a" strokeWidth="2.2" strokeLinecap="round" /><polygon points="53,126 47,124 51,120" fill="#1f9d4a" />
-          <path d="M 72,126 L 80,118" stroke="#e08a1f" strokeWidth="2.2" strokeLinecap="round" /><polygon points="82,116 76,118 80,122" fill="#e08a1f" />
-        </g>
-        <VlabPill x="58" y="212" text="اکسیژن وارد خون" size={8.5} fill="#d3f5dc" color="#126b30" /><VlabPill x="58" y="230" text="کربن‌دی‌اکسید خارج" size={8.5} fill="#ffe6c2" color="#8a4b00" />
-        <rect x="155" y="28" width="10" height="40" rx="4" fill="#dfe9f5" stroke="#8aa0c0" strokeWidth="1.6" />
-        {[34, 41, 48, 55, 62].map((y) => <line key={y} x1="155" y1={y} x2="165" y2={y} stroke="#8aa0c0" strokeWidth="1" />)}
-        <path d="M 160,68 L 118,96 L 90,104 M 118,96 L 96,124 M 160,68 L 208,92 L 240,100 M 208,92 L 232,126" fill="none" stroke="#dfe9f5" strokeWidth="5" strokeLinecap="round" strokeLinejoin="round" opacity="0.95" />
-        <path d="M 160,68 L 118,96 L 90,104 M 118,96 L 96,124 M 160,68 L 208,92 L 240,100 M 208,92 L 232,126" fill="none" stroke="#8aa0c0" strokeWidth="1.2" strokeLinecap="round" strokeLinejoin="round" />
-        <VlabPill x="62" y="84" text="شش راست" size={10} fill="#fff" color="#8a3a50" /><VlabPill x="262" y="196" text="شش چپ" size={10} fill="#fff" color="#8a3a50" />
-        {/* سر و بدن */}
-        <rect x="26" y="2" width="84" height="22" rx="10" fill="#e8e0f5" stroke="#8d7bbf" strokeWidth="1.8" /><text x="68" y="17" fontSize="9.5" fill="#4a3b78" textAnchor="middle" fontWeight="700">سر و دست‌ها</text>
-        <rect x="50" y="244" width="236" height="24" rx="11" fill="#e8e0f5" stroke="#8d7bbf" strokeWidth="1.8" /><text x="196" y="260" fontSize="10.5" fill="#4a3b78" textAnchor="middle" fontWeight="700">بدن (مغز، ماهیچه‌ها و اندام‌ها)</text>
-        {/* سیاهرگ‌های ششی (پشت قلب) */}
-        {tube("M 100,132 L 126,124 L 158,124 L 176,128", RED, 7)}
-        {tube("M 238,136 L 214,124 L 196,126", RED, 7)}
-        {/* رگ‌های بزرگ بدنی */}
-        {tube("M 70,24 L 112,34 L 122,70 L 128,112", BLUE, 9)}
-        {tube("M 56,256 L 118,256 L 120,230 L 122,156", BLUE, 9)}
-        {tube("M 206,62 L 206,12 L 112,12", RED, 5)}
-        {/* قلب: چهار حفره‌ی به‌هم‌چسبیده */}
-        {sc(134, 130, sA, <path d="M 112,110 C 112,98 128,94 144,98 L 152,106 L 152,152 L 116,154 C 108,142 108,122 112,110 Z" fill={atria ? "#5a9bd5" : "#7fb2e8"} stroke="#1d4f87" strokeWidth="2.6" strokeLinejoin="round" />)}
-        {sc(184, 128, sA, <path d="M 158,108 C 168,94 202,92 210,106 C 214,124 208,146 198,152 L 158,152 Z" fill={atria ? "#e56464" : "#ef8a80"} stroke="#8d1d1d" strokeWidth="2.6" strokeLinejoin="round" />)}
-        {sc(146, 196, sV, <path d="M 116,154 L 164,154 C 166,192 172,224 184,242 C 150,234 122,198 116,154 Z" fill={vent ? "#3f86cf" : "#6aa3df"} stroke="#1d4f87" strokeWidth="2.6" strokeLinejoin="round" />)}
-        {sc(194, 198, sV * 0.99, <path d="M 164,154 L 198,154 C 224,160 228,198 208,228 C 200,240 192,244 184,242 C 172,224 166,192 164,154 Z" fill={vent ? "#d63a3a" : "#ec6f66"} stroke="#8d1d1d" strokeWidth="5.2" strokeLinejoin="round" />)}
-        {/* دریچه‌ها */}
-        {valve(120, 146, 154, !vent)}{valve(170, 196, 154, !vent)}
-        {semi(155, 150, vent)}{semi(172, 148, vent)}
-        {/* سرخرگ‌ها */}
-        {tube("M 154,152 L 152,104 L 142,98 L 118,108 L 102,130", BLUE, 9)}
-        {tube("M 152,104 L 200,98 L 236,118", BLUE, 7)}
-        {tube("M 174,150 L 172,100 L 180,70 Q 190,58 210,60 Q 232,64 238,88 L 240,244", RED, 10)}
-        {/* حباب‌های خون */}
-        {flows.map((p, i) => Array.from({ length: 6 }, (_, k) => { const [x, y] = along(p.pts, flow + k / 6 + i * 0.09); return <circle key={i + "-" + k} cx={x} cy={y} r="2.5" fill={p.c} stroke="#fff" strokeWidth="0.8" />; }))}
-        {num(130, 124, "۱")}{num(140, 198, "۲")}{num(184, 120, "۳")}{num(198, 200, "۴")}{num(110, 80, "۵")}{num(226, 138, "۶")}{num(222, 54, "۷")}{num(106, 52, "۸")}{num(158, 164, "۹")}{num(34, 66, "۱۰")}{num(36, 108, "۱۱")}
-        <rect x="40" y="30" width="0" height="0" />
-        <VlabPill x="160" y="283" text={label} size={9.5} fill={atria || vent ? "#ffd6d0" : "#ffffff"} color={atria || vent ? "#a3200f" : "#33415c"} />
-      </svg>
-      <div className="vlab-controls"><div className="vlab-ctrl-col" style={{ flex: 1 }}>
-        <label className="vlab-ctrl-label">ضربان قلب: {VLAB_FA_DIGITS(bpm)} بار در دقیقه</label>
-        <VlabRange min={50} max={180} step={2} value={bpm} onChange={(e) => setBpm(+e.target.value)} />
-        <div className="vlab-num-row">{[[60, "استراحت"], [100, "راه رفتن"], [160, "دویدن"]].map((x) => <button key={x[0]} type="button" className={"vlab-num-btn" + (bpm === x[0] ? " active" : "")} onClick={() => setBpm(x[0])}>{x[1]}</button>)}<button type="button" className={"vlab-num-btn" + (slow ? " active" : "")} onClick={() => setSlow(!slow)}>🐢 حرکت آهسته</button></div>
-      </div></div>
-      <div className="vlab-readout">
-        {[["۱", "دهلیز راست: خون کم‌اکسیژن از بزرگ‌سیاهرگ‌ها می‌گیرد", BLUE], ["۲", "بطن راست: خون را به سرخرگ ششی و شش‌ها می‌فرستد", BLUE], ["۳", "دهلیز چپ: خون پراکسیژن را از سیاهرگ‌های ششی می‌گیرد", RED], ["۴", "بطن چپ (دیواره‌ی ضخیم‌تر): خون را به سرخرگ آئورت و بدن می‌فرستد", RED], ["۵", "سرخرگ ششی: خون کم‌اکسیژن را به شش‌ها می‌برد", BLUE], ["۶", "سیاهرگ‌های ششی: خون پراکسیژن را از شش‌ها به قلب برمی‌گردانند", RED], ["۷", "سرخرگ آئورت: خون پراکسیژن را به سراسر بدن می‌رساند", RED], ["۸", "بزرگ‌سیاهرگ‌ها: خون کم‌اکسیژن بدن را به قلب می‌آورند", BLUE], ["۹", "دریچه‌ها: خون را فقط یک‌طرفه عبور می‌دهند", "#888"], ["۱۰", "شش‌ها: هوا از نای و نایژه‌ها به کیسه‌های هوایی می‌رسد", "#e58aa0"], ["۱۱", "کیسه‌ی هوایی (بزرگنمایی): مویرگ‌ها دور آن‌اند؛ خون آبی (سرخرگ ششی) اکسیژن می‌گیرد، کربن‌دی‌اکسید می‌دهد و قرمز می‌شود و با سیاهرگ ششی به دهلیز چپ می‌رود", "#d94141"]].map((x) => <div key={x[0]} style={{ display: "flex", alignItems: "center", gap: 6, margin: "2px 0" }}><span style={{ minWidth: 20, height: 18, borderRadius: 9, background: "#26335f", color: "#fff", fontSize: 11, display: "inline-flex", alignItems: "center", justifyContent: "center", flex: "none" }}>{x[0]}</span><span style={{ width: 10, height: 10, borderRadius: 3, background: x[2], flex: "none" }} /><span>{x[1]}</span></div>)}
-        <div style={{ marginTop: 6 }}>با {VLAB_FA_DIGITS(bpm)} ضربان در دقیقه و حدود ۷۰ میلی‌لیتر خون در هر ضربان، قلب در دقیقه حدود <b>{VLAB_FA_DIGITS(co.toFixed(1))} لیتر</b> خون پمپ می‌کند. (مدل ساده؛ مقدارها تقریبی‌اند.)</div>
-      </div>
-      <VlabFormulaCheck title="برون‌ده‌ی قلب" fa="خونی که در دقیقه پمپ می‌شود = ضربان × حجم هر ضربان" en="" legend="حجم هر ضربان ≈ ۷۰ میلی‌لیتر؛ جواب را به لیتر بنویس" subst={`${bpm} × 70 ÷ 1000 = ?`} label="برون‌ده:" answer={co} unit="لیتر در دقیقه" decimals={1} />
+      <style>{VLAB_HC_CSS}</style>
+      <div ref={ref} className="hcy" dir="rtl" lang="fa" />
     </div>
   );
 }
+
 
 /* ---------- ۸. جداسازی مخلوط‌ها ---------- */
 const VLAB_F_MIX = ["ماسه و آب", "نمک و آب", "آهن‌ریزه و ماسه", "روغن و آب", "الکل و آب"];
@@ -47705,7 +48008,7 @@ const VLAB_COMPONENTS = {
 const VLAB_GUIDE = {
   "area-shapes": { goals: ["مساحت سه شکل را از راه برش بسازی.", "بدانی چرا مثلث نصف است."], challenges: ["متوازی‌الاضلاع را کج‌تر کن؛ مساحت عوض می‌شود؟", "رأس مثلث را جابه‌جا کن.", "ذوزنقه را به متوازی‌الاضلاع تبدیل کن."], misconception: "با کج‌تر شدن متوازی‌الاضلاع مساحتش بیشتر می‌شود؛ در حقیقت اگر قاعده و ارتفاع ثابت باشد مساحت ثابت می‌ماند.", check: { q: "مساحت مثلثی با قاعده‌ی ۶ و ارتفاع ۴؟", a: "۱۲." } },
   "percent-shop": { goals: ["درصد را «از هر صد» بفهمی.", "تخفیف و قیمت پرداختی را حساب کنی."], challenges: ["۲۵٪ تخفیف روی ۲۰۰ هزار تومان.", "تخفیف ۵۰٪ را ببین.", "هر ۱٪ چند تومان است؟"], misconception: "تخفیف ۵۰٪ و ۵۰٪ دوباره یعنی همه‌چیز رایگان؛ در حقیقت تخفیف دوم از قیمت تازه حساب می‌شود.", check: { q: "۲۰٪ از ۵۰۰ چند است؟", a: "۱۰۰." } },
-  "heart-chambers": { goals: ["چهار حفره‌ی قلب را بشناسی.", "مسیر خون را دنبال کنی."], challenges: ["حرکت آهسته را روشن کن و انقباض‌ها را ببین.", "ضربان را ۱۶۰ کن.", "برون‌ده‌ی قلب را حساب کن."], misconception: "خون چپ و راست قلب با هم مخلوط می‌شوند؛ در حقیقت دیواره‌ی بین دو طرف جدا نگهشان می‌دارد.", check: { q: "کدام بطن ماهیچه‌ی ضخیم‌تری دارد؟", a: "بطن چپ." } },
+  "heart-chambers": { goals: ["چهار حفره و چهار دریچه‌ی قلب را بشناسی.", "بدانی در هر مرحله‌ی ضربان کدام قسمت منقبض و کدام دریچه باز است."], challenges: ["مرحله‌ی «خروج خون از بطن‌ها» را نگه دار و بگو کدام دریچه‌ها باز هستند.", "روی نوار قلب موج P را پیدا کن و ببین هم‌زمان کدام قسمت منقبض می‌شود.", "ترتیب باز و بسته شدن دریچه‌ها را در یک ضربان بگو."], misconception: "خون چپ و راست قلب با هم مخلوط می‌شوند؛ در حقیقت دیواره‌ی بین دو طرف جدا نگهشان می‌دارد.", check: { q: "کدام بطن ماهیچه‌ی ضخیم‌تری دارد؟", a: "بطن چپ." } },
   "mixture-separation": { goals: ["هر روش را بر اساس تفاوتش بشناسی.", "روش مناسب را انتخاب کنی."], challenges: ["نمک و آب را با صافی امتحان کن.", "روغن و آب را با قیف جدا کن.", "الکل و آب را تقطیر کن."], misconception: "صافی هر مخلوطی را جدا می‌کند؛ در حقیقت فقط جامدِ نامحلول از مایع را.", check: { q: "برای جدا کردن نمک از آب نمک کدام روش؟", a: "تبخیر یا تقطیر." } },
 
   "pulley-system": { goals: ["بفهمی قرقره نیرو را کم می‌کند.", "بدانی کار ورودی و خروجی برابرند."], challenges: ["با ۴ رشته نیروی لازم را بخوان.", "بار ۲۰۰ نیوتنی را با ۴ رشته بالا ببر.", "طناب را ۸۰ سانتی‌متر بکش و بالا رفتن بار را ببین."], misconception: "قرقره کار را کم می‌کند؛ در حقیقت فقط نیرو را کم می‌کند و مسیر را بلندتر.", check: { q: "با ۲ رشته برای بار ۱۰۰ نیوتنی چه نیرویی لازم است؟", a: "۵۰ نیوتن." } },

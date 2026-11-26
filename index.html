@@ -24820,6 +24820,33 @@ const VLAB_EXPERIMENTS = [
     tools: ["دهان تا روده", "آنزیم‌ها", "جذب مواد مغذی"],
   },
   {
+    id: "five-senses",
+    subject: "زیست‌شناسی",
+    level: "ابتدایی",
+    title: "حواس پنج‌گانه",
+    icon: "👁️",
+    intro: "یک چیز را انتخاب کن و ببین کدام حس‌ها پیام را از اندام حسی به مغز می‌برند.",
+    tools: ["چشم","گوش","بینی","زبان","پوست"],
+  },
+  {
+    id: "carbon-flow",
+    subject: "زیست‌شناسی",
+    level: "متوسطه اول",
+    title: "چرخه‌ی کربن در طبیعت",
+    icon: "♻️",
+    intro: "سوخت فسیلی و درختان را عوض کن و ببین کربن‌دی‌اکسید هوا در چند سال چگونه بالا می‌رود یا پایین می‌آید.",
+    tools: ["جنگل","کارخانه","اقیانوس","تجزیه‌کننده‌ها"],
+  },
+  {
+    id: "matter-change",
+    subject: "شیمی",
+    level: "ابتدایی",
+    title: "تغییر فیزیکی یا شیمیایی؟",
+    icon: "🔬",
+    intro: "یک رویداد را انتخاب کن و با نگاه ذره‌ای ببین ذره‌ها فقط جابه‌جا می‌شوند یا ماده‌ی تازه می‌سازند.",
+    tools: ["ذره‌بین","ذره‌های ماده","نشانه‌ها"],
+  },
+  {
     id: "tides",
     subject: "زمین‌شناسی",
     level: "متوسطه اول",
@@ -43311,8 +43338,8 @@ function VlabGutJourneyExperiment({ onReading }) {
   const ph = [6.8, 6.8, 2, 8, 7, 7][st];
   const enz = st === 0 ? (F.id === "bread" ? "آمیلاز بزاق" : "—") : st === 2 ? (F.id === "meat" ? "پپسین + اسید" : F.id === "oil" ? "—" : "اسید معده") : st === 3 ? (F.id === "bread" ? "آمیلاز پانکراس" : F.id === "meat" ? "تریپسین" : F.id === "oil" ? "صفرا + لیپاز" : "—") : "—";
   const hot = (k) => (st === k ? 1 : 0.45);
-  const SI = "M122,168 L198,176 L122,186 L198,196 L122,206 L190,214";
-  const LI = "M214,220 L226,200 L226,156 L100,156 L100,214 L100,226";
+  const SI = "M122,168 L198,176 L122,186 L198,196 L122,206 L190,214 L214,222";
+  const LI = "M214,222 L226,204 L226,156 L100,156 L100,214 L100,226";
   const sizeR = 6.5 - absorbed * 3.6;
   const dots = Array.from({ length: Math.round(absorbed * 10) }, (_, i) => ({ x: 206 + ((i * 9 + t * 160) % 36), y: 168 + ((i * 11) % 38) }));
   return (
@@ -43339,6 +43366,12 @@ function VlabGutJourneyExperiment({ onReading }) {
         <path d={LI} fill="none" stroke="#d99a6c" strokeWidth="14" strokeLinecap="round" strokeLinejoin="round" opacity={hot(4)} />
         <path d={LI} fill="none" stroke="#fff" strokeWidth="1.3" strokeDasharray="2 7" opacity="0.5" strokeLinecap="round" />
         <path d="M100,226 L128,236" stroke="#c9885a" strokeWidth="9" strokeLinecap="round" opacity={hot(5)} />
+        {/* اتصال روده‌ی باریک به روده‌ی بزرگ: دریچه و cecum */}
+        <circle cx="220" cy="216" r="9" fill="#e0a77a" stroke="#a8683a" strokeWidth="1.4" opacity={Math.max(hot(3), hot(4))} />
+        <path d="M222,224 q8,6 4,12" fill="none" stroke="#c98a5a" strokeWidth="3" strokeLinecap="round" opacity="0.8" />
+        <circle cx="214" cy="221" r="3.2" fill="#fff" stroke="#a8683a" strokeWidth="1" />
+        <text x="262" y="232" fontSize="8" fill="#7a5a3a" textAnchor="middle">محل اتصال دو روده</text>
+        <path d="M232,230 L222,222" stroke="#7a5a3a" strokeWidth="0.8" />
         {/* مویرگ و جذب */}
         <path d="M214,164 Q232,180 214,210" fill="none" stroke="#d6403a" strokeWidth="3" opacity="0.8" /><text x="276" y="190" fontSize="8" fill="#b02a24" textAnchor="middle">مویرگ‌های خون</text>
         {dots.map((d, i) => <circle key={i} cx={d.x} cy={d.y} r="2.2" fill={F.c} stroke="#6a4f10" strokeWidth="0.5" />)}
@@ -43362,6 +43395,271 @@ function VlabGutJourneyExperiment({ onReading }) {
         <b>{VLAB_DIG_STAGES[st]}</b> — {F.txt[st]} <span style={{ opacity: 0.8 }}>{enz !== "—" ? " (آنزیم: " + enz + ")" : ""}</span>
       </div>
       <div className="vlab-readout">{"ماده‌ی اصلی این غذا: " + F.kind + ". بیشترین هضم و تقریباً همه‌ی جذب مواد مغذی در روده‌ی باریک رخ می‌دهد؛ روده‌ی بزرگ بیشتر آب را جذب می‌کند."}</div>
+    </div>
+  );
+}
+
+/* ---------- حواس پنج‌گانه ---------- */
+const VLAB_SENSES = [
+  { id: "eye", n: "بینایی", organ: "چشم", pt: [160, 100], col: "#4aa3ff" },
+  { id: "ear", n: "شنوایی", organ: "گوش", pt: [90, 112], col: "#b07af0" },
+  { id: "nose", n: "بویایی", organ: "بینی", pt: [160, 126], col: "#4cc38a" },
+  { id: "tongue", n: "چشایی", organ: "زبان", pt: [160, 158], col: "#ff7a7a" },
+  { id: "skin", n: "لامسه", organ: "پوست", pt: [268, 204], col: "#ffb347" },
+];
+const VLAB_SENSE_ITEMS = [
+  { ic: "🌹", n: "گل رز", s: ["nose", "eye"], t: "بینی بوی خوش را از ذره‌های بسیار ریز هوا می‌گیرد و چشم رنگ و شکل گل را می‌بیند." },
+  { ic: "🔔", n: "زنگ", s: ["ear"], t: "زنگ می‌لرزد و هوا را می‌لرزاند. لرزش به پرده‌ی گوش می‌رسد و عصب شنوایی پیام را به مغز می‌برد." },
+  { ic: "🍋", n: "لیمو", s: ["tongue", "nose", "eye"], t: "جوانه‌های چشایی روی زبان مزه‌ی ترش را حس می‌کنند؛ بوی لیمو هم از بینی به مغز می‌رسد." },
+  { ic: "🧊", n: "یخ", s: ["skin"], t: "گیرنده‌های سرما در پوست انگشت سرد بودن یخ را حس می‌کنند و به مغز خبر می‌دهند." },
+  { ic: "🍫", n: "شکلات", s: ["tongue", "nose"], t: "زبان مزه‌ی شیرین و کمی تلخ را حس می‌کند. مزه و بو با هم کار می‌کنند؛ وقتی سرما‌خورده‌ای غذا بی‌مزه است!" },
+  { ic: "🎵", n: "موسیقی", s: ["ear"], t: "گوش صدا را می‌گیرد؛ بلندی و زیر و بمی صدا را مغز تشخیص می‌دهد." },
+  { ic: "🌵", n: "کاکتوس", s: ["skin", "eye"], t: "پوست با لمس تیزی خار را حس می‌کند و درد به تو می‌گوید دستت را عقب بکشی." },
+];
+function VlabFiveSensesExperiment({ onReading }) {
+  const [it, setIt] = useState(0);
+  const tk = VLAB_GEO_TICK(30);
+  const I = VLAB_SENSE_ITEMS[it];
+  useEffect(() => { if (onReading) onReading(`${I.n} → ${I.s.map((k) => VLAB_SENSES.find((x) => x.id === k).n).join(" و ")}`); /* eslint-disable-next-line */ }, [it]);
+  const BR = [160, 30];
+  const pulse = (ph) => { const k = (((tk * 0.025 + ph) % 1) + 1) % 1; return k; };
+  const nerve = (s) => { const [x, y] = s.pt; return s.id === "skin" ? `M ${x},${y} Q 300,120 214,40` : s.id === "ear" ? `M ${x},${y} Q 80,70 128,38` : `M ${x},${y} Q ${x + (x < 160 ? -14 : 14)},${(y + 40) / 2} ${s.id === "eye" ? 150 : 160},52` ; };
+  const on = (id) => I.s.includes(id);
+  return (
+    <div className="vlab-exp">
+      <svg viewBox="0 0 320 262" className="vlab-svg" style={{ direction: "ltr", background: "#eef6ff" }}>
+        <defs>
+          <radialGradient id="fsFace" cx="0.4" cy="0.35" r="0.85"><stop offset="0" stopColor="#ffe5cc" /><stop offset="1" stopColor="#efb98e" /></radialGradient>
+          <radialGradient id="fsBrain" cx="0.4" cy="0.35" r="0.8"><stop offset="0" stopColor="#ffc7d4" /><stop offset="1" stopColor="#e8869f" /></radialGradient>
+        </defs>
+        <rect width="320" height="262" rx="12" fill="#eef6ff" />
+        {/* مغز */}
+        <g>
+          <path d="M122,32 Q116,12 138,10 Q148,0 164,6 Q186,0 194,14 Q210,20 202,38 Q204,50 186,50 L136,50 Q116,50 122,32 Z" fill="url(#fsBrain)" stroke="#b0546c" strokeWidth="1.4" />
+          <path d="M140,18 Q150,26 144,36 M160,10 Q166,24 158,34 M178,14 Q172,28 182,38 M132,38 Q146,34 152,44 M190,30 Q180,36 176,46" fill="none" stroke="#b0546c" strokeWidth="1" opacity="0.7" />
+          <text x="160" y="62" fontSize="8" fill="#8a3a52" textAnchor="middle" fontWeight="700">مغز</text>
+        </g>
+        {/* اعصاب */}
+        {VLAB_SENSES.filter((q) => !on(q.id)).map((q) => <path key={q.id} d={nerve(q)} fill="none" stroke="#c4d0e0" strokeWidth="1.6" strokeDasharray="3 4" strokeLinecap="round" />)}
+        {/* سر */}
+        <ellipse cx="90" cy="112" rx="9" ry="16" fill="url(#fsFace)" stroke="#b9855a" strokeWidth="1.2" /><ellipse cx="230" cy="112" rx="9" ry="16" fill="url(#fsFace)" stroke="#b9855a" strokeWidth="1.2" />
+        <ellipse cx="160" cy="116" rx="68" ry="74" fill="url(#fsFace)" stroke="#b9855a" strokeWidth="1.6" />
+        <path d="M92,92 Q94,48 160,44 Q226,48 228,92 Q210,66 160,64 Q110,66 92,92 Z" fill="#4a3322" />
+        {/* چشم‌ها */}
+        {[130, 190].map((x, i) => (
+          <g key={i}>
+            <path d={`M ${x - 18},${88} Q ${x},${80} ${x + 18},${88}`} stroke="#4a3322" strokeWidth="3" fill="none" strokeLinecap="round" />
+            <ellipse cx={x} cy="102" rx="14" ry={on("eye") ? 10 : 8} fill="#fff" stroke="#8a6a50" strokeWidth="1.2" />
+            <circle cx={x + (on("eye") ? 2 : 0)} cy="102" r="6" fill="#4a7a3a" /><circle cx={x + (on("eye") ? 2 : 0)} cy="102" r="3" fill="#111" /><circle cx={x + 2} cy="99" r="1.4" fill="#fff" />
+          </g>
+        ))}
+        {/* بینی */}
+        <path d="M160,104 Q150,128 146,132 Q160,140 174,132 Q170,128 160,104" fill="#eaa77c" stroke="#b9855a" strokeWidth="1.2" strokeLinejoin="round" opacity="0.9" />
+        {/* دهان و زبان */}
+        <path d="M134,150 Q160,168 186,150 Q160,156 134,150 Z" fill="#8a2a2a" stroke="#6a1a1a" strokeWidth="1.2" strokeLinejoin="round" />
+        <path d="M146,153 Q160,158 174,153 Q172,170 160,174 Q148,170 146,153 Z" fill={on("tongue") ? "#ff7a8a" : "#e8707c"} stroke="#a83a4a" strokeWidth="1" />
+        {on("tongue") && [[154, 160], [162, 164], [168, 158], [158, 168]].map((q, i) => <circle key={i} cx={q[0]} cy={q[1]} r="1.5" fill="#fff" opacity="0.9" />)}
+        {VLAB_SENSES.filter((q) => on(q.id)).map((q) => <path key={q.id} d={nerve(q)} fill="none" stroke={q.col} strokeWidth="3" strokeLinecap="round" opacity="0.85" />)}
+        {/* دست */}
+        <g transform="translate(268,204)">
+          <path d="M-14,-4 L-14,-26 Q-14,-30 -10,-30 Q-6,-30 -6,-26 L-6,-34 Q-6,-38 -2,-38 Q2,-38 2,-34 L2,-34 Q2,-38 6,-38 Q10,-38 10,-34 L10,-30 Q14,-30 14,-26 L14,-8 Q14,10 0,12 Q-14,10 -14,-4 Z" fill="url(#fsFace)" stroke="#b9855a" strokeWidth="1.3" strokeLinejoin="round" />
+          <text y="30" fontSize="8" fill="#5a6a85" textAnchor="middle">دست و پوست</text>
+        </g>
+        {/* پالس‌های عصبی به‌سوی مغز */}
+        {I.s.map((id, j) => { const s = VLAB_SENSES.find((x) => x.id === id); const k = pulse(j * 0.33);
+          const L = 1; const [x, y] = s.pt; const bx = id === "eye" ? 150 : 160, by = 52;
+          const px = id === "skin" || id === "ear" ? null : x + (bx - x) * k; const py = y + (by - y) * k;
+          if (px === null) { const t2 = k, mx2 = id === "skin" ? 300 : 80, my2 = id === "skin" ? 120 : 70, ex = id === "skin" ? 214 : 128, ey = id === "skin" ? 40 : 38; const qx = (1 - t2) * (1 - t2) * x + 2 * (1 - t2) * t2 * mx2 + t2 * t2 * ex, qy = (1 - t2) * (1 - t2) * y + 2 * (1 - t2) * t2 * my2 + t2 * t2 * ey; return <circle key={id} cx={qx} cy={qy} r="4.6" fill="#fff" stroke={s.col} strokeWidth="2.4" />; }
+          return <circle key={id} cx={px} cy={py} r="4.6" fill="#fff" stroke={s.col} strokeWidth="2.4" />; })}
+        {/* عنصر محرک */}
+        <g><circle cx="44" cy="214" r="28" fill="#fff" stroke="#c4d0e0" strokeWidth="1.4" /><text x="44" y="226" fontSize="32" textAnchor="middle">{I.ic}</text><text x="44" y="256" fontSize="9" fill="#33405a" textAnchor="middle" fontWeight="700">{I.n}</text></g>
+        {I.s.map((id) => { const s = VLAB_SENSES.find((x) => x.id === id); const tx = s.pt[0], ty = s.pt[1]; return <path key={id} d={`M 70,208 Q ${(70 + tx) / 2},${(208 + ty) / 2 + 30} ${tx + (tx > 200 ? -16 : tx < 100 ? 10 : 0)},${ty + (ty < 150 && tx > 100 && tx < 220 ? 14 : 0)}`} fill="none" stroke={s.col} strokeWidth="1.6" strokeDasharray="4 4" opacity="0.8" />; })}
+        {I.s.map((id, j) => { const s = VLAB_SENSES.find((x) => x.id === id); return <g key={id}><rect x={10 + j * 76} y="2" width="72" height="14" rx="7" fill={s.col} opacity="0.92" /><text x={46 + j * 76} y="12" fontSize="8.5" fill="#fff" textAnchor="middle" fontWeight="700">{s.n + " (" + s.organ + ")"}</text></g>; })}
+      </svg>
+      <div className="vlab-controls"><div className="vlab-ctrl-col" style={{ flex: 1 }}>
+        <label className="vlab-ctrl-label">یک چیز را انتخاب کن</label>
+        <div className="vlab-num-row" style={{ flexWrap: "wrap" }}>{VLAB_SENSE_ITEMS.map((x, i) => <button key={i} type="button" className={"vlab-num-btn" + (it === i ? " active" : "")} onClick={() => setIt(i)}>{x.ic} {x.n}</button>)}</div>
+      </div></div>
+      <div className="vlab-readout"><b>{I.n}:</b> {I.t}</div>
+      <div className="vlab-readout">اندام‌های حسی اطلاعات محیط را می‌گیرند، عصب‌ها آن را به <b>مغز</b> می‌رسانند و مغز به آن معنا می‌دهد. ما پنج حس داریم: بینایی، شنوایی، بویایی، چشایی و لامسه.</div>
+    </div>
+  );
+}
+
+/* ---------- چرخه‌ی کربن ---------- */
+function VlabCarbonFlowExperiment({ onReading }) {
+  const [fossil, setFossil] = useState(60);
+  const [trees, setTrees] = useState(70);
+  const [ppm, setPpm] = useState(420);
+  const [yr, setYr] = useState(0);
+  const [hist, setHist] = useState([420]);
+  const [play, setPlay] = useState(false);
+  const f = fossil / 100, tr = trees / 100;
+  const dpy = 5 * f - 3 * tr + 1.5;
+  const tk = VLAB_GEO_TICK(30);
+  const R = React.useRef({ ppm: 420, d: 0 }); R.current.d = dpy;
+  useEffect(() => {
+    if (!play) return undefined;
+    const id = setInterval(() => {
+      const np = vlabClamp(R.current.ppm + R.current.d, 250, 900); R.current.ppm = np;
+      setPpm(np); setYr((y) => y + 1); setHist((h) => [...h.slice(-59), np]);
+    }, 160);
+    return () => clearInterval(id);
+  }, [play]);
+  const reset = () => { R.current.ppm = 420; setPpm(420); setYr(0); setHist([420]); setPlay(false); };
+  useEffect(() => { if (onReading) onReading(`سوخت فسیلی ${fossil}٪ | درختان ${trees}٪ | تغییر سالانه ${dpy.toFixed(1)} ppm | هوا ${Math.round(ppm)} ppm`); /* eslint-disable-next-line */ }, [fossil, trees, Math.round(ppm)]);
+  const nTree = Math.max(0, Math.round(tr * 5));
+  const treeX = [118, 144, 170, 196, 222].slice(0, nTree);
+  const dot = (ph) => (((tk * 0.02 + ph) % 1) + 1) % 1;
+  const nUp = Math.round(f * 7);
+  const flows = [];
+  for (let i = 0; i < nUp; i++) { const k = dot(i / Math.max(1, nUp)); flows.push(<circle key={"f" + i} cx={68 + Math.sin(k * 6 + i) * 6 + k * 74} cy={104 - k * 56} r="3" fill="#6b7280" opacity={1 - k * 0.5} />); }
+  for (let i = 0; i < 5; i++) { const k = dot(i / 5 + 0.1); flows.push(<circle key={"r" + i} cx={196 + k * 40 - Math.sin(i) * 8} cy={170 - k * 108} r="2.6" fill="#6b7280" opacity={0.9 - k * 0.5} />); }
+  for (let i = 0; i < 4; i++) { const k = dot(i / 4 + 0.3); flows.push(<circle key={"d" + i} cx={104 + k * 20 + i * 4} cy={222 - k * 150} r="2.6" fill="#6b7280" opacity={0.85 - k * 0.5} />); }
+  treeX.forEach((x, i) => { for (let j = 0; j < 2; j++) { const k = dot(i * 0.21 + j * 0.5); flows.push(<circle key={"t" + i + j} cx={x - 6 + (150 - x) * (1 - k) * 0.2 + 6 * 0} cy={80 + k * 76} r="2.6" fill="#374151" opacity={0.9 - k * 0.45} />); } });
+  const sea = Math.round(2 + 3 * (ppm - 250) / 650);
+  for (let i = 0; i < sea; i++) { const k = dot(i / sea + 0.5); flows.push(<circle key={"o" + i} cx={262 + (i % 3) * 18 + Math.sin(k * 5) * 3} cy={78 + k * 120} r="2.6" fill="#374151" opacity={0.85 - k * 0.4} />); }
+  const cloud = vlabMixHexColor("#f1f5f9", "#9aa3b2", vlabClamp((ppm - 300) / 400, 0, 1));
+  const gx = (i) => 214 + (i / 59) * 96, gy = (v) => 46 - ((v - 250) / 650) * 34;
+  return (
+    <div className="vlab-exp">
+      <svg viewBox="0 0 320 270" className="vlab-svg" style={{ direction: "ltr", background: "#bfe3ff" }}>
+        <defs>
+          <linearGradient id="ccSky" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stopColor={vlabMixHexColor("#6fb6ee", "#c9a98a", vlabClamp((ppm - 450) / 400, 0, 1))} /><stop offset="1" stopColor="#e6f4ff" /></linearGradient>
+          <linearGradient id="ccSea" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stopColor="#3c8fd8" /><stop offset="1" stopColor="#12467e" /></linearGradient>
+          <linearGradient id="ccSoil" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stopColor="#7a5232" /><stop offset="1" stopColor="#3a2412" /></linearGradient>
+        </defs>
+        <rect width="320" height="270" rx="12" fill="url(#ccSky)" />
+        <circle cx="290" cy="70" r="0" fill="none" />
+        <ellipse cx="124" cy="40" rx="64" ry="20" fill={cloud} /><ellipse cx="90" cy="34" rx="28" ry="16" fill={cloud} /><ellipse cx="156" cy="32" rx="30" ry="17" fill={cloud} />
+        <text x="124" y="44" fontSize="10" fill="#1f2937" textAnchor="middle" fontWeight="700">کربن‌دی‌اکسید هوا</text>
+        {/* زمین و اقیانوس */}
+        <rect x="0" y="190" width="240" height="80" fill="url(#ccSoil)" />
+        <rect x="0" y="186" width="240" height="8" rx="3" fill="#4f9a3a" />
+        <path d="M240,190 L320,190 L320,270 L240,270 Z" fill="url(#ccSea)" /><path d="M240,190 q10,-4 20,0 t20,0 t20,0 t20,0" stroke="#fff" strokeOpacity="0.6" fill="none" />
+        <text x="280" y="234" fontSize="9" fill="#e6f4ff" textAnchor="middle">اقیانوس</text>
+        {/* کارخانه */}
+        <g><rect x="28" y="132" width="64" height="54" fill="#8b8f99" stroke="#4b5060" strokeWidth="1.4" /><rect x="64" y="96" width="12" height="40" fill="#6b6f7a" stroke="#4b5060" /><path d="M28,132 L44,118 L44,132 M44,132 L60,118 L60,132" fill="#7a7f8a" stroke="#4b5060" />{[0, 1, 2].map((i) => <rect key={i} x={34 + i * 18} y="150" width="10" height="10" fill="#ffe08a" />)}<text x="60" y="203" fontSize="8.5" fill="#fff" textAnchor="middle">کارخانه و خودرو</text></g>
+        <g transform="translate(96,176)"><rect x="0" y="-8" width="26" height="8" rx="3" fill="#e0524a" /><rect x="5" y="-14" width="14" height="7" rx="2" fill="#f0827a" /><circle cx="6" cy="0" r="3" fill="#222" /><circle cx="21" cy="0" r="3" fill="#222" /></g>
+        {/* درختان */}
+        {treeX.map((x, i) => <g key={i}><rect x={x - 3} y="158" width="6" height="30" fill="#6a4a2a" /><circle cx={x} cy="148" r="17" fill="#2f8f3a" /><circle cx={x - 9} cy="156" r="11" fill="#3aa347" /><circle cx={x + 9} cy="156" r="11" fill="#3aa347" /></g>)}
+        {nTree === 0 && <text x="170" y="170" fontSize="9" fill="#7a5232" textAnchor="middle">درختی نمانده!</text>}
+        <text x="170" y="203" fontSize="8.5" fill="#fff" textAnchor="middle">گیاهان (فتوسنتز)</text>
+        {/* جانوران */}
+        <text x="214" y="184" fontSize="22" textAnchor="middle">🐄</text><text x="238" y="184" fontSize="0">.</text>
+        {/* تجزیه‌کننده‌ها */}
+        <text x="112" y="230" fontSize="18" textAnchor="middle">🍄</text><text x="150" y="240" fontSize="16" textAnchor="middle">🪱</text><text x="186" y="228" fontSize="16" textAnchor="middle">🍂</text>
+        <text x="130" y="258" fontSize="8.5" fill="#f3e3cd" textAnchor="middle">قارچ و باکتری (تجزیه‌کننده‌ها)</text>
+        {flows}
+        {/* نمودار کوچک */}
+        <rect x="208" y="6" width="106" height="52" rx="6" fill="#fff" opacity="0.9" />
+        <path d={hist.map((v, i) => (i ? "L" : "M") + gx(i + (60 - hist.length) * 0).toFixed(1) + "," + gy(v).toFixed(1)).join(" ")} fill="none" stroke={dpy > 0.3 ? "#d6403a" : dpy < -0.3 ? "#2e8b57" : "#6b7280"} strokeWidth="2" />
+        <text x="261" y="56" fontSize="7" fill="#374151" textAnchor="middle">تغییر کربن‌دی‌اکسید هوا با زمان</text>
+      </svg>
+      <VlabMeterRow height={120} meters={[{ label: "کربن‌دی‌اکسید هوا", unit: "ppm", value: ppm, ranges: [450, 600, 900], maj: 5, decimals: 0 }, { label: "تغییر هر سال", unit: "ppm", value: Math.abs(dpy), ranges: [1, 2.5, 6], maj: 5, decimals: 1 }, { label: "سال", unit: "", value: yr, ranges: [30, 60, 100], maj: 5, decimals: 0 }]} />
+      <div className="vlab-controls"><div className="vlab-ctrl-col" style={{ flex: 1 }}>
+        <label className="vlab-ctrl-label">سوزاندن سوخت‌های فسیلی (٪): {VLAB_FA_DIGITS(fossil)}</label>
+        <VlabRange min={0} max={100} step={5} value={fossil} onChange={(e) => setFossil(+e.target.value)} />
+        <label className="vlab-ctrl-label">پوشش درختان و گیاهان (٪): {VLAB_FA_DIGITS(trees)}</label>
+        <VlabRange min={0} max={100} step={5} value={trees} onChange={(e) => setTrees(+e.target.value)} />
+        <div className="vlab-num-row"><button type="button" className="vlab-num-btn active" onClick={() => setPlay((p) => !p)}>{play ? "⏸ ایست" : "▶ سال‌ها را جلو ببر"}</button><button type="button" className="vlab-num-btn" onClick={reset}>↺ از اول</button></div>
+      </div></div>
+      <div className="vlab-readout">{dpy > 0.3 ? "کربن‌دی‌اکسید هوا هر سال بیشتر می‌شود؛ کربنی که از سوختن سوخت‌ها و تنفس وارد هوا می‌شود از آنچه گیاهان و اقیانوس برمی‌دارند بیشتر است." : dpy < -0.3 ? "گیاهان بیش از آنچه وارد هوا می‌شود کربن برمی‌دارند؛ مقدار کربن‌دی‌اکسید هوا کم می‌شود." : "ورودی و خروجی کربن تقریباً برابر است؛ چرخه‌ی کربن به تعادل رسیده."}</div>
+      <div className="vlab-readout">کربن در طبیعت می‌چرخد: گیاهان در <b>فتوسنتز</b> کربن‌دی‌اکسید برمی‌دارند، جانوران و گیاهان در <b>تنفس</b> آن را آزاد می‌کنند، <b>تجزیه‌کننده‌ها</b> بدن مرده‌ها را به کربن‌دی‌اکسید برمی‌گردانند و سوختن سوخت‌های فسیلی کربنی را که میلیون‌ها سال زیر زمین بود وارد هوا می‌کند.</div>
+    </div>
+  );
+}
+
+/* ---------- تغییر فیزیکی یا شیمیایی؟ ---------- */
+function vlabChgRand(i, k) { const v = Math.sin(i * 127.1 + k * 311.7) * 43758.5453; return v - Math.floor(v); }
+function vlabChgEvents() {
+  const lat = (n, cols, sx, sy, ox, oy) => Array.from({ length: n }, (_, i) => [ox + (i % cols) * sx, oy + Math.floor(i / cols) * sy]);
+  const scat = (n, r, k) => Array.from({ length: n }, (_, i) => { const a = vlabChgRand(i, k) * 6.283, d = Math.sqrt(vlabChgRand(i, k + 7)) * r; return [Math.cos(a) * d, Math.sin(a) * d]; });
+  const W = (pts) => pts.map((p) => ({ t: "W", x: p[0], y: p[1] }));
+  return [
+    { id: "ice", n: "ذوب شدن یخ", kind: "phys", a: "🧊", b: "💧", ev: ["جنس ماده عوض نمی‌شود (آب هنوز آب است)", "با سرد کردن دوباره یخ می‌شود"],
+      why: "در ذوب یخ فقط چیدمان مولکول‌های آب عوض می‌شود: از شبکه‌ی منظم به حالت روان. مولکول‌ها همان‌ها هستند.",
+      A: W(lat(16, 4, 28, 24, -42, -36)), B: W(scat(16, 56, 3)) },
+    { id: "paper", n: "پاره کردن کاغذ", kind: "phys", a: "📄", b: "📰", ev: ["اندازه و شکل عوض می‌شود، جنس نه", "تکه‌ها را می‌توان کنار هم گذاشت"],
+      why: "کاغذ پاره شده هنوز همان کاغذ است؛ فقط به تکه‌های کوچک‌تر تقسیم شده. رشته‌های سلولز همان‌اند.",
+      A: Array.from({ length: 12 }, (_, i) => ({ t: "chain", x: -34 + (i % 3) * 34, y: -36 + Math.floor(i / 3) * 24 })),
+      B: Array.from({ length: 12 }, (_, i) => ({ t: "chain", x: -34 + (i % 3) * 34 + (i % 3 - 1) * 14 + (Math.floor(i / 3) < 2 ? -10 : 10), y: -36 + Math.floor(i / 3) * 24 + (Math.floor(i / 3) < 2 ? -8 : 8) })) },
+    { id: "sugar", n: "حل شدن شکر در آب", kind: "phys", a: "🍬", b: "🥤", ev: ["شکر هنوز در آب هست (مزه‌ی شیرین)", "با تبخیر آب، شکر برمی‌گردد"],
+      why: "مولکول‌های شکر از هم جدا می‌شوند و بین مولکول‌های آب پخش می‌شوند؛ ماده‌ی تازه‌ای ساخته نمی‌شود.",
+      A: [...Array.from({ length: 9 }, (_, i) => ({ t: "sugar", x: -48 + (i % 3) * 17, y: -44 + Math.floor(i / 3) * 17 })), ...W(scat(10, 66, 11)).map((m) => ({ ...m, x: m.x * 0.9 + 14, y: m.y * 0.9 + 12 }))],
+      B: [...scat(9, 56, 21).map((p) => ({ t: "sugar", x: p[0], y: p[1] })), ...W(scat(10, 66, 11)).map((m) => ({ ...m, x: m.x * 0.9 + 14, y: m.y * 0.9 + 12 }))] },
+    { id: "candle", n: "سوختن شمع", kind: "chem", a: "🕯️", b: "💨", ev: ["نور و گرما تولید می‌شود", "ماده‌ی تازه (دود، بخار، گاز) پدید می‌آید", "شمع سوخته برنمی‌گردد"],
+      why: "در سوختن، موم با اکسیژن واکنش می‌دهد و کربن‌دی‌اکسید و بخار آب پدید می‌آید؛ ماده‌های تازه‌ای که پیش از آن نبودند.",
+      A: [{ t: "wax", x: -34, y: -34 }, { t: "wax", x: 20, y: -22 }, { t: "wax", x: -20, y: 20 }, { t: "O2", x: 34, y: 30 }, { t: "O2", x: -50, y: 0 }, { t: "O2", x: 44, y: -8 }, { t: "O2", x: 0, y: 44 }, { t: "O2", x: 6, y: -50 }],
+      B: [{ t: "CO2", x: -30, y: -34 }, { t: "CO2", x: 24, y: -26 }, { t: "CO2", x: -26, y: 22 }, { t: "CO2", x: 28, y: 28 }, { t: "W", x: -52, y: 0 }, { t: "W", x: 46, y: 0 }, { t: "W", x: 0, y: 46 }, { t: "W", x: 4, y: -52 }] },
+    { id: "rust", n: "زنگ زدن آهن", kind: "chem", a: "🔩", b: "🟤", ev: ["رنگ عوض می‌شود (قهوه‌ای)", "ماده‌ی تازه‌ای (زنگ) ساخته می‌شود", "زنگ دوباره آهن نمی‌شود"],
+      why: "آهن با اکسیژن و رطوبت هوا ترکیب می‌شود و ماده‌ی تازه‌ای به نام زنگ آهن می‌سازد که خواصش با آهن فرق دارد.",
+      A: [...lat(8, 4, 26, 26, -39, -30).map((p) => ({ t: "Fe", x: p[0], y: p[1] })), ...[[-40, 40], [-10, 46], [24, 42], [48, 22]].map((p) => ({ t: "O2", x: p[0], y: p[1] }))],
+      B: [...lat(4, 2, 40, 28, -20, -30).map((p) => ({ t: "FeO", x: p[0], y: p[1] })), ...lat(4, 2, 40, 28, -20, 24).map((p) => ({ t: "FeO", x: p[0], y: p[1] }))] },
+    { id: "egg", n: "پختن تخم‌مرغ", kind: "chem", a: "🥚", b: "🍳", ev: ["رنگ و بافت عوض می‌شود", "ساختار پروتئین‌ها برای همیشه تغییر می‌کند", "تخم‌مرغ پخته خام نمی‌شود"],
+      why: "گرما پروتئین‌های تخم‌مرغ را باز و به هم گره می‌زند؛ ماده‌ای با ساختار و خواص تازه ساخته می‌شود که برگشت‌پذیر نیست.",
+      A: lat(6, 3, 38, 40, -38, -22).map((p) => ({ t: "coil", x: p[0], y: p[1] })), B: lat(6, 3, 38, 40, -38, -22).map((p) => ({ t: "tangle", x: p[0], y: p[1] })) },
+  ];
+}
+function VlabMatterChangeExperiment({ onReading }) {
+  const EV = React.useMemo(() => vlabChgEvents(), []);
+  const [ei, setEi] = useState(0);
+  const [p, setP] = useState(0);
+  const [ans, setAns] = useState(null);
+  const [play, setPlay] = useState(false);
+  const E = EV[ei];
+  useEffect(() => {
+    if (!play) return undefined;
+    const id = setInterval(() => setP((x) => { if (x >= 1) { setPlay(false); return 1; } return Math.min(1, x + 0.02); }), 40);
+    return () => clearInterval(id);
+  }, [play]);
+  useEffect(() => { if (onReading) onReading(`${E.n} | ${E.kind === "phys" ? "تغییر فیزیکی" : "تغییر شیمیایی"} | پیشرفت ${Math.round(p * 100)}٪`); /* eslint-disable-next-line */ }, [ei, Math.round(p * 10)]);
+  const Mol = ({ t, x, y, o = 1, k = 0 }) => {
+    const g = (c) => <g transform={`translate(${x},${y})`} opacity={o}>{c}</g>;
+    if (t === "W") return g(<><circle r="7" fill="#e04b4b" stroke="#8a2a2a" strokeWidth="0.8" /><circle cx="-7.5" cy="6" r="4.2" fill="#fff" stroke="#9aa3b2" strokeWidth="0.8" /><circle cx="7.5" cy="6" r="4.2" fill="#fff" stroke="#9aa3b2" strokeWidth="0.8" /></>);
+    if (t === "CO2") return g(<><line x1="-13" y1="0" x2="13" y2="0" stroke="#555" strokeWidth="2" /><circle cx="-13" cy="0" r="6" fill="#e04b4b" stroke="#8a2a2a" strokeWidth="0.8" /><circle cx="13" cy="0" r="6" fill="#e04b4b" stroke="#8a2a2a" strokeWidth="0.8" /><circle r="6.5" fill="#5a5f6a" stroke="#2a2d34" strokeWidth="0.8" /></>);
+    if (t === "O2") return g(<><circle cx="-5" cy="0" r="6" fill="#e04b4b" stroke="#8a2a2a" strokeWidth="0.8" /><circle cx="5" cy="0" r="6" fill="#e04b4b" stroke="#8a2a2a" strokeWidth="0.8" /></>);
+    if (t === "Fe") return g(<circle r="9" fill="#9aa3b0" stroke="#4a5160" strokeWidth="1" />);
+    if (t === "FeO") return g(<><circle cx="-6" cy="0" r="9" fill="#b0623a" stroke="#6a3a1f" strokeWidth="1" /><circle cx="8" cy="3" r="6" fill="#e04b4b" stroke="#8a2a2a" strokeWidth="0.8" /></>);
+    if (t === "wax") return g(<><polyline points="-16,-4 -8,4 0,-4 8,4 16,-4" fill="none" stroke="#777" strokeWidth="1.6" />{[-16, -8, 0, 8, 16].map((cx, i) => <circle key={i} cx={cx} cy={i % 2 ? 4 : -4} r="4.2" fill="#cfa86a" stroke="#7a5a2a" strokeWidth="0.8" />)}</>);
+    if (t === "sugar") return g(<><polygon points="0,-8 7,-4 7,4 0,8 -7,4 -7,-4" fill="#ffe27a" stroke="#a88a1a" strokeWidth="1" /><circle r="2.4" fill="#fff" opacity="0.7" /></>);
+    if (t === "chain") return g(<><path d="M-14,0 q3.5,-6 7,0 t7,0 t7,0 t7,0" fill="none" stroke="#3a9a5a" strokeWidth="2.2" /></>);
+    if (t === "coil") return g(<path d="M-12,0 q3,-9 6,0 q3,9 6,0 q3,-9 6,0 q3,9 6,0" fill="none" stroke="#9a6ad8" strokeWidth="2.6" strokeLinecap="round" />);
+    return g(<><path d="M-14,-8 L-6,6 L2,-10 L10,8 L16,-6" fill="none" stroke="#e8e0f8" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round" /><path d="M-14,-8 L-6,6 L2,-10 L10,8 L16,-6" fill="none" stroke="#7a4ac0" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round" />{[[-6, 6], [2, -10], [10, 8]].map((c, i) => <circle key={i} cx={c[0]} cy={c[1]} r="2" fill="#7a4ac0" />)}</>);
+  };
+  const phys = E.kind === "phys";
+  const items = phys
+    ? E.A.map((m, i) => { const b = E.B[i]; return <Mol key={i} t={m.t} x={m.x + (b.x - m.x) * p + (p > 0 && p < 1 ? Math.sin(i * 3 + p * 20) * 1.6 : 0)} y={m.y + (b.y - m.y) * p + (p > 0 && p < 1 ? Math.cos(i * 2 + p * 20) * 1.6 : 0)} />; })
+    : [...E.A.map((m, i) => <Mol key={"a" + i} {...m} o={vlabClamp(1 - (p - 0.25) / 0.5, 0, 1)} />), ...E.B.map((m, i) => <Mol key={"b" + i} {...m} o={vlabClamp((p - 0.25) / 0.5, 0, 1)} />)];
+  const flash = !phys && p > 0.3 && p < 0.7 ? 1 - Math.abs(p - 0.5) * 5 : 0;
+  const right = ans && ((ans === "phys") === phys);
+  return (
+    <div className="vlab-exp">
+      <svg viewBox="0 0 320 262" className="vlab-svg" style={{ direction: "ltr", background: "#f4f0ff" }}>
+        <defs><radialGradient id="mcLens" cx="0.4" cy="0.35" r="0.8"><stop offset="0" stopColor="#ffffff" /><stop offset="1" stopColor="#dfe8fb" /></radialGradient><clipPath id="mcClip"><circle cx="160" cy="148" r="78" /></clipPath></defs>
+        <rect width="320" height="262" rx="12" fill="#f4f0ff" />
+        <text x="56" y="38" fontSize="34" textAnchor="middle" opacity={1 - p * 0.75}>{E.a}</text>
+        <text x="264" y="38" fontSize="34" textAnchor="middle" opacity={0.25 + p * 0.75}>{E.b}</text>
+        <path d="M100,28 L214,28" stroke="#8a7ac0" strokeWidth="2.4" strokeLinecap="round" /><path d="M206,21 L216,28 L206,35" fill="none" stroke="#8a7ac0" strokeWidth="2.4" strokeLinecap="round" strokeLinejoin="round" />
+        <text x="160" y="18" fontSize="11" fill="#3a2a7a" textAnchor="middle" fontWeight="700">{E.n}</text>
+        <circle cx="160" cy="148" r="82" fill="#8aa0d8" opacity="0.25" /><circle cx="160" cy="148" r="78" fill="url(#mcLens)" stroke="#6a7ab8" strokeWidth="3" />
+        <g clipPath="url(#mcClip)"><g transform="translate(160,148)">{items}</g>{flash > 0 && <circle cx="160" cy="148" r="78" fill="#ffd54a" opacity={flash * 0.35} />}</g>
+        <path d="M222,206 L252,238" stroke="#6a7ab8" strokeWidth="9" strokeLinecap="round" />
+        <text x="270" y="228" fontSize="8" fill="#4a5a90" textAnchor="middle">نگاه ذره‌ای</text>
+        <text x="48" y="150" fontSize="9" fill="#4a3a8a" textAnchor="middle">پیش از</text><text x="272" y="150" fontSize="9" fill="#4a3a8a" textAnchor="middle">پس از</text>
+        {ans && <g><rect x="76" y="244" width="168" height="16" rx="8" fill={right ? "#2e9e5a" : "#d6403a"} /><text x="160" y="255.5" fontSize="9.5" fill="#fff" textAnchor="middle" fontWeight="700">{right ? "درست گفتی! " + (phys ? "تغییر فیزیکی" : "تغییر شیمیایی") : "دوباره به ماده‌ها نگاه کن"}</text></g>}
+      </svg>
+      <div className="vlab-controls"><div className="vlab-ctrl-col" style={{ flex: 1 }}>
+        <label className="vlab-ctrl-label">رویداد را انتخاب کن</label>
+        <div className="vlab-num-row" style={{ flexWrap: "wrap" }}>{EV.map((x, i) => <button key={x.id} type="button" className={"vlab-num-btn" + (ei === i ? " active" : "")} onClick={() => { setEi(i); setP(0); setAns(null); setPlay(false); }}>{x.a} {x.n}</button>)}</div>
+        <label className="vlab-ctrl-label">پیشرفت تغییر: {VLAB_FA_DIGITS(Math.round(p * 100))}٪</label>
+        <VlabRange min={0} max={100} step={1} value={Math.round(p * 100)} onChange={(e) => { setPlay(false); setP(+e.target.value / 100); }} />
+        <div className="vlab-num-row"><button type="button" className="vlab-num-btn active" onClick={() => { if (p >= 1) setP(0); setPlay((x) => !x); }}>{play ? "⏸ ایست" : "▶ تغییر را ببین"}</button></div>
+        <label className="vlab-ctrl-label">به نظرت این تغییر چیست؟</label>
+        <div className="vlab-num-row"><button type="button" className="vlab-num-btn" onClick={() => setAns("phys")}>فیزیکی</button><button type="button" className="vlab-num-btn" onClick={() => setAns("chem")}>شیمیایی</button></div>
+      </div></div>
+      {ans && <div className="vlab-readout"><b>{phys ? "تغییر فیزیکی" : "تغییر شیمیایی"}:</b> {E.why}<br />نشانه‌ها: {E.ev.join(" ، ")}.</div>}
+      <div className="vlab-readout">در <b>تغییر فیزیکی</b> فقط شکل، اندازه یا حالت ماده عوض می‌شود و ماده‌ی تازه‌ای پدید نمی‌آید. در <b>تغییر شیمیایی</b> ذره‌ها دوباره آرایش می‌یابند و ماده‌ی تازه با ویژگی‌های متفاوت ساخته می‌شود؛ نشانه‌هایش تغییر رنگ، گاز، نور یا گرما و برگشت‌ناپذیری است.</div>
     </div>
   );
 }
@@ -48375,6 +48673,9 @@ const VLAB_COMPONENTS = {
   "meander": VlabMeanderExperiment,
   "seasons": VlabSeasonsExperiment,
   "tides": VlabTidesExperiment,
+  "matter-change": VlabMatterChangeExperiment,
+  "carbon-flow": VlabCarbonFlowExperiment,
+  "five-senses": VlabFiveSensesExperiment,
   "eclipse": VlabEclipseExperiment,
   "gut-journey": VlabGutJourneyExperiment,
 
@@ -48710,6 +49011,9 @@ const VLAB_GUIDE = {
   "seasons": { goals: ["فصل‌ها به‌دلیل کجی محور زمین پدید می‌آیند، نه فاصله از خورشید.", "در تابستان شمالی، روز در نیمکره‌ی شمالی بلندتر است."], challenges: ["طول روز تهران را در اول هر چهار فصل بنویس.", "در استوا طول روز در سال تغییر می‌کند؟", "نیمکره‌ی جنوبی در اول تیر چه فصلی است؟"], misconception: "فکر می‌کنیم تابستان به این دلیل است که زمین به خورشید نزدیک‌تر است؛ ولی کجی محور عامل اصلی است.", check: { q: "طول روز در اول فروردین و اول پاییز تقریباً چقدر است؟", a: "حدود ۱۲ ساعت (اعتدال)." } },
   "gut-journey": { goals: ["مسیر غذا را از دهان تا روده بشناسی.", "بدانی هر ماده‌ی مغذی کجا و با چه آنزیمی هضم می‌شود."], challenges: ["نشاسته از کجا هضم را شروع می‌کند؟", "چرا معده اسیدی است؟", "بیشترین جذب در کدام بخش است؟"], misconception: "فکر می‌کنیم غذا در معده کاملاً هضم و جذب می‌شود؛ اما بیشتر هضم و تقریباً همه‌ی جذب در روده‌ی باریک رخ می‌دهد.", check: { q: "هضم نشاسته از کدام عضو آغاز می‌شود؟", a: "دهان." } },
   "eclipse": { goals: ["جای ماه، زمین و خورشید را برای گرفت پیدا کنی.", "بفهمی چرا گرفت هر ماه رخ نمی‌دهد."], challenges: ["در ماه نو، گرفت کی رخ می‌دهد؟", "چرا ماه‌گرفتگی فقط شب دیده می‌شود؟", "اگر مدار ماه کج نبود چه می‌شد؟"], misconception: "فکر می‌کنیم در هر ماه نو خورشیدگرفتگی رخ می‌دهد؛ اما کجی مدار ماه معمولاً سایه را از زمین دور نگه می‌دارد.", check: { q: "ماه‌گرفتگی در کدام فاز ماه رخ می‌دهد؟", a: "ماه کامل." } },
+  "five-senses": { goals: ["پنج حس و اندام هر کدام را بشناسی.","بدانی پیام حسی از عصب به مغز می‌رسد."], challenges: ["با لیمو کدام حس‌ها کار می‌کنند؟","یخ را با کدام اندام حس می‌کنیم؟"], misconception: "فکر می‌کنیم چشم یا گوش خودشان می‌فهمند؛ اما همه‌ی حس‌ها باید به مغز برسند تا معنا پیدا کنند.", check: { q: "برای حس کردن سردی یخ از کدام اندام استفاده می‌کنیم؟", a: "پوست." } },
+  "carbon-flow": { goals: ["مسیر کربن میان هوا، گیاه، جانور و خاک را دنبال کنی.","اثر سوخت فسیلی و جنگل را بر کربن‌دی‌اکسید هوا ببینی."], challenges: ["با ۰٪ سوخت فسیلی هوا چه می‌شود؟","چند درصد درخت لازم است تا هوا ثابت بماند؟"], misconception: "فکر می‌کنیم فقط کارخانه‌ها کربن‌دی‌اکسید می‌سازند؛ اما تنفس همه‌ی جانداران و تجزیه هم آن را آزاد می‌کنند و گیاهان و اقیانوس آن را برمی‌دارند.", check: { q: "کدام فرایند گیاهان کربن‌دی‌اکسید هوا را برمی‌دارد؟", a: "فتوسنتز." } },
+  "matter-change": { goals: ["فرق تغییر فیزیکی و شیمیایی را از روی ذره‌ها بفهمی.","نشانه‌های تغییر شیمیایی را بشناسی."], challenges: ["ذوب یخ چرا فیزیکی است؟","در سوختن شمع چه مواد تازه‌ای پدید می‌آید؟"], misconception: "فکر می‌کنیم هر تغییری که چیزی ناپدید شود شیمیایی است؛ اما حل‌شدن شکر فیزیکی است چون مولکول‌های شکر هنوز هستند.", check: { q: "ذوب شدن یخ تغییر فیزیکی است یا شیمیایی؟", a: "فیزیکی." } },
   "tides": { goals: ["کشش گرانشی ماه و خورشید باعث جزر و مد می‌شود.", "هم‌راستایی سه جرم کشند بزرگ و حالت عمودی کشند کوچک می‌دهد."], challenges: ["در چه فازهایی کشند بزرگ است؟", "چرا دو برآمدگی آب داریم؟", "در تربیع، دامنه‌ی کشند را چقدر می‌بینی؟"], misconception: "فکر می‌کنیم فقط یک برآمدگی رو به ماه داریم؛ اما یک برآمدگی هم در سمت مقابل پدید می‌آید.", check: { q: "در ماه نو یا ماه کامل کشند بزرگ است یا کوچک؟", a: "بزرگ." } },
 
   "res-color": { goals: ["هر رنگ نمایانگر یک رقم است و نوار سوم ضریب ده‌به‌توان است.", "مقدار مقاومت را از روی رنگ‌ها بخوانی."], challenges: ["مقاومتی با مقدار ۴٫۷ کیلواهم بساز. چه رنگ‌هایی لازم است؟", "نوار سوم را یک رنگ جلوتر ببر؛ مقاومت چند برابر می‌شود؟", "کوچک‌ترین و بزرگ‌ترین مقدار ممکن برای مقاومت ±۵٪ را حساب کن."], misconception: "گاهی فکر می‌کنیم نوار سوم هم یک رقم است؛ اما ضریب است و تعداد صفرها را مشخص می‌کند.", check: { q: "نوارها قهوه‌ای، مشکی، قرمز هستند. مقاومت چند اهم است؟", a: "۱۰ × ۱۰۰ = ۱۰۰۰ اهم (۱ کیلواهم)." } },

@@ -44844,37 +44844,100 @@ const VLAB_LIFE = [
   { n: "شفیره (پیله)", d: "درون پیله دگرگون می‌شود", t: "۱ تا ۲ هفته" },
   { n: "پروانه‌ی بالغ", d: "پرواز می‌کند و تخم می‌گذارد", t: "۲ تا ۶ هفته" },
 ];
+function VlabButterflyShape({ x, y, s = 1, open = 1, rot = 0, c1 = "#ff9d1c", c2 = "#ffd27a" }) {
+  const w = Math.max(0.12, open);
+  return (
+    <g transform={`translate(${x},${y}) rotate(${rot}) scale(${s})`}>
+      <g transform={`scale(${w},1)`}>
+        <ellipse cx="-17" cy="-9" rx="17" ry="13" fill={c1} stroke="#4a2a00" strokeWidth="1.6" transform="rotate(-18 -17 -9)" />
+        <ellipse cx="17" cy="-9" rx="17" ry="13" fill={c1} stroke="#4a2a00" strokeWidth="1.6" transform="rotate(18 17 -9)" />
+        <ellipse cx="-13" cy="9" rx="11" ry="9" fill={c2} stroke="#4a2a00" strokeWidth="1.6" />
+        <ellipse cx="13" cy="9" rx="11" ry="9" fill={c2} stroke="#4a2a00" strokeWidth="1.6" />
+        <circle cx="-19" cy="-10" r="3.2" fill="#fff" /><circle cx="19" cy="-10" r="3.2" fill="#fff" />
+        <circle cx="-13" cy="9" r="2.2" fill="#fff" /><circle cx="13" cy="9" r="2.2" fill="#fff" />
+      </g>
+      <ellipse cx="0" cy="0" rx="2.6" ry="14" fill="#3e2723" />
+      <circle cx="0" cy="-15" r="3.4" fill="#3e2723" />
+      <path d="M -1,-17 Q -6,-27 -9,-26 M 1,-17 Q 6,-27 9,-26" stroke="#3e2723" strokeWidth="1.2" fill="none" />
+    </g>
+  );
+}
 function VlabButterflyCycleExperiment({ onReading }) {
-  const [st, setSt] = useState(0);
-  const tk = VLAB_GEO_TICK(30);
+  const [t, setT] = useState(0);
   const [auto, setAuto] = useState(false);
-  useEffect(() => { if (!auto) return; const id = setInterval(() => setSt((s) => (s + 1) % 4), 1800); return () => clearInterval(id); }, [auto]);
+  const tk = VLAB_GEO_TICK(30);
+  useEffect(() => { if (!auto) return; const id = setInterval(() => setT((x) => (x + 0.6) % 400), 50); return () => clearInterval(id); }, [auto]);
+  const st = Math.min(3, Math.floor(t / 100)), lp = (t % 100) / 100;
   const L = VLAB_LIFE[st];
   useEffect(() => { if (onReading) onReading(`مرحله‌ی ${st + 1}: ${L.n}`); /* eslint-disable-next-line */ }, [st]);
-  const flap = Math.sin(tk * 0.5) * 0.35;
+  const flap = 0.35 + 0.65 * Math.abs(Math.sin(tk * 0.55));
+  const lerp = (a, b, k) => a + (b - a) * k;
+  const bites = Math.floor(lp * 5);
+  const nEggs = st === 0 ? Math.max(1, Math.ceil(lp * 6)) : 6;
+  const eggPos = [[-26, 8], [-10, 14], [8, 6], [22, 15], [-2, 24], [30, 2]];
+  const q = Math.max(0, (lp - 0.25) / 0.75), e = Math.min(1, q * 5);
+  const fx = lerp(176, 200 + 62 * Math.sin(2 * Math.PI * q), e), fy = lerp(104, 86 + 22 * Math.sin(4 * Math.PI * q), e);
   return (
     <div className="vlab-exp">
-      <svg viewBox="0 0 320 200" className="vlab-svg" style={{ direction: "ltr", background: "#0b1330" }}>
-        <rect width="320" height="200" rx="12" fill="#d6eec8" />
-        <path d="M 10,150 Q 160,120 310,150 L 310,200 L 10,200 Z" fill="#6aa84f" />
-        {/* مسیر چرخه */}
-        {VLAB_LIFE.map((x, i) => { const a = (i / 4) * 2 * Math.PI - Math.PI / 2; return <g key={i}><circle cx={90 + 40 * Math.cos(a) * 1.1} cy={100 + 40 * Math.sin(a)} r="9" fill={st === i ? "#ffd23f" : "#fff"} stroke="#4a7c28" strokeWidth="2" /><text x={90 + 40 * Math.cos(a) * 1.1} y={104 + 40 * Math.sin(a)} fontSize="9" textAnchor="middle" fill="#222" fontWeight="700">{VLAB_FA_DIGITS(i + 1)}</text></g>; })}
-        <g transform="translate(230,95)">
-          {st === 0 && <><path d="M -50,40 Q 0,-10 50,40 Z" fill="#7cb342" stroke="#3f6b1c" /><ellipse cx="-10" cy="22" rx="5" ry="6" fill="#fff8d6" stroke="#aaa" /><ellipse cx="6" cy="26" rx="5" ry="6" fill="#fff8d6" stroke="#aaa" /><ellipse cx="-2" cy="14" rx="5" ry="6" fill="#fff8d6" stroke="#aaa" /></>}
-          {st === 1 && <>{Array.from({ length: 6 }, (_, i) => <circle key={i} cx={-30 + i * 12} cy={20 + Math.sin(tk * 0.4 + i) * 3} r="9" fill="#9ccc65" stroke="#3f6b1c" />)}<circle cx="42" cy="18" r="10" fill="#7cb342" stroke="#3f6b1c" /><circle cx="46" cy="15" r="2" fill="#000" /></>}
-          {st === 2 && <><line x1="0" y1="-30" x2="0" y2="-12" stroke="#6b4513" strokeWidth="3" /><ellipse cx="0" cy="12" rx="14" ry="26" fill="#8d6e63" stroke="#5d4037" strokeWidth="2" /><path d="M -12,0 q 12,6 24,0 M -13,12 q 13,6 26,0 M -11,24 q 11,5 22,0" stroke="#5d4037" fill="none" /></>}
-          {st === 3 && <g transform={`translate(0,${10 + Math.sin(tk * 0.2) * 5})`}><ellipse cx="0" cy="0" rx="4" ry="22" fill="#4e342e" /><g transform={`scale(${1 + flap},1)`}><ellipse cx="-24" cy="-8" rx="24" ry="16" fill="#ff9d1c" stroke="#8a4b00" strokeWidth="2" /><ellipse cx="24" cy="-8" rx="24" ry="16" fill="#ff9d1c" stroke="#8a4b00" strokeWidth="2" /><ellipse cx="-20" cy="14" rx="16" ry="11" fill="#ffc266" stroke="#8a4b00" strokeWidth="2" /><ellipse cx="20" cy="14" rx="16" ry="11" fill="#ffc266" stroke="#8a4b00" strokeWidth="2" /></g></g>}
+      <svg viewBox="0 0 320 240" className="vlab-svg" style={{ direction: "ltr", background: "#d6eec8" }}>
+        <defs>
+          <linearGradient id="bfSky" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stopColor="#8fd3ff" /><stop offset="1" stopColor="#e9f9d8" /></linearGradient>
+          <radialGradient id="bfPupa" cx="0.35" cy="0.3"><stop offset="0" stopColor={lp > 0.7 && st === 2 ? "#ffcc80" : "#c5e1a5"} /><stop offset="1" stopColor={st === 2 && lp > 0.4 ? "#6d4c41" : "#689f38"} /></radialGradient>
+        </defs>
+        <rect width="320" height="240" rx="12" fill="url(#bfSky)" />
+        <circle cx="288" cy="30" r="17" fill="#ffe066" style={{ filter: "drop-shadow(0 0 8px #ffd23f)" }} />
+        <path d="M 0,150 Q 90,118 180,142 T 320,138 L 320,172 L 0,172 Z" fill="#7cc65a" />
+        <path d="M 0,160 Q 120,140 320,158 L 320,172 L 0,172 Z" fill="#5aae3c" />
+        {[18, 52, 96, 278, 300].map((x, i) => <text key={i} x={x} y={166 + (i % 2) * 4} fontSize="16" textAnchor="middle">{["🌼", "🌸", "🌷", "🌻", "🌼"][i]}</text>)}
+        {/* شاخه و برگ */}
+        <path d="M 20,176 Q 70,150 120,122" stroke="#6d4c41" strokeWidth="6" fill="none" strokeLinecap="round" />
+        <g transform="translate(176,118)">
+          <path d="M -70,12 Q -20,-44 70,-6 Q 20,50 -70,12 Z" fill="#66bb6a" stroke="#2e7d32" strokeWidth="2" />
+          <path d="M -66,12 Q 0,2 66,-4" stroke="#2e7d32" strokeWidth="1.6" fill="none" />
+          {Array.from({ length: 6 }, (_, i) => <path key={i} d={`M ${-40 + i * 20},${8 - i * 1.8} l 8,-12 M ${-40 + i * 20},${8 - i * 1.8} l 8,12`} stroke="#2e7d32" strokeWidth="1" fill="none" />)}
+          {st === 1 && Array.from({ length: bites }, (_, i) => <circle key={i} cx={52 - i * 14} cy={-2 + (i % 2) * 8} r="6" fill="#d6eec8" />)}
+          {nEggs > 0 && st <= 0 && Array.from({ length: nEggs }, (_, i) => <g key={i}><ellipse cx={eggPos[i][0]} cy={eggPos[i][1] - 2} rx="5" ry="6.5" fill="#fff8d6" stroke="#bfa84a" strokeWidth="1.2" /><ellipse cx={eggPos[i][0] - 1.5} cy={eggPos[i][1] - 4.5} rx="1.6" ry="2.2" fill="#fff" /></g>)}
+          {st === 0 && lp > 0.85 && <circle cx="22" cy="13" r="3" fill="#4a7c28" />}
         </g>
-        <text x="230" y="30" fontSize="12" fill="#1b3a10" textAnchor="middle" fontWeight="700">{L.n}</text>
-        <text x="230" y="48" fontSize="9" fill="#33591f" textAnchor="middle">{L.d}</text>
-        <text x="90" y="174" fontSize="9" fill="#fff" textAnchor="middle">مدت: {L.t}</text>
+        {/* ماده‌ی پروانه تخم‌گذار */}
+        {st === 0 && lp < 0.75 && <VlabButterflyShape x={40 + lp * 300} y={72 + Math.sin(lp * 16) * 9} s={0.8} open={flap} rot={8} />}
+        {/* لارو */}
+        {st === 1 && <g transform={`translate(${lerp(182, 236, lp) + Math.sin(tk * 0.1) * 2},${112 - lp * 3}) scale(${0.65 + lp * 0.85})`}>
+          {Array.from({ length: 8 }, (_, i) => <circle key={i} cx={-i * 9} cy={-Math.abs(Math.sin(tk * 0.25 - i * 0.7)) * 4} r="7.5" fill={i % 2 ? "#aed581" : "#7cb342"} stroke="#33691e" strokeWidth="1.3" />)}
+          <circle cx="8" cy="-1" r="8.5" fill="#ffca28" stroke="#33691e" strokeWidth="1.5" /><circle cx="11" cy="-4" r="2.2" fill="#000" /><circle cx="5" cy="-4" r="2.2" fill="#000" />
+          <path d="M 4,2 Q 9,6 14,2" stroke="#7a3e00" strokeWidth="1.4" fill="none" /><path d="M 6,-9 l -2,-7 M 12,-9 l 3,-7" stroke="#33691e" strokeWidth="1.5" />
+        </g>}
+        {/* شفیره */}
+        {(st === 2 || st === 3) && <g transform={`translate(176,96) rotate(${Math.sin(tk * 0.12) * (st === 2 ? 6 : 2)} 0 0)`}>
+          <line x1="0" y1="-96" x2="0" y2="-16" stroke="#6d4c41" strokeWidth="2.4" />
+          <ellipse cx="0" cy="12" rx="13" ry="28" fill={st === 3 ? "#d7ccc8" : "url(#bfPupa)"} stroke="#4e342e" strokeWidth="2" opacity={st === 3 ? 0.65 : 1} />
+          {st === 2 && [-2, 8, 18].map((yy, i) => <path key={i} d={`M -11,${yy - 6} q 11,6 22,0`} stroke="#33691e" strokeWidth="1.2" fill="none" opacity="0.7" />)}
+          {st === 2 && lp > 0.7 && <g opacity={(lp - 0.7) * 3}><path d="M -7,0 q 7,-14 14,0" fill="#ff9d1c" /><circle cx="-3" cy="6" r="2" fill="#fff" /><circle cx="4" cy="10" r="2" fill="#fff" /></g>}
+          {st === 3 && lp < 0.25 && <path d="M -8,-4 l 5,6 l 3,-8 l 4,10" stroke="#5d4037" strokeWidth="1.6" fill="none" />}
+        </g>}
+        {st === 3 && lp >= 0 && <VlabButterflyShape x={lp < 0.25 ? 176 : fx} y={lp < 0.25 ? 104 : fy} s={lp < 0.25 ? 0.4 + lp * 2.4 : 1.15} open={lp < 0.25 ? 0.3 + lp * 2 : flap} rot={lp < 0.25 ? 0 : Math.cos(2 * Math.PI * q) * 14} />}
+        {st === 3 && lp > 0.4 && Array.from({ length: 5 }, (_, i) => <text key={i} x={fx - 18 - i * 11} y={fy + 10 + Math.sin(tk * 0.3 + i) * 3} fontSize="9" opacity={0.7 - i * 0.13}>✨</text>)}
+        {/* عنوان */}
+        <rect x="70" y="8" width="180" height="40" rx="14" fill="#fff" opacity="0.88" />
+        <text x="160" y="25" fontSize="14" fill="#1b3a10" textAnchor="middle" fontWeight="700">{VLAB_FA_DIGITS(st + 1)}. {L.n}</text>
+        <text x="160" y="41" fontSize="9" fill="#33591f" textAnchor="middle">{L.d} • {L.t}</text>
+        {/* حلقه‌ی چرخه */}
+        <path d="M 60,222 Q 160,238 260,222" stroke="#33691e" strokeWidth="2" fill="none" strokeDasharray="4 4" /><text x="160" y="236" fontSize="8" fill="#33691e" textAnchor="middle">دوباره از نو</text>
+        {VLAB_LIFE.map((x, i) => { const cx = 262 - i * 68; return <g key={i} onClick={() => { setAuto(false); setT(i * 100 + 1); }} style={{ cursor: "pointer" }}>
+          {i < 3 && <path d={`M ${cx - 26},204 l -14,0 m 5,-5 l -5,5 l 5,5`} stroke="#33691e" strokeWidth="2" fill="none" />}
+          <circle cx={cx} cy="204" r="18" fill={st === i ? "#ffd23f" : "#fff"} stroke={st === i ? "#e65100" : "#4a7c28"} strokeWidth={st === i ? 3.5 : 2} />
+          <text x={cx} y="210" fontSize="17" textAnchor="middle">{["🥚", "🐛", "🥜", "🦋"][i]}</text>
+          {st === i && <circle cx={cx} cy="204" r={21 + Math.sin(tk * 0.3) * 2} fill="none" stroke="#ff9800" strokeWidth="1.5" opacity="0.7" />}
+        </g>; })}
       </svg>
       <div className="vlab-controls"><div className="vlab-ctrl-col" style={{ flex: 1 }}>
-        <div className="vlab-num-row">{VLAB_LIFE.map((x, i) => <button key={i} type="button" className={"vlab-num-btn" + (st === i ? " active" : "")} onClick={() => { setAuto(false); setSt(i); }}>{VLAB_FA_DIGITS(i + 1)}. {x.n}</button>)}</div>
+        <label className="vlab-ctrl-label">گذر زمان: {VLAB_FA_DIGITS(Math.round(t / 4))}٪ از یک چرخه</label>
+        <VlabRange min={0} max={99} step={1} value={Math.round(t / 4)} onChange={(e) => { setAuto(false); setT(+e.target.value * 4); }} />
+        <div className="vlab-num-row">{VLAB_LIFE.map((x, i) => <button key={i} type="button" className={"vlab-num-btn" + (st === i ? " active" : "")} onClick={() => { setAuto(false); setT(i * 100 + 1); }}>{VLAB_FA_DIGITS(i + 1)}. {x.n}</button>)}</div>
         <div className="vlab-num-row"><button type="button" className="vlab-num-btn active" onClick={() => setAuto((a) => !a)}>{auto ? "⏸ توقف" : "▶ پخش خودکار"}</button></div>
       </div></div>
       <div className="vlab-readout">
-        پروانه چهار مرحله دارد: <b>تخم ← لارو ← شفیره ← پروانه</b>. شکل هر مرحله با مرحله‌ی دیگر خیلی فرق دارد؛ به این تغییر کامل «دگردیسی» می‌گویند. پروانه‌ی بالغ دوباره تخم می‌گذارد و چرخه ادامه پیدا می‌کند.
+        پروانه چهار مرحله دارد: <b>تخم ← لارو ← شفیره ← پروانه</b>. شکل هر مرحله با مرحله‌ی دیگر خیلی فرق دارد؛ به این تغییر کامل «دگردیسی» می‌گویند. لارو فقط می‌خورد و بزرگ می‌شود؛ در شفیره بدنش تغییر می‌کند؛ پروانه‌ی بالغ بال‌هایش را باز می‌کند، پرواز می‌کند و دوباره تخم می‌گذارد. (مدت‌ها تقریبی‌اند.)
       </div>
     </div>
   );

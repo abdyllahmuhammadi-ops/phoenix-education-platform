@@ -25472,6 +25472,51 @@ const VLAB_EXPERIMENTS = [
     intro: "شب‌های یخ‌بندان پیاپی را شبیه‌سازی کن و شکستن صخره را ببین.",
     tools: ["صخره", "آب", "یخ‌بندان"],
   },
+  {
+    id: "soil-layers",
+    subject: "زمین‌شناسی",
+    level: "ابتدایی",
+    title: "لایه‌های خاک",
+    icon: "🌱",
+    intro: "لایه‌های خاک را بشناس و مسیر باران را ببین.",
+    tools: ["مقطع خاک", "باران"],
+  },
+  {
+    id: "fossil-layers",
+    subject: "زمین‌شناسی",
+    level: "متوسطه اول",
+    title: "لایه‌های رسوبی و فسیل",
+    icon: "🐚",
+    intro: "لایه‌ها را مقایسه کن و سن نسبی را بفهم.",
+    tools: ["چهار لایه", "فسیل"],
+  },
+  {
+    id: "fold-mountain",
+    subject: "زمین‌شناسی",
+    level: "متوسطه اول",
+    title: "چین‌خوردگی و کوه‌زایی",
+    icon: "⛰️",
+    intro: "فشار را زیاد کن و ببین لایه‌ها چطور چین می‌خورند.",
+    tools: ["لایه‌های رنگی", "فشار"],
+  },
+  {
+    id: "push-pull",
+    subject: "فیزیک",
+    level: "ابتدایی",
+    title: "هل دادن و کشیدن",
+    icon: "👉",
+    intro: "نیروی هل دادن و جرم را عوض کن و حرکت جعبه را ببین.",
+    tools: ["جعبه", "نیرو", "اصطکاک"],
+  },
+  {
+    id: "sink-float-kids",
+    subject: "فیزیک",
+    level: "ابتدایی",
+    title: "شناور یا غرق؟",
+    icon: "🥚",
+    intro: "اجسام را در آب بینداز، آب شور هم امتحان کن.",
+    tools: ["ظرف آب", "شش جسم", "نمک"],
+  },
 ];
 
 function vlabClamp(v, min, max) {
@@ -35330,6 +35375,12 @@ function VlabReactionTimeExperiment({ onReading }) {
 }
 
 const VLAB_EVERYDAY = {
+  "soil-layers": { title: "باغچه", text: "کود را روی خاک رویی می‌ریزیم چون ریشه‌ها آنجا هستند.", art: <g><text x="52" y="58" fontSize="40" textAnchor="middle">🌱</text></g> },
+  "fossil-layers": { title: "معدن و کوه", text: "در برش جاده‌ها لایه‌های رسوبی دیده می‌شوند.", art: <g><text x="52" y="58" fontSize="40" textAnchor="middle">🐚</text></g> },
+  "fold-mountain": { title: "البرز و زاگرس", text: "این کوه‌ها بر اثر برخورد صفحه‌های زمین ساخته شده‌اند.", art: <g><text x="52" y="58" fontSize="40" textAnchor="middle">⛰️</text></g> },
+  "push-pull": { title: "هل دادن مبل", text: "مبل سنگین را با نیروی بیشتر می‌لغزانیم.", art: <g><text x="52" y="58" fontSize="40" textAnchor="middle">👉</text></g> },
+  "sink-float-kids": { title: "دریای مرده", text: "در آب بسیار شور آدم روی آب می‌ماند.", art: <g><text x="52" y="58" fontSize="40" textAnchor="middle">🥚</text></g> },
+
   "fraction-add": { title: "تکه‌های کیک", text: "اگر ۲ تکه از ۸ تکه و ۳ تکه دیگر را بخوری، ۵ تکه از ۸ تکه خورده‌ای.", art: <g><text x="52" y="58" fontSize="40" textAnchor="middle">➕</text></g> },
   "mean-median": { title: "نمره‌ی کلاس", text: "یک نمره‌ی خیلی بالا میانگین را بالا می‌برد، ولی میانه را کم‌تر.", art: <g><text x="52" y="58" fontSize="40" textAnchor="middle">📈</text></g> },
   "coord-plane": { title: "نقشه", text: "مختصات جغرافیایی همین ایده است: عرض و طول.", art: <g><text x="52" y="58" fontSize="40" textAnchor="middle">🧭</text></g> },
@@ -45651,7 +45702,144 @@ function VlabWeatheringExperiment({ onReading }) {
   );
 }
 
+/* ---------- ه۱. لایه‌های خاک ---------- */
+const VLAB_E_SOIL = [["خاک رویی (هوموس)", "#4e342e", "پر از مواد غذایی و ریشه؛ گیاهان اینجا رشد می‌کنند"], ["خاک زیرین", "#8d6e63", "رس و مواد معدنی؛ ریشه‌های بلند به اینجا می‌رسند"], ["سنگ‌ریزه و خرده‌سنگ", "#bcaaa4", "سنگ‌های خُرد؛ آب از لابه‌لای آن‌ها می‌گذرد"], ["سنگ بستر", "#78909c", "سنگ سخت و محکم؛ زیر همه‌ی لایه‌ها"]];
+function VlabSoilLayersExperiment({ onReading }) {
+  const [sel, setSel] = useState(0);
+  const [rain, setRain] = useState(false);
+  useEffect(() => { if (onReading) onReading(VLAB_E_SOIL[sel][0]); /* eslint-disable-next-line */ }, [sel]);
+  const H = [38, 40, 38, 36];
+  let y0 = 28; const ys = H.map((h) => { const y = y0; y0 += h; return y; });
+  return (
+    <div className="vlab-exp">
+      <svg viewBox="0 0 320 200" className="vlab-svg" style={{ direction: "ltr", background: "#dbe9f4" }}>
+        <rect width="320" height="200" rx="12" fill="#dbe9f4" />
+        <text x="60" y="20" fontSize="14" textAnchor="middle">🌱🌿🌱</text>
+        {VLAB_E_SOIL.map((l, i) => <g key={i} onClick={() => setSel(i)} style={{ cursor: "pointer" }}><rect x="20" y={ys[i]} width="200" height={H[i]} fill={l[1]} stroke={sel === i ? "#ffd23f" : "#33291a"} strokeWidth={sel === i ? 4 : 1} />{i === 2 && Array.from({ length: 9 }, (_, k) => <circle key={k} cx={34 + k * 22} cy={ys[i] + 12 + (k % 2) * 12} r="5" fill="#8d8f93" />)}{i === 0 && <path d="M 50,28 v 24 M 110,28 v 30 M 170,28 v 20" stroke="#c8e6c9" strokeWidth="2" />}</g>)}
+        {rain && <g stroke="#1e6fd9" strokeWidth="2">{[40, 100, 160].map((x) => <path key={x} d={`M ${x},30 L ${x},${ys[2] + 36}`} strokeDasharray="4 5" />)}</g>}
+        <text x="270" y="60" fontSize="10" fill="#33291a" textAnchor="middle" fontWeight="700">{VLAB_E_SOIL[sel][0]}</text>
+        <foreignObject x="226" y="68" width="90" height="100"><div style={{ fontSize: "9px", color: "#33291a", direction: "rtl", lineHeight: 1.5 }}>{VLAB_E_SOIL[sel][2]}</div></foreignObject>
+      </svg>
+      <div className="vlab-controls"><div className="vlab-ctrl-col" style={{ flex: 1 }}>
+        <div className="vlab-num-row">{VLAB_E_SOIL.map((l, i) => <button key={i} type="button" className={"vlab-num-btn" + (sel === i ? " active" : "")} onClick={() => setSel(i)}>{VLAB_FA_DIGITS(i + 1)}. {l[0].split(" ")[0]}</button>)}<button type="button" className={"vlab-num-btn" + (rain ? " active" : "")} onClick={() => setRain(!rain)}>🌧️ باران</button></div>
+      </div></div>
+      <div className="vlab-readout">خاک چند لایه دارد. باران از لایه‌های بالایی رد می‌شود، اما سنگ بستر آن را نگه می‌دارد؛ برای همین گیاهان از خاک رویی و آب زیرزمینی بهره می‌برند. لایه‌ها ضخامت‌شان در هر منطقه فرق می‌کند.</div>
+    </div>
+  );
+}
+
+/* ---------- ه۲. لایه‌های رسوبی و فسیل ---------- */
+const VLAB_E_FOSSILS = [["🐚", "صدف", 0], ["🦴", "استخوان ماهی", 1], ["🌿", "برگ گیاه", 2], ["🦕", "دایناسور", 3]];
+function VlabFossilLayersExperiment({ onReading }) {
+  const [age, setAge] = useState(2);
+  useEffect(() => { if (onReading) onReading(`لایه‌ی ${age}`); /* eslint-disable-next-line */ }, [age]);
+  const layers = ["#d7ccc8", "#bcaaa4", "#a1887f", "#8d6e63"];
+  return (
+    <div className="vlab-exp">
+      <svg viewBox="0 0 320 190" className="vlab-svg" style={{ direction: "ltr", background: "#fbf7ec" }}>
+        <rect width="320" height="190" rx="12" fill="#fbf7ec" />
+        {layers.map((c, i) => <g key={i}><rect x="20" y={20 + i * 36} width="200" height="36" fill={c} stroke="#33291a" strokeOpacity="0.4" /><text x="120" y={44 + i * 36} fontSize="18" textAnchor="middle">{VLAB_E_FOSSILS[i][0]}</text><text x="232" y={42 + i * 36} fontSize="9" fill="#33291a">{i === 0 ? "جوان‌ترین (بالا)" : i === 3 ? "قدیمی‌ترین (پایین)" : ""}</text></g>)}
+        <rect x="14" y={16 + (age - 1) * 36} width="212" height="44" fill="none" stroke="#c0392b" strokeWidth="3" rx="4" />
+        <text x="270" y="92" fontSize="10" fill="#c0392b" textAnchor="middle" fontWeight="700">{VLAB_E_FOSSILS[age - 1][1]}</text>
+        <text x="270" y="108" fontSize="9" fill="#33291a" textAnchor="middle">لایه‌ی {VLAB_FA_DIGITS(age)} از بالا</text>
+      </svg>
+      <div className="vlab-controls"><div className="vlab-ctrl-col" style={{ flex: 1 }}>
+        <label className="vlab-ctrl-label">لایه‌ی مورد بررسی: {VLAB_FA_DIGITS(age)}</label>
+        <VlabRange min={1} max={4} step={1} value={age} onChange={(e) => setAge(+e.target.value)} />
+      </div></div>
+      <div className="vlab-readout">رسوب‌ها روی هم ته‌نشین می‌شوند؛ پس معمولاً لایه‌ی پایین‌تر <b>قدیمی‌تر</b> است و فسیل‌های آن هم کهن‌ترند. این «سن نسبی» است: فقط می‌گوید کدام قدیمی‌تر است، نه چند سال. اگر لایه‌ها چین بخورند یا بشکنند، ترتیب باید با دقت بررسی شود.</div>
+    </div>
+  );
+}
+
+/* ---------- ه۳. کوه‌های چین‌خورده ---------- */
+function VlabFoldMountainExperiment({ onReading }) {
+  const [sq, setSq] = useState(0);
+  useEffect(() => { if (onReading) onReading(`فشردگی ${sq}٪`); /* eslint-disable-next-line */ }, [sq]);
+  const L = 280 * (1 - sq / 100 * 0.5), amp = sq * 0.45;
+  const path = (y0, c) => { let d = ""; for (let i = 0; i <= 60; i++) { const x = 20 + (L * i) / 60; const y = y0 - amp * Math.sin((i / 60) * Math.PI * 4) * (1 - (y0 - 80) / 160); d += (i ? "L" : "M") + x.toFixed(1) + "," + y.toFixed(1) + " "; } return <path d={d} stroke={c} strokeWidth="14" fill="none" />; };
+  return (
+    <div className="vlab-exp">
+      <svg viewBox="0 0 320 190" className="vlab-svg" style={{ direction: "ltr", background: "#0b1330" }}>
+        <rect width="320" height="190" rx="12" fill="#0b1330" />
+        {["#e57373", "#ffb74d", "#fff176", "#81c784", "#64b5f6"].map((c, i) => <g key={i}>{path(110 + i * 14, c)}</g>)}
+        <rect x="6" y="70" width="14" height="110" fill="#78909c" /><rect x={20 + L} y="70" width="14" height="110" fill="#78909c" />
+        <text x="160" y="22" fontSize="10" fill="#ffe08a" textAnchor="middle" fontWeight="700">طول لایه‌ها از {VLAB_FA_DIGITS(280)} به {VLAB_FA_DIGITS(Math.round(L))} رسیده (فشردگی {VLAB_FA_DIGITS(sq)}٪)</text>
+      </svg>
+      <div className="vlab-controls"><div className="vlab-ctrl-col" style={{ flex: 1 }}>
+        <label className="vlab-ctrl-label">فشار از دو طرف: {VLAB_FA_DIGITS(sq)}٪</label>
+        <VlabRange min={0} max={80} step={1} value={sq} onChange={(e) => setSq(+e.target.value)} />
+      </div></div>
+      <div className="vlab-readout">وقتی دو صفحه‌ی سنگی به هم فشار می‌آورند، لایه‌های افقی خم می‌شوند و «چین» می‌خورند. کوه‌های البرز و زاگرس بر اثر چین‌خوردگی‌هایی در میلیون‌ها سال پدید آمده‌اند. این مدل مقیاس واقعی ندارد.</div>
+    </div>
+  );
+}
+
+/* ---------- ه۴. هل دادن و کشیدن ---------- */
+function VlabPushPullExperiment({ onReading }) {
+  const [F, setF] = useState(30);
+  const [m, setM] = useState(10);
+  const [t, setT] = useState(0);
+  const mu = 0.2, N = m * 10, fr = Math.min(F, mu * N);
+  const a = Math.max(0, (F - mu * N) / m);
+  useEffect(() => { if (t > 0 && t < 4) { const id = setTimeout(() => setT((x) => x + 0.05), 40); return () => clearTimeout(id); } }, [t]);
+  useEffect(() => { setT(0); }, [F, m]);
+  useEffect(() => { if (onReading) onReading(`نیرو ${F} N | جرم ${m} kg | شتاب ${a.toFixed(1)}`); /* eslint-disable-next-line */ }, [F, m]);
+  const dx = vlabClamp(0.5 * a * t * t * 14, 0, 150);
+  return (
+    <div className="vlab-exp">
+      <svg viewBox="0 0 320 170" className="vlab-svg" style={{ direction: "ltr", background: "#fbf7ec" }}>
+        <rect width="320" height="170" rx="12" fill="#fbf7ec" />
+        <rect y="120" width="320" height="50" fill="#c8b891" />
+        <rect x={60 + dx} y={120 - 20 - m * 1.6} width={30 + m * 1.6} height={20 + m * 1.6} fill="#ff9800" stroke="#6b4513" strokeWidth="2" />
+        <line x1={20 + dx} y1="96" x2={58 + dx} y2="96" stroke="#c0392b" strokeWidth={1 + F / 12} markerEnd="" /><polygon points={`${58 + dx},90 ${70 + dx},96 ${58 + dx},102`} fill="#c0392b" />
+        <text x="160" y="24" fontSize="11" fill="#33291a" textAnchor="middle" fontWeight="700">{a > 0 ? `حرکت می‌کند — شتاب ${VLAB_FA_DIGITS(a.toFixed(1))}` : "نیروی هل دادن از اصطکاک کمتر است؛ جعبه نمی‌لغزد"}</text>
+        <text x="160" y="42" fontSize="9" fill="#7a6b50" textAnchor="middle">اصطکاک = {VLAB_FA_DIGITS(fr.toFixed(0))} نیوتن</text>
+      </svg>
+      <div className="vlab-controls"><div className="vlab-ctrl-col" style={{ flex: 1 }}>
+        <label className="vlab-ctrl-label">نیروی هل دادن: {VLAB_FA_DIGITS(F)} نیوتن</label><VlabRange min={0} max={80} step={5} value={F} onChange={(e) => setF(+e.target.value)} />
+        <label className="vlab-ctrl-label">جرم جعبه: {VLAB_FA_DIGITS(m)} کیلوگرم</label><VlabRange min={2} max={30} step={1} value={m} onChange={(e) => setM(+e.target.value)} />
+        <div className="vlab-num-row"><button type="button" className="vlab-num-btn active" onClick={() => setT(0.01)}>👉 هل بده</button><button type="button" className="vlab-num-btn" onClick={() => setT(0)}>از نو</button></div>
+      </div></div>
+      <div className="vlab-readout">هل دادن و کشیدن «نیرو» است. نیرو تا از اصطکاک بیشتر نشود جسم را نمی‌لغزاند؛ بعد هرچه جسم سنگین‌تر، شتابش کمتر. (اصطکاک ۰٫۲ وزن، g ≈ ۱۰ — مدل ساده)</div>
+      <VlabFormulaCheck title="شتاب" fa="شتاب = (نیرو − اصطکاک) ÷ جرم" en="" legend="اصطکاک = ۰٫۲ × وزن، وزن = جرم × ۱۰" subst={`(${F} − ${fr.toFixed(0)}) ÷ ${m} = ?`} label="شتاب:" answer={a} unit="" decimals={1} />
+    </div>
+  );
+}
+
+/* ---------- ه۵. شناور یا غرق ---------- */
+const VLAB_E_ITEMS = [["🪵", "چوب", 0.6], ["🪨", "سنگ", 2.6], ["🍎", "سیب", 0.8], ["🔩", "پیچ آهنی", 7.8], ["🧊", "یخ", 0.92], ["🥚", "تخم‌مرغ", 1.03]];
+function VlabSinkFloatKidsExperiment({ onReading }) {
+  const [i, setI] = useState(0);
+  const [salt, setSalt] = useState(false);
+  const it = VLAB_E_ITEMS[i], dw = salt ? 1.2 : 1.0;
+  const floats = it[2] < dw;
+  useEffect(() => { if (onReading) onReading(`${it[1]}: ${floats ? "شناور" : "غرق"}`); /* eslint-disable-next-line */ }, [i, salt]);
+  return (
+    <div className="vlab-exp">
+      <svg viewBox="0 0 320 180" className="vlab-svg" style={{ direction: "ltr", background: "#fbf7ec" }}>
+        <rect width="320" height="180" rx="12" fill="#fbf7ec" />
+        <rect x="60" y="40" width="200" height="120" rx="8" fill={salt ? "#7fbfdc" : "#a8d8f0"} stroke="#33291a" strokeWidth="2" />
+        <text x={160} y={floats ? 70 : 140} fontSize="34" textAnchor="middle">{it[0]}</text>
+        <text x="160" y="28" fontSize="11" fill="#33291a" textAnchor="middle" fontWeight="700">{it[1]} در {salt ? "آب شور" : "آب شیرین"}: {floats ? "شناور می‌شود" : "غرق می‌شود"}</text>
+        <text x="160" y="172" fontSize="9" fill="#7a6b50" textAnchor="middle">چگالی {it[1]} ≈ {VLAB_FA_DIGITS(it[2])} ، چگالی آب ≈ {VLAB_FA_DIGITS(dw)} (گرم بر سانتی‌مترمکعب)</text>
+      </svg>
+      <div className="vlab-controls"><div className="vlab-ctrl-col" style={{ flex: 1 }}>
+        <div className="vlab-num-row">{VLAB_E_ITEMS.map((x, k) => <button key={k} type="button" className={"vlab-num-btn" + (i === k ? " active" : "")} onClick={() => setI(k)}>{x[0]}</button>)}<button type="button" className={"vlab-num-btn" + (salt ? " active" : "")} onClick={() => setSalt(!salt)}>🧂 نمک بریز</button></div>
+      </div></div>
+      <div className="vlab-readout">جسمی که از آب <b>چگال‌تر</b> باشد غرق و جسمی که کم‌چگال‌تر باشد شناور می‌شود. با افزودن نمک چگالی آب بیشتر می‌شود؛ تخم‌مرغ در آب شور شناور می‌شود. (چگالی‌ها تقریبی‌اند.)</div>
+      <VlabFormulaCheck title="چگالی" fa="چگالی = جرم ÷ حجم" en="" legend="جسمی با جرم ۲۶ گرم و حجم ۱۰ سانتی‌مترمکعب" subst={`26 ÷ 10 = ?`} label="چگالی:" answer={2.6} unit="" decimals={1} />
+    </div>
+  );
+}
+
 const VLAB_COMPONENTS = {
+  "soil-layers": VlabSoilLayersExperiment,
+  "fossil-layers": VlabFossilLayersExperiment,
+  "fold-mountain": VlabFoldMountainExperiment,
+  "push-pull": VlabPushPullExperiment,
+  "sink-float-kids": VlabSinkFloatKidsExperiment,
+
   "fraction-add": VlabFractionAddExperiment,
   "mean-median": VlabMeanMedianExperiment,
   "coord-plane": VlabCoordPlaneExperiment,
@@ -45968,6 +46156,12 @@ const VLAB_COMPONENTS = {
 /* راهنمای یادگیری (پیش‌نویس، در انتظار بازبینی معلم) — با الهام از اصول PhET: هدف‌های کم و مشخص، چالش‌های باز («همه‌ی راه‌ها را پیدا کن»)،
    پیش‌بینی و مقایسه، ارتباط با زندگی، و برداشت‌های نادرست رایج. هر آزمایش: goals، challenges، misconception (اختیاری)، check:{q,a} */
 const VLAB_GUIDE = {
+  "soil-layers": { goals: ["لایه‌های خاک را نام ببری.", "بدانی ریشه و آب کجا می‌روند."], challenges: ["لایه‌ی مغذی کدام است؟", "باران را روشن کن.", "سنگ بستر چه نقشی دارد؟"], misconception: "خاک یک ماده‌ی یکنواخت است؛ در حقیقت چند لایه دارد.", check: { q: "گیاهان بیشتر از کدام لایه مواد غذایی می‌گیرند؟", a: "خاک رویی." } },
+  "fossil-layers": { goals: ["سن نسبی را بفهمی.", "ترتیب لایه‌ها را بخوانی."], challenges: ["قدیمی‌ترین فسیل کدام است؟", "لایه‌ی ۱ جوان‌تر است یا ۴؟", "اگر لایه‌ها چین بخورند چه می‌شود؟"], misconception: "فسیل بالایی همیشه قدیمی‌تر است؛ در حقیقت پایینی قدیمی‌تر است.", check: { q: "کدام لایه معمولاً قدیمی‌تر است؟", a: "لایه‌ی پایینی." } },
+  "fold-mountain": { goals: ["چین‌خوردگی را توضیح دهی.", "رابطه‌ی فشار و ارتفاع را ببینی."], challenges: ["فشار را به ۸۰٪ برسان.", "طول لایه‌ها چه شد؟", "البرز چگونه ساخته شد؟"], misconception: "کوه‌ها یک‌شبه ساخته می‌شوند؛ در حقیقت طی میلیون‌ها سال.", check: { q: "با فشار بیشتر، ارتفاع چین‌ها چه می‌شود؟", a: "بیشتر." } },
+  "push-pull": { goals: ["نیرو را بشناسی.", "نقش جرم و اصطکاک را ببینی."], challenges: ["جعبه‌ی سنگین‌تر بگذار.", "نیرو را کم کن.", "کمترین نیروی لغزاندن چند است؟"], misconception: "هر نیروی کوچکی جسم را حرکت می‌دهد؛ در حقیقت باید از اصطکاک بیشتر باشد.", check: { q: "اگر نیرو کمتر از اصطکاک باشد چه می‌شود؟", a: "جسم نمی‌لغزد." } },
+  "sink-float-kids": { goals: ["شناور و غرق را پیش‌بینی کنی.", "اثر نمک را ببینی."], challenges: ["تخم‌مرغ را در آب شور بینداز.", "کدام جسم همیشه غرق می‌شود؟", "چرا یخ شناور است؟"], misconception: "جسم سنگین همیشه غرق می‌شود؛ در حقیقت چگالی مهم است.", check: { q: "تخم‌مرغ در آب شور چه می‌شود؟", a: "شناور." } },
+
   "fraction-add": { goals: ["کسرهای هم‌مخرج را جمع کنی.", "بدانی چرا مخرج ثابت می‌ماند."], challenges: ["۲/۶ + ۳/۶ را بساز.", "جمعی بساز که از یک کل بیشتر شود.", "مخرج را عوض کن."], misconception: "در جمع کسرها مخرج‌ها هم جمع می‌شوند؛ در حقیقت مخرج ثابت می‌ماند.", check: { q: "۲/۷ + ۳/۷ چند است؟", a: "۵/۷." } },
   "mean-median": { goals: ["میانگین و میانه را حساب کنی.", "اثر داده‌ی پرت را ببینی."], challenges: ["یک داده را ۲۰ کن.", "همه‌ی داده‌ها را برابر کن.", "میانه را عوض نکن ولی میانگین را عوض کن."], misconception: "میانگین همیشه برابر عدد وسط است؛ در حقیقت فقط نقطه‌ی تعادل داده‌هاست.", check: { q: "میانگین ۲، ۴، ۶ چند است؟", a: "۴." } },
   "coord-plane": { goals: ["مختصات نقطه را بخوانی.", "ناحیه‌ی نقطه را تشخیص دهی."], challenges: ["نقطه‌ای در ناحیه‌ی سوم بگذار.", "نقطه‌ای روی محور y بگذار.", "فاصله‌ی (۳،۴) از مبدأ چند است؟"], misconception: "(۲، ۵) و (۵، ۲) یک نقطه‌اند؛ در حقیقت ترتیب مهم است.", check: { q: "در (۳،۴) کدام x است؟", a: "۳." } },

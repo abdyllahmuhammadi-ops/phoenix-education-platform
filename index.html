@@ -22642,6 +22642,28 @@ function VlabMeterRow({ meters, height }) {
    ققنوس — لغزنده + کادر عددی (دانش‌آموز می‌تواند عدد دقیق را تایپ کند؛ تصویر و فرمول همان عدد را نشان می‌دهند)
    ============================================================ */
 /* ===== کادربندی خودکار برچسب‌های SVG آزمایشگاه: اگر نوشته‌ای از لبه‌ی تصویر بیرون بزند، به‌اندازه‌ی لازم به داخل می‌آید ===== */
+/* پوسته‌ی کودکانه: روی آزمایش‌های ابتدایی، بوم‌های روشن را نشان‌گذاری می‌کند تا پس‌زمینه‌ی شاد بگیرند */
+function VlabKidsSkin({ children }) {
+  const ref = React.useRef(null);
+  useEffect(() => {
+    const tag = () => {
+      const root = ref.current; if (!root) return;
+      root.querySelectorAll("svg.vlab-svg").forEach((svg) => {
+        const m = (getComputedStyle(svg).backgroundColor || "").match(/\d+/g);
+        const lum = m ? (0.299 * m[0] + 0.587 * m[1] + 0.114 * m[2]) : 0;
+        svg.classList.toggle("kids-light", lum > 150);
+      });
+    };
+    tag(); const id = setInterval(tag, 500); return () => clearInterval(id);
+  }, []);
+  return (
+    <div ref={ref} className="vlab-kids">
+      <div className="vlab-kids-banner"><span>🦉</span><b>بیا آزمایش کنیم!</b><span>✨</span></div>
+      {children}
+    </div>
+  );
+}
+
 function VlabTextFit({ children }) {
   const ref = React.useRef(null);
   useEffect(() => {
@@ -46628,6 +46650,26 @@ function StudentVirtualLabView({ onBack, grade, studentCode, schoolCode }) {
         .vlab-tools-box { background: #fff; border: 1px solid rgba(28,37,64,0.08); border-radius: 12px; padding: 14px; margin-bottom: 14px; }
         .vlab-tools-chip-row { display: flex; flex-wrap: wrap; gap: 8px; }
         .vlab-tool-chip { background: #eef3fb; border: 1px solid #c9d9f0; color: #27406b; font-size: 12px; font-weight: 700; padding: 6px 12px; border-radius: 999px; }
+        /* ===== پوسته‌ی کودکانه (ابتدایی): رنگارنگ، درشت، گرد و دوستانه ===== */
+        .vlab-kids { display: flex; flex-direction: column; gap: 14px; padding: 12px; border-radius: 28px; background: linear-gradient(160deg, #fff4c9 0%, #ffe3ec 45%, #d9f0ff 100%); border: 3px solid #fff; box-shadow: 0 10px 28px rgba(255,160,0,0.22), inset 0 0 0 2px #ffd36b; }
+        .vlab-kids-banner { display: flex; align-items: center; justify-content: center; gap: 10px; font-size: 17px; color: #7a3e00; background: #fff; border-radius: 999px; padding: 6px 18px; width: fit-content; margin: 0 auto; box-shadow: 0 4px 0 #ffd36b; }
+        .vlab-kids-banner span { font-size: 24px; animation: vlab-kids-bob 1.8s ease-in-out infinite; display: inline-block; }
+        .vlab-kids-banner span:last-child { animation-delay: .6s; }
+        @keyframes vlab-kids-bob { 0%,100% { transform: translateY(0) rotate(-6deg); } 50% { transform: translateY(-4px) rotate(6deg); } }
+        .vlab-kids .vlab-svg { max-width: 460px; border: 5px solid #ff9f1c; border-radius: 26px; box-shadow: 0 7px 0 #e07b00, 0 16px 26px rgba(0,0,0,0.18); }
+        .vlab-kids .vlab-svg.kids-light { background: radial-gradient(circle at 18% 14%, #fffde7 0%, #ffe9b8 38%, #bfe9ff 100%) !important; }
+        .vlab-kids .vlab-svg.kids-light > rect:first-of-type { fill-opacity: 0.35; }
+        .vlab-kids .vlab-exp { gap: 16px; }
+        .vlab-kids .vlab-ctrl-label { font-size: 15px; color: #7a3e00; background: #fff; padding: 4px 12px; border-radius: 999px; width: fit-content; box-shadow: 0 2px 0 #ffd36b; }
+        .vlab-kids input[type="range"] { accent-color: #ff6f00; height: 14px; cursor: pointer; }
+        .vlab-kids .vlab-num-row, .vlab-kids .vlab-btn-row, .vlab-kids .vlab-toggle-row { gap: 10px; }
+        .vlab-kids .vlab-num-btn, .vlab-kids .vlab-toggle-btn, .vlab-kids .vlab-btn { min-height: 48px; min-width: 52px; font-size: 16px; border-radius: 16px; border: 3px solid #fff; color: #fff; background: linear-gradient(180deg, #4fc3f7, #1e88e5); box-shadow: 0 5px 0 #1565c0; transition: transform .1s, box-shadow .1s; }
+        .vlab-kids .vlab-num-btn:nth-child(3n+2), .vlab-kids .vlab-toggle-btn:nth-child(3n+2), .vlab-kids .vlab-btn:nth-child(3n+2) { background: linear-gradient(180deg, #ba68c8, #8e24aa); box-shadow: 0 5px 0 #6a1b9a; }
+        .vlab-kids .vlab-num-btn:nth-child(3n), .vlab-kids .vlab-toggle-btn:nth-child(3n), .vlab-kids .vlab-btn:nth-child(3n) { background: linear-gradient(180deg, #81c784, #43a047); box-shadow: 0 5px 0 #2e7d32; }
+        .vlab-kids .vlab-num-btn:active, .vlab-kids .vlab-toggle-btn:active, .vlab-kids .vlab-btn:active { transform: translateY(4px); box-shadow: 0 1px 0 rgba(0,0,0,.3); }
+        .vlab-kids .vlab-num-btn.active, .vlab-kids .vlab-toggle-btn.active { background: linear-gradient(180deg, #ffd54f, #ff9800); color: #4e2a00; box-shadow: 0 5px 0 #e65100, 0 0 0 4px rgba(255,213,79,.55); }
+        .vlab-kids .vlab-readout { position: relative; background: #fffdf2; border: 3px dashed #ffb300; border-radius: 22px; padding: 16px 18px 14px; font-size: 16px; line-height: 2.1; color: #5d4037; margin-top: 8px; }
+        .vlab-kids .vlab-readout::before { content: "🦉 جغد دانا می‌گوید"; position: absolute; top: -17px; right: 18px; background: #ffb300; color: #fff; font-size: 13px; font-weight: 800; padding: 3px 14px; border-radius: 999px; }
         .vlab-tools-note { font-size: 11.5px; color: #8a8060; line-height: 1.8; margin: 10px 0 0; }
         .pqb-root button:focus-visible, .pqb-root input:focus-visible, .pqb-root select:focus-visible, .pqb-root textarea:focus-visible, .pqb-root [tabindex]:focus-visible { outline: 3px solid #1b6ef3; outline-offset: 2px; }
         .vlab-guide-box { background: #eef5ff; border: 1px solid #bcd3f5; border-radius: 14px; padding: 14px 16px; margin: 12px 0; }
@@ -46777,7 +46819,7 @@ function StudentVirtualLabView({ onBack, grade, studentCode, schoolCode }) {
               <button type="button" className="vlab-tb-btn" onClick={() => { try { window.print(); } catch (e) {} }}>🖨 برگه‌ی فعالیت (چاپ)</button>
             </div>
             <div ref={labBoxRef}>
-            {ActiveComponent && <VlabTextFit key={resetKey}><ActiveComponent onReading={setReading} /></VlabTextFit>}
+            {ActiveComponent && (activeExperiment && activeExperiment.level === "ابتدایی" ? <VlabKidsSkin key={resetKey}><VlabTextFit><ActiveComponent onReading={setReading} /></VlabTextFit></VlabKidsSkin> : <VlabTextFit key={resetKey}><ActiveComponent onReading={setReading} /></VlabTextFit>)}
             </div>
             {ActiveComponent && VLAB_EVERYDAY[activeId] && <VlabEverydayCard title={VLAB_EVERYDAY[activeId].title} text={VLAB_EVERYDAY[activeId].text}>{VLAB_EVERYDAY[activeId].art}</VlabEverydayCard>}
 

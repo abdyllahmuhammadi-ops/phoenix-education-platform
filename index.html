@@ -30457,11 +30457,22 @@ function VlabHeatTransferExperiment({ onReading }) {
                 <stop offset="100%" stopColor="#5b6472" />
               </linearGradient>
             </defs>
-            <rect x="38" y="96" width="34" height="10" rx="2" fill="#3a2f22" />
-            <ellipse cx="55" cy="84" rx="10" ry="15" fill="#1e88e5" opacity="0.85" />
-            <path d="M55,96 C46,86 47,74 55,62 C63,74 64,86 55,96 Z" fill="#ffb347" opacity="0.92" />
-            <rect x="70" y="86" width="220" height="14" rx="3" fill="url(#heatRodGrad)" stroke="#2c3140" strokeWidth="1.5" />
-            <line x1="70" y1="89" x2="290" y2="89" stroke="#fff" strokeWidth="1" opacity="0.22" />
+            <rect x="30" y="160" width="270" height="6" rx="2" fill="#3a3326" />
+            <path d="M82,100 L78,160 M272,100 L276,160" stroke="#6b7280" strokeWidth="3.4" strokeLinecap="round" />
+            <path d="M40,160 L48,138 L68,138 L76,160 Z" fill="#78818f" stroke="#3d4450" strokeWidth="1" />
+            <rect x="52" y="124" width="12" height="14" fill="#5a6270" />
+            <ellipse cx="58" cy="100" rx="11" ry="18" fill="#1e88e5" opacity="0.28" />
+            <path d="M58,118 C48,106 50,92 58,78 C66,92 68,106 58,118 Z" fill="#ff9d2e" opacity="0.95" /><path d="M58,116 C53,108 54,98 58,90 C62,98 63,108 58,116 Z" fill="#fff0a8" />
+            <rect x="70" y="88" width="220" height="13" rx="6.5" fill="url(#heatRodGrad)" stroke="#2c3140" strokeWidth="1.5" />
+            <rect x="70" y="90" width="220" height="3" rx="1.5" fill="#fff" opacity="0.32" />
+            {[0, 1, 2, 3, 4].map((i) => {
+              const px = 102 + i * 44, fall = heatFrac * 220 > px - 70 + 8;
+              return fall ? (
+                <g key={"pin" + i} transform={`translate(${px - 8 + (i % 2) * 5},${158 - 2}) rotate(${-24 + i * 14})`}><rect x="0" y="0" width="14" height="2.4" rx="1" fill="#d9c9a0" /><circle cx="0" cy="1.2" r="2.6" fill="#c0392b" /></g>
+              ) : (
+                <g key={"pin" + i}><circle cx={px} cy="105" r="3.6" fill="#f2e6c4" stroke="#b7a878" strokeWidth="0.8" /><rect x={px - 1} y="107" width="2.4" height="12" rx="1" fill="#d9c9a0" /><circle cx={px} cy="120" r="2.8" fill="#c0392b" /></g>
+              );
+            })}
             <VlabThermometerMini x={298} y={60} temp={farEndTemp} minT={0} maxT={100} h={55} />
             {Array.from({ length: 11 }).map((_, k) => (
               <g key={"hr" + k}>
@@ -30469,7 +30480,7 @@ function VlabHeatTransferExperiment({ onReading }) {
                 {k % 5 === 0 && <text x={70 + k * 22 - (k === 10 ? 8 : 0)} y="136" fontSize="7.5" fill="#cfd6ea" textAnchor="middle" style={{ direction: "ltr", unicodeBidi: "isolate" }}>{k * 10 + " cm"}</text>}
               </g>
             ))}
-            <text x="180" y="150" fontSize="9" fill="#9aa3c0" textAnchor="middle">جبهه‌ی داغ (نارنجی) با گذشتِ زمان در طولِ میله‌ی فلزی جلو می‌رود</text>
+            <text x="180" y="182" fontSize="9" fill="#9aa3c0" textAnchor="middle">جبهه‌ی داغ (نارنجی) با گذشتِ زمان در طولِ میله‌ی فلزی جلو می‌رود</text>
           </g>
         )}
         {mode === "همرفت" && (
@@ -33020,22 +33031,24 @@ function VlabPlaneMirrorExperiment({ onReading }) {
     <div className="vlab-exp">
       <svg viewBox="0 0 320 200" className="vlab-svg" style={{ background: "#03060f", borderRadius: "10px" }}>
         <defs><linearGradient id="pmMir" x1="0" x2="1"><stop offset="0" stopColor="#9fc4e8" /><stop offset="1" stopColor="#e9f3ff" /></linearGradient></defs>
-        <line x1="6" y1={AY} x2="314" y2={AY} stroke="#2b3760" />
-        <rect x={MX - 3} y="30" width="6" height={AY - 30 + 4} fill="url(#pmMir)" stroke="#cfe0ff" />
+        <rect x="6" y={AY} width="308" height="26" fill="#2a2216" /><line x1="6" y1={AY} x2="314" y2={AY} stroke="#6a5530" strokeWidth="2" />
+        <rect x={MX - 6} y="26" width="12" height={AY - 26 + 3} rx="2" fill="#6e4824" stroke="#3a2412" />
+        <rect x={MX - 2.5} y="30" width="5" height={AY - 30 - 3} fill="url(#pmMir)" stroke="#cfe0ff" strokeWidth="0.8" />
+        <rect x={MX - 16} y={AY} width="32" height="5" rx="2" fill="#6e4824" />
         {Array.from({ length: 14 }).map((_, k) => (<line key={"mh" + k} x1={MX + 3} y1={36 + k * 9} x2={MX + 10} y2={42 + k * 9} stroke="#6b7390" strokeWidth="1" />))}
         {/* جسم */}
-        <line x1={ox} y1={AY} x2={ox} y2={topY} stroke="#ffd98a" strokeWidth="3.4" /><polygon points={`${ox - 5},${topY + 7} ${ox + 5},${topY + 7} ${ox},${topY - 1}`} fill="#ffd98a" />
+        <g><rect x={ox - 5} y={topY + 9} width="10" height={AY - topY - 9} rx="1.5" fill="#f7efd8" stroke="#bdb08a" /><rect x={ox - 5} y={topY + 9} width="3" height={AY - topY - 9} fill="#fff" opacity="0.6" /><line x1={ox} y1={topY + 9} x2={ox} y2={topY + 6} stroke="#333" strokeWidth="1" /><path d={`M ${ox},${topY - 3} C ${ox + 6},${topY + 2} ${ox + 4},${topY + 7} ${ox},${topY + 7} C ${ox - 4},${topY + 7} ${ox - 6},${topY + 2} ${ox},${topY - 3} Z`} fill="#ffb02e" /><ellipse cx={ox} cy={topY + 3} rx="1.8" ry="3" fill="#fff6c0" /><circle cx={ox} cy={topY + 2} r="11" fill="#ffd54a" opacity="0.15" /></g>
         <text x={ox} y={AY + 14} fontSize="8" fill="#ffd98a" textAnchor="middle">جسم</text>
         {/* تصویر */}
-        <line x1={ix} y1={AY} x2={ix} y2={topY} stroke="#7be0a4" strokeWidth="3.4" strokeDasharray="4 3" opacity="0.75" /><polygon points={`${ix - 5},${topY + 7} ${ix + 5},${topY + 7} ${ix},${topY - 1}`} fill="#7be0a4" opacity="0.75" />
+        <g opacity="0.6"><rect x={ix - 5} y={topY + 9} width="10" height={AY - topY - 9} rx="1.5" fill="#f7efd8" stroke="#7be0a4" strokeDasharray="3 2" /><path d={`M ${ix},${topY - 3} C ${ix + 6},${topY + 2} ${ix + 4},${topY + 7} ${ix},${topY + 7} C ${ix - 4},${topY + 7} ${ix - 6},${topY + 2} ${ix},${topY - 3} Z`} fill="#ffb02e" /><circle cx={ix} cy={topY + 2} r="11" fill="#ffd54a" opacity="0.15" /></g>
         <text x={ix} y={AY + 14} fontSize="8" fill="#7be0a4" textAnchor="middle">تصویر (مجازی)</text>
         {/* پرتوها */}
         {ok && (<g><line x1={ox} y1={topY} x2={MX} y2={hy} stroke="#ff6a5a" strokeWidth="1.4" /><line x1={MX} y1={hy} x2={eyeX} y2={eyeY} stroke="#ff6a5a" strokeWidth="1.4" /><line x1={MX} y1={hy} x2={ix} y2={topY} stroke="#ff6a5a" strokeWidth="1.1" strokeDasharray="3 3" opacity="0.7" /></g>)}
         <line x1={MX - 38} y1={AY + 24} x2={MX} y2={AY + 24} stroke="#ffd98a" strokeWidth="1" /><text x={MX - d * K / 2} y={AY + 33} fontSize="8" fill="#ffd98a" textAnchor="middle" style={{ direction: "ltr", unicodeBidi: "isolate" }}>{d} cm</text>
         <line x1={MX} y1={AY + 24} x2={ix} y2={AY + 24} stroke="#7be0a4" strokeWidth="1" /><text x={MX + d * K / 2} y={AY + 33} fontSize="8" fill="#7be0a4" textAnchor="middle" style={{ direction: "ltr", unicodeBidi: "isolate" }}>{d} cm</text>
         {/* چشم */}
-        <ellipse cx={eyeX} cy={eyeY} rx="9" ry="6" fill="#fff" stroke="#999" /><circle cx={eyeX + 2} cy={eyeY} r="3" fill="#3a2a17" />
-        <text x={eyeX} y={eyeY - 12} fontSize="8" fill="#9fb0e0" textAnchor="middle">ناظر</text>
+        <path d={`M ${eyeX - 14},${eyeY + 26} L ${eyeX - 12},${eyeY + 8} Q ${eyeX - 16},${eyeY - 10} ${eyeX - 4},${eyeY - 16} Q ${eyeX + 8},${eyeY - 16} ${eyeX + 10},${eyeY - 6} L ${eyeX + 14},${eyeY + 2} L ${eyeX + 9},${eyeY + 4} L ${eyeX + 10},${eyeY + 10} L ${eyeX + 4},${eyeY + 13} L ${eyeX + 3},${eyeY + 26} Z`} fill="#f1c9a0" stroke="#a87a50" strokeWidth="1" strokeLinejoin="round" /><path d={`M ${eyeX - 14},${eyeY - 4} Q ${eyeX - 12},${eyeY - 18} ${eyeX + 4},${eyeY - 15} Q ${eyeX - 6},${eyeY - 10} ${eyeX - 8},${eyeY + 4} Z`} fill="#3a2a1a" /><ellipse cx={eyeX + 4} cy={eyeY - 1} rx="4.4" ry="2.8" fill="#fff" stroke="#777" strokeWidth="0.8" /><circle cx={eyeX + 5.4} cy={eyeY - 1} r="1.7" fill="#3a2a17" />
+        <text x={eyeX} y={eyeY + 40} fontSize="8" fill="#9fb0e0" textAnchor="middle">ناظر</text>
       </svg>
       <VlabMeterRow height={160} meters={[{ label: "فاصله‌ی تصویر", unit: "cm", value: d, ranges: [50], maj: 5, decimals: 0 }, { label: "فاصله‌ی جسم–تصویر", unit: "cm", value: 2 * d, ranges: [100], maj: 5, decimals: 0 }]} />
       <div className="vlab-controls">
@@ -43305,14 +43318,24 @@ function VlabEchoExperiment({ onReading }) {
   return (
     <div className="vlab-exp">
       <svg viewBox="0 0 320 170" className="vlab-svg" style={{ direction: "ltr", background: "#0b1330" }}>
-        <rect width="320" height="170" rx="12" fill="#cfe5f7" />
-        <rect y="120" width="320" height="50" fill="#7aa35a" />
-        {/* کوه */}
-        <path d="M 250,120 L 270,40 L 290,70 L 310,30 L 320,120 Z" fill="#7a6f62" stroke="#4e443a" />
-        {/* شخص */}
-        <circle cx="52" cy="92" r="8" fill="#f1c9a0" /><rect x="46" y="100" width="12" height="22" rx="4" fill="#2e63c4" />
+        <defs>
+          <linearGradient id="ecSky" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stopColor="#7fb6e8" /><stop offset="1" stopColor="#e6f2fb" /></linearGradient>
+          <linearGradient id="ecMt" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stopColor="#9a8f82" /><stop offset="1" stopColor="#4e443a" /></linearGradient>
+          <linearGradient id="ecGr" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stopColor="#8dbb64" /><stop offset="1" stopColor="#5d8a3e" /></linearGradient>
+        </defs>
+        <rect width="320" height="170" rx="12" fill="url(#ecSky)" />
+        <ellipse cx="90" cy="34" rx="26" ry="8" fill="#fff" opacity="0.8" /><ellipse cx="108" cy="30" rx="16" ry="7" fill="#fff" opacity="0.8" />
+        <path d="M 196,122 L 226,64 L 240,78 L 266,28 L 292,70 L 304,56 L 320,92 L 320,122 Z" fill="url(#ecMt)" stroke="#3e352c" strokeWidth="1.2" strokeLinejoin="round" />
+        <path d="M 266,28 L 254,50 L 262,46 L 268,56 L 274,46 L 280,50 Z" fill="#fff" opacity="0.9" />
+        <path d="M 266,28 L 292,70 L 276,122 L 262,122 Z" fill="#000" opacity="0.14" />
+        <rect y="120" width="320" height="50" fill="url(#ecGr)" />
+        {[[120, 128], [150, 124], [182, 130], [96, 132]].map((q, i) => <g key={i}><rect x={q[0] - 1} y={q[1] - 6} width="2" height="8" fill="#5a3a1c" /><circle cx={q[0]} cy={q[1] - 10} r="6" fill="#3e7a34" /></g>)}
+        {/* شخص با دست‌های دور دهان */}
+        <circle cx="50" cy="90" r="8" fill="#f1c9a0" stroke="#a87a50" strokeWidth="0.8" /><path d="M 42,88 Q 50,78 58,88 Q 54,84 50,84 Q 46,84 42,88 Z" fill="#3a2a1a" />
+        <path d="M 44,102 L 56,102 L 58,124 L 42,124 Z" fill="#2e63c4" stroke="#1b3f82" strokeWidth="1" /><rect x="44" y="123" width="5" height="9" fill="#2a2a4a" /><rect x="51" y="123" width="5" height="9" fill="#2a2a4a" />
+        <path d="M 56,100 L 60,92 L 66,90" stroke="#f1c9a0" strokeWidth="3.4" fill="none" strokeLinecap="round" /><path d="M 60,86 L 68,88 L 66,96 Z" fill="#d9d9d9" stroke="#777" strokeWidth="0.8" />
         {run ? <g fill="none" stroke="#e8573d" strokeWidth="2" opacity={1 - Math.abs(prog - 0.5) * 0.8}>
-          <path d={`M ${wavePos - 6},${80} q ${prog < 0.5 ? 8 : -8},12 0,24`} /><path d={`M ${wavePos - 14},${72} q ${prog < 0.5 ? 14 : -14},20 0,40`} />
+          <path d={`M ${wavePos - 6},${80} q ${prog < 0.5 ? 8 : -8},12 0,24`} /><path d={`M ${wavePos - 14},${72} q ${prog < 0.5 ? 14 : -14},20 0,40`} /><path d={`M ${wavePos - 22},${64} q ${prog < 0.5 ? 20 : -20},28 0,56`} opacity="0.55" />
         </g> : null}
         <line x1="60" y1="140" x2="255" y2="140" stroke="#344" strokeDasharray="3 3" />
         <text x="157" y="156" fontSize="10" fill="#122" textAnchor="middle">فاصله تا کوه: {VLAB_FA_DIGITS(d)} متر</text>
@@ -44089,7 +44112,7 @@ function VlabEnergyPyramidExperiment({ onReading }) {
     <div className="vlab-exp">
       <svg viewBox="0 0 320 200" className="vlab-svg" style={{ direction: "ltr", background: "#0b1330" }}>
         <rect width="320" height="200" rx="12" fill="#0b1330" />
-        {lv.map((E, i) => { const w = 240 - i * 55, y = 140 - i * 38; return (<g key={i}><rect x={160 - w / 2} y={y} width={w} height="32" rx="4" fill={["#4caf50", "#8bc34a", "#ffb300", "#ef5350"][i]} opacity="0.9" /><text x="160" y={y + 15} fontSize="10" fill="#10210f" textAnchor="middle" fontWeight="700">{icons[i]} {names[i]}</text><text x="160" y={y + 28} fontSize="9" fill="#10210f" textAnchor="middle">{VLAB_FA_DIGITS(E >= 10 ? Math.round(E) : E.toFixed(1))} کیلوژول</text></g>); })}
+        {lv.map((E, i) => { const w = 250 - i * 38, y = 140 - i * 38; return (<g key={i}><rect x={160 - w / 2} y={y} width={w} height="32" rx="4" fill={["#4caf50", "#8bc34a", "#ffb300", "#ef5350"][i]} opacity="0.9" /><text x="160" y={y + 15} fontSize="10" fill="#10210f" textAnchor="middle" fontWeight="700">{icons[i]} {names[i]}</text><text x="160" y={y + 28} fontSize="9" fill="#10210f" textAnchor="middle">{VLAB_FA_DIGITS(E >= 10 ? Math.round(E) : E.toFixed(1))} کیلوژول</text></g>); })}
         <text x="160" y="190" fontSize="9" fill="#aab3cc" textAnchor="middle">بقیه‌ی انرژی با تنفس و گرما و دفع از دست می‌رود</text>
       </svg>
       <div className="vlab-controls"><div className="vlab-ctrl-col" style={{ flex: 1 }}>
@@ -45811,7 +45834,7 @@ function VlabRulerMeasureExperiment({ onReading }) {
         <text x={x0 + off * sc + (O.w * sc) / 2} y="57" fontSize="11" fill="#222" textAnchor="middle" fontWeight="700">{O.n}</text>
         <line x1={x0 + off * sc} y1="30" x2={x0 + off * sc} y2="78" stroke="#c0392b" strokeDasharray="3 3" /><line x1={x0 + rulerEnd * sc} y1="30" x2={x0 + rulerEnd * sc} y2="78" stroke="#c0392b" strokeDasharray="3 3" />
         <text x="160" y="20" fontSize="11" fill="#33291a" textAnchor="middle" fontWeight="700">ابتدای جسم روی عدد {VLAB_FA_DIGITS(off)} است{off === 0 ? " ✔ (درست)" : " ✘ (باید روی صفر باشد)"}</text>
-        <text x="160" y="150" fontSize="11" fill="#1b7d3a" textAnchor="middle" fontWeight="700">انتهای جسم روی عدد {VLAB_FA_DIGITS(rulerEnd)} است → طول = {VLAB_FA_DIGITS(rulerEnd)} − {VLAB_FA_DIGITS(off)} = {VLAB_FA_DIGITS(O.w)} سانتی‌متر</text>
+        <text x="160" y="142" fontSize="10.5" fill="#1b7d3a" textAnchor="middle" fontWeight="700">{"انتهای جسم روی عدد " + VLAB_FA_DIGITS(rulerEnd) + " است"}</text><text x="160" y="158" fontSize="10.5" fill="#1b7d3a" textAnchor="middle" fontWeight="700">{"طول = " + VLAB_FA_DIGITS(rulerEnd) + " − " + VLAB_FA_DIGITS(off) + " = " + VLAB_FA_DIGITS(O.w) + " سانتی‌متر"}</text>
       </svg>
       <div className="vlab-controls"><div className="vlab-ctrl-col" style={{ flex: 1 }}>
         <div className="vlab-num-row">{objs.map((x, i) => <button key={i} type="button" className={"vlab-num-btn" + (oi === i ? " active" : "")} onClick={() => setOi(i)}>{x.n}</button>)}</div>
@@ -46454,11 +46477,20 @@ function VlabSeismicWavesExperiment({ onReading }) {
     <div className="vlab-exp">
       <svg viewBox="0 0 320 200" className="vlab-svg" style={{ direction: "ltr", background: "#0b1330" }}>
         <rect width="320" height="200" rx="12" fill="#0b1330" />
-        <rect x="14" y="26" width="292" height="28" rx="4" fill="#6b4f2a" />
-        <polygon points="24,26 30,10 36,26" fill="#ff6b6b" /><text x="30" y="68" fontSize="8" fill="#ffb3b3" textAnchor="middle">کانون</text>
-        <circle cx={ex} cy="40" r="7" fill="#7dffa8" /><text x={ex} y="68" fontSize="8" fill="#bfe8cf" textAnchor="middle">ایستگاه ({VLAB_FA_DIGITS(dist)} km)</text>
-        {t > 0 && <><circle cx={vlabClamp(sx + (t / tP) * (ex - sx), sx, ex)} cy="40" r="4" fill="#4fc3f7" /><circle cx={vlabClamp(sx + (t / tS) * (ex - sx), sx, ex)} cy="40" r="4" fill="#ffd23f" /></>}
-        <text x="14" y="86" fontSize="8" fill="#4fc3f7">● موج اول (P، سریع‌تر)</text><text x="150" y="86" fontSize="8" fill="#ffd23f">● موج دوم (S، کندتر)</text>
+        <defs><clipPath id="swClip"><rect x="10" y="22" width="300" height="56" rx="6" /></clipPath></defs>
+        <rect x="10" y="22" width="300" height="56" rx="6" fill="#6b4f2a" />
+        <g clipPath="url(#swClip)">
+          <rect x="10" y="22" width="300" height="9" fill="#5e9a44" />
+          <rect x="10" y="31" width="300" height="12" fill="#8a6a3c" /><rect x="10" y="43" width="300" height="14" fill="#6e5230" /><rect x="10" y="57" width="300" height="21" fill="#5a3f22" />
+          {[40, 90, 150, 210, 250].map((x, i) => <ellipse key={i} cx={x} cy={48 + (i % 3) * 8} rx="7" ry="2.6" fill="#4a331a" opacity="0.6" />)}
+          {t > 0 && [[tP, "#4fc3f7", 3], [tS, "#ffd23f", 4]].map((q, i) => { const r = vlabClamp(t / q[0], 0, 1.4) * (ex - sx); return <g key={i}><circle cx={sx} cy="60" r={r} fill="none" stroke={q[1]} strokeWidth="2.2" opacity="0.9" /><circle cx={sx} cy="60" r={Math.max(0, r - 7)} fill="none" stroke={q[1]} strokeWidth="1.2" opacity="0.45" /></g>; })}
+        </g>
+        <path d={`M ${sx - 7},60 l 7,-9 l 7,9 l -7,9 Z`} fill="#ff6b6b" stroke="#fff" strokeWidth="1" />
+        <text x={sx} y="92" fontSize="8" fill="#ffb3b3" textAnchor="middle">کانون زلزله</text>
+        <g transform={`translate(${ex},22)`}><rect x="-12" y="-12" width="24" height="12" fill="#e8e0d0" stroke="#7a6a4a" /><polygon points="-14,-12 0,-22 14,-12" fill="#b5523a" /><rect x="-3" y="-8" width="6" height="8" fill="#5a3a1c" /></g>
+        <circle cx={ex} cy="40" r="4" fill="#7dffa8" stroke="#fff" strokeWidth="1" />
+        <text x={ex - 4} y="92" fontSize="8" fill="#bfe8cf" textAnchor="middle">{"ایستگاه (" + VLAB_FA_DIGITS(dist) + " km)"}</text>
+        <text x="14" y="108" fontSize="8" fill="#4fc3f7">● موج اول (P، سریع‌تر)</text><text x="170" y="108" fontSize="8" fill="#ffd23f">● موج دوم (S، کندتر)</text>
         {/* لرزه‌نگاشت */}
         <line x1="20" y1="140" x2="300" y2="140" stroke="#445" />
         <path d={Array.from({ length: 141 }, (_, i) => { const tt = (i / 140) * (tS + 8); let a = 0; if (tt > tP && tt < tP + 3) a = 8 * Math.sin((tt - tP) * 9); if (tt > tS) a = 22 * Math.sin((tt - tS) * 5) * Math.exp(-(tt - tS) * 0.25); const shown = t >= tt || t === 0 ? a : 0; return (i ? "L" : "M") + gx(tt).toFixed(1) + "," + (140 - (t === 0 ? 0 : a * (t >= tt ? 1 : 0))).toFixed(1); }).join(" ")} fill="none" stroke="#7dffa8" strokeWidth="1.8" />
@@ -47411,10 +47443,10 @@ function VlabPercentShopExperiment({ onReading }) {
           <path d="M 0,0 L 134,0 L 134,92 L 0,92 L -14,46 Z" fill="url(#psTag)" stroke="#e65100" strokeWidth="2" />
           <circle cx="-2" cy="46" r="4" fill="#fff8ee" stroke="#e65100" />
           <text x="68" y="18" fontSize="9" fill="#5d3000" textAnchor="middle">قیمت اصلی</text>
-          <text x="68" y="34" fontSize="11" fill="#5d3000" textAnchor="middle">{fa(full)} تومان</text><line x1="14" y1="31" x2="122" y2="31" stroke="#b71c1c" strokeWidth="1.6" />
-          <text x="68" y="52" fontSize="9" fill="#b71c1c" textAnchor="middle" fontWeight="700">تخفیف {VLAB_FA_DIGITS(d)} درصد = {fa(off)}</text>
+          <text x="68" y="36" fontSize="12.5" fill="#5d3000" textAnchor="middle" style={{ direction: "rtl", unicodeBidi: "plaintext" }}>{fa(full)} تومان</text><line x1="20" y1="27.5" x2="116" y2="27.5" stroke="#b71c1c" strokeWidth="1.1" opacity="0.85" />
+          <text x="68" y="52" fontSize="9" fill="#b71c1c" textAnchor="middle" fontWeight="700" style={{ direction: "rtl", unicodeBidi: "plaintext" }}>تخفیف {VLAB_FA_DIGITS(d)} درصد = {fa(off)}</text>
           <text x="68" y="70" fontSize="9" fill="#1b5e20" textAnchor="middle">قیمت پرداختی</text>
-          <text x="68" y="86" fontSize="13" fill="#1b5e20" textAnchor="middle" fontWeight="700">{fa(pay)} تومان</text>
+          <text x="68" y="86" fontSize="13" fill="#1b5e20" textAnchor="middle" fontWeight="700" style={{ direction: "rtl", unicodeBidi: "plaintext" }}>{fa(pay)} تومان</text>
         </g>
         <g transform="translate(166,134)">
           <rect x="0" y="0" width="134" height="14" rx="7" fill="#c8e6c9" /><rect x="0" y="0" width={(134 * (100 - d)) / 100} height="14" rx="7" fill="#43a047" /><rect x={(134 * (100 - d)) / 100} y="0" width={(134 * d) / 100} height="14" rx="0" fill="#ef5350" />

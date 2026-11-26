@@ -46850,27 +46850,47 @@ function VlabJointsExperiment({ onReading }) {
     </g>;
     void q;
   } else if (J.t === "لولایی") {
-    const E = [160, 112];
-    const bi = rotPt(E, 152, 138, a), tri = rotPt(E, 178, 104, a);
+    const E = [160, 100];
+    const Ip = rotPt(E, 148.5, 122, a), Op = rotPt(E, 173, 96, a);
+    const A1 = [141, 14], A2 = [180, 14];
+    const dI = Math.hypot(Ip[0] - A1[0], Ip[1] - A1[1]), bl1 = Math.max(14, dI - 30);
+    const B1 = [A1[0] + ((Ip[0] - A1[0]) / dI) * bl1, A1[1] + ((Ip[1] - A1[1]) / dI) * bl1];
+    const B2 = [181, 14 + 48 + (a / 145) * 26];
+    const tendO = { stroke: "#a98d3a", strokeWidth: 6.5, strokeLinecap: "round", fill: "none" };
+    const tend = { stroke: "#efe0b0", strokeWidth: 4.2, strokeLinecap: "round", fill: "none" };
+    const fing = (x1, y1, x2, y2) => <g><line x1={x1} y1={y1} x2={x2} y2={y2} stroke={VLAB_BONE_S} strokeWidth="7" strokeLinecap="round" /><line x1={x1} y1={y1} x2={x2} y2={y2} stroke="#f6ecd2" strokeWidth="4.6" strokeLinecap="round" /></g>;
+    const tp = `M ${B2[0].toFixed(1)},${B2[1].toFixed(1)} Q 194,${(B2[1] + (Op[1] - B2[1]) * 0.6).toFixed(1)} ${Op[0].toFixed(1)},${Op[1].toFixed(1)}`;
     scene = (
-      <g>
-        <path d={`M 150,12 L 150,66 Q 138,82 138,100 Q 144,116 160,116 Q 176,116 182,100 Q 182,82 170,66 L 170,12 Z`} {...bone} />
-        <path d={vlabMuscle([176, 30], tri, 6 - (a / 145) * 3.2)} fill="#e4776d" opacity="0.8" stroke="#8a2c24" strokeWidth="1.2" />
+      <g transform="translate(22.4,0) scale(0.86)">
+        <path d="M 112,-4 L 208,-4 L 208,8 Q 190,16 172,10 L 150,10 Q 130,16 112,8 Z" {...bone} />
+        <path d="M 149,6 L 171,6 L 168,62 Q 170,80 184,96 Q 190,110 176,118 Q 164,122 156,117 Q 138,110 140,94 Q 150,80 152,62 Z" {...bone} />
+        <path d="M 152,66 Q 160,70 168,66" fill="none" stroke="#c9b98a" strokeWidth="1" opacity="0.7" />
+        <circle cx={E[0]} cy={E[1]} r="11" fill="#7fd0f5" opacity="0.5" stroke="#3b8cb8" strokeWidth="1.2" />
         <g transform={`rotate(${a} ${E[0]} ${E[1]})`}>
-          <path d="M 156,104 Q 170,94 178,106 L 174,122 L 168,180 Q 164,184 160,180 L 158,130 Z" {...bone} />
-          <path d="M 144,120 Q 152,110 158,120 L 156,132 L 150,178 Q 144,182 140,178 L 142,134 Z" {...bone} />
-          <ellipse cx="156" cy="192" rx="20" ry="9" fill="url(#jtBone)" stroke={VLAB_BONE_S} strokeWidth="1.4" />
+          <path d="M 146,103 Q 152,97 159,103 L 158,112 L 157,132 Q 158,160 159,180 L 160,190 Q 150,196 140,190 L 144,176 Q 148,150 150,122 L 146,112 Z" {...bone} />
+          <ellipse cx="148" cy="122" rx="3.6" ry="5.5" fill="url(#jtBone)" stroke={VLAB_BONE_S} strokeWidth="1.2" />
+          <path d="M 160,88 Q 173,86 178,95 L 176,110 Q 171,114 169,122 L 169,152 Q 170,176 172,190 L 173,196 Q 166,200 161,196 L 161,150 L 160,126 Q 154,118 157,108 Q 158,98 160,88 Z" {...bone} />
+          <line x1="159.5" y1="130" x2="159.5" y2="180" stroke="#b79b5a" strokeWidth="1" opacity="0.7" />
+          {[[150, 199], [160, 201], [169, 199]].map((c, i) => <circle key={i} cx={c[0]} cy={c[1]} r="5" fill="url(#jtBone)" stroke={VLAB_BONE_S} strokeWidth="1.3" />)}
+          {[[155, 208], [165, 208]].map((c, i) => <circle key={i} cx={c[0]} cy={c[1]} r="4.6" fill="url(#jtBone)" stroke={VLAB_BONE_S} strokeWidth="1.3" />)}
+          {fing(146, 211, 143, 228)}{fing(154, 213, 153, 232)}{fing(162, 213, 163, 231)}{fing(169, 211, 172, 227)}{fing(142, 202, 132, 214)}
         </g>
-        <circle cx={E[0]} cy={E[1]} r="10" fill="#7fd0f5" stroke="#3b8cb8" strokeWidth="1.6" opacity="0.92" />
-        <circle cx={E[0]} cy={E[1]} r="3" fill="#2f6f95" />
-        <path d={vlabMuscle([138, 30], bi, 6.5 + (a / 145) * 8)} fill="#d6453b" opacity="0.9" stroke="#7a1d16" strokeWidth="1.3" />
+        <circle cx={E[0]} cy={E[1]} r="3.4" fill="#2f6f95" stroke="#fff" strokeWidth="1" />
+        <path d={vlabMuscle(A2, B2, 8.5 - (a / 145) * 3.5)} fill="#e4776d" opacity="0.9" stroke="#8a2c24" strokeWidth="1.2" />
+        <path d={tp} {...tendO} /><path d={tp} {...tend} />
+        <path d={vlabMuscle(A1, B1, 9 + (a / 145) * 8)} fill="#d6453b" opacity="0.92" stroke="#7a1d16" strokeWidth="1.3" />
+        <path d={`M ${B1[0].toFixed(1)},${B1[1].toFixed(1)} L ${Ip[0].toFixed(1)},${Ip[1].toFixed(1)}`} {...tendO} /><path d={`M ${B1[0].toFixed(1)},${B1[1].toFixed(1)} L ${Ip[0].toFixed(1)},${Ip[1].toFixed(1)}`} {...tend} />
+        <circle cx={Ip[0]} cy={Ip[1]} r="2.6" fill="#a98d3a" /><circle cx={Op[0]} cy={Op[1]} r="2.6" fill="#a98d3a" />
+        <circle cx={A1[0]} cy={A1[1]} r="2.6" fill="#a98d3a" /><circle cx={A2[0]} cy={A2[1]} r="2.6" fill="#a98d3a" />
       </g>
     );
     tags = <g>
       <VlabPill x="62" y="30" text="عضله‌ی جلو (دوسر)" size={9.5} fill="#ffd6d0" color="#8a1f12" />
       <VlabPill x="266" y="30" text="عضله‌ی پشت (سه‌سر)" size={9.5} fill="#ffe0dc" color="#8a1f12" />
-      <line x1="238" y1="100" x2="188" y2="112" stroke="#6a7aa8" strokeWidth="1" strokeDasharray="2 3" /><VlabPill x="262" y="98" text="مفصل لولایی" size={10} fill="#d8f1ff" />
-      <VlabPill x="64" y="196" text="به عقب خم نمی‌شود" size={9.5} fill="#fff" color="#555" />
+      <line x1="238" y1="86" x2="172" y2="86" stroke="#6a7aa8" strokeWidth="1" strokeDasharray="2 3" /><VlabPill x="268" y="84" text="مفصل لولایی" size={10} fill="#d8f1ff" />
+      <line x1="238" y1="50" x2="172" y2="50" stroke="#6a7aa8" strokeWidth="1" strokeDasharray="2 3" /><VlabPill x="268" y="48" text="استخوان بازو" size={10} fill="#fff1d6" color="#6a4a10" />
+      <VlabPill x="266" y="188" text="ساعد: زند زبرین و زیرین" size={9} fill="#fff1d6" color="#6a4a10" />
+      <VlabPill x="64" y="188" text="به عقب خم نمی‌شود" size={9.5} fill="#fff" color="#555" />
     </g>;
   } else if (J.t === "محوری") {
     const th = (a * Math.PI) / 180, cs = Math.cos(th), sn = Math.sin(th), HX = 100, HY = 62;

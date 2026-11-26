@@ -33782,19 +33782,31 @@ function VlabStaticElectricityExperiment({ onReading }) {
   return (
     <div className="vlab-exp">
       <svg ref={svgRef} viewBox="0 0 320 224" className="vlab-svg" style={{ background: "#03060f", borderRadius: "10px" }}>
-        <rect x="6" y="38" width="94" height="116" rx="8" fill="#6a3a8c" stroke="#a97ad1" />
-        {[0, 1, 2, 3, 4, 5].map((i) => <path key={i} d={`M10,${52 + i * 18} q10,-8 20,0 t20,0 t20,0 t20,0`} stroke="#8b5cb3" strokeWidth="1.2" fill="none" />)}
+        <defs>
+          <linearGradient id="seWood" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stopColor="#b98550" /><stop offset="1" stopColor="#6e4824" /></linearGradient>
+          <radialGradient id="seBal" cx="0.35" cy="0.3" r="0.8"><stop offset="0" stopColor="#bcd8ff" /><stop offset="0.5" stopColor="#4a8bff" /><stop offset="1" stopColor="#1f4fb8" /></radialGradient>
+          <clipPath id="seSwC"><path d="M30,38 L76,38 Q80,48 88,48 L100,60 L100,98 L88,98 L88,154 L18,154 L18,98 L6,98 L6,60 L18,48 Q26,48 30,38 Z" /></clipPath>
+        </defs>
+        <path d="M30,38 L76,38 Q80,50 88,50 L100,62 L100,100 L88,100 L88,154 L18,154 L18,100 L6,100 L6,62 L18,50 Q26,50 30,38 Z" fill="#7a3f9c" stroke="#b58ae0" strokeWidth="1.4" strokeLinejoin="round" />
+        <g clipPath="url(#seSwC)" stroke="#9a62bf" strokeWidth="1.6" fill="none">
+          {Array.from({ length: 16 }).map((_, i) => <path key={i} d={`M${8 + i * 6},36 v124`} opacity="0.55" />)}
+          <rect x="6" y="146" width="94" height="8" fill="#5d2e7c" stroke="none" />
+          <rect x="6" y="92" width="14" height="8" fill="#5d2e7c" stroke="none" /><rect x="86" y="92" width="14" height="8" fill="#5d2e7c" stroke="none" />
+        </g>
+        <path d="M30,38 Q53,56 76,38" fill="#22103a" stroke="#b58ae0" strokeWidth="1.2" />
         <text x="53" y="170" fontSize="9" fill="#cdb0e8" textAnchor="middle">{"ژاکت پشمی (+)"}</text>
         {[0, 1, 2, 3, 4, 5, 6, 7].map((i) => (i < 8 - Math.round(q / 5) ? <text key={i} x={22 + (i % 4) * 22} y={64 + Math.floor(i / 4) * 40} fontSize="13" fill="#ff8a8a" textAnchor="middle">+</text> : null))}
-        <rect x="120" y="186" width="190" height="6" fill="#4a3a28" />
+        <rect x="112" y="186" width="204" height="8" rx="2" fill="url(#seWood)" stroke="#3a2412" /><rect x="120" y="194" width="8" height="26" fill="#5a3a1c" /><rect x="298" y="194" width="8" height="26" fill="#5a3a1c" />
         {bits.map((bx, i) => {
           const L = lifted[i]; let tx = 0, ty = 0;
           if (L) { const dx = pos.x - bx, dy = pos.y - 186, dd = Math.hypot(dx, dy) || 1, k = (i - 3.5) * 0.28; tx = dx - (dx / dd) * 22 * Math.cos(k) + Math.cos(k + 1.57) * 0 ; ty = dy - (dy / dd) * 22 ; tx += (i - 3.5) * 2.4; }
-          return <rect key={i} x={bx - 5} y="181" width="10" height="5" fill="#f6f1d6" stroke="#bdb68f" style={{ transform: `translate(${tx}px,${ty}px)`, transition: "transform .22s ease-out" }} />;
+          return <path key={i} d={`M${bx - 5},186 L${bx - 4},181.5 L${bx + 1},181 L${bx + 5},182.5 L${bx + 4},186 Z`} fill="#f6f1d6" stroke="#bdb68f" style={{ transform: `translate(${tx}px,${ty}px)`, transition: "transform .22s ease-out" }} />;
         })}
         <g>
-          <line x1={pos.x} y1={pos.y + 19} x2={pos.x + 4} y2={pos.y + 32} stroke="#ddd" strokeWidth="1" />
-          <ellipse cx={pos.x} cy={pos.y} rx="15" ry="19" fill="#4a8bff" opacity="0.92" stroke="#bcd3ff" />
+          <path d={`M${pos.x},${pos.y + 20} q-4,6 2,10 q6,4 0,10 q-4,5 1,9`} stroke="#ddd" strokeWidth="1" fill="none" />
+          <path d={`M${pos.x},${pos.y + 19} l-3,5 h6 z`} fill="#2a5fd6" />
+          <path d={`M${pos.x},${pos.y - 20} C${pos.x + 20},${pos.y - 20} ${pos.x + 18},${pos.y + 16} ${pos.x},${pos.y + 19} C${pos.x - 18},${pos.y + 16} ${pos.x - 20},${pos.y - 20} ${pos.x},${pos.y - 20} Z`} fill="url(#seBal)" stroke="#bcd3ff" strokeWidth="0.8" />
+          <ellipse cx={pos.x - 6} cy={pos.y - 9} rx="3" ry="6" fill="#fff" opacity="0.55" transform={`rotate(20 ${pos.x - 6} ${pos.y - 9})`} />
           {Array.from({ length: negs }).map((_, i) => <text key={i} x={pos.x + Math.cos(i * 0.9) * (4 + (i % 3) * 3)} y={pos.y + Math.sin(i * 1.7) * (8 + (i % 2) * 4) + 3} fontSize="10" fill="#fff" textAnchor="middle">−</text>)}
           <ellipse cx={pos.x} cy={pos.y} rx="26" ry="30" fill="transparent" onPointerDown={startDrag("balloon")} style={{ cursor: "grab", touchAction: "none" }} />
         </g>
@@ -35482,8 +35494,24 @@ function VlabReactionTimeExperiment({ onReading }) {
           {ticks.filter((h) => h % 10 === 0 && h > 0).map((h) => <text key={h} x="176" y={173 - h * 3} fontSize="7" fill="#5a4a1a" textAnchor="end">{vlabFaN(h)}</text>)}
           <text x="176" y="167" fontSize="7" fill="#5a4a1a" textAnchor="end">۰</text>
         </g>
-        <rect x="140" y="4" width="50" height="14" rx="6" fill="#c98a5a" stroke="#7a4a1a" />
-        <rect x={caught || phase === "fall" ? 112 : 98} y="166" width="38" height="14" rx="7" fill="#d9a47a" stroke="#7a4a1a" /><rect x={caught || phase === "fall" ? 184 : 198} y="166" width="38" height="14" rx="7" fill="#d9a47a" stroke="#7a4a1a" />
+        <defs>
+          <linearGradient id="rtSk" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stopColor="#f5cfae" /><stop offset="1" stopColor="#d49a72" /></linearGradient>
+          <linearGradient id="rtSkH" x1="0" y1="0" x2="1" y2="0"><stop offset="0" stopColor="#f5cfae" /><stop offset="1" stopColor="#d49a72" /></linearGradient>
+        </defs>
+        <path d="M128,0 L192,0 L192,12 Q192,24 182,24 L180,24 Q176,18 170,18 L150,18 Q144,18 140,24 L138,24 Q128,24 128,12 Z" fill="url(#rtSk)" stroke="#8a5530" strokeWidth="1.3" strokeLinejoin="round" />
+        <ellipse cx="146" cy="21" rx="9" ry="6" fill="url(#rtSk)" stroke="#8a5530" strokeWidth="1.2" /><ellipse cx="184" cy="21" rx="9" ry="6" fill="url(#rtSk)" stroke="#8a5530" strokeWidth="1.2" />
+        {(() => {
+          const near = caught || phase === "fall"; const lx = near ? 108 : 92, rx = near ? 182 : 198;
+          return (
+            <g>
+              <path d={`M${lx - 14},196 L${lx - 6},172 Q${lx - 4},162 ${lx + 8},162 L${lx + 40},162 Q${lx + 48},162 ${lx + 48},170 Q${lx + 48},178 ${lx + 40},178 L${lx + 12},180 L${lx + 10},196 Z`} fill="url(#rtSkH)" stroke="#8a5530" strokeWidth="1.3" strokeLinejoin="round" />
+              <ellipse cx={lx + 41} cy="167" rx="4.4" ry="3" fill="#f9e4d2" stroke="#b07a52" strokeWidth="0.7" />
+              <path d={`M${rx + 52},196 L${rx + 44},172 Q${rx + 42},162 ${rx + 30},162 L${rx - 2},162 Q${rx - 10},162 ${rx - 10},170 Q${rx - 10},178 ${rx - 2},178 L${rx + 26},180 L${rx + 28},196 Z`} fill="url(#rtSkH)" stroke="#8a5530" strokeWidth="1.3" strokeLinejoin="round" />
+              <ellipse cx={rx - 3} cy="167" rx="4.4" ry="3" fill="#f9e4d2" stroke="#b07a52" strokeWidth="0.7" />
+              <path d={`M${rx + 4},170 q6,0 12,1 M${rx + 8},175 q8,0 14,1`} stroke="#b07a52" strokeWidth="0.8" fill="none" />
+            </g>
+          );
+        })()}
         <line x1="90" x2="230" y1="170" y2="170" stroke="#ffd98a" strokeDasharray="3 3" strokeWidth="0.7" opacity="0.7" />
         {caught ? <g><line x1="236" x2="252" y1="170" y2="170" stroke="#ffd98a" strokeWidth="1.4" /><text x="276" y="166" fontSize="11" fontWeight="bold" fill="#ffd98a" textAnchor="middle" style={VLAB_LTR}>{vlabFaN(dist) + " cm"}</text></g> : null}
         <text x="50" y="90" fontSize="9" fill="#9fb0e0" textAnchor="middle">روی صفحه بزن</text><text x="50" y="102" fontSize="9" fill="#9fb0e0" textAnchor="middle">تا خط‌کش را بگیری</text>
@@ -42013,26 +42041,57 @@ function VlabFuseExperiment({ onReading }) {
   const reset = () => { setBlown(false); setHeat(0); setOn([true, false, false, false]); };
   return (
     <div className="vlab-exp">
-      <svg viewBox="0 0 320 150" className="vlab-svg" style={{ direction: "ltr", background: "#0b1330" }}>
-        <rect width="320" height="150" rx="12" fill="#0b1330" />
-        <path d="M 10,75 L 80,75" stroke="#f2c548" strokeWidth="4" />
-        <path d="M 240,75 L 310,75" stroke={blown ? "#444" : "#f2c548"} strokeWidth="4" />
-        {/* فیوز شیشه‌ای */}
-        <rect x="80" y="55" width="160" height="40" rx="10" fill="rgba(200,230,255,0.12)" stroke="#cfd8e8" strokeWidth="2" />
-        <rect x="70" y="52" width="26" height="46" rx="4" fill="#b9c1cc" /><rect x="224" y="52" width="26" height="46" rx="4" fill="#b9c1cc" />
+      <svg viewBox="0 0 320 190" className="vlab-svg" style={{ direction: "ltr", background: "#0b1330" }}>
+        <defs>
+          <linearGradient id="fzGlass" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stopColor="#f4fbff" stopOpacity="0.5" /><stop offset="0.5" stopColor="#bfe0f5" stopOpacity="0.16" /><stop offset="1" stopColor="#f4fbff" stopOpacity="0.34" /></linearGradient>
+          <linearGradient id="fzCap" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stopColor="#f3e2a6" /><stop offset="0.5" stopColor="#c9a23c" /><stop offset="1" stopColor="#8a6a1c" /></linearGradient>
+          <linearGradient id="fzWall" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stopColor="#2a3566" /><stop offset="1" stopColor="#1a2347" /></linearGradient>
+        </defs>
+        <rect width="320" height="190" rx="12" fill="#0b1330" />
+        <rect x="8" y="10" width="304" height="100" rx="10" fill="url(#fzWall)" stroke="#3a4a85" strokeWidth="1.5" />
+        <text x="160" y="24" fontSize="9" fill="#aab3cc" textAnchor="middle">تابلوی برق خانه</text>
+        {/* سیم ورودی و خروجی */}
+        <path d="M 8,66 L 62,66" stroke={blown ? "#6b7388" : "#e8a33a"} strokeWidth="5" strokeLinecap="round" />
+        <path d="M 258,66 L 312,66" stroke={blown ? "#4a4f60" : "#e8a33a"} strokeWidth="5" strokeLinecap="round" />
+        <text x="30" y="56" fontSize="8" fill="#aab3cc" textAnchor="middle">از شبکه</text>
+        <text x="286" y="56" fontSize="8" fill="#aab3cc" textAnchor="middle">به وسایل</text>
+        {/* نگهدارنده */}
+        <rect x="56" y="44" width="208" height="46" rx="6" fill="#2b2f3d" stroke="#555d73" strokeWidth="1.5" />
+        {/* لولهٔ شیشه‌ای فیوز */}
+        <rect x="84" y="50" width="152" height="34" rx="8" fill="url(#fzGlass)" stroke="#d6e6f2" strokeWidth="1.6" />
+        <rect x="76" y="47" width="22" height="40" rx="4" fill="url(#fzCap)" stroke="#6a4f10" strokeWidth="1.2" />
+        <rect x="222" y="47" width="22" height="40" rx="4" fill="url(#fzCap)" stroke="#6a4f10" strokeWidth="1.2" />
+        <path d="M 92,54 L 228,54" stroke="#fff" strokeWidth="1.6" opacity="0.35" strokeLinecap="round" />
         {!blown ? (
-          <path d="M 96,75 L 224,75" stroke={wireColor} strokeWidth={Math.max(1.2, 3 - heat * 1.8)} strokeLinecap="round" />
+          <g>
+            {heat > 0.25 && <ellipse cx="160" cy="67" rx={18 + heat * 50} ry={8 + heat * 12} fill="#ff7a1a" opacity={heat * 0.4} />}
+            <path d={`M 98,67 Q 129,${67 + heat * 7} 160,67 T 222,67`} fill="none" stroke={wireColor} strokeWidth={Math.max(1.4, 3 - heat * 1.6)} strokeLinecap="round" />
+            {heat > 0.55 && [0, 1, 2].map((i) => <circle key={i} cx={130 + i * 30 + Math.sin(heat * 40 + i) * 4} cy={60 - Math.abs(Math.sin(heat * 30 + i)) * 6} r="1.6" fill="#ffd27a" />)}
+          </g>
         ) : (
-          <g stroke="#555" strokeWidth="2" strokeLinecap="round">
-            <path d="M 96,75 L 140,70" /><path d="M 224,75 L 184,80" />
-            <rect x="100" y="57" width="120" height="36" fill="#000" opacity="0.4" stroke="none" />
+          <g>
+            <path d="M 98,67 Q 120,67 138,62" fill="none" stroke="#555" strokeWidth="2" strokeLinecap="round" />
+            <path d="M 222,67 Q 200,67 182,73" fill="none" stroke="#555" strokeWidth="2" strokeLinecap="round" />
+            <ellipse cx="160" cy="67" rx="62" ry="13" fill="#000" opacity="0.5" />
+            <circle cx="142" cy="63" r="2.4" fill="#ffb347" /><circle cx="178" cy="71" r="2.4" fill="#ffb347" />
           </g>
         )}
-        {heat > 0.3 && !blown && <circle cx="160" cy="75" r={6 + heat * 16} fill="#ff7a1a" opacity={heat * 0.35} />}
-        <text x="160" y="118" fontSize="11" fill="#ffe08a" textAnchor="middle" fontWeight="700">فیوز {VLAB_FA_DIGITS(rating)} آمپر — {blown ? "سوخت ⛔" : "سالم ✅"}</text>
-        <rect x="90" y="126" width="140" height="8" rx="4" fill="#1b2a5a" />
-        <rect x="90" y="126" width={140 * vlabClamp(heat, 0, 1)} height="8" rx="4" fill={heat > 0.7 ? "#e53935" : "#f08a24"} />
-        <text x="160" y="144" fontSize="8" fill="#aab3cc" textAnchor="middle">گرمای سیم فیوز</text>
+        <text x="160" y="104" fontSize="9" fill="#ffe08a" textAnchor="middle" fontWeight="700">{"فیوز " + VLAB_FA_DIGITS(rating) + " آمپر — " + (blown ? "سوخت" : "سالم")}</text>
+        {/* وسایل */}
+        {loads.map((l, i) => {
+          const x = 24 + i * 76;
+          const act = on[i] && !blown;
+          return (
+            <g key={i} transform={`translate(${x},118)`}>
+              <rect x="0" y="0" width="64" height="42" rx="8" fill={act ? "#1f3a2f" : "#161d3a"} stroke={act ? "#6fd08a" : "#3a4a85"} strokeWidth="1.6" />
+              <text x="32" y="22" fontSize="18" textAnchor="middle" opacity={act ? 1 : 0.4}>{l.ic}</text>
+              <text x="32" y="37" fontSize="8" textAnchor="middle" fill={act ? "#d9f7e2" : "#7d88aa"}>{VLAB_FA_DIGITS(l.w) + " وات"}</text>
+            </g>
+          );
+        })}
+        <rect x="24" y="168" width="272" height="8" rx="4" fill="#1b2a5a" />
+        <rect x="24" y="168" width={272 * vlabClamp(heat, 0, 1)} height="8" rx="4" fill={heat > 0.7 ? "#e53935" : "#f08a24"} />
+        <text x="160" y="186" fontSize="8" fill="#aab3cc" textAnchor="middle">گرمای سیم فیوز</text>
       </svg>
       <VlabMeterRow meters={[{ label: "آمپرمتر — جریان کل", unit: "A", value: current, ranges: [5, 15, 30] }]} />
       <div className="vlab-controls"><div className="vlab-ctrl-col" style={{ flex: 1 }}>
@@ -44867,9 +44926,22 @@ function VlabSoundVibrationExperiment({ onReading }) {
     <div className="vlab-exp">
       <svg viewBox="0 0 320 180" className="vlab-svg" style={{ direction: "ltr", background: "#0b1330" }}>
         <rect width="320" height="180" rx="12" fill="#f3efe6" />
-        <rect x="20" y="96" width="110" height="64" fill="#a67c52" stroke="#6b4513" strokeWidth="2" />
-        <rect x="20" y="86" width="90" height="10" fill="#7a5a30" />
-        <path d={`M 110,91 Q ${110 + L / 2},${91 + (tipY - 91) * 0.35} ${110 + L},${tipY}`} fill="none" stroke="#2e63c4" strokeWidth="8" strokeLinecap="round" />
+        <defs>
+          <linearGradient id="svWood" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stopColor="#c99b62" /><stop offset="1" stopColor="#8a5f33" /></linearGradient>
+          <linearGradient id="svSkin" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stopColor="#f2c9a5" /><stop offset="1" stopColor="#d9a47d" /></linearGradient>
+        </defs>
+        <rect x="0" y="150" width="320" height="30" fill="#e2dccb" />
+        <rect x="10" y="94" width="118" height="16" rx="3" fill="url(#svWood)" stroke="#5d3513" strokeWidth="1.6" />
+        <rect x="10" y="110" width="118" height="6" fill="#6e4824" />
+        <rect x="22" y="116" width="12" height="36" fill="#7a5028" stroke="#4a2c10" /><rect x="104" y="116" width="12" height="36" fill="#7a5028" stroke="#4a2c10" />
+        {[0.45, 0.2].map((g, i) => <path key={i} d={`M ${110 + L},${tipY} L ${110 + L},${tipY}`} stroke="none" />)}
+        {amp > 0.05 && [-1, 1].map((sg) => <path key={sg} d={`M 110,91 Q ${110 + L / 2},${91 + (90 - amp * 38 * sg - 91) * 0.35} ${110 + L},${90 - amp * 38 * sg}`} fill="none" stroke="#2e63c4" strokeWidth="9" strokeLinecap="round" opacity="0.14" />)}
+        <path d={`M 52,91 L 110,91 Q ${110 + L / 2},${91 + (tipY - 91) * 0.35} ${110 + L},${tipY}`} fill="none" stroke="#7a5d00" strokeWidth="11.5" strokeLinecap="round" strokeLinejoin="round" />
+        <path d={`M 52,91 L 110,91 Q ${110 + L / 2},${91 + (tipY - 91) * 0.35} ${110 + L},${tipY}`} fill="none" stroke="#f2cf4a" strokeWidth="9" strokeLinecap="round" strokeLinejoin="round" />
+        <path d={`M 52,91 L 110,91 Q ${110 + L / 2},${91 + (tipY - 91) * 0.35} ${110 + L},${tipY}`} fill="none" stroke="#6b5200" strokeWidth="5" strokeDasharray="0.9 6.2" opacity="0.65" />
+        <path d="M 38,78 q4,-14 16,-12 l36,2 q8,2 6,10 l-2,8 q-3,8 -12,8 h-34 q-12,0 -10,-16 z" fill="url(#svSkin)" stroke="#a8754e" strokeWidth="1.2" />
+        <path d="M 62,72 q8,-3 16,0 M 60,79 q10,-3 20,0" stroke="#b9855c" strokeWidth="1" fill="none" />
+        <path d="M 110,95 L 110,88" stroke="#5d3513" strokeWidth="2" />
         {amp > 0.05 && Array.from({ length: 3 }, (_, i) => <path key={i} d={`M ${110 + L + 12 + i * 12},${tipY - 14 - i * 4} q ${8 + i * 2},${14 + i * 4} 0,${28 + i * 8}`} stroke="#c0392b" strokeWidth="2" fill="none" opacity={vlabClamp(amp, 0, 1) * (1 - i * 0.25)} />)}
         <text x="160" y="22" fontSize="10" fill="#0b1f4a" textAnchor="middle" fontWeight="700">طول آزاد خط‌کش: {VLAB_FA_DIGITS(len)} سانتی‌متر</text>
         <text x="160" y="40" fontSize="10" fill={f > 120 ? "#c0392b" : "#1b7d3a"} textAnchor="middle">صدا: {f > 120 ? "زیر (تیز)" : f > 60 ? "متوسط" : "بم"}</text>
@@ -45792,12 +45864,22 @@ function VlabAirSpaceExperiment({ onReading }) {
     <div className="vlab-exp">
       <svg viewBox="0 0 320 180" className="vlab-svg" style={{ direction: "ltr", background: "#0b1330" }}>
         <rect width="320" height="180" rx="12" fill="#fbf7ec" />
-        <rect x="24" y="60" width={wid} height="54" rx="6" fill="#e3f2fd" stroke="#33291a" strokeWidth="2.5" />
-        <rect x={24 + wid} y="50" width="8" height="74" fill="#78909c" /><rect x={32 + wid} y="82" width="90" height="10" fill="#78909c" />
-        <rect x={24 + wid + 122} y="72" width="10" height="30" rx="3" fill="#455a64" />
-        {open && <path d="M 24,87 L 14,87" stroke="#c0392b" strokeWidth="4" />}
+        <defs>
+          <linearGradient id="asBar" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stopColor="#ffffff" stopOpacity="0.85" /><stop offset="0.5" stopColor="#d5ecfa" stopOpacity="0.45" /><stop offset="1" stopColor="#ffffff" stopOpacity="0.7" /></linearGradient>
+          <linearGradient id="asRub" x1="0" y1="0" x2="1" y2="0"><stop offset="0" stopColor="#3a3f48" /><stop offset="0.5" stopColor="#6a717d" /><stop offset="1" stopColor="#2c3038" /></linearGradient>
+        </defs>
+        <rect x="4" y="82" width="20" height="10" rx="2" fill="#dfe8ee" stroke="#5a6672" strokeWidth="1.6" />
+        <rect x="8" y="86" width="12" height="2.6" rx="1.3" fill="#fbf7ec" />
+        <rect x="24" y="56" width={wid} height="62" rx="5" fill="#cfe9fb" opacity="0.55" />
+        <rect x="24" y="56" width="162" height="62" rx="6" fill="url(#asBar)" stroke="#33414f" strokeWidth="2.4" />
+        {Array.from({ length: 13 }, (_, i) => <line key={i} x1={24 + 12.4 * (i + 1)} y1="56" x2={24 + 12.4 * (i + 1)} y2={i % 2 ? 64 : 71} stroke="#33414f" strokeWidth="1.2" />)}
+        <rect x="186" y="52" width="6" height="70" rx="2" fill="#8c98a6" stroke="#33414f" strokeWidth="1.4" />
+        <rect x={24 + wid - 2} y="58" width="12" height="58" rx="3" fill="url(#asRub)" stroke="#15181e" strokeWidth="1.4" />
+        <rect x={34 + wid} y="82" width="86" height="10" rx="3" fill="#aab4c0" stroke="#5a6672" strokeWidth="1.4" />
+        <rect x={120 + wid} y="68" width="12" height="38" rx="5" fill="#e07a5f" stroke="#8a3a24" strokeWidth="1.6" />
+        {open && <g><path d="M 4,87 L -2,87" stroke="#c0392b" strokeWidth="3" /><path d="M 1,80 q-6,-3 -10,0 M 1,94 q-6,3 -10,0" stroke="#7db4d9" strokeWidth="1.6" fill="none" /></g>}
         {Array.from({ length: cnt }, (_, i) => { const sp = 0.1 + press * 0.05; return <circle key={i} cx={30 + ((Math.sin(tk * sp + i * 2.1) + 1) / 2) * (wid - 12)} cy={66 + ((Math.cos(tk * sp * 1.1 + i * 3.7) + 1) / 2) * 40} r="3" fill="#4fc3f7" />; })}
-        <g transform="translate(250,36)"><circle r="22" fill="#fff" stroke="#566573" strokeWidth="3" /><line x1="0" y1="0" x2={16 * Math.sin((-130 + vlabClamp(press, 0, 3) * 87) * Math.PI / 180)} y2={-16 * Math.cos((-130 + vlabClamp(press, 0, 3) * 87) * Math.PI / 180)} stroke="#c0392b" strokeWidth="3" /><text y="38" fontSize="9" fill="#33291a" textAnchor="middle">فشار</text></g>
+        <g transform="translate(276,28)"><circle r="22" fill="#fff" stroke="#566573" strokeWidth="3" /><line x1="0" y1="0" x2={16 * Math.sin((-130 + vlabClamp(press, 0, 3) * 87) * Math.PI / 180)} y2={-16 * Math.cos((-130 + vlabClamp(press, 0, 3) * 87) * Math.PI / 180)} stroke="#c0392b" strokeWidth="3" /><text y="33" fontSize="9" fill="#33291a" textAnchor="middle">فشار</text></g>
         <text x="130" y="150" fontSize="11" fill="#1e6fd9" textAnchor="middle" fontWeight="700">حجم هوا: {VLAB_FA_DIGITS(vol)} میلی‌لیتر — فشار {VLAB_FA_DIGITS(press.toFixed(1))} برابر</text>
         <text x="130" y="168" fontSize="9" fill="#7a6b50" textAnchor="middle">{open ? "سوراخ باز است: هوا بیرون می‌رود، فشار تغییر نمی‌کند" : "سر سرنگ بسته است"}</text>
       </svg>

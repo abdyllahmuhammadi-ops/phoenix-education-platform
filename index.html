@@ -25036,6 +25036,51 @@ const VLAB_EXPERIMENTS = [
     tools: ["دندان","مسواک","شیرینی"],
   },
   {
+    id: "nitrogen-cycle",
+    subject: "زیست‌شناسی",
+    level: "متوسطه دوم",
+    title: "چرخه‌ی نیتروژن",
+    icon: "🌱",
+    intro: "مرحله‌های چرخه را یکی‌یکی ببین: تثبیت، آمونیفیکاسیون، نیتریفیکاسیون، جذب و دنیتریفیکاسیون؛ و اثر خاک غرقاب را بررسی کن.",
+    tools: ["هوا","باکتری‌ها","خاک"],
+  },
+  {
+    id: "vaccine-memory",
+    subject: "زیست‌شناسی",
+    level: "متوسطه دوم",
+    title: "واکسن و حافظه‌ی ایمنی",
+    icon: "💉",
+    intro: "تعداد دوزهای واکسن و زمان برخورد با میکروب را تغییر بده و ببین چرا پاسخ دوم سریع‌تر و قوی‌تر است.",
+    tools: ["دوز واکسن","نمودار آنتی‌بادی","میکروب"],
+  },
+  {
+    id: "epidemic-sir",
+    subject: "زیست‌شناسی",
+    level: "متوسطه دوم",
+    title: "منحنی اپیدمی و صاف کردن آن",
+    icon: "📈",
+    intro: "R₀، واکسن و فاصله‌گذاری را تغییر بده و ببین منحنی بیماران چگونه کوتاه و پهن می‌شود.",
+    tools: ["نمودار S-I-R","جمعیت ۱۰۰ نفره","ظرفیت بیمارستان"],
+  },
+  {
+    id: "pythagoras-proof",
+    subject: "ریاضی",
+    level: "متوسطه اول",
+    title: "اثبات تصویری قضیه‌ی فیثاغورس",
+    icon: "📐",
+    intro: "چهار مثلث را جابه‌جا کن و ببین مربع وتر چگونه به دو مربع ضلع‌ها تبدیل می‌شود.",
+    tools: ["مثلث قائم‌الزاویه","مربع","اسلایدر"],
+  },
+  {
+    id: "regression-fit",
+    subject: "ریاضی",
+    level: "متوسطه دوم",
+    title: "رگرسیون خطی و کمترین مربعات",
+    icon: "📊",
+    intro: "خط را روی نقاط جابه‌جا کن، مربع‌های خطا را ببین و به بهترین خط برسد.",
+    tools: ["نمودار پراکندگی","خط برازش","مربع خطا"],
+  },
+  {
     id: "tides",
     subject: "زمین‌شناسی",
     level: "متوسطه اول",
@@ -45172,6 +45217,318 @@ function VlabToothCareExperiment({ onReading }) {
   );
 }
 
+/* ---------- چرخه‌ی نیتروژن ---------- */
+function VlabNitrogenCycleExperiment({ onReading }) {
+  const [stage, setStage] = useState(0);
+  const [flood, setFlood] = useState(false);
+  const tk = VLAB_GEO_TICK(50);
+  const P = {
+    fix1: [[160, 46], [108, 80], [62, 112], [62, 159]],
+    fix2: [[174, 46], [246, 70], [250, 130], [232, 203]],
+    amm: [[262, 152], [228, 182], [122, 182], [86, 178]],
+    waste: [[268, 100], [274, 120], [270, 136], [264, 144]],
+    nit1: [[84, 188], [92, 197], [100, 205], [108, 211]],
+    nit2: [[152, 218], [170, 218], [186, 218], [202, 218]],
+    up: [[236, 207], [252, 168], [220, 140], [198, 128]],
+    eat: [[208, 68], [226, 54], [246, 58], [259, 76]],
+    den: [[246, 210], [318, 176], [312, 52], [186, 38]],
+  };
+  const COL = { fix1: "#ffd54a", fix2: "#fff08a", amm: "#ff9a62", waste: "#ff9a62", nit1: "#c58bff", nit2: "#c58bff", up: "#5fe08a", eat: "#5fe08a", den: "#6ecbff" };
+  const ST = {
+    1: ["fix1", "fix2"], 2: ["amm", "waste"], 3: ["nit1", "nit2"], 4: ["up", "eat"], 5: ["den"],
+  };
+  const INFO = [
+    ["کل چرخه", "نیتروژنِ هوا (N₂) برای بیشتر موجودات قابل استفاده نیست. چرخه‌ی نیتروژن آن را به شکل‌های قابل‌مصرف درمی‌آورد و دوباره به هوا برمی‌گرداند. یک مرحله را انتخاب کن."],
+    ["تثبیت نیتروژن (مرحله‌ی ۱)", "صاعقه و باکتری‌های تثبیت‌کننده (مثل ریزوبیوم در غده‌های ریشه‌ی حبوبات) N₂ هوا را به آمونیاک/نیترات تبدیل می‌کنند؛ تنها راه ورود نیتروژن هوا به زیست‌کره."],
+    ["آمونیفیکاسیون (مرحله‌ی ۲)", "قارچ‌ها و باکتری‌های تجزیه‌کننده، پروتئین و اوره‌ی مرده‌ها و فضولات را به یون آمونیوم (NH₄⁺) تبدیل می‌کنند."],
+    ["نیتریفیکاسیون (مرحله‌ی ۳)", "باکتری‌های نیتروزوموناس، NH₄⁺ را به نیتریت (NO₂⁻) و نیتروباکتر آن را به نیترات (NO₃⁻) اکسید می‌کنند؛ این کار به اکسیژن نیاز دارد."],
+    ["جذب و مصرف (مرحله‌ی ۴)", "ریشه‌ی گیاه، نیترات را جذب و از آن پروتئین می‌سازد؛ جانوران با خوردن گیاه، نیتروژن را دریافت می‌کنند."],
+    ["دنیتریفیکاسیون (مرحله‌ی ۵)", "باکتری‌های بی‌هوازی (در خاک غرقاب) نیترات را به N₂ تبدیل و به هوا برمی‌گردانند و چرخه بسته می‌شود."],
+  ];
+  const bez = (c, t) => { const u = 1 - t; return [u * u * u * c[0][0] + 3 * u * u * t * c[1][0] + 3 * u * t * t * c[2][0] + t * t * t * c[3][0], u * u * u * c[0][1] + 3 * u * u * t * c[1][1] + 3 * u * t * t * c[2][1] + t * t * t * c[3][1]]; };
+  const dstr = (c) => `M ${c[0][0]},${c[0][1]} C ${c[1][0]},${c[1][1]} ${c[2][0]},${c[2][1]} ${c[3][0]},${c[3][1]}`;
+  const on = (k) => stage === 0 || (ST[stage] || []).includes(k);
+  const speedOf = (k) => (flood && (k === "nit1" || k === "nit2") ? 0.2 : flood && k === "den" ? 2.2 : 1);
+  const lvl = (k) => (flood && (k === "nit1" || k === "nit2") ? 0.35 : 1);
+  useEffect(() => { if (onReading) onReading(`${INFO[stage][0]}${flood ? " | خاک غرقاب" : ""}`); /* eslint-disable-next-line */ }, [stage, flood]);
+  const box = (x, y, w, txt, col) => (<g><rect x={x - w / 2} y={y - 9} width={w} height="18" rx="9" fill="#0d1b2a" stroke={col} strokeWidth="1.4" /><text x={x} y={y + 4} fontSize="10.5" fontWeight="700" fill={col} textAnchor="middle">{txt}</text></g>);
+  const amt = flood ? 0.5 : 1;
+  return (
+    <div className="vlab-exp">
+      <svg viewBox="0 0 320 250" className="vlab-svg" style={{ direction: "ltr", background: "#0b1330" }}>
+        <defs>
+          <linearGradient id="nitSky" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stopColor="#15356b" /><stop offset="1" stopColor="#8cc3ea" /></linearGradient>
+          <linearGradient id="nitSoil" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stopColor={flood ? "#2f3b3f" : "#6b4a2c"} /><stop offset="1" stopColor={flood ? "#14232a" : "#2e1f12"} /></linearGradient>
+        </defs>
+        <rect width="320" height="96" fill="url(#nitSky)" />
+        <circle cx="30" cy="22" r="10" fill="#ffe27a" opacity="0.9" />
+        <ellipse cx="226" cy="22" rx="26" ry="8" fill="#e9eef6" opacity="0.85" /><ellipse cx="246" cy="17" rx="16" ry="7" fill="#e9eef6" opacity="0.85" />
+        <path d="M236,28 l-6,10 h6 l-5,11" stroke="#fff08a" strokeWidth="2.2" fill="none" strokeLinejoin="round" opacity={(tk % 14) < 4 ? 1 : 0.35} />
+        <rect x="0" y="96" width="320" height="154" fill="url(#nitSoil)" />
+        {flood && <rect x="0" y="96" width="320" height="7" fill="#4aa3d8" opacity="0.75" />}
+        {/* گیاه */}
+        <path d="M190,98 L190,62" stroke="#3f8f3f" strokeWidth="3.4" strokeLinecap="round" />
+        <ellipse cx="177" cy="68" rx="12" ry="5" fill="#4caf50" transform="rotate(-25 177 68)" /><ellipse cx="203" cy="60" rx="12" ry="5" fill="#57bd5b" transform="rotate(25 203 60)" /><ellipse cx="190" cy="54" rx="6" ry="9" fill="#66cc6a" />
+        <path d="M190,98 C186,112 178,120 170,128 M190,98 C192,112 196,122 200,130 M186,110 C182,116 176,118 168,120" stroke="#d8c08a" strokeWidth="1.8" fill="none" strokeLinecap="round" />
+        {[[176, 117], [170, 126], [198, 126]].map((q, i) => <circle key={i} cx={q[0]} cy={q[1]} r="2.8" fill="#ff8fa8" stroke="#c4506e" strokeWidth="0.7" />)}
+        <text x="152" y="124" fontSize="7.5" fill="#ffd2dc" textAnchor="end">غده‌ی ریشه</text>
+        <text x="266" y="94" fontSize="22" textAnchor="middle">🐄</text>
+        <text x="30" y="118" fontSize="15" textAnchor="middle">🍄</text>
+        {/* باکتری‌ها */}
+        {[[30, 150, "#ffd54a"], [96, 142, "#ff9a62"], [140, 196, "#c58bff"], [236, 190, "#6ecbff"]].map((b, i) => <g key={i} transform={`translate(${b[0]},${b[1]}) rotate(${i * 40})`}><rect x="-6" y="-2.6" width="12" height="5.2" rx="2.6" fill={b[2]} stroke="#000" strokeOpacity="0.4" strokeWidth="0.6" /></g>)}
+        {/* مسیرها */}
+        {Object.keys(P).map((k) => (
+          <g key={k} opacity={on(k) ? lvl(k) : 0.12}>
+            <path d={dstr(P[k])} fill="none" stroke={COL[k]} strokeWidth="2" strokeDasharray="1 5" strokeLinecap="round" />
+            {on(k) && [0, 1, 2, 3].map((i) => { const [x, y] = bez(P[k], ((tk * 0.018 * speedOf(k)) + i / 4) % 1); return <circle key={i} cx={x} cy={y} r="3" fill={COL[k]} stroke="#fff" strokeWidth="0.8" />; })}
+            {(() => { const [x, y] = bez(P[k], 0.9), [x2, y2] = bez(P[k], 1); const ang = Math.atan2(y2 - y, x2 - x) * 180 / Math.PI; return <path d="M -6,-4 L 1,0 L -6,4" transform={`translate(${x2},${y2}) rotate(${ang})`} fill="none" stroke={COL[k]} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />; })()}
+          </g>
+        ))}
+        {/* گره‌ها */}
+        {box(160, 34, 52, "N₂ هوا", "#6ecbff")}
+        {box(62, 172, 54, "NH₄⁺", "#ff9a62")}
+        {box(130, 218, 46, "NO₂⁻", "#c58bff")}
+        {box(225, 218, 46, "NO₃⁻", "#5fe08a")}
+        {box(262, 150, 54, "مواد آلی", "#ff9a62")}
+        {/* برچسب‌های نام باکتری */}
+        <text x="40" y="138" fontSize="7" fill="#ffe9a8" textAnchor="middle" style={{ display: stage === 0 || stage === 1 ? "block" : "none" }}>ریزوبیوم</text>
+        {(stage === 0 || stage === 3) && <><text x="96" y="236" fontSize="7.5" fill="#e3c9ff" textAnchor="middle">نیتروزوموناس</text><text x="160" y="236" fontSize="7.5" fill="#e3c9ff" textAnchor="middle">نیتروباکتر</text></>}
+        {(stage === 0 || stage === 5) && <text x="272" y="236" fontSize="7.5" fill="#bfe6ff" textAnchor="middle">باکتری‌های بی‌هوازی</text>}
+        {flood && <text x="160" y="108" fontSize="8.5" fill="#d6f0ff" textAnchor="middle">خاک غرقاب: اکسیژن کم ← نیتریفیکاسیون کند، دنیتریفیکاسیون سریع</text>}
+        <text x="160" y="12" fontSize="9.5" fontWeight="700" fill="#fff" textAnchor="middle">{INFO[stage][0]}</text>
+      </svg>
+      <div className="vlab-controls"><div className="vlab-ctrl-col" style={{ flex: 1 }}>
+        <div className="vlab-num-row">{INFO.map((s, i) => <button key={i} type="button" className="vlab-num-btn" style={stage === i ? { outline: "2px solid #e0a83e" } : null} onClick={() => setStage(i)}>{i === 0 ? "کل چرخه" : "مرحله‌ی " + VLAB_FA_DIGITS(i)}</button>)}</div>
+        <label className="vlab-ctrl-label" style={{ display: "flex", gap: 8, alignItems: "center" }}><input type="checkbox" checked={flood} onChange={(e) => setFlood(e.target.checked)} /> خاک غرقاب (کم‌اکسیژن)</label>
+      </div></div>
+      <div className="vlab-readout"><b>{INFO[stage][0]}:</b> {INFO[stage][1]}{flood ? " در خاک غرقاب، باکتری‌های هوازی نیتریفیکاسیون کند می‌شوند و نیترات بیشتری از دست می‌رود؛ برای همین کشاورزان زهکشی و شخم می‌زنند." : ""}</div>
+    </div>
+  );
+}
+
+/* ---------- واکسن و حافظه‌ی ایمنی ---------- */
+function VlabVaccineMemoryExperiment({ onReading }) {
+  const [doses, setDoses] = useState(2);
+  const [gap, setGap] = useState(30);
+  const [inf, setInf] = useState(110);
+  const A = [12, 70, 90], LAG = [7, 2, 2], RISE = [8, 4, 4], HALF = [22, 70, 100];
+  const resp = (t, tau, k) => { const dt = t - tau; if (dt <= LAG[k]) return 0; const u = dt - LAG[k]; return u < RISE[k] ? A[k] * Math.sin((u / RISE[k]) * Math.PI / 2) : A[k] * Math.pow(0.5, (u - RISE[k]) / HALF[k]); };
+  const days = Array.from({ length: doses }, (_, i) => 5 + i * gap);
+  const ab = (t, withInf) => { let v = 0; days.forEach((d, i) => { v += resp(t, d, Math.min(i, 2)); }); if (withInf) v += resp(t, inf, doses > 0 ? 1 : 0); return v; };
+  const TH = 20, X0 = 34, X1 = 308, Y0 = 176, YT = 42, TMAX = 180, VMAX = 100;
+  const sx = (t) => X0 + (t / TMAX) * (X1 - X0), sy = (v) => Y0 - (Math.min(v, VMAX * 1.05) / VMAX) * (Y0 - YT);
+  const path = (fn) => { let d = ""; for (let t = 0; t <= TMAX; t += 2) d += (t ? " L " : "M ") + sx(t).toFixed(1) + "," + sy(fn(t)).toFixed(1); return d; };
+  const before = ab(inf - 0.01, false);
+  const protectedNow = before >= TH;
+  const peakAfter = Math.max(...Array.from({ length: 90 }, (_, i) => ab(inf + i * 2, true)));
+  useEffect(() => { if (onReading) onReading(`دوز ${doses} | فاصله ${gap} روز | آنتی‌بادی هنگام عفونت ${before.toFixed(0)} | ${protectedNow ? "محافظت‌شده" : "بیمار می‌شود"}`); /* eslint-disable-next-line */ }, [doses, gap, inf]);
+  return (
+    <div className="vlab-exp">
+      <svg viewBox="0 0 320 250" className="vlab-svg" style={{ direction: "ltr", background: "#0f1b33" }}>
+        <defs><linearGradient id="vmFill" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stopColor="#4fa3ff" stopOpacity="0.55" /><stop offset="1" stopColor="#4fa3ff" stopOpacity="0.02" /></linearGradient></defs>
+        <rect width="320" height="250" rx="12" fill="#0f1b33" />
+        <text x="160" y="16" fontSize="10" fontWeight="700" fill="#cfe5ff" textAnchor="middle">سطح آنتی‌بادی در بدن در طول زمان</text>
+        {[0, 25, 50, 75, 100].map((v) => <g key={v}><line x1={X0} y1={sy(v)} x2={X1} y2={sy(v)} stroke="#fff" strokeOpacity="0.08" /><text x={X0 - 4} y={sy(v) + 3} fontSize="7.5" fill="#8fa8c8" textAnchor="end">{VLAB_FA_DIGITS(v)}</text></g>)}
+        {[0, 30, 60, 90, 120, 150, 180].map((t) => <text key={t} x={sx(t)} y={Y0 + 11} fontSize="7.5" fill="#8fa8c8" textAnchor="middle">{VLAB_FA_DIGITS(t)}</text>)}
+        <text x="308" y={Y0 + 22} fontSize="8" fill="#8fa8c8" textAnchor="end">روز</text>
+        <line x1={X0} y1={sy(TH)} x2={X1} y2={sy(TH)} stroke="#ff6b6b" strokeWidth="1.2" strokeDasharray="5 4" />
+        <text x={X1} y={sy(TH) - 3} fontSize="8" fill="#ff9c9c" textAnchor="end">حد حفاظت</text>
+        <path d={path((t) => resp(t, inf, 0))} fill="none" stroke="#9aa6b8" strokeWidth="1.6" strokeDasharray="4 3" />
+        <path d={path((t) => ab(t, true)) + ` L ${X1},${Y0} L ${X0},${Y0} Z`} fill="url(#vmFill)" />
+        <path d={path((t) => ab(t, true))} fill="none" stroke="#5db3ff" strokeWidth="2.4" strokeLinejoin="round" />
+        <line x1={sx(inf)} y1={YT - 6} x2={sx(inf)} y2={Y0} stroke={protectedNow ? "#5fe08a" : "#ff8a6b"} strokeWidth="1.4" strokeDasharray="3 3" />
+        <text x={sx(inf)} y={YT - 8} fontSize="15" textAnchor="middle">🦠</text>
+        <circle cx={sx(inf)} cy={sy(before)} r="4" fill={protectedNow ? "#5fe08a" : "#ff8a6b"} stroke="#fff" strokeWidth="1.2" />
+        {days.map((d, i) => <g key={i}><line x1={sx(d)} y1={Y0} x2={sx(d)} y2={Y0 + 4} stroke="#ffd54a" strokeWidth="1.4" /><text x={sx(d)} y={Y0 + 27} fontSize="13" textAnchor="middle">💉</text><text x={sx(d)} y={Y0 + 40} fontSize="7.5" fill="#ffe28a" textAnchor="middle">دوز {VLAB_FA_DIGITS(i + 1)}</text></g>)}
+        <g transform="translate(40,50)"><line x1="0" y1="0" x2="16" y2="0" stroke="#5db3ff" strokeWidth="2.4" /><text x="20" y="3" fontSize="8" fill="#cfe5ff">با واکسن</text><line x1="0" y1="11" x2="16" y2="11" stroke="#9aa6b8" strokeWidth="1.6" strokeDasharray="4 3" /><text x="20" y="14" fontSize="8" fill="#cfe5ff">بدون واکسن (فقط عفونت)</text></g>
+        <rect x="8" y="226" width="304" height="20" rx="10" fill={protectedNow ? "#124a2c" : "#4a1c14"} stroke={protectedNow ? "#5fe08a" : "#ff8a6b"} />
+        <text x="160" y="240" fontSize="9.5" fontWeight="700" fill="#fff" textAnchor="middle">{protectedNow ? "در روز عفونت آنتی‌بادی بالاتر از حد حفاظت است ← بیماری خفیف یا هیچ" : doses === 0 ? "بدون واکسن: پاسخ کند و ضعیف ← بیماری شدید" : "هنوز آنتی‌بادی کافی نیست ← بیمار می‌شود"}</text>
+      </svg>
+      <div className="vlab-controls"><div className="vlab-ctrl-col" style={{ flex: 1 }}>
+        <div className="vlab-num-row">{[0, 1, 2, 3].map((n) => <button key={n} type="button" className="vlab-num-btn" style={doses === n ? { outline: "2px solid #e0a83e" } : null} onClick={() => setDoses(n)}>{n === 0 ? "بدون واکسن" : VLAB_FA_DIGITS(n) + " دوز"}</button>)}</div>
+        <label className="vlab-ctrl-label">فاصله‌ی دوزها: {VLAB_FA_DIGITS(gap)} روز</label>
+        <VlabRange min={14} max={90} step={2} value={gap} onChange={(e) => setGap(+e.target.value)} />
+        <label className="vlab-ctrl-label">روز برخورد با میکروب واقعی: {VLAB_FA_DIGITS(inf)}</label>
+        <VlabRange min={20} max={170} step={2} value={inf} onChange={(e) => setInf(+e.target.value)} />
+      </div></div>
+      <div className="vlab-readout">در برخورد اول، پاسخ ایمنی کند (حدود یک هفته تأخیر) و ضعیف است. واکسن بدن را با «سلول‌های خاطره» آشنا می‌کند؛ در برخورد بعدی پاسخ در چند روز و چند برابر قوی‌تر است. آنتی‌بادی هنگام عفونت: <b>{VLAB_FA_DIGITS(Math.round(before))}</b> (حد حفاظت {VLAB_FA_DIGITS(TH)}) | اوج پس از عفونت: <b>{VLAB_FA_DIGITS(Math.round(peakAfter))}</b>. دوز دوم و سوم، سطح و ماندگاری را بالا می‌برند.</div>
+    </div>
+  );
+}
+
+/* ---------- منحنی اپیدمی (S-I-R) ---------- */
+function VlabEpidemicSirExperiment({ onReading }) {
+  const [R0, setR0] = useState(3);
+  const [rec, setRec] = useState(8);
+  const [vac, setVac] = useState(0);
+  const [dist, setDist] = useState(0);
+  const [day, setDay] = useState(40);
+  const gamma = 1 / rec, Re = R0 * (1 - dist / 100), beta = Re * gamma;
+  const sim = (() => {
+    let S = Math.max(0, 1 - vac / 100 - 0.001), I = 0.001, R = vac / 100;
+    const out = [[S, I, R]], dt = 0.25;
+    for (let d = 1; d <= 160; d++) { for (let k = 0; k < 4; k++) { const ni = beta * S * I * dt, nr = gamma * I * dt; S -= ni; I += ni - nr; R += nr; } out.push([S, I, R]); }
+    return out;
+  })();
+  const peak = sim.reduce((m, p, i) => (p[1] > m[1] ? [i, p[1]] : m), [0, 0]);
+  const final = sim[160][2] - vac / 100;
+  const herd = Re > 1 ? 1 - 1 / R0 : 0;
+  const X0 = 30, X1 = 308, Y0 = 138, YT = 26;
+  const sx = (d) => X0 + (d / 160) * (X1 - X0), sy = (v) => Y0 - v * (Y0 - YT);
+  const line = (i) => sim.map((p, d) => (d ? " L " : "M ") + sx(d).toFixed(1) + "," + sy(p[i]).toFixed(1)).join("");
+  const cur = sim[Math.min(160, day)];
+  const nS = Math.round(cur[0] * 100), nI = Math.round(cur[1] * 100), nR = Math.max(0, 100 - nS - nI);
+  const dotCol = (i) => (i < nR ? "#4fc38a" : i < nR + nI ? "#ff5a4a" : "#6fa8ff");
+  useEffect(() => { if (onReading) onReading(`R₀=${R0} | واکسینه ${vac}٪ | فاصله‌گذاری ${dist}٪ | اوج بیماران ${(peak[1] * 100).toFixed(1)}٪ روز ${peak[0]}`); /* eslint-disable-next-line */ }, [R0, rec, vac, dist, day]);
+  return (
+    <div className="vlab-exp">
+      <svg viewBox="0 0 320 262" className="vlab-svg" style={{ direction: "ltr", background: "#101a2e" }}>
+        <rect width="320" height="262" rx="12" fill="#101a2e" />
+        <text x="160" y="15" fontSize="10" fontWeight="700" fill="#d6e6ff" textAnchor="middle">سرایت بیماری در یک جمعیت</text>
+        {[0, 0.25, 0.5, 0.75, 1].map((v) => <g key={v}><line x1={X0} y1={sy(v)} x2={X1} y2={sy(v)} stroke="#fff" strokeOpacity="0.08" /><text x={X0 - 3} y={sy(v) + 3} fontSize="7" fill="#8fa8c8" textAnchor="end">{VLAB_FA_DIGITS(Math.round(v * 100))}٪</text></g>)}
+        {[0, 40, 80, 120, 160].map((d) => <text key={d} x={sx(d)} y={Y0 + 10} fontSize="7.5" fill="#8fa8c8" textAnchor="middle">{VLAB_FA_DIGITS(d)}</text>)}
+        <text x="308" y={Y0 + 20} fontSize="8" fill="#8fa8c8" textAnchor="end">روز</text>
+        <line x1={X0} y1={sy(0.1)} x2={X1} y2={sy(0.1)} stroke="#ffb347" strokeWidth="1" strokeDasharray="4 4" /><text x={X1} y={sy(0.1) - 3} fontSize="7.5" fill="#ffc77a" textAnchor="end">ظرفیت بیمارستان</text>
+        <path d={line(0)} fill="none" stroke="#6fa8ff" strokeWidth="2" /><path d={line(2)} fill="none" stroke="#4fc38a" strokeWidth="2" />
+        <path d={line(1) + ` L ${sx(160)},${Y0} L ${sx(0)},${Y0} Z`} fill="#ff5a4a" fillOpacity="0.28" /><path d={line(1)} fill="none" stroke="#ff5a4a" strokeWidth="2.6" strokeLinejoin="round" />
+        {peak[1] > 0.004 && <g><circle cx={sx(peak[0])} cy={sy(peak[1])} r="3.4" fill="#fff" stroke="#ff5a4a" strokeWidth="1.5" /><text x={sx(peak[0]) + (peak[0] > 100 ? -6 : 6)} y={sy(peak[1]) - 6} fontSize="8" fill="#ffd0c8" textAnchor={peak[0] > 100 ? "end" : "start"}>{"⁧"}اوج: {VLAB_FA_DIGITS((peak[1] * 100).toFixed(1))}٪ در روز {VLAB_FA_DIGITS(peak[0])}{"⁩"}</text></g>}
+        <line x1={sx(day)} y1={YT - 4} x2={sx(day)} y2={Y0} stroke="#fff" strokeWidth="1.2" strokeDasharray="3 3" />
+        <g transform="translate(150,160)"><circle cx="0" r="3" fill="#6fa8ff" /><text x="6" y="3" fontSize="8" fill="#cfe0ff">سالم و مستعد</text><circle cx="-80" r="3" fill="#ff5a4a" /><text x="-74" y="3" fontSize="8" fill="#ffd0c8">بیمار</text><circle cx="-60" r="0" fill="none" /><circle cx="68" r="3" fill="#4fc38a" /><text x="74" y="3" fontSize="8" fill="#c8f2dc">بهبودیافته/واکسینه</text></g>
+        {Array.from({ length: 100 }, (_, i) => <circle key={i} cx={60 + (i % 20) * 10.5} cy={181 + Math.floor(i / 20) * 10.5} r="3.6" fill={dotCol(i)} opacity="0.95" />)}
+        <text x="160" y="232" fontSize="9" fill="#d6e6ff" textAnchor="middle">{"⁧"}روز {VLAB_FA_DIGITS(day)}: ۱۰۰ نفر نمونه — {VLAB_FA_DIGITS(nI)} بیمار{"⁩"}</text>
+        <text x="160" y="250" fontSize="9.5" fontWeight="700" fill={Re > 1 ? "#ffb4a8" : "#a8f0c8"} textAnchor="middle">{"⁧"}R مؤثر = {VLAB_FA_DIGITS(Re.toFixed(1))} ← {Re > 1 ? "بیماری گسترش می‌یابد" : "بیماری خاموش می‌شود"}{"⁩"}</text>
+      </svg>
+      <div className="vlab-controls"><div className="vlab-ctrl-col" style={{ flex: 1 }}>
+        <label className="vlab-ctrl-label">R₀ (هر بیمار چند نفر را مبتلا می‌کند): {VLAB_FA_DIGITS(R0.toFixed(1))}</label>
+        <VlabRange min={0.5} max={6} step={0.1} value={R0} onChange={(e) => setR0(+e.target.value)} />
+        <label className="vlab-ctrl-label">مدت بیماری: {VLAB_FA_DIGITS(rec)} روز</label>
+        <VlabRange min={4} max={14} step={1} value={rec} onChange={(e) => setRec(+e.target.value)} />
+        <label className="vlab-ctrl-label">واکسینه‌شده‌ها: {VLAB_FA_DIGITS(vac)}٪</label>
+        <VlabRange min={0} max={90} step={5} value={vac} onChange={(e) => setVac(+e.target.value)} />
+        <label className="vlab-ctrl-label">کاهش تماس‌ها (ماسک و فاصله‌گذاری): {VLAB_FA_DIGITS(dist)}٪</label>
+        <VlabRange min={0} max={80} step={5} value={dist} onChange={(e) => setDist(+e.target.value)} />
+        <label className="vlab-ctrl-label">روز نمایش: {VLAB_FA_DIGITS(day)}</label>
+        <VlabRange min={0} max={160} step={1} value={day} onChange={(e) => setDay(+e.target.value)} />
+      </div></div>
+      <div className="vlab-readout">مجموع مبتلایان در پایان: <b>{VLAB_FA_DIGITS(Math.round(final * 100))}٪</b> جمعیت. {herd > 0 ? <>برای خاموش شدن بیماری باید دست‌کم <b>{VLAB_FA_DIGITS(Math.round(herd * 100))}٪</b> ایمن باشند (۱ − ۱/R₀).</> : "با این مقدار، بیماری اصلاً گسترش نمی‌یابد."} اگر منحنی از خط ظرفیت بیمارستان بالاتر برود، سیستم درمان ازهم‌پاشیده می‌شود؛ ماسک و واکسن منحنی را کوتاه و پهن می‌کنند.</div>
+    </div>
+  );
+}
+
+/* ---------- اثبات تصویری فیثاغورس ---------- */
+function VlabPythagorasProofExperiment({ onReading }) {
+  const [a, setA] = useState(3);
+  const [b, setB] = useState(4);
+  const [t, setT] = useState(0);
+  const [playing, setPlaying] = useState(false);
+  const dirRef = React.useRef(1);
+  useEffect(() => {
+    if (!playing) return undefined;
+    const id = setInterval(() => setT((v) => { let n = v + dirRef.current * 2; if (n >= 100) { n = 100; dirRef.current = -1; } if (n <= 0) { n = 0; dirRef.current = 1; } return n; }), 40);
+    return () => clearInterval(id);
+  }, [playing]);
+  const c = Math.sqrt(a * a + b * b), s = a + b;
+  const sc = 196 / s, ox = 62, oy = 26;
+  const u = t / 100, e = u * u * (3 - 2 * u);
+  const X = (x) => ox + x * sc, Y = (y) => oy + y * sc;
+  const rot = (k, x, y) => { let px = x, py = y; for (let i = 0; i < k; i++) { const nx = -py, ny = px; px = nx; py = ny; } return [px, py]; };
+  const tri = (k, R, d) => { const o = rot(k, a, 0), q = rot(k, 0, b); return [[R[0] + d[0] * e, R[1] + d[1] * e], [R[0] + o[0] + d[0] * e, R[1] + o[1] + d[1] * e], [R[0] + q[0] + d[0] * e, R[1] + q[1] + d[1] * e]]; };
+  const T = [
+    { k: 0, R: [0, 0], d: [0, a], col: "#ffc83d" },
+    { k: 1, R: [s, 0], d: [0, 0], col: "#ff8a5c" },
+    { k: 2, R: [s, s], d: [-b, 0], col: "#ffe58a" },
+    { k: 3, R: [0, s], d: [a, -b], col: "#ff6f6f" },
+  ];
+  const poly = (pts) => pts.map((p) => X(p[0]).toFixed(1) + "," + Y(p[1]).toFixed(1)).join(" ");
+  const inner = [[a, 0], [s, a], [b, s], [0, b]];
+  useEffect(() => { if (onReading) onReading(`a=${a} | b=${b} | c=${c.toFixed(2)} | a²+b²=${a * a + b * b} | c²=${(c * c).toFixed(1)}`); /* eslint-disable-next-line */ }, [a, b]);
+  return (
+    <div className="vlab-exp">
+      <svg viewBox="0 0 320 262" className="vlab-svg" style={{ direction: "ltr", background: "#fbf9f2" }}>
+        <rect width="320" height="262" rx="12" fill="#fbf9f2" />
+        <text x="160" y="16" fontSize="10" fontWeight="700" fill="#3a3326" textAnchor="middle">{u < 0.5 ? "حالت ۱: مربعِ وتر (c²) در میانِ چهار مثلث" : "حالت ۲: دو مربعِ ضلع‌ها (a² و b²) و همان چهار مثلث"}</text>
+        <polygon points={poly(inner)} fill="#4f8de8" opacity={1 - e} stroke="#2a5cae" strokeWidth="1" />
+        <rect x={X(0)} y={Y(0)} width={a * sc} height={a * sc} fill="#4cbf7a" opacity={e} stroke="#2c8c55" strokeWidth="1" />
+        <rect x={X(a)} y={Y(a)} width={b * sc} height={b * sc} fill="#f08fb0" opacity={e} stroke="#b0577a" strokeWidth="1" />
+        {T.map((q, i) => <polygon key={i} points={poly(tri(q.k, q.R, q.d))} fill={q.col} stroke="#fff" strokeWidth="1.6" strokeLinejoin="round" opacity="0.97" />)}
+        <rect x={X(0)} y={Y(0)} width={s * sc} height={s * sc} fill="none" stroke="#3a3326" strokeWidth="1.8" />
+        {u < 0.5 ? <text x={X(s / 2)} y={Y(s / 2) + 4} fontSize="16" fontWeight="700" fill="#fff" textAnchor="middle" opacity={1 - 2 * u}>c²</text> : null}
+        {u > 0.5 ? <><text x={X(a / 2)} y={Y(a / 2) + 5} fontSize="16" fontWeight="700" fill="#fff" textAnchor="middle" opacity={2 * u - 1}>a²</text><text x={X(a + b / 2)} y={Y(a + b / 2) + 5} fontSize="16" fontWeight="700" fill="#fff" textAnchor="middle" opacity={2 * u - 1}>b²</text></> : null}
+        <text x={X(s / 2)} y={Y(s) + 11} fontSize="8.5" fill="#5a4e3a" textAnchor="middle">{"⁧"}ضلع مربع بزرگ = a + b = {VLAB_FA_DIGITS(s)}{"⁩"}</text>
+        <rect x="8" y="238" width="304" height="20" rx="10" fill="#efe6cf" stroke="#cdbf96" />
+        <text x="160" y="252" fontSize="10" fontWeight="700" fill="#3a3326" textAnchor="middle">{"⁦"}{VLAB_FA_DIGITS(a)}² + {VLAB_FA_DIGITS(b)}² = {VLAB_FA_DIGITS(a * a)} + {VLAB_FA_DIGITS(b * b)} = {VLAB_FA_DIGITS(a * a + b * b)} = c²   →   c = {VLAB_FA_DIGITS(c.toFixed(2).replace(/\.?0+$/, ""))}{"⁩"}</text>
+        
+      </svg>
+      <div className="vlab-controls"><div className="vlab-ctrl-col" style={{ flex: 1 }}>
+        <label className="vlab-ctrl-label">جابه‌جایی مثلث‌ها: {VLAB_FA_DIGITS(t)}٪</label>
+        <VlabRange min={0} max={100} step={1} value={t} onChange={(ev) => { setPlaying(false); setT(+ev.target.value); }} />
+        <div className="vlab-btn-row"><button className="vlab-btn" onClick={() => setPlaying((p) => !p)}>{playing ? "⏸ توقف" : "▶ پخش انیمیشن"}</button></div>
+        <label className="vlab-ctrl-label">ضلع a: {VLAB_FA_DIGITS(a)}</label>
+        <VlabRange min={1} max={12} step={1} value={a} onChange={(ev) => setA(+ev.target.value)} />
+        <label className="vlab-ctrl-label">ضلع b: {VLAB_FA_DIGITS(b)}</label>
+        <VlabRange min={1} max={12} step={1} value={b} onChange={(ev) => setB(+ev.target.value)} />
+        <div className="vlab-num-row"><button type="button" className="vlab-num-btn" onClick={() => { setA(3); setB(4); }}>۳-۴-۵</button><button type="button" className="vlab-num-btn" onClick={() => { setA(5); setB(12); }}>۵-۱۲-۱۳</button><button type="button" className="vlab-num-btn" onClick={() => { setA(6); setB(6); }}>مثلث متساوی‌الساقین</button></div>
+      </div></div>
+      <div className="vlab-readout">مربع بزرگ هر دو بار از یک مربع به ضلع (a + b) و چهار مثلث هم‌اندازه ساخته شده است؛ پس مساحتِ باقی‌مانده هم باید برابر باشد: <b>c² = a² + b²</b>. با جابه‌جایی چهار مثلث، فضای خالی از یک مربع بزرگ (c²) به دو مربع کوچک‌تر (a² و b²) تبدیل می‌شود.</div>
+    </div>
+  );
+}
+
+/* ---------- رگرسیون خطی و کمترین مربعات ---------- */
+function VlabRegressionFitExperiment({ onReading }) {
+  const DS = [
+    { name: "ساعت مطالعه و نمره", xl: "ساعت مطالعه در هفته", yl: "نمره", pts: [[1, 6.5], [1.5, 9], [2, 8], [2.5, 10.5], [3, 9.5], [3.5, 12], [4, 11], [4.5, 13.5], [5, 13], [5.5, 14.5], [6, 13.5], [6.5, 16], [7, 15], [7.5, 17.5], [8, 16.5], [8.5, 18.5], [9, 18]] },
+    { name: "ساعت تلویزیون و نمره", xl: "ساعت تماشای تلویزیون", yl: "نمره", pts: [[1, 18], [1.5, 17], [2, 17.5], [2.5, 15], [3, 15.5], [3.5, 14], [4, 14.5], [4.5, 12], [5, 12.5], [5.5, 11], [6, 10.5], [6.5, 9.5], [7, 10], [7.5, 8], [8, 7.5], [8.5, 6.5], [9, 7]] },
+    { name: "شماره‌ی کفش و نمره", xl: "شماره‌ی کفش (واحد دلخواه)", yl: "نمره", pts: [[1, 12], [1.6, 7], [2.2, 15], [2.8, 10], [3.4, 17], [4, 8], [4.6, 13], [5.2, 6], [5.8, 16], [6.4, 11], [7, 14], [7.6, 9], [8.2, 17], [8.8, 12], [9, 9]] },
+  ];
+  const [di, setDi] = useState(0);
+  const [m, setM] = useState(0.5);
+  const [c, setC] = useState(8);
+  const [sq, setSq] = useState(true);
+  const d = DS[di], n = d.pts.length;
+  const mx = d.pts.reduce((s, p) => s + p[0], 0) / n, my = d.pts.reduce((s, p) => s + p[1], 0) / n;
+  const sxx = d.pts.reduce((s, p) => s + (p[0] - mx) * (p[0] - mx), 0), sxy = d.pts.reduce((s, p) => s + (p[0] - mx) * (p[1] - my), 0), syy = d.pts.reduce((s, p) => s + (p[1] - my) * (p[1] - my), 0);
+  const bm = sxy / sxx, bc = my - bm * mx, r = sxy / Math.sqrt(sxx * syy);
+  const sse = (mm, cc) => d.pts.reduce((s, p) => s + Math.pow(p[1] - (mm * p[0] + cc), 2), 0);
+  const mine = sse(m, c), best = sse(bm, bc);
+  const X0 = 40, X1 = 300, Y0 = 200, YT = 28, sxs = (X1 - X0) / 10, sys = (Y0 - YT) / 20;
+  const px = (x) => X0 + x * sxs, py = (y) => Y0 - y * sys;
+  const yl = (x) => Math.max(0, Math.min(20, m * x + c));
+  const pct = Math.min(100, (best / Math.max(mine, 1e-6)) * 100);
+  useEffect(() => { if (onReading) onReading(`${d.name} | y=${m.toFixed(2)}x+${c.toFixed(1)} | SSE شما ${mine.toFixed(1)} | SSE بهینه ${best.toFixed(1)} | r=${r.toFixed(2)}`); /* eslint-disable-next-line */ }, [di, m, c]);
+  const setBest = () => { setM(Math.round(bm * 20) / 20); setC(Math.round(bc * 4) / 4); };
+  return (
+    <div className="vlab-exp">
+      <svg viewBox="0 0 320 262" className="vlab-svg" style={{ direction: "ltr", background: "#f8fbff" }}>
+        <rect width="320" height="262" rx="12" fill="#f8fbff" />
+        <text x="160" y="15" fontSize="10" fontWeight="700" fill="#233a5a" textAnchor="middle">{d.name}</text>
+        {[0, 5, 10, 15, 20].map((v) => <g key={v}><line x1={X0} y1={py(v)} x2={X1} y2={py(v)} stroke="#d4dfee" strokeWidth="0.8" /><text x={X0 - 4} y={py(v) + 3} fontSize="7.5" fill="#6a7d96" textAnchor="end">{VLAB_FA_DIGITS(v)}</text></g>)}
+        {[0, 2, 4, 6, 8, 10].map((v) => <text key={v} x={px(v)} y={Y0 + 10} fontSize="7.5" fill="#6a7d96" textAnchor="middle">{VLAB_FA_DIGITS(v)}</text>)}
+        <text x="170" y={Y0 + 22} fontSize="8.5" fill="#44607f" textAnchor="middle">{d.xl}</text>
+        <text x="12" y="110" fontSize="8.5" fill="#44607f" textAnchor="middle" transform="rotate(-90 12 110)">{d.yl}</text>
+        {sq && d.pts.map((p, i) => { const yh = m * p[0] + c, res = p[1] - yh, side = Math.abs(res) * sys; return <rect key={i} x={px(p[0])} y={res > 0 ? py(p[1]) : py(yh)} width={side} height={side} fill="#ff7a59" fillOpacity="0.28" stroke="#ff7a59" strokeWidth="0.8" strokeOpacity="0.7" />; })}
+        {d.pts.map((p, i) => { const yh = m * p[0] + c; return <line key={i} x1={px(p[0])} y1={py(p[1])} x2={px(p[0])} y2={py(yh)} stroke="#ff7a59" strokeWidth="1" strokeDasharray="2 2" />; })}
+        <line x1={px(0)} y1={py(Math.max(0, Math.min(20, bc)))} x2={px(10)} y2={py(Math.max(0, Math.min(20, bm * 10 + bc)))} stroke="#2ea36b" strokeWidth="1.4" strokeDasharray="5 4" opacity="0.7" />
+        <line x1={px(0)} y1={py(Math.max(0, Math.min(20, c)))} x2={px(10)} y2={py(Math.max(0, Math.min(20, m * 10 + c)))} stroke="#2563d6" strokeWidth="2.6" strokeLinecap="round" />
+        {d.pts.map((p, i) => <circle key={i} cx={px(p[0])} cy={py(p[1])} r="3.8" fill="#1d3b6e" stroke="#fff" strokeWidth="1.2" />)}
+        <g transform="translate(46,34)"><line x1="0" y1="0" x2="16" y2="0" stroke="#2563d6" strokeWidth="2.6" /><text x="20" y="3" fontSize="8" fill="#233a5a">خط شما</text><line x1="0" y1="11" x2="16" y2="11" stroke="#2ea36b" strokeWidth="1.4" strokeDasharray="5 4" /><text x="20" y="14" fontSize="8" fill="#233a5a">خط بهینه (کمترین مربعات)</text></g>
+        <text x="160" y="248" fontSize="9.5" fontWeight="700" fill="#233a5a" textAnchor="middle">{"⁦"}y = {VLAB_FA_DIGITS(m.toFixed(2))}x + {VLAB_FA_DIGITS(c.toFixed(1))}   |   r = {VLAB_FA_DIGITS(r.toFixed(2))}{"⁩"}</text>
+      </svg>
+      <div className="vlab-controls"><div className="vlab-ctrl-col" style={{ flex: 1 }}>
+        <div className="vlab-num-row">{DS.map((q, i) => <button key={i} type="button" className="vlab-num-btn" style={di === i ? { outline: "2px solid #e0a83e" } : null} onClick={() => { setDi(i); setM(i === 1 ? -0.5 : 0.5); setC(i === 1 ? 15 : 8); }}>{q.name}</button>)}</div>
+        <label className="vlab-ctrl-label">شیب خط: {VLAB_FA_DIGITS(m.toFixed(2))}</label>
+        <VlabRange min={-3} max={3} step={0.05} value={m} onChange={(e) => setM(+e.target.value)} />
+        <label className="vlab-ctrl-label">عرض از مبدأ: {VLAB_FA_DIGITS(c.toFixed(1))}</label>
+        <VlabRange min={-5} max={25} step={0.25} value={c} onChange={(e) => setC(+e.target.value)} />
+        <div className="vlab-btn-row"><button className="vlab-btn" onClick={setBest}>🎯 برازش بهینه</button><button className="vlab-btn" onClick={() => setSq(!sq)}>{sq ? "پنهان کردن مربع‌ها" : "نمایش مربع‌ها"}</button></div>
+        <div style={{ height: 12, background: "#e1e9f4", borderRadius: 6, overflow: "hidden", marginTop: 6 }}><div style={{ width: pct + "%", height: "100%", background: pct > 95 ? "#2ea36b" : pct > 60 ? "#e6b422" : "#e2603c", transition: "width .2s" }} /></div>
+        <div style={{ fontSize: 11, marginTop: 3 }}>نزدیکی به بهترین خط: {VLAB_FA_DIGITS(Math.round(pct))}٪</div>
+      </div></div>
+      <div className="vlab-readout">مجموع مساحت مربع‌های خطا (SSE) برای خط شما <b>{VLAB_FA_DIGITS(mine.toFixed(1))}</b> و برای خط بهینه <b>{VLAB_FA_DIGITS(best.toFixed(1))}</b> است. خط کمترین مربعات همان خطی است که این مجموع را کمینه می‌کند. ضریب همبستگی r بین ۱− و ۱ شدت و جهت رابطه را نشان می‌دهد؛ r نزدیک صفر یعنی رابطه‌ی خطی نیست. توجه: همبستگی، علت و معلول نمی‌سازد.</div>
+    </div>
+  );
+}
+
 const VLAB_SOLID_AREAS = [
   { n: "نوک میخ", a: 0.1, w: 3 },
   { n: "پاشنه‌ی کفش", a: 10, w: 14 },
@@ -50201,6 +50558,11 @@ const VLAB_COMPONENTS = {
   "meander": VlabMeanderExperiment,
   "seasons": VlabSeasonsExperiment,
   "tides": VlabTidesExperiment,
+  "regression-fit": VlabRegressionFitExperiment,
+  "pythagoras-proof": VlabPythagorasProofExperiment,
+  "epidemic-sir": VlabEpidemicSirExperiment,
+  "vaccine-memory": VlabVaccineMemoryExperiment,
+  "nitrogen-cycle": VlabNitrogenCycleExperiment,
   "tooth-decay": VlabToothCareExperiment,
   "brain-map": VlabBrainMapExperiment,
   "water-treatment": VlabWaterTreatExperiment,
@@ -50584,6 +50946,11 @@ const VLAB_GUIDE = {
   "water-treatment": { goals: ["مرحله‌های تصفیه‌ی آب را به ترتیب بگویی.","نقش هر مرحله را بدانی."], challenges: ["صافی را خاموش کن؛ آب نوشیدنی می‌شود؟","کلر برای آب گل‌آلود چرا کم‌اثر است؟"], misconception: "فکر می‌کنیم آب زلال همیشه سالم است؛ ولی میکروب‌ها با چشم دیده نمی‌شوند.", check: { q: "کدام مرحله میکروب‌ها را می‌کشد؟", a: "کلرزنی." } },
   "brain-map": { goals: ["بخش‌های اصلی مغز و کار هر کدام را بگویی.","کارهای روزمره را به بخش‌های مغز ربط بدهی."], challenges: ["برای ضربه به توپ چند بخش لازم است؟","نفس کشیدن را کدام بخش اداره می‌کند؟"], misconception: "فکر می‌کنیم هر کار فقط با یک بخش مغز انجام می‌شود؛ بیشتر کارها هماهنگی چند بخش است.", check: { q: "تعادل بدن به کدام بخش مغز وابسته است؟", a: "مخچه." } },
   "tooth-decay": { goals: ["لایه‌های دندان را نام ببری.","نقش مسواک و شیرینی در پوسیدگی را بفهمی."], challenges: ["چرا دفعات خوردن شیرینی مهم است؟","بدون مسواک بعد از ۶۰ روز چه می‌شود؟"], misconception: "فکر می‌کنیم فقط مقدار شیرینی مهم است؛ ولی تعداد دفعات خوردن هم دهان را بارها اسیدی می‌کند.", check: { q: "کدام لایه‌ی دندان از همه سخت‌تر است؟", a: "مینا." } },
+  "nitrogen-cycle": { goals: ["پنج مرحله‌ی چرخه‌ی نیتروژن را به ترتیب نام می‌برم.","نقش باکتری‌ها در هر مرحله را می‌گویم."], challenges: ["کدام مرحله تنها راه ورود نیتروژن هوا به زیست‌کره است؟","خاک غرقاب چه اثری بر نیتریفیکاسیون دارد؟","چرا حبوبات خاک را حاصلخیز می‌کنند؟"], misconception: "گیاهان نیتروژن هوا را مستقیم جذب می‌کنند؛ در حقیقت فقط به شکل یون‌هایی مثل نیترات و آمونیوم از خاک جذب می‌کنند.", check: { q: "کدام باکتری‌ها نیتریت را به نیترات تبدیل می‌کنند؟", a: "نیتروباکتر" } },
+  "vaccine-memory": { goals: ["پاسخ اول و دوم ایمنی را مقایسه می‌کنم.","نقش سلول‌های خاطره را توضیح می‌دهم."], challenges: ["با یک دوز آیا از حد حفاظت بالاتر می‌روی؟","اثر فاصله‌ی دوزها را بررسی کن.","اگر عفونت زود، قبل از اثر واکسن برسد چه می‌شود؟"], misconception: "واکسن به‌محض تزریق محافظت کامل می‌دهد؛ ولی ساخت آنتی‌بادی و سلول خاطره دست‌کم یک تا دو هفته زمان می‌برد.", check: { q: "چرا پاسخ ایمنی در برخورد دوم سریع‌تر است؟", a: "چون سلول‌های خاطره از قبل ساخته شده‌اند." } },
+  "epidemic-sir": { goals: ["اثر R₀ را روی اوج بیماری می‌بینم.","اثر واکسن و فاصله‌گذاری را مقایسه می‌کنم."], challenges: ["R₀ را ۳ بگذار؛ چند درصد واکسن لازم است تا بیماری خاموش شود؟","با ۵۰٪ کاهش تماس، اوج منحنی چقدر می‌آید؟","مدت بیماری چه اثری دارد؟"], misconception: "فکر می‌کنیم بیماری تا وقتی همه مبتلا نشوند ادامه می‌یابد؛ در حقیقت وقتی تعداد مستعدها کم شود، بیماری خودبه‌خود خاموش می‌شود.", check: { q: "فرمول آستانه‌ی ایمنی جمعی چیست؟", a: "۱ منهای ۱ تقسیم بر R₀" } },
+  "pythagoras-proof": { goals: ["قضیه‌ی فیثاغورس را با جابه‌جایی مثلث‌ها اثبات می‌کنم.","رابطه‌ی c² = a² + b² را روی اندازه‌های مختلف می‌آزمایم."], challenges: ["سه‌تایی ۳-۴-۵ و ۵-۱۲-۱۳ را بررسی کن.","وقتی a = b است c چقدر می‌شود؟","چرا مساحت دو حالت یکی است؟"], misconception: "فکر می‌کنیم قضیه‌ی فیثاغورس برای هر مثلثی درست است؛ ولی فقط برای مثلث قائم‌الزاویه برقرار است.", check: { q: "در مثلث قائم‌الزاویه‌ای با اضلاع ۶ و ۸، وتر چقدر است؟", a: "۱۰" } },
+  "regression-fit": { goals: ["مفهوم کمترین مربعات و ضریب همبستگی را می‌فهمم.","فرق همبستگی و علیت را می‌دانم."], challenges: ["با دست خطی بکش که SSE شما به خط بهینه نزدیک شود.","در مجموعه‌ی سوم r چقدر است و چرا؟","اثر یک نقطه‌ی دورافتاده را بررسی کن."], misconception: "همبستگی بالا یعنی یکی از متغیرها دیگری را ایجاد می‌کند؛ در حالی که ممکن است عامل سومی هر دو را تغییر دهد.", check: { q: "r نزدیک صفر چه معنایی دارد؟", a: "رابطه‌ی خطی ندارد." } },
   "tides": { goals: ["کشش گرانشی ماه و خورشید باعث جزر و مد می‌شود.", "هم‌راستایی سه جرم کشند بزرگ و حالت عمودی کشند کوچک می‌دهد."], challenges: ["در چه فازهایی کشند بزرگ است؟", "چرا دو برآمدگی آب داریم؟", "در تربیع، دامنه‌ی کشند را چقدر می‌بینی؟"], misconception: "فکر می‌کنیم فقط یک برآمدگی رو به ماه داریم؛ اما یک برآمدگی هم در سمت مقابل پدید می‌آید.", check: { q: "در ماه نو یا ماه کامل کشند بزرگ است یا کوچک؟", a: "بزرگ." } },
 
   "res-color": { goals: ["هر رنگ نمایانگر یک رقم است و نوار سوم ضریب ده‌به‌توان است.", "مقدار مقاومت را از روی رنگ‌ها بخوانی."], challenges: ["مقاومتی با مقدار ۴٫۷ کیلواهم بساز. چه رنگ‌هایی لازم است؟", "نوار سوم را یک رنگ جلوتر ببر؛ مقاومت چند برابر می‌شود؟", "کوچک‌ترین و بزرگ‌ترین مقدار ممکن برای مقاومت ±۵٪ را حساب کن."], misconception: "گاهی فکر می‌کنیم نوار سوم هم یک رقم است؛ اما ضریب است و تعداد صفرها را مشخص می‌کند.", check: { q: "نوارها قهوه‌ای، مشکی، قرمز هستند. مقاومت چند اهم است؟", a: "۱۰ × ۱۰۰ = ۱۰۰۰ اهم (۱ کیلواهم)." } },

@@ -29721,152 +29721,90 @@ function VlabReactionRateExperiment({ onReading }) {
 }
 
 /* ---------- ۲۲. ضربان قلب و فعالیت بدنی ---------- */
+function vlabEcg(p) {
+  const g = (x, m, s, a) => a * Math.exp(-((x - m) * (x - m)) / (2 * s * s));
+  return g(p, 0.1, 0.022, 0.16) - g(p, 0.205, 0.008, 0.22) + g(p, 0.225, 0.010, 1.0) - g(p, 0.248, 0.010, 0.3) + g(p, 0.42, 0.045, 0.3);
+}
 function VlabHeartRateExperiment({ onReading }) {
   const [activity, setActivity] = useState(0);
-  const heartRate = 70 + activity * 8;
-  const pulseDuration = vlabClamp(60 / heartRate, 0.3, 0.9);
+  const [t, setT] = useState(0);
+  const [cnt, setCnt] = useState({ on: false, t0: 0, n: 0, done: false, last: -1 });
+  const heartRate = 70 + activity * 10;
   const activityLabel = activity === 0 ? "استراحت" : activity <= 3 ? "پیاده‌روی آرام" : activity <= 7 ? "دویدن متوسط" : "دویدن شدید";
-
+  useEffect(() => { if (onReading) onReading(`فعالیت: ${activityLabel} (سطح ${activity}) | ضربان قلب: ${heartRate} ضربه در دقیقه`); /* eslint-disable-next-line */ }, [activity]);
+  useEffect(() => { const id = setInterval(() => setT((x) => x + 0.033), 33); return () => clearInterval(id); }, []);
+  const beats = (t * heartRate) / 60, ph = beats - Math.floor(beats);
   useEffect(() => {
-    if (onReading) onReading(`فعالیت: ${activityLabel} (سطح ${activity}) | ضربان قلب تقریبی: ${heartRate} ضربه در دقیقه`);
+    if (!cnt.on) return;
+    const bi = Math.floor(beats);
+    if (cnt.last < 0) { setCnt((c) => ({ ...c, last: bi })); return; }
+    if (bi > cnt.last) setCnt((c) => ({ ...c, n: c.n + (bi - c.last), last: bi }));
+    if (t - cnt.t0 >= 15) setCnt((c) => ({ ...c, on: false, done: true }));
     // eslint-disable-next-line
-  }, [activity]);
-
-  // یک موج ECG واقعی (خط صاف + یک کمپلکس QRS تیز) چندبار پشتِ‌سرِهم تکرار می‌شود تا شکلِ صفحه‌ی
-  // دستگاهِ ضربان‌سنجِ واقعی را بسازد؛ با strokeDasharray/strokeDashoffset به چپ می‌لغزد — سرعتِ
-  // لغزش به pulseDuration (یعنی به ضربانِ قلب) وابسته است.
-  const ecgUnit = "l10,0 l4,0 l3,-7 l4,16 l3,-22 l3,13 l4,0 l10,0";
-  const ecgPath = `M0,30 ${Array.from({ length: 10 }).map(() => ecgUnit).join(" ")}`;
-
-  // آدمکی که درجا راه می‌رود/می‌دود — سرعت و دامنه‌ی تابِ دست‌وپا با سطحِ فعالیت بالا می‌رود:
-  // در استراحت یک راه‌رفتنِ آرامِ درجا، در فعالیتِ شدید یک دویدنِ تندِ پرتاب.
-  const legDur = vlabClamp(0.95 - activity * 0.065, 0.28, 0.95);
-  const ampDeg = 12 + activity * 2;
-  const runLabel = activity === 0 ? "راه‌رفتنِ آرامِ درجا" : activity <= 3 ? "راه‌رفتنِ تند" : activity <= 7 ? "دویدنِ متوسط" : "دویدنِ شدید";
-
+  }, [t]);
+  const lub = Math.exp(-Math.pow((ph - 0.04) / 0.05, 2)) * 0.14 + Math.exp(-Math.pow((ph - 0.34) / 0.05, 2)) * 0.08;
+  const WIN = 3.2, W = 186, pts = [];
+  for (let i = 0; i <= 120; i++) { const tt = t - ((120 - i) / 120) * WIN; const bb = (tt * heartRate) / 60; pts.push(`${(12 + (i / 120) * W).toFixed(1)},${(52 - vlabEcg(bb - Math.floor(bb)) * 36).toFixed(1)}`); }
+  const cad = 0.9 + activity * 0.28, sw = Math.sin(t * Math.PI * 2 * cad), bob = Math.abs(Math.sin(t * Math.PI * 2 * cad)) * (1 + activity * 0.25);
+  const amp = 18 + activity * 3.4;
+  const limb = (x, y, ang, len, w, c) => <line x1={x} y1={y} x2={x + Math.sin((ang * Math.PI) / 180) * len} y2={y + Math.cos((ang * Math.PI) / 180) * len} stroke={c} strokeWidth={w} strokeLinecap="round" />;
+  const shown = cnt.on ? Math.min(15, t - cnt.t0) : cnt.done ? 15 : 0;
   return (
     <div className="vlab-exp">
-      {/* «ساعت یا کرنومتر» و «انگشت برای حس ضربان» که در فهرست وسایل بودند، اضافه شدند؛ به‌جایِ یک
-          قلبِ تختِ تک‌رنگ، حالا یک دستگاهِ ضربان‌سنجِ واقعیِ بیمارستانی (صفحه‌ی سیاه با خطِ ECGِ سبزِ
-          متحرک) و یک قلبِ با گرادیانِ سه‌بعدی و رگ‌های خروجی کشیده شد. ارتفاعِ viewBox به 230 افزایش
-          یافت تا جای کافی برایِ آدمکِ در حالِ راه‌رفتن/دویدن در پایینِ صحنه باز شود. */}
-      <svg viewBox="0 0 320 230" className="vlab-svg" style={{ background: "#03060f", borderRadius: "10px" }}>
+      <svg viewBox="0 0 320 250" className="vlab-svg" style={{ direction: "ltr", background: "#eef6ff" }}>
         <defs>
-          <radialGradient id="heartGrad" cx="35%" cy="30%" r="75%">
-            <stop offset="0%" stopColor="#ff7a5c" />
-            <stop offset="55%" stopColor="#e2432f" />
-            <stop offset="100%" stopColor="#9c1f1f" />
-          </radialGradient>
-          <clipPath id="ecgScreenClip">
-            <rect x="14" y="16" width="150" height="56" rx="4" />
-          </clipPath>
+          <linearGradient id="hrBg" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stopColor="#dff0ff" /><stop offset="1" stopColor="#f6fbff" /></linearGradient>
+          <radialGradient id="hrHeart" cx="35%" cy="30%" r="75%"><stop offset="0" stopColor="#ff8a6e" /><stop offset="0.55" stopColor="#e2432f" /><stop offset="1" stopColor="#9c1f1f" /></radialGradient>
+          <pattern id="hrGrid" width="6" height="6" patternUnits="userSpaceOnUse"><path d="M 6,0 L 0,0 L 0,6" fill="none" stroke="#f1b6bd" strokeWidth="0.5" /></pattern>
+          <pattern id="hrGrid2" width="30" height="30" patternUnits="userSpaceOnUse"><path d="M 30,0 L 0,0 L 0,30" fill="none" stroke="#e58c98" strokeWidth="0.9" /></pattern>
+          <clipPath id="hrClip"><rect x="12" y="14" width="186" height="64" rx="3" /></clipPath>
         </defs>
-
-        {/* قلب: گرادیانِ سه‌بعدی + دو رگِ خروجی از بالا، با انیمیشنِ تپش هم‌زمان با ضربان واقعی.
-            نکته‌ی مهم: اگر انیمیشنِ CSSِ «transform» روی همان عنصری اعمال شود که خودش از قبل یک
-            attributeِ «transform="translate(...)"» دارد، مرورگر مقدارِ attribute را کاملاً نادیده
-            می‌گیرد و فقط مقدارِ انیمیشن (اینجا فقط scale، بدونِ translate) اعمال می‌شود — یعنی قلب به
-            مختصاتِ (0,0) صفحه می‌پرد، دقیقاً همان باگی که کاربر دید (قلب فقط یک تکه‌ی کوچک در گوشه‌ی
-            بالا-چپ، روی صفحه‌ی ECG افتاده بود). رفع شد با دو <g> تودرتو: g بیرونی فقط برایِ جایگذاریِ
-            ثابت (translate)، g درونی فقط برایِ انیمیشنِ تپش (scale) — این دو هرگز نباید روی یک عنصر
-            ترکیب شوند. */}
-        <g transform="translate(220,95)">
-          <g style={{ transformOrigin: "0px 0px", animation: `vlabHeartbeat ${pulseDuration}s ease-in-out infinite` }}>
-            <path d="M-8,-38 Q-6,-50 4,-48 L4,-30 Z" fill="#b23a3a" stroke="#7a1f1f" strokeWidth="1" />
-            <path d="M8,-38 Q14,-52 22,-46 L14,-28 Z" fill="#b23a3a" stroke="#7a1f1f" strokeWidth="1" />
-            <path
-              d="M0,45 C-55,5 -52,-38 -18,-42 C0,-44 8,-26 8,-18 C8,-26 20,-46 40,-42 C72,-36 72,5 0,45 Z"
-              fill="url(#heartGrad)"
-              stroke="#7a1f1f"
-              strokeWidth="1.4"
-            />
-            <path d="M-18,-20 C-8,-10 -4,8 4,26" fill="none" stroke="#ff9d85" strokeWidth="2.2" opacity="0.55" strokeLinecap="round" />
+        <rect width="320" height="250" rx="12" fill="url(#hrBg)" />
+        {/* ECG */}
+        <rect x="6" y="6" width="198" height="78" rx="9" fill="#2a3150" /><rect x="12" y="14" width="186" height="64" rx="3" fill="#fff4f4" />
+        <rect x="12" y="14" width="186" height="64" fill="url(#hrGrid)" /><rect x="12" y="14" width="186" height="64" fill="url(#hrGrid2)" />
+        <g clipPath="url(#hrClip)"><polyline points={pts.join(" ")} fill="none" stroke="#1a1a22" strokeWidth="1.8" strokeLinejoin="round" /><circle cx={12 + W} cy={52 - vlabEcg(ph) * 36} r="2.8" fill="#e2432f" /></g>
+        <VlabPill x="105" y="96" text="نمودار الکتریکی قلب (ECG)" size={9} fill="#ffffff" color="#4a5a7a" />
+        {/* عدد */}
+        <rect x="210" y="6" width="104" height="78" rx="9" fill="#10201a" />
+        <text x="262" y="52" fontSize="34" fontWeight="700" fill="#3ddc6f" textAnchor="middle">{VLAB_FA_DIGITS(heartRate)}</text>
+        <text x="262" y="72" fontSize="10" fill="#9be8b5" textAnchor="middle">ضربه در دقیقه</text>
+        <text x="262" y="22" fontSize="11" fill="#3ddc6f" textAnchor="middle" opacity={ph < 0.3 ? 1 : 0.35}>♥</text>
+        {/* قلب تپنده (لاب‌دوپ) */}
+        <g transform={`translate(70,150) scale(${(1 + lub).toFixed(3)})`}>
+          <path d="M-9,-40 Q-8,-54 4,-52 L4,-32 Z" fill="#b23a3a" stroke="#7a1f1f" strokeWidth="1" /><path d="M9,-40 Q16,-56 25,-48 L15,-30 Z" fill="#b23a3a" stroke="#7a1f1f" strokeWidth="1" />
+          <path d="M0,46 C-58,6 -54,-40 -18,-44 C0,-46 8,-28 8,-20 C8,-28 22,-48 42,-44 C74,-38 74,6 0,46 Z" fill="url(#hrHeart)" stroke="#7a1f1f" strokeWidth="1.6" />
+          <path d="M-20,-22 C-10,-10 -4,8 4,28" fill="none" stroke="#ffb09b" strokeWidth="2.4" opacity="0.6" strokeLinecap="round" />
+        </g>
+        <VlabPill x="70" y="212" text="لاب - دوپ" size={9.5} fill="#ffffff" color="#8a1f12" />
+        {/* دونده */}
+        <g transform="translate(228,150)">
+          <ellipse cx="0" cy="62" rx="26" ry="4" fill="#000" opacity="0.18" /><line x1="-44" y1="63" x2="44" y2="63" stroke="#7aa35a" strokeWidth="3" />
+          <g transform={`translate(0,${(-bob * 2).toFixed(1)})`}>
+            {limb(0, 14, -sw * amp, 26, 7, "#3d72cc")}{limb(0, 14, sw * amp, 26, 7, "#2f5fb0")}
+            {limb(-sw * amp * 0.0, 14, 0, 0, 0, "none")}
+            <path d={`M ${Math.sin((-sw * amp * Math.PI) / 180) * 26 - 2},${14 + Math.cos((-sw * amp * Math.PI) / 180) * 26 + 1} h 9`} stroke="#fff" strokeWidth="4" strokeLinecap="round" />
+            <path d={`M ${Math.sin((sw * amp * Math.PI) / 180) * 26 - 2},${14 + Math.cos((sw * amp * Math.PI) / 180) * 26 + 1} h 9`} stroke="#fff" strokeWidth="4" strokeLinecap="round" />
+            <rect x="-9" y="-22" width="18" height="38" rx="8" fill="#e2622f" />
+            {limb(0, -16, sw * amp * 1.2, 22, 5, "#e8c3a0")}{limb(0, -16, -sw * amp * 1.2, 22, 5, "#d9b090")}
+            <circle cx="1" cy="-32" r="9" fill="#f0cfae" stroke="#c8926a" strokeWidth="1.2" /><path d="M -8,-34 Q -6,-44 3,-42 Q 10,-41 9,-34 Q 3,-38 -8,-34 Z" fill="#3a2a1c" /><circle cx="5" cy="-32" r="1.1" fill="#3a2a1c" />
           </g>
         </g>
-
-        {/* دستگاهِ ضربان‌سنج: بدنه‌ی فلزیِ خاکستری + صفحه‌ی سیاهِ ECG با موجِ سبزِ متحرک + عددِ دیجیتال */}
-        <rect x="8" y="8" width="164" height="94" rx="8" fill="#232a44" stroke="#4a5280" strokeWidth="2" />
-        <rect x="14" y="16" width="150" height="56" rx="4" fill="#061309" />
-        {/* همان درسِ رفعِ باگِ قلب اینجا هم اعمال شد: دیگر هیچ attributeِ ثابتِ transform روی عنصرِ
-            متحرک نیست — کلِ جایگذاری (ازجمله موقعیتِ شروع) از خودِ keyframe می‌آید، تا در هیچ
-            مرورگری با تداخلِ attribute/CSS transform، این خط به‌طورِ کامل ناپدید نشود. */}
-        <g clipPath="url(#ecgScreenClip)">
-          <g style={{ animation: `vlabEcgScroll ${pulseDuration * 2}s linear infinite` }}>
-            <path d={ecgPath} fill="none" stroke="#3ddc6f" strokeWidth="2" />
-          </g>
-        </g>
-        <rect x="14" y="78" width="150" height="18" rx="3" fill="#061309" />
-        <text x="89" y="92" fontSize="13" fill="#3ddc6f" textAnchor="middle" fontWeight="700" style={{ direction: "ltr", unicodeBidi: "isolate" }}>
-          {heartRate} BPM
-        </text>
-
-        {/* انگشت با کلیپسِ قرمزِ پالس‌اکسیمتر — همان «انگشت برای حسِ ضربان» در فهرستِ وسایل */}
-        <g transform="translate(205,130)">
-          <path d="M-6,22 Q-9,0 -5,-20 Q-2,-29 3,-27 Q7,-25 6,-11 L6,11 Q6,22 0,24 Z" fill="#e8c3a0" stroke="#c8926a" strokeWidth="1" />
-          <rect x="-9" y="-16" width="18" height="20" rx="4" fill="#d3384a" stroke="#8a1f2b" strokeWidth="1" />
-          <circle cx="0" cy="-6" r="2.4" fill="#ff8f9c" style={{ animation: `vlabHeartbeat ${pulseDuration}s ease-in-out infinite` }} />
-          <text x="0" y="40" fontSize="7" fill="#9aa3c0" textAnchor="middle">حسگرِ ضربان (انگشت)</text>
-        </g>
-
-        <text x="90" y="118" fontSize="8" fill="#9aa3c0" textAnchor="middle">دستگاهِ ضربان‌سنج</text>
-
-        {/* آدمکِ در حالِ راه‌رفتن/دویدن: دست‌وپاها حولِ مفصلِ شانه/رانِ خود (با g جداگانه برایِ هرکدام)
-            با یک چرخشِ رفت‌وبرگشتی می‌چرخند؛ دامنه و سرعتِ این چرخش به سطحِ فعالیت وابسته است، یعنی
-            دقیقاً همان چیزی که باعثِ بالا رفتنِ ضربان‌قلب در بالا شده. سایه‌ی زیرِ پا و خطِ زمین کمک
-            می‌کند آدمک «روی زمین» به نظر برسد نه معلق در هوا. */}
-        <g transform="translate(70,205)">
-          <ellipse cx="0" cy="27" rx="17" ry="4" fill="#000" opacity="0.28" />
-          <line x1="-26" y1="27" x2="26" y2="27" stroke="#3a4472" strokeWidth="2" />
-
-          {/* پای عقب */}
-          <g style={{ transformOrigin: "0px -5px", animation: `vlabRunLegs ${legDur}s ease-in-out infinite`, animationDelay: `${legDur / 2}s` }}>
-            <line x1="0" y1="-5" x2="0" y2="22" stroke="#2f5fb0" strokeWidth="5.5" strokeLinecap="round" />
-            <line x1="0" y1="23" x2="6" y2="23" stroke="#fff" strokeWidth="3.4" strokeLinecap="round" />
-          </g>
-          {/* پای جلو */}
-          <g style={{ transformOrigin: "0px -5px", animation: `vlabRunLegs ${legDur}s ease-in-out infinite` }}>
-            <line x1="0" y1="-5" x2="0" y2="22" stroke="#3d72cc" strokeWidth="5.5" strokeLinecap="round" />
-            <line x1="0" y1="23" x2="6" y2="23" stroke="#fff" strokeWidth="3.4" strokeLinecap="round" />
-          </g>
-
-          {/* تنه و سر */}
-          <line x1="0" y1="-32" x2="0" y2="-5" stroke="#e2622f" strokeWidth="9" strokeLinecap="round" />
-          <circle cx="0" cy="-41" r="7" fill="#e8c3a0" stroke="#c8926a" strokeWidth="1" />
-          <path d="M-7,-42 Q-6,-50 2,-49 Q8,-48 7,-42 Q2,-45 -7,-42 Z" fill="#3a2a1c" />
-          <circle cx="3" cy="-41" r="0.9" fill="#3a2a1c" />
-
-          {/* بازویِ عقب */}
-          <g style={{ transformOrigin: "0px -32px", animation: `vlabRunArms ${legDur}s ease-in-out infinite`, animationDelay: `${legDur / 2}s` }}>
-            <line x1="0" y1="-32" x2="0" y2="-10" stroke="#c8926a" strokeWidth="3.5" strokeLinecap="round" />
-          </g>
-          {/* بازویِ جلو */}
-          <g style={{ transformOrigin: "0px -32px", animation: `vlabRunArms ${legDur}s ease-in-out infinite` }}>
-            <line x1="0" y1="-32" x2="0" y2="-10" stroke="#e8c3a0" strokeWidth="3.5" strokeLinecap="round" />
-          </g>
-
-          <text x="0" y="-52" fontSize="8" fill="#9aa3c0" textAnchor="middle">{runLabel}</text>
-        </g>
+        <VlabPill x="228" y="212" text={activityLabel} size={9.5} fill="#ffffff" />
       </svg>
-      <VlabMeterRow height={160} meters={[{ label: "ضربان قلب", unit: "BPM", value: heartRate, ranges: [200], maj: 5, decimals: 0 }, { label: "ضربان در ۱۵ ثانیه", unit: "", value: heartRate / 4, ranges: [50], maj: 5, decimals: 0 }]} />
+      <VlabMeterRow height={150} meters={[{ label: "ضربان قلب", unit: "BPM", value: heartRate, ranges: [200], maj: 5, decimals: 0 }, { label: "ضربان در ۱۵ ثانیه", unit: "", value: heartRate / 4, ranges: [50], maj: 5, decimals: 0 }]} />
       <div className="vlab-controls">
         <div className="vlab-ctrl-col" style={{ flex: 1 }}>
           <label className="vlab-ctrl-label">سطح فعالیت بدنی: {activityLabel}</label>
-          <VlabRange min="0" max="10" value={activity} onChange={(e) => setActivity(+e.target.value)} />
+          <VlabRange min="0" max="10" value={activity} onChange={(e) => { setActivity(+e.target.value); setCnt({ on: false, t0: 0, n: 0, done: false, last: -1 }); }} />
+          <div className="vlab-num-row"><button type="button" className="vlab-num-btn active" onClick={() => setCnt({ on: true, t0: t, n: 0, done: false, last: -1 })}>⏱ نبض را ۱۵ ثانیه بشمار</button></div>
+          {(cnt.on || cnt.done) && <div style={{ textAlign: "center", fontSize: 13, fontWeight: 700, color: cnt.done ? "#126b30" : "#8a3d00" }}>{cnt.done ? `${VLAB_FA_DIGITS(cnt.n)} ضربه × ۴ = ${VLAB_FA_DIGITS(cnt.n * 4)} ضربه در دقیقه (ضربان واقعی: ${VLAB_FA_DIGITS(heartRate)})` : `در حال شمارش… ${VLAB_FA_DIGITS(Math.floor(shown))} ثانیه — ضربه‌ها: ${VLAB_FA_DIGITS(cnt.n)}`}</div>}
         </div>
       </div>
       <div className="vlab-readout">
-        ضربان قلب تقریبی ≈ <b>{heartRate} ضربه در دقیقه</b>
-        <br />
-        هرچه فعالیت بدنی شدیدتر باشد، بدن برای رساندن اکسیژن بیشتر، قلب را سریع‌تر می‌تپاند.
+        قلب هر بار که می‌تپد، یک «لاب» و یک «دوپ» می‌زند و در نمودار ECG یک قله‌ی بلند (قله‌ی R) می‌سازد؛ تعداد این قله‌ها در یک دقیقه همان <b>ضربان قلب</b> است. در استراحت حدود {VLAB_FA_DIGITS(70)} و هنگام دویدن شدید تا حدود {VLAB_FA_DIGITS(170)} ضربه در دقیقه می‌رسد، چون ماهیچه‌ها اکسیژن بیشتری می‌خواهند. (مقدارها تقریبی‌اند.)
       </div>
-      <style>{`
-        @keyframes vlabHeartbeat { 0%, 100% { transform: scale(1); } 30% { transform: scale(1.18); } 50% { transform: scale(1); } 70% { transform: scale(1.1); } }
-        @keyframes vlabEcgScroll { from { transform: translate(14px,14px); } to { transform: translate(-150px,14px); } }
-        @keyframes vlabRunLegs { 0%, 100% { transform: rotate(${ampDeg}deg); } 50% { transform: rotate(-${ampDeg}deg); } }
-        @keyframes vlabRunArms { 0%, 100% { transform: rotate(-${ampDeg}deg); } 50% { transform: rotate(${ampDeg}deg); } }
-      `}</style>
-      <VlabFormulaCheck title="فاصله‌ی دو ضربان" fa="فاصله‌ی دو ضربان (ثانیه) = ۶۰ ÷ ضربان در دقیقه" en="T = 60 / BPM" legend={"ضربان فعلی: " + heartRate + " ضربه در دقیقه"} subst={`T = 60 ÷ ${heartRate} = ?`} label="فاصله‌ی دو ضربان:" answer={60 / heartRate} unit="ثانیه" decimals={2} />
-      <VlabFormulaCheck title="شمارش ضربان" fa="ضربان در دقیقه = تعداد ضربه در ۱۵ ثانیه × ۴" en="BPM = N × 4" legend="با حسگر انگشت، ضربه‌ها را ۱۵ ثانیه می‌شماریم" subst={`BPM = ${(heartRate / 4).toFixed(1)} × 4 = ?`} label="ضربان:" answer={heartRate} unit="BPM" decimals={0} />
+      <VlabFormulaCheck title="شمارش ضربان با نبض" fa="ضربان در دقیقه = ضربه‌های ۱۵ ثانیه × ۴" en="BPM = N × 4" legend="با حسگر انگشت، ضربه‌ها را ۱۵ ثانیه می‌شماریم" subst={`BPM = ${(heartRate / 4).toFixed(1)} × 4 = ?`} label="ضربان:" answer={heartRate} unit="BPM" decimals={0} />
     </div>
   );
 }
@@ -42271,17 +42209,19 @@ function VlabBatteryPackExperiment({ onReading }) {
   const si = window.setInterval.bind(window), st = window.setTimeout.bind(window), ct = window.clearTimeout.bind(window), raf = window.requestAnimationFrame.bind(window), craf = window.cancelAnimationFrame.bind(window);
   const tm = {}, fm = {}; let n = 1e9;
   window.setInterval = function (fn, ms, ...a) {
-    if (window.__vlabInLab && typeof fn === "function") { const f = fn; fn = function (...q) { if (window.__vlabPause) return; return f.apply(this, q); }; }
+    if (window.__vlabInLab && typeof fn === "function") { if (ms <= 200) window.__vlabMotion = true; const f = fn; fn = function (...q) { if (window.__vlabPause) return; return f.apply(this, q); }; }
     return si(fn, ms, ...a);
   };
   window.setTimeout = function (fn, ms, ...a) {
     if (!(window.__vlabInLab && typeof fn === "function")) return st(fn, ms, ...a);
+    if (ms <= 120) window.__vlabMotion = true;
     const id = ++n; const w = function () { if (window.__vlabPause) { tm[id] = st(w, 150); return; } delete tm[id]; return fn.apply(this, a); };
     tm[id] = st(w, ms); return id;
   };
   window.clearTimeout = function (id) { if (id in tm) { ct(tm[id]); delete tm[id]; } else ct(id); };
   window.requestAnimationFrame = function (fn) {
     if (!(window.__vlabInLab && typeof fn === "function")) return raf(fn);
+    window.__vlabMotion = true;
     const id = ++n; const step = function (t) { if (window.__vlabPause) { fm[id] = raf(step); return; } delete fm[id]; fn(t); };
     fm[id] = raf(step); return id;
   };
@@ -46054,27 +45994,82 @@ function VlabJointsExperiment({ onReading }) {
       <VlabPill x="64" y="196" text="به عقب خم نمی‌شود" size={9.5} fill="#fff" color="#555" />
     </g>;
   } else if (J.t === "محوری") {
-    const C = [160, 110];
+    const th = (a * Math.PI) / 180, cs = Math.cos(th), sn = Math.sin(th), HX = 100, HY = 62;
+    const fx = (x, z) => HX + x * cs + z * sn, vis = (x, z) => vlabClamp((z * cs - x * sn + 6) / 12, 0, 1);
+    const feat = [[-17, 30, "o"], [17, 30, "o"]];
+    const teeth = Array.from({ length: 8 }, (_, k) => -14 + k * 4);
+    const verts = [["C1", 46, 10], ["C2", 40, 10], ["C3", 38, 10], ["C4", 38, 10], ["C5", 40, 10], ["C6", 42, 11], ["C7", 46, 12]];
+    let yy = 118;
+    const vy = verts.map((v) => { const y0 = yy; yy += v[2] + 2; return y0; });
+    const C0 = [262, 60];
     scene = (
       <g>
-        <ellipse cx="160" cy="154" rx="56" ry="26" fill="url(#jtBone)" stroke={VLAB_BONE_S} strokeWidth="1.8" />
-        <circle cx="160" cy="132" r="12" fill="#5a3f6e" stroke="#33203f" strokeWidth="1.4" />
-        <circle cx="160" cy="104" r="10" fill="url(#jtBone)" stroke={VLAB_BONE_S} strokeWidth="1.8" />
-        <g transform={`rotate(${a} ${C[0]} ${C[1]})`}>
-          <circle cx="160" cy="110" r="84" fill="#ffe3c2" fillOpacity="0.28" stroke="#c99a6a" strokeWidth="1.4" strokeDasharray="4 4" />
-          <polygon points="160,18 150,40 170,40" fill="#f2b787" stroke="#a8683a" strokeWidth="1.4" />
-          <ellipse cx="76" cy="112" rx="6" ry="13" fill="#f2b787" stroke="#a8683a" strokeWidth="1.2" /><ellipse cx="244" cy="112" rx="6" ry="13" fill="#f2b787" stroke="#a8683a" strokeWidth="1.2" />
-          <path d="M 102,110 A 58,34 0 1 0 218,110 A 58,34 0 1 0 102,110 Z M 130,110 A 30,20 0 1 0 190,110 A 30,20 0 1 0 130,110 Z" fillRule="evenodd" fill="url(#jtBone)" stroke={VLAB_BONE_S} strokeWidth="1.8" />
-          <path d="M 142,114 Q 160,122 178,114" fill="none" stroke="#c0392b" strokeWidth="3" strokeLinecap="round" />
+        {/* ستون مهره‌های گردن */}
+        <rect x={HX - 9} y="108" width="18" height={yy - 108} rx="8" fill="#e8d8b6" stroke={VLAB_BONE_S} strokeWidth="1" />
+        {verts.map((v, k) => (
+          <g key={v[0]}>
+            <rect x={HX - v[1] / 2} y={vy[k]} width={v[1]} height={v[2]} rx="5" fill={k === 0 ? "#ffc4bd" : k === 1 ? "#bcd9ff" : "url(#jtBone)"} stroke={k === 0 ? "#c0392b" : k === 1 ? "#2d6fc4" : VLAB_BONE_S} strokeWidth={k < 2 ? 2 : 1.4} />
+            {k > 1 && <><rect x={HX - v[1] / 2 - 5} y={vy[k] + v[2] / 2 - 3} width="8" height="6" rx="3" fill="#e8d8b6" stroke={VLAB_BONE_S} strokeWidth="1" /><rect x={HX + v[1] / 2 - 3} y={vy[k] + v[2] / 2 - 3} width="8" height="6" rx="3" fill="#e8d8b6" stroke={VLAB_BONE_S} strokeWidth="1" /></>}
+            {k > 0 && k < 6 && <rect x={HX - v[1] / 2 + 2} y={vy[k] + v[2] - 0.5} width={v[1] - 4} height="2.6" rx="1.3" fill="#7fd0f5" stroke="#3b8cb8" strokeWidth="0.6" />}
+          </g>
+        ))}
+        <circle cx={HX + 17 * sn} cy={vy[0] + 5.5} r="3.6" fill="#c0392b" stroke="#fff" strokeWidth="1.2" />
+        <circle cx={HX} cy={vy[1] + 6} r="3.6" fill="#2d6fc4" stroke="#fff" strokeWidth="1.2" />
+        {/* جمجمه‌ی در حال چرخش */}
+        <defs>
+          <clipPath id="skClip"><path transform={`translate(${HX},${HY}) scale(${(0.8 + 0.2 * cs).toFixed(3)},1)`} d="M -44,-6 C -46,-54 46,-54 44,-6 C 44,6 40,16 38,24 L 30,30 L 26,46 C 22,56 14,60 0,60 C -14,60 -22,56 -26,46 L -30,30 L -38,24 C -40,16 -44,6 -44,-6 Z" /></clipPath>
+        </defs>
+        <g>
+          <path transform={`translate(${HX},${HY}) scale(${(0.8 + 0.2 * cs).toFixed(3)},1)`} d="M -44,-6 C -46,-54 46,-54 44,-6 C 44,6 40,16 38,24 L 30,30 L 26,46 C 22,56 14,60 0,60 C -14,60 -22,56 -26,46 L -30,30 L -38,24 C -40,16 -44,6 -44,-6 Z" fill="url(#jtBone)" stroke={VLAB_BONE_S} strokeWidth="2.2" strokeLinejoin="round" />
+          <g clipPath="url(#skClip)">
+            <path d={`M ${HX - 40 * cs},${HY - 22} Q ${HX},${HY - 52} ${HX + 40 * cs},${HY - 22}`} fill="none" stroke="#a89468" strokeWidth="1.2" strokeDasharray="1.5 2.5" opacity="0.8" />
+            <g transform={`translate(${(HX + 34 * sn).toFixed(2)},${HY}) scale(${cs.toFixed(3)},1)`}>
+              {/* ابروها و کاسه‌ی چشم */}
+              {[-1, 1].map((d) => <g key={d}>
+                <path d={`M ${d * 6},-10 Q ${d * 17},-20 ${d * 30},-10`} fill="none" stroke="#a89468" strokeWidth="2.2" strokeLinecap="round" />
+                <ellipse cx={d * 17} cy="-3" rx="11.5" ry="10" fill="#2b231a" stroke="#8a7650" strokeWidth="2.6" />
+                <ellipse cx={d * 17} cy="-1" rx="6" ry="6" fill="#4a3d2c" />
+                <path d={`M ${d * 28},6 Q ${d * 36},12 ${d * 33},24`} fill="none" stroke="#8a7650" strokeWidth="1.8" strokeLinecap="round" />
+              </g>)}
+              {/* بینی */}
+              <path d="M 0,8 C -7,12 -8,24 -3,28 L 0,25 L 3,28 C 8,24 7,12 0,8 Z" fill="#2b231a" stroke="#8a7650" strokeWidth="1.5" />
+              <path d="M -2,-8 L -1,8 M 2,-8 L 1,8" stroke="#a89468" strokeWidth="1.1" />
+              {/* فک بالا و دندان‌ها */}
+              <path d="M -23,30 Q 0,26 23,30 L 21,42 Q 0,46 -21,42 Z" fill="#f3e6c4" stroke="#8a7650" strokeWidth="1.4" />
+              {Array.from({ length: 10 }, (_, k) => { const x = -18 + k * 4; return <rect key={k} x={x - 1.8} y="36" width="3.6" height={Math.abs(x) < 8 ? 8 : 6.5} rx="1.1" fill="#fff" stroke="#9a8a60" strokeWidth="0.8" />; })}
+              {/* فک پایین */}
+              <path d="M -26,38 C -28,54 -16,62 0,62 C 16,62 28,54 26,38 L 22,44 C 12,48 -12,48 -22,44 Z" fill="#ead9b0" stroke="#8a7650" strokeWidth="1.6" strokeLinejoin="round" />
+              {Array.from({ length: 10 }, (_, k) => { const x = -18 + k * 4; return <rect key={k} x={x - 1.8} y="44" width="3.6" height="5.5" rx="1.1" fill="#fff" stroke="#9a8a60" strokeWidth="0.8" />; })}
+            </g>
+          </g>
+          <g opacity={vlabClamp((sn - 0.5) * 2.4, 0, 1)}>
+            <ellipse cx={HX + 20} cy={HY - 2} rx="6.5" ry="10" fill="#2b231a" stroke="#8a7650" strokeWidth="2.2" />
+            <path d={`M ${HX + 27},${HY + 4} L ${HX + 42},${HY + 20} L ${HX + 28},${HY + 24} Z`} fill="#ead9b0" stroke={VLAB_BONE_S} strokeWidth="1.6" strokeLinejoin="round" />
+            <path d={`M ${HX + 24},${HY + 28} L ${HX + 36},${HY + 30} L ${HX + 36},${HY + 40} L ${HX + 24},${HY + 40} Z`} fill="#f3e6c4" stroke={VLAB_BONE_S} strokeWidth="1.4" />
+            {[0, 1, 2, 3].map((k) => <rect key={k} x={HX + 31 - k * 0.6} y={HY + 32 + k * 2} width="5" height="2.4" rx="1" fill="#fff" stroke="#9a8a60" strokeWidth="0.6" />)}
+            <path d={`M ${HX + 14},${HY + 40} Q ${HX + 22},${HY + 62} ${HX + 36},${HY + 46} L ${HX + 34},${HY + 42}`} fill="#ead9b0" stroke={VLAB_BONE_S} strokeWidth="1.6" strokeLinejoin="round" />
+          </g>
+          <ellipse cx={HX + 41 * sn} cy={HY + 10} rx="5.5" ry="13" fill="#e2cf9f" stroke={VLAB_BONE_S} strokeWidth="1.5" opacity={vlabClamp(sn * 1.8, 0, 1)} />
+          <polygon points={`${HX + 38 * (0.8 + 0.2 * cs) + 8 * sn},${HY + 22} ${HX + 36 * (0.8 + 0.2 * cs)},${HY + 8} ${HX + 36 * (0.8 + 0.2 * cs)},${HY + 22}`} fill="#ead9b0" stroke={VLAB_BONE_S} strokeWidth="1.4" opacity={vlabClamp((sn - 0.55) * 3, 0, 1)} />
         </g>
-        <circle cx="160" cy="104" r="10" fill="none" stroke={VLAB_BONE_S} strokeWidth="1.8" opacity="0.0" />
+        {/* بزرگنمایی نمای بالا */}
+        <line x1={HX + 23} y1={vy[0] + 5} x2="214" y2="86" stroke="#6a7aa8" strokeWidth="1" strokeDasharray="2 3" />
+        <circle cx={C0[0]} cy={C0[1]} r="52" fill="#fff" fillOpacity="0.7" stroke="#8c98d6" strokeWidth="1.4" />
+        <ellipse cx={C0[0]} cy={C0[1] + 24} rx="38" ry="14" fill="#bcd9ff" stroke="#2d6fc4" strokeWidth="1.6" />
+        <circle cx={C0[0]} cy={C0[1] + 2} r="7.5" fill="#dfeeff" stroke="#2d6fc4" strokeWidth="1.6" />
+        <circle cx={C0[0]} cy={C0[1] + 22} r="7" fill="#5a3f6e" stroke="#33203f" strokeWidth="1.2" />
+        <g transform={`rotate(${a} ${C0[0]} ${C0[1]})`}>
+          <path d={`M ${C0[0] - 40},${C0[1]} A 40,24 0 1 0 ${C0[0] + 40},${C0[1]} A 40,24 0 1 0 ${C0[0] - 40},${C0[1]} Z M ${C0[0] - 21},${C0[1]} A 21,14 0 1 0 ${C0[0] + 21},${C0[1]} A 21,14 0 1 0 ${C0[0] - 21},${C0[1]} Z`} fillRule="evenodd" fill="#ffc4bd" stroke="#c0392b" strokeWidth="1.8" />
+          <polygon points={`${C0[0]},${C0[1] - 36} ${C0[0] - 6},${C0[1] - 27} ${C0[0] + 6},${C0[1] - 27}`} fill="#f2b787" stroke="#a8683a" strokeWidth="1.2" />
+        </g>
+        <VlabPill x={C0[0]} y="8" text="نمای از بالا (بزرگنمایی)" size={9} fill="#ffffff" color="#4a5a7a" />
       </g>
     );
     tags = <g>
-      <VlabPill x="66" y="22" text="حلقه‌ی اطلس" size={10} fill="#efe2f7" color="#4a2a63" />
-      <VlabPill x="256" y="22" text="بینی (جلو)" size={10} fill="#ffe3c0" />
-      <line x1="256" y1="190" x2="170" y2="104" stroke="#6a7aa8" strokeWidth="1" strokeDasharray="2 3" /><VlabPill x="258" y="196" text="دندانه‌ی محور (میخ)" size={9.5} fill="#fff" color="#4a2a63" />
-      <VlabPill x="62" y="196" text="نخاع" size={10} fill="#d9c7e8" color="#33203f" />
+      <line x1={HX + 24} y1={vy[0] + 5} x2="212" y2="158" stroke="#c0392b" strokeWidth="1" strokeDasharray="2 3" /><VlabPill x="256" y="158" text="مهره‌ی ۱: اطلس" size={10} fill="#ffd6d0" color="#8a1f12" />
+      <line x1={HX + 20} y1={vy[1] + 6} x2="212" y2="184" stroke="#2d6fc4" strokeWidth="1" strokeDasharray="2 3" /><VlabPill x="256" y="184" text="مهره‌ی ۲: آکسیس" size={10} fill="#d6e8ff" color="#123f8c" />
+      <VlabPill x="256" y="132" text="دندانه (میخ آبی)" size={9.5} fill="#ffffff" color="#123f8c" />
+      <VlabPill x="50" y="30" text="جمجمه" size={10} fill="#efe3c4" />
     </g>;
   } else {
     const press = (a / 100) * 5;
@@ -46607,7 +46602,7 @@ function VlabSinkFloatKidsExperiment({ onReading }) {
   const floats = rho < dw;
   const sp = VLAB_SF_SPEC[it[1]];
   const sim = React.useRef(null);
-  const WT0 = 92, FLOOR = 196, XC = 160;
+  const WT0 = 92, FLOOR = 203, XC = 160;
   useEffect(() => { if (onReading) onReading(`${it[1]}: ${floats ? "شناور" : "غرق"}`); /* eslint-disable-next-line */ }, [i, salt]);
   useEffect(() => {
     sim.current = { y: 6, v: 0, t: 0, s: 0, rest: false, tEnter: -9, tRest: -9, rot: 0, stable: 0, saltT: salt ? 0 : -9 };
@@ -47094,35 +47089,75 @@ function VlabHeartChambersExperiment({ onReading }) {
   const tk = VLAB_GEO_TICK(30);
   const sec = tk * 0.03 * (slow ? 0.25 : 1);
   const ph = (sec * bpm / 60) % 1;
-  const atria = ph < 0.12, vent = ph >= 0.12 && ph < 0.45;
-  const sa = atria ? 0.9 : 1, sv = vent ? 0.88 : 1;
-  const label = atria ? "انقباض دهلیزها" : vent ? "انقباض بطن‌ها (خون به شش‌ها و بدن)" : "استراحت (قلب از خون پر می‌شود)";
+  const atria = ph < 0.13, vent = ph >= 0.13 && ph < 0.46;
+  const label = atria ? "انقباض دهلیزها: خون به بطن‌ها می‌رود" : vent ? "انقباض بطن‌ها: خون به شش‌ها و بدن می‌رود" : "استراحت: دهلیزها از خون پر می‌شوند";
   const co = (bpm * 70) / 1000;
   useEffect(() => { if (onReading) onReading(`${bpm} ضربان در دقیقه | برون‌ده ${co.toFixed(1)} L/min`); /* eslint-disable-next-line */ }, [bpm]);
-  const along = (pts, f) => { const L = []; let tot = 0; for (let i = 0; i < pts.length - 1; i++) { const l = Math.hypot(pts[i + 1][0] - pts[i][0], pts[i + 1][1] - pts[i][1]); L.push(l); tot += l; } let d = ((f % 1) + 1) % 1 * tot; for (let i = 0; i < L.length; i++) { if (d <= L[i]) return [pts[i][0] + (pts[i + 1][0] - pts[i][0]) * d / L[i], pts[i][1] + (pts[i + 1][1] - pts[i][1]) * d / L[i]]; d -= L[i]; } return pts[pts.length - 1]; };
-  const flow = sec * bpm / 60 * 0.9;
-  const ch = (cx, cy, rx, ry, sc, fill, dark, name) => <g transform={`translate(${cx},${cy}) scale(${sc}) translate(${-cx},${-cy})`}><ellipse cx={cx} cy={cy} rx={rx} ry={ry} fill={fill} stroke={dark} strokeWidth="2.5" /><text x={cx} y={cy - 1} fontSize="8" fill="#fff" textAnchor="middle" fontWeight="700">{name[0]}</text><text x={cx} y={cy + 9} fontSize="8" fill="#fff" textAnchor="middle" fontWeight="700">{name[1]}</text></g>;
+  const along = (pts, f) => { const L = []; let tot = 0; for (let i = 0; i < pts.length - 1; i++) { const l = Math.hypot(pts[i + 1][0] - pts[i][0], pts[i + 1][1] - pts[i][1]); L.push(l); tot += l; } let d = (((f % 1) + 1) % 1) * tot; for (let i = 0; i < L.length; i++) { if (d <= L[i]) return [pts[i][0] + ((pts[i + 1][0] - pts[i][0]) * d) / L[i], pts[i][1] + ((pts[i + 1][1] - pts[i][1]) * d) / L[i]]; d -= L[i]; } return pts[pts.length - 1]; };
+  const flow = (sec * bpm) / 60 * 0.55;
+  const BLUE = "#3b82c4", RED = "#d94141";
+  const sA = atria ? 0.93 : 1, sV = vent ? 0.92 : 1;
+  const sc = (cx, cy, k, kids) => <g transform={`translate(${cx},${cy}) scale(${k}) translate(${-cx},${-cy})`}>{kids}</g>;
+  // مسیرهای جریان خون
+  const flows = [
+    { c: BLUE, pts: [[56, 256], [118, 256], [120, 230], [122, 160], [130, 128], [138, 150], [140, 190], [150, 152], [150, 108], [140, 98], [118, 108], [100, 128]] },
+    { c: RED, pts: [[100, 130], [126, 124], [158, 124], [184, 126], [184, 160], [190, 200], [176, 150], [172, 100], [180, 70], [206, 60], [230, 74], [240, 100], [240, 244]] },
+    { c: BLUE, pts: [[150, 150], [152, 100], [200, 98], [236, 118]] },
+    { c: RED, pts: [[238, 136], [214, 124], [190, 126]] },
+    { c: BLUE, pts: [[70, 24], [112, 34], [122, 70], [130, 118]] },
+    { c: RED, pts: [[206, 62], [206, 12], [112, 12]] },
+  ];
+  const valve = (x1, x2, y, open) => open
+    ? <g><path d={`M ${x1},${y} L ${x1 + 4},${y + 11}`} stroke="#fff" strokeWidth="3" strokeLinecap="round" /><path d={`M ${x2},${y} L ${x2 - 4},${y + 11}`} stroke="#fff" strokeWidth="3" strokeLinecap="round" /></g>
+    : <path d={`M ${x1},${y} L ${(x1 + x2) / 2},${y + 6} L ${x2},${y}`} fill="none" stroke="#fff" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round" />;
+  const semi = (cx, y, open) => open
+    ? <g><path d={`M ${cx - 6},${y} L ${cx - 6},${y - 6}`} stroke="#fff" strokeWidth="3" strokeLinecap="round" /><path d={`M ${cx + 6},${y} L ${cx + 6},${y - 6}`} stroke="#fff" strokeWidth="3" strokeLinecap="round" /></g>
+    : <path d={`M ${cx - 6},${y} Q ${cx},${y - 6} ${cx + 6},${y}`} fill="none" stroke="#fff" strokeWidth="3" strokeLinecap="round" />;
+  const num = (x, y, n) => <g><circle cx={x} cy={y} r="8" fill="#26335f" stroke="#fff" strokeWidth="1.4" /><text x={x} y={y + 3.6} fontSize="10.5" fontWeight="700" fill="#fff" textAnchor="middle">{n}</text></g>;
+  const tube = (d, c, w = 9) => <g><path d={d} fill="none" stroke="#fff" strokeWidth={w + 3} strokeLinecap="round" strokeLinejoin="round" opacity="0.8" /><path d={d} fill="none" stroke={c} strokeWidth={w} strokeLinecap="round" strokeLinejoin="round" opacity="0.55" /></g>;
   return (
     <div className="vlab-exp">
-      <svg viewBox="0 0 320 262" className="vlab-svg" style={{ direction: "ltr", background: "#fdf4f4" }}>
-        <rect width="320" height="262" rx="12" fill="#fdf4f4" />
-        {/* شش‌ها */}
-        {[[22, 60], [254, 60]].map((q, i) => <g key={i}><rect x={q[0]} y={q[1]} width="44" height="80" rx="18" fill="#f4b6c2" stroke="#d17a8e" strokeWidth="2" /><text x={q[0] + 22} y={q[1] + 44} fontSize="9" fill="#8a3a50" textAnchor="middle" fontWeight="700">شش</text></g>)}
-        {/* بدن */}
-        <rect x="50" y="214" width="220" height="34" rx="12" fill="#e8e0f5" stroke="#8d7bbf" strokeWidth="2" /><text x="160" y="236" fontSize="10" fill="#4a3b78" textAnchor="middle" fontWeight="700">بدن (مغز، ماهیچه‌ها و اندام‌ها)</text>
-        {/* رگ‌ها */}
-        {VLAB_F_HEART_PATHS.map((p, i) => <polyline key={i} points={p.pts.map((q) => q.join(",")).join(" ")} fill="none" stroke={p.c} strokeWidth="7" strokeLinecap="round" strokeLinejoin="round" opacity="0.45" />)}
-        {VLAB_F_HEART_PATHS.map((p, i) => Array.from({ length: 5 }, (_, k) => { const [x, y] = along(p.pts, flow + k / 5 + i * 0.13); return <circle key={i + "-" + k} cx={x} cy={y} r="2.6" fill={p.c} />; }))}
-        {/* قلب */}
-        {ch(135, 142, 27, 36, sv, "#3b82c4", "#1d4f87", ["بطن", "راست"])}
-        {ch(190, 142, 30, 40, sv, "#d94141", "#8d1d1d", ["بطن", "چپ"])}
-        {ch(128, 90, 26, 21, sa, "#5a9bd5", "#1d4f87", ["دهلیز", "راست"])}
-        {ch(194, 90, 26, 21, sa, "#e56464", "#8d1d1d", ["دهلیز", "چپ"])}
-        <rect x="104" y="108" width="14" height="4" rx="2" fill="#fff" opacity="0.9" /><rect x="205" y="108" width="14" height="4" rx="2" fill="#fff" opacity="0.9" />
-        <text x="76" y="118" fontSize="7.5" fill="#2b6cb0" textAnchor="middle">سیاهرگ‌ها</text>
-        <text x="266" y="204" fontSize="7.5" fill="#b71c1c" textAnchor="middle">سرخرگ آئورت</text>
-        <rect x="40" y="2" width="240" height="18" rx="9" fill="#fff" opacity="0.85" /><text x="160" y="15" fontSize="9.5" fill={atria || vent ? "#b71c1c" : "#33415c"} textAnchor="middle" fontWeight="700">{label}</text>
-        <text x="160" y="256" fontSize="7.5" fill="#7a6f8a" textAnchor="middle">آبی = خون پراکسیژن‌کم ، قرمز = خون پراکسیژن‌دار (نمای روبه‌رو؛ ساده‌شده)</text>
+      <svg viewBox="0 0 320 292" className="vlab-svg" style={{ direction: "ltr", background: "#fdf4f4" }}>
+        <defs>
+          <linearGradient id="hcLung" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stopColor="#f8c9d2" /><stop offset="1" stopColor="#ee9fb0" /></linearGradient>
+        </defs>
+        <rect width="320" height="292" rx="12" fill="#fdf4f4" />
+        {/* ریه‌ها کنار قلب + نای */}
+        <path d="M 24,72 C 20,112 24,162 40,186 C 56,202 98,198 110,178 L 114,104 C 110,72 92,52 66,52 C 44,52 28,60 24,72 Z" fill="url(#hcLung)" stroke="#c9707f" strokeWidth="2.2" />
+        <path d="M 296,72 C 300,112 296,162 282,186 C 268,202 236,200 226,188 C 214,162 214,132 212,104 C 214,74 232,52 258,52 C 280,52 292,60 296,72 Z" fill="url(#hcLung)" stroke="#c9707f" strokeWidth="2.2" />
+        <path d="M 30,110 Q 70,104 110,126 M 36,150 Q 72,140 108,150 M 290,112 Q 252,108 214,130" fill="none" stroke="#c9707f" strokeWidth="1.2" opacity="0.6" />
+        <rect x="155" y="28" width="10" height="40" rx="4" fill="#dfe9f5" stroke="#8aa0c0" strokeWidth="1.6" />
+        {[34, 41, 48, 55, 62].map((y) => <line key={y} x1="155" y1={y} x2="165" y2={y} stroke="#8aa0c0" strokeWidth="1" />)}
+        <path d="M 160,68 L 118,96 L 90,104 M 118,96 L 96,124 M 160,68 L 208,92 L 240,100 M 208,92 L 232,126" fill="none" stroke="#dfe9f5" strokeWidth="5" strokeLinecap="round" strokeLinejoin="round" opacity="0.95" />
+        <path d="M 160,68 L 118,96 L 90,104 M 118,96 L 96,124 M 160,68 L 208,92 L 240,100 M 208,92 L 232,126" fill="none" stroke="#8aa0c0" strokeWidth="1.2" strokeLinecap="round" strokeLinejoin="round" />
+        <VlabPill x="62" y="168" text="شش راست" size={10} fill="#fff" color="#8a3a50" /><VlabPill x="262" y="168" text="شش چپ" size={10} fill="#fff" color="#8a3a50" />
+        {/* سر و بدن */}
+        <rect x="26" y="2" width="84" height="22" rx="10" fill="#e8e0f5" stroke="#8d7bbf" strokeWidth="1.8" /><text x="68" y="17" fontSize="9.5" fill="#4a3b78" textAnchor="middle" fontWeight="700">سر و دست‌ها</text>
+        <rect x="50" y="244" width="236" height="24" rx="11" fill="#e8e0f5" stroke="#8d7bbf" strokeWidth="1.8" /><text x="196" y="260" fontSize="10.5" fill="#4a3b78" textAnchor="middle" fontWeight="700">بدن (مغز، ماهیچه‌ها و اندام‌ها)</text>
+        {/* سیاهرگ‌های ششی (پشت قلب) */}
+        {tube("M 100,132 L 126,124 L 158,124 L 176,128", RED, 7)}
+        {tube("M 238,136 L 214,124 L 196,126", RED, 7)}
+        {/* رگ‌های بزرگ بدنی */}
+        {tube("M 70,24 L 112,34 L 122,70 L 128,112", BLUE, 9)}
+        {tube("M 56,256 L 118,256 L 120,230 L 122,156", BLUE, 9)}
+        {tube("M 206,62 L 206,12 L 112,12", RED, 5)}
+        {/* قلب: چهار حفره‌ی به‌هم‌چسبیده */}
+        {sc(134, 130, sA, <path d="M 112,110 C 112,98 128,94 144,98 L 152,106 L 152,152 L 116,154 C 108,142 108,122 112,110 Z" fill={atria ? "#5a9bd5" : "#7fb2e8"} stroke="#1d4f87" strokeWidth="2.6" strokeLinejoin="round" />)}
+        {sc(184, 128, sA, <path d="M 158,108 C 168,94 202,92 210,106 C 214,124 208,146 198,152 L 158,152 Z" fill={atria ? "#e56464" : "#ef8a80"} stroke="#8d1d1d" strokeWidth="2.6" strokeLinejoin="round" />)}
+        {sc(146, 196, sV, <path d="M 116,154 L 164,154 C 166,192 172,224 184,242 C 150,234 122,198 116,154 Z" fill={vent ? "#3f86cf" : "#6aa3df"} stroke="#1d4f87" strokeWidth="2.6" strokeLinejoin="round" />)}
+        {sc(194, 198, sV * 0.99, <path d="M 164,154 L 198,154 C 224,160 228,198 208,228 C 200,240 192,244 184,242 C 172,224 166,192 164,154 Z" fill={vent ? "#d63a3a" : "#ec6f66"} stroke="#8d1d1d" strokeWidth="5.2" strokeLinejoin="round" />)}
+        {/* دریچه‌ها */}
+        {valve(120, 146, 154, !vent)}{valve(170, 196, 154, !vent)}
+        {semi(155, 150, vent)}{semi(172, 148, vent)}
+        {/* سرخرگ‌ها */}
+        {tube("M 154,152 L 152,104 L 142,98 L 118,108 L 102,130", BLUE, 9)}
+        {tube("M 152,104 L 200,98 L 236,118", BLUE, 7)}
+        {tube("M 174,150 L 172,100 L 180,70 Q 190,58 210,60 Q 232,64 238,88 L 240,244", RED, 10)}
+        {/* حباب‌های خون */}
+        {flows.map((p, i) => Array.from({ length: 6 }, (_, k) => { const [x, y] = along(p.pts, flow + k / 6 + i * 0.09); return <circle key={i + "-" + k} cx={x} cy={y} r="2.5" fill={p.c} stroke="#fff" strokeWidth="0.8" />; }))}
+        {num(130, 124, "۱")}{num(140, 198, "۲")}{num(184, 120, "۳")}{num(198, 200, "۴")}{num(110, 80, "۵")}{num(226, 138, "۶")}{num(222, 54, "۷")}{num(106, 52, "۸")}{num(158, 164, "۹")}{num(48, 118, "۱۰")}
+        <rect x="40" y="30" width="0" height="0" />
+        <VlabPill x="160" y="283" text={label} size={9.5} fill={atria || vent ? "#ffd6d0" : "#ffffff"} color={atria || vent ? "#a3200f" : "#33415c"} />
       </svg>
       <div className="vlab-controls"><div className="vlab-ctrl-col" style={{ flex: 1 }}>
         <label className="vlab-ctrl-label">ضربان قلب: {VLAB_FA_DIGITS(bpm)} بار در دقیقه</label>
@@ -47130,7 +47165,8 @@ function VlabHeartChambersExperiment({ onReading }) {
         <div className="vlab-num-row">{[[60, "استراحت"], [100, "راه رفتن"], [160, "دویدن"]].map((x) => <button key={x[0]} type="button" className={"vlab-num-btn" + (bpm === x[0] ? " active" : "")} onClick={() => setBpm(x[0])}>{x[1]}</button>)}<button type="button" className={"vlab-num-btn" + (slow ? " active" : "")} onClick={() => setSlow(!slow)}>🐢 حرکت آهسته</button></div>
       </div></div>
       <div className="vlab-readout">
-        قلب دو پمپ کنار هم است. خون <b style={{ color: "#2b6cb0" }}>آبی</b> (کم‌اکسیژن) از بدن به دهلیز و بطن راست می‌رسد و به <b>شش‌ها</b> می‌رود؛ از آنجا خون <b style={{ color: "#c62828" }}>قرمز</b> (پراکسیژن) به دهلیز و بطن چپ برمی‌گردد و بطن چپ که ماهیچه‌ی ضخیم‌تری دارد، آن را به <b>سراسر بدن</b> می‌فرستد. با {VLAB_FA_DIGITS(bpm)} ضربان در دقیقه و حدود ۷۰ میلی‌لیتر خون در هر ضربان، قلب در دقیقه حدود <b>{VLAB_FA_DIGITS(co.toFixed(1))} لیتر</b> خون پمپ می‌کند. (مدل ساده؛ مقدارها تقریبی‌اند.)
+        {[["۱", "دهلیز راست: خون کم‌اکسیژن از بزرگ‌سیاهرگ‌ها می‌گیرد", BLUE], ["۲", "بطن راست: خون را به سرخرگ ششی و شش‌ها می‌فرستد", BLUE], ["۳", "دهلیز چپ: خون پراکسیژن را از سیاهرگ‌های ششی می‌گیرد", RED], ["۴", "بطن چپ (دیواره‌ی ضخیم‌تر): خون را به سرخرگ آئورت و بدن می‌فرستد", RED], ["۵", "سرخرگ ششی: خون کم‌اکسیژن را به شش‌ها می‌برد", BLUE], ["۶", "سیاهرگ‌های ششی: خون پراکسیژن را از شش‌ها به قلب برمی‌گردانند", RED], ["۷", "سرخرگ آئورت: خون پراکسیژن را به سراسر بدن می‌رساند", RED], ["۸", "بزرگ‌سیاهرگ‌ها: خون کم‌اکسیژن بدن را به قلب می‌آورند", BLUE], ["۹", "دریچه‌ها: خون را فقط یک‌طرفه عبور می‌دهند", "#888"], ["۱۰", "شش‌ها: اکسیژن وارد خون و کربن‌دی‌اکسید از آن خارج می‌شود", "#e58aa0"]].map((x) => <div key={x[0]} style={{ display: "flex", alignItems: "center", gap: 6, margin: "2px 0" }}><span style={{ minWidth: 20, height: 18, borderRadius: 9, background: "#26335f", color: "#fff", fontSize: 11, display: "inline-flex", alignItems: "center", justifyContent: "center", flex: "none" }}>{x[0]}</span><span style={{ width: 10, height: 10, borderRadius: 3, background: x[2], flex: "none" }} /><span>{x[1]}</span></div>)}
+        <div style={{ marginTop: 6 }}>با {VLAB_FA_DIGITS(bpm)} ضربان در دقیقه و حدود ۷۰ میلی‌لیتر خون در هر ضربان، قلب در دقیقه حدود <b>{VLAB_FA_DIGITS(co.toFixed(1))} لیتر</b> خون پمپ می‌کند. (مدل ساده؛ مقدارها تقریبی‌اند.)</div>
       </div>
       <VlabFormulaCheck title="برون‌ده‌ی قلب" fa="خونی که در دقیقه پمپ می‌شود = ضربان × حجم هر ضربان" en="" legend="حجم هر ضربان ≈ ۷۰ میلی‌لیتر؛ جواب را به لیتر بنویس" subst={`${bpm} × 70 ÷ 1000 = ?`} label="برون‌ده:" answer={co} unit="لیتر در دقیقه" decimals={1} />
     </div>
@@ -47825,6 +47861,7 @@ function StudentVirtualLabView({ onBack, grade, studentCode, schoolCode }) {
   const [predMatch, setPredMatch] = useState("");
   const [resetKey, setResetKey] = useState(0);
   const [animPaused, setAnimPaused] = useState(false);
+  const [hasMotion, setHasMotion] = useState(false);
   useEffect(() => { window.__vlabPause = animPaused; }, [animPaused]);
   useEffect(() => () => { window.__vlabInLab = false; window.__vlabPause = false; }, []);
   const [fbVote, setFbVote] = useState("");
@@ -47913,6 +47950,22 @@ function StudentVirtualLabView({ onBack, grade, studentCode, schoolCode }) {
     };
     fix(); const mo = new MutationObserver(fix); mo.observe(box, { childList: true, subtree: true });
     return () => mo.disconnect();
+  }, [activeId, resetKey]);
+
+  // دگمه‌ی «توقف حرکت» فقط وقتی دیده می‌شود که آزمایش واقعاً حرکتی دارد (انیمیشن SVG، زمان‌سنج یا انیمیشن CSS)
+  useEffect(() => {
+    setHasMotion(false); window.__vlabMotion = false;
+    const box = labBoxRef.current;
+    const chk = () => {
+      let m = !!window.__vlabMotion;
+      if (!m && box) {
+        try { m = !!box.querySelector("svg animate, svg animateTransform, svg animateMotion, svg set"); } catch (e) {}
+        if (!m && box.getAnimations) { try { m = box.getAnimations({ subtree: true }).some((x) => !(x.animationName && x.animationName.indexOf("vlab-kids") === 0) && x.effect && x.effect.getComputedTiming && x.effect.getComputedTiming().iterations === Infinity); } catch (e) {} }
+      }
+      if (m) setHasMotion(true);
+    };
+    const t0 = setTimeout(chk, 150); const t = setInterval(chk, 400);
+    return () => { clearTimeout(t0); clearInterval(t); };
   }, [activeId, resetKey]);
 
   // توقف/ادامه‌ی همه‌ی انیمیشن‌ها (برای کسانی که حرکت آزارشان می‌دهد یا می‌خواهند دقیق نگاه کنند)
@@ -48254,7 +48307,7 @@ function StudentVirtualLabView({ onBack, grade, studentCode, schoolCode }) {
             </div>
             <div className="vlab-toolbar" role="toolbar" aria-label="ابزارهای آزمایش">
               <button type="button" className="vlab-tb-btn" onClick={() => setResetKey((k) => k + 1)}>🔄 بازنشانی آزمایش</button>
-              <button type="button" className={"vlab-tb-btn" + (animPaused ? " on" : "")} aria-pressed={animPaused} title="همه‌ی حرکت‌های این آزمایش را نگه می‌دارد تا با دقت نگاه کنی؛ دوباره بزن تا ادامه پیدا کند" onClick={() => setAnimPaused((p) => !p)}>{animPaused ? "▶ ادامه‌ی حرکت" : "⏸ توقف حرکت"}</button>
+              {(hasMotion || animPaused) && <button type="button" className={"vlab-tb-btn" + (animPaused ? " on" : "")} aria-pressed={animPaused} title="همه‌ی حرکت‌های این آزمایش را نگه می‌دارد تا با دقت نگاه کنی؛ دوباره بزن تا ادامه پیدا کند" onClick={() => setAnimPaused((p) => !p)}>{animPaused ? "▶ ادامه‌ی حرکت" : "⏸ توقف حرکت"}</button>}
               <button type="button" className="vlab-tb-btn" onClick={() => { try { window.print(); } catch (e) {} }}>🖨 برگه‌ی فعالیت (چاپ)</button>
             </div>
             <div ref={labBoxRef}>

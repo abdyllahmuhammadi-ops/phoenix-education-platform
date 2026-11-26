@@ -24231,7 +24231,7 @@ const VLAB_EXPERIMENTS = [
     level: "متوسطه",
     title: "چرخه‌ی آب",
     icon: "💧",
-    intro: "گرمای خورشید و ارتفاع کوه را عوض کن و تبخیر، بارش و رواناب را ببین.",
+    intro: "دمای هوا و ارتفاع کوه را عوض کن و تبخیر، بارش و رواناب را ببین.",
     tools: ["دریا و کوه", "تبخیر و بارش", "رواناب"],
   },
   {
@@ -25212,7 +25212,7 @@ const VLAB_EXPERIMENTS = [
     level: "ابتدایی",
     title: "چرخه‌ی آب (دوره‌ی ابتدایی)",
     icon: "🌧️",
-    intro: "گرمای خورشید را تغییر بده و چرخه‌ی تبخیر، ابر و باران را ببین.",
+    intro: "دمای هوا را تغییر بده و چرخه‌ی تبخیر، ابر و باران یا برف را ببین.",
     tools: ["خورشید", "دریا", "ابر", "باران"],
   },
   {
@@ -39180,7 +39180,8 @@ function VlabThermometerExperiment({ onReading }) {
 
 /* ===== زمین‌شناسی) چرخه‌ی آب ===== */
 function VlabWaterCycleExperiment({ onReading }) {
-  const [sun, setSun] = useState(50);
+  const [temp, setTemp] = useState(20);
+  const sun = 10 + temp * 2.25;
   const [mh, setMh] = useState(50);
   const E = sun * 0.05;
   const P = E * (0.8 + mh / 250);
@@ -39258,10 +39259,10 @@ function VlabWaterCycleExperiment({ onReading }) {
       </svg>
       <div className="vlab-readout" style={{ textAlign: "center" }}>تبخیر {fa(E)} ← بارش {fa(P)} (برحسب میلی‌متر در روز)</div>
       <div className="vlab-controls"><div className="vlab-ctrl-col" style={{ flex: 1 }}>
-        <label className="vlab-ctrl-label">گرمای خورشید: {vlabFaN(sun)}٪</label><VlabRange min="10" max="100" step="5" value={sun} onChange={(e) => setSun(+e.target.value)} />
+        <label className="vlab-ctrl-label">🌡️ دمای هوا: {vlabFaN(temp)} درجه‌ی سانتی‌گراد</label><VlabRange min="0" max="40" step="5" value={temp} onChange={(e) => setTemp(+e.target.value)} />
         <label className="vlab-ctrl-label">ارتفاع کوه: {vlabFaN(mh)}٪</label><VlabRange min="10" max="100" step="5" value={mh} onChange={(e) => setMh(+e.target.value)} />
       </div></div>
-      <div className="vlab-readout">{`خورشید آب دریا را تبخیر می‌کند، بخار بالا می‌رود و در سرما به قطره (میعان و ابر) تبدیل می‌شود و بارش می‌کند. کوه بلند هوای نمدار را بالاتر و سردتر می‌برد و بارش دامنه‌ی رو به باد را زیاد می‌کند؛ بارش به رودها و آب‌های زیرزمینی می‌رود و دوباره به دریا می‌رسد. آب از بین نمی‌رود، فقط جابه‌جا می‌شود.`}</div>
+      <div className="vlab-readout">{`گرمای هوا آب دریا را تبخیر می‌کند، بخار بالا می‌رود و در سرما به قطره (میعان و ابر) تبدیل می‌شود و بارش می‌کند. کوه بلند هوای نمدار را بالاتر و سردتر می‌برد و بارش دامنه‌ی رو به باد را زیاد می‌کند؛ بارش به رودها و آب‌های زیرزمینی می‌رود و دوباره به دریا می‌رسد. آب از بین نمی‌رود، فقط جابه‌جا می‌شود.`}</div>
       <VlabFormulaCheck title="رواناب" fa="رواناب ≈ ۰٫۳۵ × بارش × (ارتفاع کوه ÷ ۱۰۰ + ۰٫۵)" en="runoff" legend="مدل ساده برای دیدن اثر کوه؛ واحد: میلی‌متر در روز." subst={`${fa(P, 2)} × ۰٫۳۵ × (${fa(mh / 100, 2)} + ۰٫۵)`} answer={runoff} unit="mm/day" decimals={2} />
       <VlabEverydayCard title="باران در البرز و کویر" text="هوای مرطوب خزر با رسیدن به کوه‌های البرز بالا می‌رود و می‌بارد؛ پشت کوه، سمت کویر، هوا خشک می‌شود. به همین دلیل شمال ایران سرسبز و دامنه‌ی جنوبی کم‌باران است.">
         <path d="M10,64 L48,16 L84,64 Z" fill="#6b8f4e" /><ellipse cx="62" cy="14" rx="26" ry="9" fill="#cfd6ea" />

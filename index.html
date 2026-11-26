@@ -42962,37 +42962,82 @@ const VLAB_SOLID_AREAS = [
 ];
 function VlabSolidPressureExperiment({ onReading }) {
   const [mass, setMass] = useState(60);
-  const [ai, setAi] = useState(1);
+  const [ai, setAi] = useState(2);
   const A = VLAB_SOLID_AREAS[ai];
   const F = mass * 9.8;
-  const P = F / (A.a / 10000); // پاسکال
-  const depth = vlabClamp(Math.log10(P / 800 + 1) * 22, 2, 58);
+  const P = F / (A.a / 10000);
+  const Pk = P / 1000;
+  const target = vlabClamp(Math.log10(P / 1000 + 1) * 14, 2, 58);
+  const [d, setD] = useState(target);
+  const tgt = React.useRef(target);
+  tgt.current = target;
+  useEffect(() => { const id = setInterval(() => setD((x) => (Math.abs(tgt.current - x) < 0.05 ? tgt.current : x + (tgt.current - x) * 0.14)), 33); return () => clearInterval(id); }, []);
   useEffect(() => { if (onReading) onReading(`${mass} kg | ${A.n} (${A.a} cm²) | P = ${(P / 1000).toFixed(1)} kPa`); /* eslint-disable-next-line */ }, [mass, ai]);
+  const cx = 160, gy = 128, w = A.w, hw = w / 2 + 8 + d * 0.35;
+  const ww = 58 + mass * 0.24;
+  const footH = ai === 0 ? 32 : ai === 1 ? 26 : ai === 2 ? 13 : 7;
+  const yBot = gy + d;
+  const surf = `M 0,${gy} L ${cx - hw - 26},${gy} C ${cx - hw - 8},${gy} ${cx - hw},${gy - 3} ${cx - hw + 4},${gy - 1} C ${cx - w / 2 - 2},${gy + d * 0.3} ${cx - w / 2},${yBot} ${cx - w / 2 + 1},${yBot} L ${cx + w / 2 - 1},${yBot} C ${cx + w / 2},${yBot} ${cx + w / 2 + 2},${gy + d * 0.3} ${cx + hw - 4},${gy - 1} C ${cx + hw},${gy - 3} ${cx + hw + 8},${gy} ${cx + hw + 26},${gy} L 320,${gy}`;
+  const nArr = vlabClamp(Math.round(w / 9), 1, 15), aLen = vlabClamp(6 + 5 * Math.log10(Pk + 1), 8, 30);
+  const grains = Array.from({ length: 70 }, (_, i) => ({ x: (i * 53.3) % 320, y: gy + 6 + ((i * 31.7) % 100), r: 0.8 + (i % 3) * 0.5 }));
+  const foot = ai === 0 ? (
+    <g><path d="M -1.9,-32 L 1.9,-32 L 1.9,-7 L 0,0 L -1.9,-7 Z" fill="url(#spMetal)" stroke="#3b4350" strokeWidth="0.9" /><ellipse cx="0" cy="-32" rx="9" ry="2.6" fill="#a9b3c2" stroke="#3b4350" strokeWidth="0.9" /></g>
+  ) : ai === 1 ? (
+    <g><rect x="-7" y="-26" width="14" height="26" rx="2.5" fill="#b9854a" stroke="#5d3513" strokeWidth="1.2" /><rect x="-7" y="-4" width="14" height="4" rx="1.5" fill="#2b2b33" /><line x1="-4" y1="-22" x2="-4" y2="-8" stroke="#e8c48a" strokeWidth="1" opacity="0.8" /></g>
+  ) : ai === 2 ? (
+    <g><rect x="-30" y="-13" width="60" height="13" rx="5" fill="#35394a" stroke="#14161f" strokeWidth="1.3" />{Array.from({ length: 10 }, (_, k) => <line key={k} x1={-27 + k * 6} y1="-3.5" x2={-27 + k * 6} y2="0" stroke="#8a90a8" strokeWidth="1.4" />)}<path d="M -30,-13 L 30,-13 L 30,-10 L -30,-10 Z" fill="#6b7290" opacity="0.5" /></g>
+  ) : (
+    <g><path d="M -65,-2 L -65,-8 Q -72,-12 -68,-18 Q -64,-12 -58,-8 L 65,-8 L 65,0 L -58,0 Z" fill="#c99a5b" stroke="#5d3513" strokeWidth="1.2" />{[-40, -14, 12, 38].map((x) => <line key={x} x1={x} y1="-8" x2={x} y2="0" stroke="#7a4a1d" strokeWidth="1.1" />)}<rect x="-14" y="-12" width="28" height="4" rx="1.5" fill="#d94141" /></g>
+  );
   return (
     <div className="vlab-exp">
-      <svg viewBox="0 0 320 210" className="vlab-svg" style={{ direction: "ltr", background: "#0b1330" }}>
-        <rect width="320" height="210" rx="12" fill="#cfe8ff" />
-        <rect x="0" y="110" width="320" height="100" fill="#dcc08a" />
-        {Array.from({ length: 30 }, (_, i) => <circle key={i} cx={(i * 47) % 320} cy={125 + ((i * 29) % 70)} r="1.6" fill="#b89a5f" />)}
-        {/* فرورفتگی در ماسه */}
-        <path d={`M ${160 - A.w / 2 - 14},110 Q ${160 - A.w / 2 - 4},${110 + depth} ${160 - A.w / 2},${110 + depth} L ${160 + A.w / 2},${110 + depth} Q ${160 + A.w / 2 + 4},${110 + depth} ${160 + A.w / 2 + 14},110 Z`} fill="#b99a5c" />
-        {/* جسم: وزنه با پایه‌ی انتخابی */}
-        <g transform={`translate(160,${110 + depth - 50})`}>
-          <rect x="-40" y="-34" width="80" height="34" rx="5" fill="#44527a" stroke="#222" />
-          <text x="0" y="-12" fontSize="13" fill="#fff" textAnchor="middle" fontWeight="700">{VLAB_FA_DIGITS(mass)} کیلوگرم</text>
-          <path d={`M ${-A.w / 2},0 L ${A.w / 2},0 L ${A.w / 2},50 L ${-A.w / 2},50 Z`} fill={ai === 0 ? "#9aa3b0" : "#6b7280"} stroke="#222" />
+      <svg viewBox="0 0 320 232" className="vlab-svg" style={{ direction: "ltr", background: "#cfe8ff" }}>
+        <defs>
+          <linearGradient id="spSky" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stopColor="#8cc9ff" /><stop offset="1" stopColor="#e6f5ff" /></linearGradient>
+          <linearGradient id="spSnow" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stopColor="#ffffff" /><stop offset="1" stopColor="#c9dcf0" /></linearGradient>
+          <linearGradient id="spMetal" x1="0" y1="0" x2="1" y2="0"><stop offset="0" stopColor="#d6dce6" /><stop offset="0.5" stopColor="#8e98a8" /><stop offset="1" stopColor="#5c6574" /></linearGradient>
+          <linearGradient id="spWeight" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stopColor="#6a738f" /><stop offset="1" stopColor="#3b4260" /></linearGradient>
+          <radialGradient id="spComp" cx="50%" cy="0%" r="100%"><stop offset="0" stopColor="#5d7fb8" stopOpacity="0.55" /><stop offset="1" stopColor="#5d7fb8" stopOpacity="0" /></radialGradient>
+          <clipPath id="spSnowClip"><path d={`${surf} L 320,232 L 0,232 Z`} /></clipPath>
+        </defs>
+        <rect width="320" height="232" rx="12" fill="url(#spSky)" />
+        <path d="M 0,118 L 40,86 L 74,110 L 118,76 L 168,114 L 214,84 L 262,112 L 320,90 L 320,140 L 0,140 Z" fill="#d6e6f7" />
+        <path d="M 118,76 L 108,88 L 118,84 L 126,90 Z M 214,84 L 205,94 L 214,90 L 222,96 Z" fill="#fff" />
+        {/* برف (برش عمودی) */}
+        <path d={`${surf} L 320,232 L 0,232 Z`} fill="url(#spSnow)" />
+        <g clipPath="url(#spSnowClip)">
+          {grains.map((g, i) => <circle key={i} cx={g.x} cy={g.y} r={g.r} fill="#aac3e0" opacity="0.7" />)}
+          <ellipse cx={cx} cy={yBot + 2} rx={w / 2 + 10 + d * 0.9} ry={14 + d * 1.1} fill="url(#spComp)" />
+          {Array.from({ length: nArr }, (_, k) => { const x = cx + (nArr === 1 ? 0 : (k / (nArr - 1) - 0.5) * (w - 4)); return <g key={k}><line x1={x} y1={yBot + 4} x2={x} y2={yBot + 4 + aLen} stroke="#d94141" strokeWidth={vlabClamp(1.4 + Math.log10(Pk + 1) * 0.5, 1.4, 3.6)} strokeLinecap="round" /><polygon points={`${x},${yBot + 9 + aLen} ${x - 3},${yBot + 3 + aLen} ${x + 3},${yBot + 3 + aLen}`} fill="#d94141" /></g>; })}
         </g>
-        <text x="160" y="22" fontSize="11" fill="#0b1f4a" textAnchor="middle" fontWeight="700">{A.n}: سطح تماس {VLAB_FA_DIGITS(A.a)} سانتی‌متر مربع</text>
-        <text x="160" y="40" fontSize="10" fill="#0b1f4a" textAnchor="middle">فشار ≈ {VLAB_FA_DIGITS((P / 1000).toFixed(P > 1e5 ? 0 : 1))} کیلوپاسکال</text>
+        <path d={surf} fill="none" stroke="#9db6d3" strokeWidth="1.6" />
+        {/* پا و وزنه */}
+        <g transform={`translate(${cx},${yBot})`}>
+          {foot}
+          <g transform={`translate(0,${-footH})`}>
+            <rect x={-ww / 2} y="-36" width={ww} height="36" rx="6" fill="url(#spWeight)" stroke="#1c2036" strokeWidth="1.6" />
+            <path d={`M ${-10},-36 Q 0,-52 10,-36`} fill="none" stroke="#1c2036" strokeWidth="4" strokeLinecap="round" />
+            <path d={`M ${-ww / 2 + 4},-30 L ${ww / 2 - 4},-30`} stroke="#9aa5c8" strokeWidth="1.4" opacity="0.6" />
+            <text x="0" y="-12" fontSize="13" fontWeight="700" fill="#fff" textAnchor="middle">{VLAB_FA_DIGITS(mass)} کیلوگرم</text>
+          </g>
+        </g>
+        {/* فلش نیروی وزن */}
+        <g transform={`translate(${cx + ww / 2 + 16},${yBot - footH - 52})`}>
+          <line x1="0" y1="0" x2="0" y2="30" stroke="#1d6fd6" strokeWidth="4" strokeLinecap="round" /><polygon points="0,38 -6,28 6,28" fill="#1d6fd6" />
+        </g>
+        <VlabPill x={cx + ww / 2 + 16} y={yBot - footH - 60} text={`نیرو ${VLAB_FA_DIGITS(Math.round(F))} نیوتن`} size={9} fill="#d6e8ff" color="#123f8c" />
+        <VlabPill x="80" y="22" text={A.n} size={11} fill="#ffffff" />
+        <VlabPill x="240" y="22" text={`سطح تماس: ${VLAB_FA_DIGITS(String(A.a).replace(".", "٫"))} سانتی‌متر مربع`} size={9.5} fill="#ffffff" color="#4a5a7a" />
+        <VlabPill x="160" y="214" text={`فشار روی برف ≈ ${VLAB_FA_DIGITS(Pk > 100 ? Math.round(Pk) : Pk.toFixed(1).replace(".", "٫"))} کیلوپاسکال`} size={10.5} fill="#fff1d6" color="#8a3d00" />
       </svg>
       <div className="vlab-controls"><div className="vlab-ctrl-col" style={{ flex: 1 }}>
         <label className="vlab-ctrl-label">جرم (kg): {VLAB_FA_DIGITS(mass)}</label>
         <VlabRange min={5} max={100} step={5} value={mass} onChange={(e) => setMass(+e.target.value)} />
-        <label className="vlab-ctrl-label">سطح تماس</label>
+        <label className="vlab-ctrl-label">پایه‌ای که روی برف می‌ایستد</label>
         <div className="vlab-num-row">{VLAB_SOLID_AREAS.map((x, i) => <button key={i} type="button" className={"vlab-num-btn" + (ai === i ? " active" : "")} onClick={() => setAi(i)}>{x.n}</button>)}</div>
       </div></div>
       <div className="vlab-readout">
-        نیروی وزن F = mg = <b>{VLAB_FA_DIGITS(Math.round(F))} N</b> در همه‌ی حالت‌ها یکی است؛ ولی هرچه سطح تماس کوچک‌تر باشد، فشار P = F ÷ A بیشتر و فرورفتگی بیشتر است. برای همین نوک میخ فرو می‌رود و کفش برفی روی برف نمی‌نشیند.
+        نیروی وزن F = mg = <b>{VLAB_FA_DIGITS(Math.round(F))} N</b> است. فلش‌های قرمز زیر پایه نشان می‌دهند این نیرو روی سطح تماس پخش می‌شود: سطح تماس هرچه <b>کوچک‌تر</b> باشد، نیروی هر قسمت از سطح بیشتر است، یعنی <b>فشار</b> (P = F ÷ A) بیشتر می‌شود و پایه عمیق‌تر در برف فرو می‌رود. برای همین نوک میخ فرو می‌رود و کفش برفی روی برف می‌ماند.
       </div>
       <VlabFormulaCheck title="فشار" fa="فشار = نیرو ÷ سطح" en="P = F / A" legend="F: نیرو (N) — A: سطح (m²) — ۱ cm² = ۰٫۰۰۰۱ m²" subst={`P = ${Math.round(F)} ÷ ${(A.a / 10000).toFixed(5)} = ?`} label="فشار:" answer={P} unit="پاسکال" decimals={0} />
     </div>

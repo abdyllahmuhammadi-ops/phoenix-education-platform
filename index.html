@@ -45675,10 +45675,11 @@ function VlabNumberLineExperiment({ onReading }) {
         <rect width="320" height="150" rx="12" fill="#fbf7ec" />
         <line x1="16" y1="90" x2="304" y2="90" stroke="#33291a" strokeWidth="2.5" />
         {Array.from({ length: hi - lo + 1 }, (_, i) => { const v = lo + i; return <g key={v}><line x1={X(v)} y1={v % 5 === 0 ? 84 : 87} x2={X(v)} y2="93" stroke="#33291a" />{v % 5 === 0 && <text x={X(v)} y="108" fontSize="9" fill="#33291a" textAnchor="middle" fontWeight={v === 0 ? "700" : "400"}>{VLAB_FA_DIGITS(v)}</text>}</g>; })}
-        <path d={`M ${X(a)},84 Q ${mid},${op === "add" ? 40 : 40} ${X(res)},84`} fill="none" stroke={op === "add" ? "#1b7d3a" : "#c0392b"} strokeWidth="3" />
-        <path d={`M ${X(res) + (res >= a ? -7 : 7)},${74} L ${X(res)},84 L ${X(res) + (res >= a ? 1 : -1) * 2},73`} fill="none" stroke={op === "add" ? "#1b7d3a" : "#c0392b"} strokeWidth="2.5" />
-        <circle cx={X(a)} cy="90" r="6" fill="#1e6fd9" stroke="#fff" strokeWidth="2" /><circle cx={X(res)} cy="90" r="7" fill="#ffd23f" stroke="#6b4513" strokeWidth="2" />
-        <text x="160" y="28" fontSize="16" fill="#33291a" textAnchor="middle" fontWeight="700">{VLAB_FA_DIGITS(a)} {op === "add" ? "+" : "−"} {VLAB_FA_DIGITS(b)} = {VLAB_FA_DIGITS(res)}</text>
+        {Array.from({ length: b }, (_, k) => { const sg = op === "add" ? 1 : -1, x0 = X(a + sg * k), x1 = X(a + sg * (k + 1)); return <path key={k} d={`M ${x0},84 Q ${(x0 + x1) / 2},${58 - (k % 2) * 4} ${x1},84`} fill="none" stroke={op === "add" ? "#1b7d3a" : "#c0392b"} strokeWidth="2.2" strokeLinecap="round" strokeDasharray="1 0" />; })}
+        <circle cx={X(a)} cy="90" r="5" fill="#1e6fd9" stroke="#fff" strokeWidth="2" />
+        <circle cx={X(res)} cy="90" r="5.5" fill="#ffd23f" stroke="#6b4513" strokeWidth="2" />
+        <text x={X(res)} y="76" fontSize="22" textAnchor="middle" style={{ transform: op === "add" ? "none" : "none" }}>🐸</text>
+        <text x="160" y="28" fontSize="16" fill="#33291a" textAnchor="middle" fontWeight="700">{"\u2066" + VLAB_FA_DIGITS(a) + (op === "add" ? " + " : " − ") + VLAB_FA_DIGITS(b) + " = " + (res < 0 ? "−" : "") + VLAB_FA_DIGITS(Math.abs(res)) + "\u2069"}</text>
         <text x="160" y="136" fontSize="9" fill="#7a6b50" textAnchor="middle">{op === "add" ? "جمع: از عدد اول به سمت راست می‌رویم" : "تفریق: از عدد اول به سمت چپ برمی‌گردیم"}</text>
       </svg>
       <div className="vlab-controls"><div className="vlab-ctrl-col" style={{ flex: 1 }}>
@@ -46149,7 +46150,16 @@ function VlabSpinnerProbExperiment({ onReading }) {
   const [hits, setHits] = useState(0);
   const total = 8;
   const p = red / total;
-  const spin = (times) => { let h = 0; for (let i = 0; i < times; i++) if (Math.random() < p) h++; setN((x) => x + times); setHits((x) => x + h); };
+  const [rot, setRot] = useState(0);
+  const spin = (times) => {
+    let h = 0, lastRed = false;
+    for (let i = 0; i < times; i++) { lastRed = Math.random() < p; if (lastRed) h++; }
+    setN((x) => x + times); setHits((x) => x + h);
+    const pool = []; for (let k = 0; k < total; k++) if ((k < red) === lastRed) pool.push(k);
+    const slice = pool.length ? pool[Math.floor(Math.random() * pool.length)] : 0;
+    const center = ((slice + 0.3 + Math.random() * 0.4) / total) * 360;
+    setRot((r) => r - (r % 360) + 360 * (times > 1 ? 5 : 3) + center);
+  };
   useEffect(() => { setN(0); setHits(0); }, [red]);
   useEffect(() => { if (onReading) onReading(`احتمال قرمز ${red}/8 | ${hits} از ${n} بار`); /* eslint-disable-next-line */ }, [red, n]);
   return (
@@ -46157,7 +46167,13 @@ function VlabSpinnerProbExperiment({ onReading }) {
       <svg viewBox="0 0 320 190" className="vlab-svg" style={{ direction: "ltr", background: "#0b1330" }}>
         <rect width="320" height="190" rx="12" fill="#fbf7ec" />
         {Array.from({ length: total }, (_, i) => { const a0 = (i / total) * 2 * Math.PI - Math.PI / 2, a1 = ((i + 1) / total) * 2 * Math.PI - Math.PI / 2, R = 62; return <path key={i} d={`M 90,95 L ${90 + R * Math.cos(a0)},${95 + R * Math.sin(a0)} A ${R},${R} 0 0 1 ${90 + R * Math.cos(a1)},${95 + R * Math.sin(a1)} Z`} fill={i < red ? "#e53935" : "#4fc3f7"} stroke="#fff" strokeWidth="2" />; })}
-        <polygon points="90,24 83,8 97,8" fill="#33291a" />
+        <circle cx="90" cy="95" r="68" fill="#33291a" opacity="0.12" transform="translate(2,4)" />
+        <circle cx="90" cy="95" r="66" fill="none" stroke="#c9a23c" strokeWidth="5" />
+        <g style={{ transform: `rotate(${rot}deg)`, transformOrigin: "90px 95px", transition: "transform 1.3s cubic-bezier(.15,.7,.2,1)" }}>
+          <polygon points="90,26 84,90 96,90" fill="#33291a" stroke="#fff" strokeWidth="1" strokeLinejoin="round" />
+          <polygon points="90,100 85,118 95,118" fill="#33291a" opacity="0.6" />
+        </g>
+        <circle cx="90" cy="95" r="8" fill="#c9a23c" stroke="#6a4f10" strokeWidth="1.6" /><circle cx="88" cy="93" r="2.6" fill="#fff" opacity="0.7" />
         <text x="230" y="44" fontSize="12" fill="#33291a" textAnchor="middle" fontWeight="700">احتمال قرمز = {VLAB_FA_DIGITS(red)}/۸</text>
         <text x="230" y="70" fontSize="10" fill="#33291a" textAnchor="middle">تعداد چرخاندن: {VLAB_FA_DIGITS(n)}</text>
         <text x="230" y="88" fontSize="10" fill="#c0392b" textAnchor="middle">قرمز آمد: {VLAB_FA_DIGITS(hits)} بار</text>

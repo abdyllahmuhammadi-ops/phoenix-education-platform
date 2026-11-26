@@ -43162,48 +43162,82 @@ function VlabTopoMapExperiment({ onReading }) {
 function VlabMeanderExperiment({ onReading }) {
   const [age, setAge] = useState(30);
   const [flow, setFlow] = useState(50);
-  const A = 8 + (age / 100) * (22 + flow * 0.12);
-  const cut = age > 88;
+  const A = 8 + (Math.min(age, 58) / 58) * (22 + flow * 0.12);
   const W = 12 + flow * 0.1;
-  const pts = (amp, off = 0) => {
+  const BL = 22 * Math.PI;
+  const NB = 5;
+  const sm = (t) => { const c = Math.max(0, Math.min(1, t)); return c * c * (3 - 2 * c); };
+  const prog = (k) => sm((age - (58 + k * 8)) / 10);
+  const done = Array.from({ length: NB }, (_, k) => prog(k));
+  const nCut = done.filter((v) => v > 0.98).length;
+  const anyCut = done.some((v) => v > 0.02);
+  const mainPath = () => {
     let d = "";
-    for (let x = 10; x <= 310; x += 4) {
-      const y = 100 + amp * Math.sin((x - 10) / 22) + off;
+    for (let x = 10; x <= 310; x += 3) {
+      const k = Math.min(NB - 1, Math.floor((x - 10) / BL));
+      const y = 100 + A * (1 - done[k]) * Math.sin((x - 10) / 22);
       d += (x === 10 ? "M " : " L ") + x + "," + y.toFixed(1);
     }
     return d;
   };
-  const straight = "M 10,100 L 310,100";
-  useEffect(() => { if (onReading) onReading(`عمر ${age}٪ | جریان ${flow}٪ | دامنه‌ی پیچ ${A.toFixed(1)}${cut ? " | بُریده‌شدن گردنه" : ""}`); /* eslint-disable-next-line */ }, [age, flow]);
+  const loopPath = (k) => {
+    let d = "";
+    const x0 = 10 + k * BL, x1 = Math.min(310, 10 + (k + 1) * BL);
+    for (let x = x0; x <= x1 + 0.1; x += 3) d += (d ? " L " : "M ") + x.toFixed(1) + "," + (100 + A * Math.sin((x - 10) / 22)).toFixed(1);
+    return d;
+  };
+  useEffect(() => { if (onReading) onReading(`عمر ${age}٪ | جریان ${flow}٪ | دامنه‌ی پیچ ${A.toFixed(1)} | پیچ‌های بریده‌شده ${nCut}`); /* eslint-disable-next-line */ }, [age, flow]);
   const tk = VLAB_GEO_TICK(50);
+  const main = mainPath();
   return (
     <div className="vlab-exp">
       <svg viewBox="0 0 320 200" className="vlab-svg" style={{ direction: "ltr", background: "#0b1330" }}>
         <rect width="320" height="200" rx="12" fill="#4b7a3a" />
-        <rect y="40" width="320" height="120" fill="#6a9a4a" opacity="0.6" />
-        {/* دریاچه‌ی نعل‌اسبی: مسیر قدیمی با آب راکد */}
-        {cut && <path d={pts(A)} fill="none" stroke="#5aa6d6" strokeWidth={W * 0.8} strokeLinecap="round" opacity="0.65" strokeDasharray="1 0" />}
-        {/* مسیر اصلی رودخانه */}
-        <path d={cut ? straight : pts(A)} fill="none" stroke="#2f6bd1" strokeWidth={W} strokeLinecap="round" strokeLinejoin="round" />
-        <path d={cut ? straight : pts(A)} fill="none" stroke="#9fc9ff" strokeWidth="1.5" strokeDasharray="6 8" strokeDashoffset={-tk * (1 + flow / 25)} />
-        {/* رسوب در داخل پیچ و فرسایش در بیرون پیچ */}
-        {!cut && [1, 3, 5, 7, 9, 11, 13].map((k) => {
-          const x = 10 + k * 22 * Math.PI / 2 * 0.5 * 2;
-          const sgn = Math.cos((x - 10) / 22) >= 0 ? 1 : -1;
-          const y = 100 + A * Math.sin((x - 10) / 22);
-          return x < 305 ? <g key={k}><circle cx={x - sgn * 0 + 0} cy={y + (Math.sin((x - 10) / 22) > 0 ? -W * 0.7 : W * 0.7)} r="3.2" fill="#e7cf8d" /><path d={`M ${x},${y + (Math.sin((x - 10) / 22) > 0 ? W * 0.9 : -W * 0.9)} l 0,${Math.sin((x - 10) / 22) > 0 ? 7 : -7}`} stroke="#c0392b" strokeWidth="2" /></g> : null;
+        <rect y="30" width="320" height="140" fill="#6a9a4a" opacity="0.6" />
+        {/* دریاچه‌های نعل‌اسبی: پیچ‌های جداشده با آب راکد */}
+        {done.map((v, k) => v > 0.02 ? (
+          <g key={"l" + k} opacity={Math.min(1, v * 1.4)}>
+            <path d={loopPath(k)} fill="none" stroke="#c9b27a" strokeWidth={W * 0.8 + 5} strokeLinecap="round" />
+            <path d={loopPath(k)} fill="none" stroke="#3f9fb8" strokeWidth={W * 0.8} strokeLinecap="round" />
+            <path d={loopPath(k)} fill="none" stroke="#bfeaf2" strokeWidth="1.2" strokeOpacity="0.6" strokeDasharray="2 7" />
+            {[0.3, 0.7].map((f, q) => { const x = 10 + (k + f) * BL; const yy = 100 + A * Math.sin((x - 10) / 22); const sg = Math.sin((x - 10) / 22) > 0 ? 1 : -1; return <g key={q}><path d={`M ${x - 3},${yy + sg * (W * 0.55 + 3)} l 1,-6 M ${x},${yy + sg * (W * 0.55 + 3)} l 0,-8 M ${x + 3},${yy + sg * (W * 0.55 + 3)} l -1,-6`} stroke="#2e6b2e" strokeWidth="1.4" /></g>; })}
+            {k === Math.max(0, done.findIndex((d) => d > 0.9)) && v > 0.9 && (() => { const x = 10 + (k + 0.5) * BL; const yy = 100 + A * Math.sin((x - 10) / 22); const sg = Math.sin((x - 10) / 22) > 0 ? 1 : -1; return <text x={x} y={yy + sg * (W * 0.8 + 10)} fontSize="8.5" fill="#fff" textAnchor="middle">دریاچه‌ی نعل‌اسبی</text>; })()}
+            <ellipse cx={10 + k * BL} cy="100" rx="5" ry="3.4" fill="#e7cf8d" /><ellipse cx={10 + (k + 1) * BL} cy="100" rx="5" ry="3.4" fill="#e7cf8d" />
+          </g>) : null)}
+        {/* رودخانه */}
+        <path d={main} fill="none" stroke="#d8c58f" strokeWidth={W + 4} strokeLinecap="round" strokeLinejoin="round" opacity="0.8" />
+        <path d={main} fill="none" stroke="#2f6bd1" strokeWidth={W} strokeLinecap="round" strokeLinejoin="round" />
+        <path d={main} fill="none" stroke="#9fc9ff" strokeWidth="1.5" strokeDasharray="6 8" strokeDashoffset={-tk * (1 + flow / 25)} />
+        {/* فلش‌های جهت جریان روی خود رود */}
+        {[0.5, 1.5, 2.5, 3.5].map((f) => { const x = 10 + f * BL * 0.62 + 20; const k = Math.min(NB - 1, Math.floor((x - 10) / BL)); const a = A * (1 - done[k]); const yy = 100 + a * Math.sin((x - 10) / 22); const sl = Math.atan(a * Math.cos((x - 10) / 22) / 22) * 180 / Math.PI; return x < 300 ? <g key={f} transform={`translate(${x},${yy}) rotate(${sl})`}><path d="M -6,0 L 5,0 M 1,-3.5 L 5.5,0 L 1,3.5" stroke="#fff" strokeWidth="1.8" fill="none" strokeLinecap="round" strokeLinejoin="round" /></g> : null; })}
+        {/* فرسایش بیرون پیچ و رسوب درون پیچ */}
+        {done.map((v, k) => {
+          const x = 10 + (k + 0.5) * BL; if (x > 300) return null;
+          const sg = Math.sin((x - 10) / 22) > 0 ? 1 : -1;
+          const a = A * (1 - v), y = 100 + a * Math.sin((x - 10) / 22);
+          const sandR = (5 + (age / 100) * 9) * (1 - v);
+          const op = 1 - v;
+          return (
+            <g key={"s" + k} opacity={op}>
+              <ellipse cx={x} cy={y - sg * (W * 0.5 + sandR * 0.55)} rx={sandR * 1.7} ry={sandR * 0.7} fill="#ecd696" stroke="#c9ae66" strokeWidth="0.8" />
+              {[-1, 0, 1].map((q) => <circle key={q} cx={x + q * sandR * 0.7} cy={y - sg * (W * 0.5 + sandR * 0.55) + q * 0.6} r="0.9" fill="#b99a50" />)}
+              <path d={`M ${x - 10},${y + sg * (W * 0.5 + 3)} Q ${x},${y + sg * (W * 0.5 + 8)} ${x + 10},${y + sg * (W * 0.5 + 3)}`} stroke="#c0392b" strokeWidth="2.6" fill="none" strokeLinecap="round" />
+              <path d={`M ${x - 7},${y + sg * (W * 0.5 + 8)} l 0,${sg * 4} M ${x},${y + sg * (W * 0.5 + 10)} l 0,${sg * 4} M ${x + 7},${y + sg * (W * 0.5 + 8)} l 0,${sg * 4}`} stroke="#c0392b" strokeWidth="1.2" />
+              <path d={`M ${x - 4},${y + sg * (W * 0.5 - 1)} l ${-sg * 0.01},${sg * 0.01}`} stroke="none" />
+            </g>);
         })}
-        <text x="160" y="18" fontSize="10" fill="#fff" textAnchor="middle">{cut ? "گردنه بریده شد؛ دریاچه‌ی نعل‌اسبی پدید آمد" : "رود در پیچ‌ها: بیرون پیچ فرسایش (قرمز)، درون پیچ رسوب (ماسه)"}</text>
-        <text x="160" y="190" fontSize="9" fill="#fff" textAnchor="middle">جهت جریان ←</text>
+        <text x="160" y="16" fontSize="9.5" fill="#fff" textAnchor="middle">{nCut >= NB - 0 ? "رودخانه تقریباً مستقیم شد؛ پیچ‌ها دریاچه‌ی نعل‌اسبی شدند" : anyCut ? "پیچ‌ها یکی‌یکی بریده و به دریاچه‌ی نعل‌اسبی تبدیل می‌شوند" : "بیرون پیچ فرسایش (قرمز)، درون پیچ رسوب (ماسه)"}</text>
+        <path d="M 120,186 L 190,186 M 182,181.5 L 191,186 L 182,190.5" stroke="#fff" strokeWidth="2" fill="none" strokeLinecap="round" strokeLinejoin="round" />
+        <text x="205" y="189" fontSize="9" fill="#fff">جهت جریان</text>
       </svg>
       <div className="vlab-controls"><div className="vlab-ctrl-col" style={{ flex: 1 }}>
         <label className="vlab-ctrl-label">گذشت زمان (٪ عمر رودخانه): {VLAB_FA_DIGITS(age)}</label>
-        <VlabRange min={0} max={100} step={2} value={age} onChange={(e) => setAge(+e.target.value)} />
+        <VlabRange min={0} max={100} step={1} value={age} onChange={(e) => setAge(+e.target.value)} />
         <label className="vlab-ctrl-label">قدرت جریان آب (٪): {VLAB_FA_DIGITS(flow)}</label>
         <VlabRange min={10} max={100} step={5} value={flow} onChange={(e) => setFlow(+e.target.value)} />
       </div></div>
       <div className="vlab-readout">
-        در دشت‌های هموار، آب در بیرون پیچ سریع‌تر است و کناره را می‌فرساید؛ در درون پیچ آهسته است و رسوب می‌گذارد. با گذر زمان پیچ‌ها بزرگ‌تر می‌شوند تا گردنه بریده شود و بخش جداشده، <b>دریاچه‌ی نعل‌اسبی</b> بسازد.
+        در دشت‌های هموار، آب در بیرون پیچ سریع‌تر است و کناره را می‌فرساید؛ در درون پیچ آهسته است و رسوب می‌گذارد. با گذر زمان پیچ‌ها بزرگ‌تر می‌شوند و یکی‌یکی از رود جدا می‌شوند؛ هر پیچ جداشده یک <b>دریاچه‌ی نعل‌اسبی</b> است و رود به‌تدریج مستقیم می‌شود.
       </div>
     </div>
   );

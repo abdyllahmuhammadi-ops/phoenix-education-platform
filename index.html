@@ -25418,6 +25418,60 @@ const VLAB_EXPERIMENTS = [
     intro: "نور سفید را از منشور بگذران و هفت‌رنگ را ببین.",
     tools: ["منشور", "نور سفید", "طیف"],
   },
+  {
+    id: "fraction-add",
+    subject: "ریاضی",
+    level: "ابتدایی",
+    title: "جمع کسرها",
+    icon: "➕",
+    intro: "دو کسر هم‌مخرج را با نوار کسری جمع کن.",
+    tools: ["نوار کسری", "مخرج", "جمع"],
+  },
+  {
+    id: "mean-median",
+    subject: "ریاضی",
+    level: "متوسطه اول",
+    title: "میانگین و میانه",
+    icon: "📈",
+    intro: "پنج داده را تغییر بده و میانگین و میانه را مقایسه کن.",
+    tools: ["پنج داده", "محور عددی", "میانگین", "میانه"],
+  },
+  {
+    id: "coord-plane",
+    subject: "ریاضی",
+    level: "متوسطه اول",
+    title: "صفحه‌ی مختصات",
+    icon: "🧭",
+    intro: "نقطه را با x و y جابه‌جا کن و ناحیه‌اش را ببین.",
+    tools: ["محور x و y", "نقطه", "ناحیه‌ها"],
+  },
+  {
+    id: "shape-sort",
+    subject: "ریاضی",
+    level: "ابتدایی",
+    title: "چندضلعی‌ها",
+    icon: "🔷",
+    intro: "تعداد ضلع‌ها را عوض کن و نام و مجموع زاویه‌ها را ببین.",
+    tools: ["چندضلعی", "رأس", "ضلع"],
+  },
+  {
+    id: "proportion-graph",
+    subject: "ریاضی",
+    level: "متوسطه اول",
+    title: "تناسب مستقیم و نمودار",
+    icon: "📉",
+    intro: "قیمت و تعداد را عوض کن و نمودار تناسب را ببین.",
+    tools: ["نمودار خطی", "k", "x"],
+  },
+  {
+    id: "weathering",
+    subject: "زمین‌شناسی",
+    level: "متوسطه اول",
+    title: "هوازدگی یخ‌زدگی",
+    icon: "🪨",
+    intro: "شب‌های یخ‌بندان پیاپی را شبیه‌سازی کن و شکستن صخره را ببین.",
+    tools: ["صخره", "آب", "یخ‌بندان"],
+  },
 ];
 
 function vlabClamp(v, min, max) {
@@ -35276,6 +35330,13 @@ function VlabReactionTimeExperiment({ onReading }) {
 }
 
 const VLAB_EVERYDAY = {
+  "fraction-add": { title: "تکه‌های کیک", text: "اگر ۲ تکه از ۸ تکه و ۳ تکه دیگر را بخوری، ۵ تکه از ۸ تکه خورده‌ای.", art: <g><text x="52" y="58" fontSize="40" textAnchor="middle">➕</text></g> },
+  "mean-median": { title: "نمره‌ی کلاس", text: "یک نمره‌ی خیلی بالا میانگین را بالا می‌برد، ولی میانه را کم‌تر.", art: <g><text x="52" y="58" fontSize="40" textAnchor="middle">📈</text></g> },
+  "coord-plane": { title: "نقشه", text: "مختصات جغرافیایی همین ایده است: عرض و طول.", art: <g><text x="52" y="58" fontSize="40" textAnchor="middle">🧭</text></g> },
+  "shape-sort": { title: "لانه‌ی زنبور", text: "حفره‌های لانه‌ی زنبور شش‌ضلعی‌اند.", art: <g><text x="52" y="58" fontSize="40" textAnchor="middle">🔷</text></g> },
+  "proportion-graph": { title: "خرید", text: "قیمت ۵ مداد ۵ برابر قیمت ۱ مداد است.", art: <g><text x="52" y="58" fontSize="40" textAnchor="middle">📉</text></g> },
+  "weathering": { title: "جاده‌های کوهستانی", text: "ترک‌های جاده در زمستان از همین یخ‌بندان پدید می‌آید.", art: <g><text x="52" y="58" fontSize="40" textAnchor="middle">🪨</text></g> },
+
   "fraction-compare": { title: "تقسیم کیک", text: "اگر کیک را بین ۳ نفر تقسیم کنیم، سهم هر نفر از تقسیم بین ۴ نفر بیشتر است.", art: <g><text x="52" y="58" fontSize="40" textAnchor="middle">🍕</text></g> },
   "angle-types": { title: "گوشه‌ی کتاب", text: "گوشه‌ی کتاب و دفتر زاویه‌ی قائمه است.", art: <g><text x="52" y="58" fontSize="40" textAnchor="middle">📐</text></g> },
   "bar-chart": { title: "رأی‌گیری کلاس", text: "با نمودار می‌فهمیم اکثر دانش‌آموزان چه میوه‌ای دوست دارند.", art: <g><text x="52" y="58" fontSize="40" textAnchor="middle">📊</text></g> },
@@ -45409,7 +45470,195 @@ function VlabPrismSpectrumExperiment({ onReading }) {
   );
 }
 
+/* ---------- د۱. جمع کسرها ---------- */
+function VlabFractionAddExperiment({ onReading }) {
+  const [d, setD] = useState(6);
+  const [a, setA] = useState(2);
+  const [b, setB] = useState(3);
+  const A = Math.min(a, d), B = Math.min(b, d), S = A + B;
+  useEffect(() => { if (onReading) onReading(`${A}/${d} + ${B}/${d} = ${S}/${d}`); /* eslint-disable-next-line */ }, [A, B, d]);
+  const W = 260 / d;
+  const bar = (y, n, c) => Array.from({ length: d }, (_, i) => <rect key={y + "-" + i} x={30 + i * W} y={y} width={W} height="28" fill={i < n ? c : "#fff"} stroke="#33291a" />);
+  const sumCells = Array.from({ length: d }, (_, i) => <rect key={"s" + i} x={30 + i * W} y="130" width={W} height="28" fill={i < A ? "#ffb74d" : i < S ? "#4fc3f7" : "#fff"} stroke="#33291a" />);
+  return (
+    <div className="vlab-exp">
+      <svg viewBox="0 0 320 190" className="vlab-svg" style={{ direction: "ltr", background: "#fbf7ec" }}>
+        <rect width="320" height="190" rx="12" fill="#fbf7ec" />
+        {bar(24, A, "#ffb74d")}{bar(76, B, "#4fc3f7")}{sumCells}
+        <text x="160" y="16" fontSize="10" fill="#33291a" textAnchor="middle">{VLAB_FA_DIGITS(A)}/{VLAB_FA_DIGITS(d)}</text>
+        <text x="160" y="68" fontSize="10" fill="#33291a" textAnchor="middle">+ {VLAB_FA_DIGITS(B)}/{VLAB_FA_DIGITS(d)}</text>
+        <text x="160" y="122" fontSize="11" fill="#1b7d3a" textAnchor="middle" fontWeight="700">= {VLAB_FA_DIGITS(S)}/{VLAB_FA_DIGITS(d)}{S > d ? " (بیشتر از یک کل)" : S === d ? " = ۱ کل" : ""}</text>
+        <text x="160" y="180" fontSize="9" fill="#7a6b50" textAnchor="middle">مخرج برابر است؛ فقط صورت‌ها جمع می‌شوند</text>
+      </svg>
+      <div className="vlab-controls"><div className="vlab-ctrl-col" style={{ flex: 1 }}>
+        <label className="vlab-ctrl-label">تعداد قطعه‌های کل (مخرج): {VLAB_FA_DIGITS(d)}</label>
+        <VlabRange min={2} max={12} step={1} value={d} onChange={(e) => setD(+e.target.value)} />
+        <label className="vlab-ctrl-label">کسر اول: {VLAB_FA_DIGITS(A)} قطعه</label>
+        <VlabRange min={0} max={d} step={1} value={A} onChange={(e) => setA(+e.target.value)} />
+        <label className="vlab-ctrl-label">کسر دوم: {VLAB_FA_DIGITS(B)} قطعه</label>
+        <VlabRange min={0} max={d} step={1} value={B} onChange={(e) => setB(+e.target.value)} />
+      </div></div>
+      <div className="vlab-readout">وقتی اندازه‌ی قطعه‌ها یکسان است (مخرج برابر)، فقط تعداد قطعه‌ها را جمع می‌کنیم و مخرج ثابت می‌ماند: {VLAB_FA_DIGITS(A)}/{VLAB_FA_DIGITS(d)} + {VLAB_FA_DIGITS(B)}/{VLAB_FA_DIGITS(d)} = <b>{VLAB_FA_DIGITS(S)}/{VLAB_FA_DIGITS(d)}</b>.</div>
+      <VlabFormulaCheck title="جمع کسرها" fa="صورت جواب = جمع صورت‌ها" en="" legend="مخرج‌ها برابرند" subst={`${A} + ${B} = ?`} label="صورت جواب:" answer={S} unit="" decimals={0} />
+    </div>
+  );
+}
+
+/* ---------- د۲. میانگین و میانه ---------- */
+function VlabMeanMedianExperiment({ onReading }) {
+  const [v, setV] = useState([3, 5, 6, 8, 9]);
+  const set = (i, x) => setV((p) => p.map((q, j) => (j === i ? x : q)));
+  const mean = v.reduce((a, b) => a + b, 0) / v.length;
+  const sorted = [...v].sort((a, b) => a - b), med = sorted[2];
+  useEffect(() => { if (onReading) onReading(`میانگین ${mean.toFixed(1)} | میانه ${med}`); /* eslint-disable-next-line */ }, [v]);
+  const X = (t) => 20 + (t / 20) * 280;
+  return (
+    <div className="vlab-exp">
+      <svg viewBox="0 0 320 170" className="vlab-svg" style={{ direction: "ltr", background: "#fbf7ec" }}>
+        <rect width="320" height="170" rx="12" fill="#fbf7ec" />
+        <line x1="20" y1="110" x2="300" y2="110" stroke="#33291a" strokeWidth="2" />
+        {[0, 5, 10, 15, 20].map((t) => <g key={t}><line x1={X(t)} y1="106" x2={X(t)} y2="114" stroke="#33291a" /><text x={X(t)} y="126" fontSize="9" fill="#33291a" textAnchor="middle">{VLAB_FA_DIGITS(t)}</text></g>)}
+        {sorted.map((x, i) => <circle key={i} cx={X(x)} cy={96 - (sorted.slice(0, i).filter((y) => y === x).length) * 14} r="6" fill="#4fc3f7" stroke="#1e6fd9" strokeWidth="2" />)}
+        <polygon points={`${X(mean)},112 ${X(mean) - 7},126 ${X(mean) + 7},126`} fill="#c0392b" transform="translate(0,12)" />
+        <line x1={X(med)} y1="40" x2={X(med)} y2="108" stroke="#1b7d3a" strokeDasharray="4 3" strokeWidth="2" />
+        <text x="160" y="22" fontSize="10" fill="#1b7d3a" textAnchor="middle" fontWeight="700">میانه (خط سبز) = {VLAB_FA_DIGITS(med)}</text>
+        <text x="160" y="164" fontSize="10" fill="#c0392b" textAnchor="middle" fontWeight="700">میانگین (مثلث قرمز) = {VLAB_FA_DIGITS(mean.toFixed(1))}</text>
+      </svg>
+      <div className="vlab-controls"><div className="vlab-ctrl-col" style={{ flex: 1 }}>
+        {v.map((x, i) => <div key={i}><label className="vlab-ctrl-label">داده‌ی {VLAB_FA_DIGITS(i + 1)}: {VLAB_FA_DIGITS(x)}</label><VlabRange min={0} max={20} step={1} value={x} onChange={(e) => set(i, +e.target.value)} /></div>)}
+      </div></div>
+      <div className="vlab-readout">میانگین مثل «نقطه‌ی تعادل» داده‌هاست و با یک داده‌ی خیلی بزرگ جابه‌جا می‌شود؛ اما میانه (عدد وسط داده‌های مرتب‌شده) کمتر تکان می‌خورد. یکی از داده‌ها را به ۲۰ ببر و ببین!</div>
+      <VlabFormulaCheck title="میانگین" fa="میانگین = جمع داده‌ها ÷ تعداد داده‌ها" en="" legend="" subst={`(${v.join(" + ")}) ÷ 5 = ?`} label="میانگین:" answer={mean} unit="" decimals={1} />
+    </div>
+  );
+}
+
+/* ---------- د۳. صفحه‌ی مختصات ---------- */
+function VlabCoordPlaneExperiment({ onReading }) {
+  const [x, setX] = useState(3);
+  const [y, setY] = useState(2);
+  const q = x === 0 || y === 0 ? "روی محور" : x > 0 && y > 0 ? "ناحیه‌ی اول" : x < 0 && y > 0 ? "ناحیه‌ی دوم" : x < 0 ? "ناحیه‌ی سوم" : "ناحیه‌ی چهارم";
+  useEffect(() => { if (onReading) onReading(`نقطه (${x}, ${y}) — ${q}`); /* eslint-disable-next-line */ }, [x, y]);
+  const P = (a, b) => [160 + a * 12.5 - 30, 90 - b * 12.5];
+  const [px, py] = P(x, y);
+  return (
+    <div className="vlab-exp">
+      <svg viewBox="0 0 320 180" className="vlab-svg" style={{ direction: "ltr", background: "#fbf7ec" }}>
+        <rect width="320" height="180" rx="12" fill="#fbf7ec" />
+        {Array.from({ length: 13 }, (_, i) => { const t = i - 6; return <g key={i}><line x1={130 + t * 12.5} y1="14" x2={130 + t * 12.5} y2="166" stroke="#e5dcc6" /><line x1="55" y1={90 + t * 12.5 * 1} x2="205" y2={90 + t * 12.5} stroke="#e5dcc6" /></g>; })}
+        <line x1="55" y1="90" x2="205" y2="90" stroke="#33291a" strokeWidth="2" /><line x1="130" y1="14" x2="130" y2="166" stroke="#33291a" strokeWidth="2" />
+        <line x1={px} y1="90" x2={px} y2={py} stroke="#c0392b" strokeDasharray="3 3" /><line x1="130" y1={py} x2={px} y2={py} stroke="#1e6fd9" strokeDasharray="3 3" />
+        <circle cx={px} cy={py} r="6" fill="#ffd23f" stroke="#6b4513" strokeWidth="2" />
+        <text x="212" y="94" fontSize="9" fill="#33291a">x</text><text x="134" y="12" fontSize="9" fill="#33291a">y</text>
+        <text x="262" y="48" fontSize="14" fill="#c0392b" textAnchor="middle" fontWeight="700">افقی x: {VLAB_FA_DIGITS(x)}</text><text x="262" y="68" fontSize="14" fill="#1e6fd9" textAnchor="middle" fontWeight="700">عمودی y: {VLAB_FA_DIGITS(y)}</text>
+        <text x="262" y="86" fontSize="10" fill="#1b7d3a" textAnchor="middle">{q}</text>
+        <text x="262" y="112" fontSize="9" fill="#7a6b50" textAnchor="middle">اول افقی، بعد عمودی</text>
+      </svg>
+      <div className="vlab-controls"><div className="vlab-ctrl-col" style={{ flex: 1 }}>
+        <label className="vlab-ctrl-label">x (افقی): {VLAB_FA_DIGITS(x)}</label><VlabRange min={-6} max={6} step={1} value={x} onChange={(e) => setX(+e.target.value)} />
+        <label className="vlab-ctrl-label">y (عمودی): {VLAB_FA_DIGITS(y)}</label><VlabRange min={-6} max={6} step={1} value={y} onChange={(e) => setY(+e.target.value)} />
+      </div></div>
+      <div className="vlab-readout">هر نقطه با دو عدد پیدا می‌شود: نخست حرکت افقی (x)، سپس عمودی (y). علامت x و y ناحیه‌ی نقطه را تعیین می‌کند.</div>
+      <VlabFormulaCheck title="فاصله از مبدأ" fa="فاصله = √(x² + y²)" en="" legend="مبدأ نقطه‌ی (۰، ۰) است" subst={`√(${x}² + ${y}²) = ?`} label="فاصله:" answer={Math.sqrt(x * x + y * y)} unit="" decimals={2} />
+    </div>
+  );
+}
+
+/* ---------- د۴. دسته‌بندی شکل‌ها ---------- */
+const VLAB_D_SHAPES = [["مثلث", 3], ["چهارضلعی", 4], ["پنج‌ضلعی", 5], ["شش‌ضلعی", 6], ["هشت‌ضلعی", 8]];
+function VlabShapeSortExperiment({ onReading }) {
+  const [n, setN] = useState(4);
+  const name = (VLAB_D_SHAPES.find((s) => s[1] === n) || [n + "‌ضلعی"])[0];
+  const pts = Array.from({ length: n }, (_, i) => { const a = (i / n) * 2 * Math.PI - Math.PI / 2; return [110 + 60 * Math.cos(a), 95 + 60 * Math.sin(a)]; });
+  useEffect(() => { if (onReading) onReading(`${name}: ${n} ضلع، ${n} رأس`); /* eslint-disable-next-line */ }, [n]);
+  const sumAng = (n - 2) * 180;
+  return (
+    <div className="vlab-exp">
+      <svg viewBox="0 0 320 190" className="vlab-svg" style={{ direction: "ltr", background: "#fbf7ec" }}>
+        <rect width="320" height="190" rx="12" fill="#fbf7ec" />
+        <polygon points={pts.map((p) => p.join(",")).join(" ")} fill="#ffe08a" stroke="#6b4513" strokeWidth="3" />
+        {pts.map((p, i) => <circle key={i} cx={p[0]} cy={p[1]} r="5" fill="#c0392b" />)}
+        <text x="245" y="60" fontSize="16" fill="#33291a" textAnchor="middle" fontWeight="700">{name}</text>
+        <text x="245" y="86" fontSize="11" fill="#33291a" textAnchor="middle">{VLAB_FA_DIGITS(n)} ضلع (پاره‌خط)</text>
+        <text x="245" y="106" fontSize="11" fill="#c0392b" textAnchor="middle">{VLAB_FA_DIGITS(n)} رأس (گوشه)</text>
+        <text x="245" y="132" fontSize="11" fill="#1b7d3a" textAnchor="middle">مجموع زاویه‌ها: {VLAB_FA_DIGITS(sumAng)}°</text>
+      </svg>
+      <div className="vlab-controls"><div className="vlab-ctrl-col" style={{ flex: 1 }}>
+        <label className="vlab-ctrl-label">تعداد ضلع‌ها: {VLAB_FA_DIGITS(n)}</label>
+        <VlabRange min={3} max={10} step={1} value={n} onChange={(e) => setN(+e.target.value)} />
+      </div></div>
+      <div className="vlab-readout">در هر چندضلعی تعداد ضلع‌ها با تعداد رأس‌ها برابر است. مجموع زاویه‌های داخلی = (تعداد ضلع − ۲) × ۱۸۰°.</div>
+      <VlabFormulaCheck title="مجموع زاویه‌ها" fa="مجموع = (n − ۲) × ۱۸۰°" en="" legend="n تعداد ضلع‌هاست" subst={`(${n} − 2) × 180 = ?`} label="مجموع:" answer={sumAng} unit="°" decimals={0} />
+    </div>
+  );
+}
+
+/* ---------- د۵. تناسب مستقیم و نمودار ---------- */
+function VlabProportionGraphExperiment({ onReading }) {
+  const [k, setK] = useState(3);
+  const [x, setX] = useState(4);
+  const y = k * x;
+  useEffect(() => { if (onReading) onReading(`y = ${k}x | x=${x} → y=${y}`); /* eslint-disable-next-line */ }, [k, x]);
+  const sx = 250 / 10, sy = 130 / 50;
+  return (
+    <div className="vlab-exp">
+      <svg viewBox="0 0 320 190" className="vlab-svg" style={{ direction: "ltr", background: "#fbf7ec" }}>
+        <rect width="320" height="190" rx="12" fill="#fbf7ec" />
+        <line x1="40" y1="160" x2="300" y2="160" stroke="#33291a" strokeWidth="2" /><line x1="40" y1="160" x2="40" y2="14" stroke="#33291a" strokeWidth="2" />
+        {[0, 5, 10].map((t) => <text key={t} x={40 + t * sx} y="174" fontSize="9" fill="#33291a" textAnchor="middle">{VLAB_FA_DIGITS(t)}</text>)}
+        {[0, 20, 40].map((t) => <text key={t} x="34" y={163 - t * sy} fontSize="9" fill="#33291a" textAnchor="end">{VLAB_FA_DIGITS(t)}</text>)}
+        <line x1="40" y1="160" x2={40 + 10 * sx} y2={160 - Math.min(50, k * 10) * sy} stroke="#1e6fd9" strokeWidth="3" />
+        <line x1={40 + x * sx} y1="160" x2={40 + x * sx} y2={160 - Math.min(50, y) * sy} stroke="#c0392b" strokeDasharray="3 3" />
+        <circle cx={40 + x * sx} cy={160 - Math.min(50, y) * sy} r="6" fill="#ffd23f" stroke="#6b4513" strokeWidth="2" />
+        <text x="170" y="26" fontSize="11" fill="#33291a" textAnchor="middle" fontWeight="700">قیمت = {VLAB_FA_DIGITS(k)} × تعداد → {VLAB_FA_DIGITS(y)}</text>
+      </svg>
+      <div className="vlab-controls"><div className="vlab-ctrl-col" style={{ flex: 1 }}>
+        <label className="vlab-ctrl-label">قیمت هر عدد (k): {VLAB_FA_DIGITS(k)}</label><VlabRange min={1} max={5} step={1} value={k} onChange={(e) => setK(+e.target.value)} />
+        <label className="vlab-ctrl-label">تعداد (x): {VLAB_FA_DIGITS(x)}</label><VlabRange min={0} max={10} step={1} value={x} onChange={(e) => setX(+e.target.value)} />
+      </div></div>
+      <div className="vlab-readout">در تناسب مستقیم نمودار یک <b>خط راست از مبدأ</b> است و نسبت y به x همیشه ثابت (k) می‌ماند. هرچه k بیشتر، خط شیب‌دارتر.</div>
+      <VlabFormulaCheck title="تناسب مستقیم" fa="y = k × x" en="" legend="" subst={`${k} × ${x} = ?`} label="y:" answer={y} unit="" decimals={0} />
+    </div>
+  );
+}
+
+/* ---------- د۶. هوازدگی یخ‌زدگی ---------- */
+function VlabWeatheringExperiment({ onReading }) {
+  const [cycles, setCycles] = useState(0);
+  const [water, setWater] = useState(60);
+  const crack = Math.min(40, cycles * (water / 100) * 4);
+  useEffect(() => { if (onReading) onReading(`${cycles} بار یخ‌زدن | شکاف ${crack.toFixed(0)}`); /* eslint-disable-next-line */ }, [cycles, water]);
+  const split = crack >= 36;
+  return (
+    <div className="vlab-exp">
+      <svg viewBox="0 0 320 180" className="vlab-svg" style={{ direction: "ltr", background: "#dbe9f4" }}>
+        <rect width="320" height="180" rx="12" fill="#dbe9f4" />
+        <rect y="150" width="320" height="30" fill="#8d6e63" />
+        <g transform={split ? "translate(-10,0)" : ""}><polygon points="80,150 90,70 150,60 160,150" fill="#8a8f98" stroke="#33291a" strokeWidth="2" /></g>
+        <g transform={split ? "translate(14,4) rotate(6 200 150)" : ""}><polygon points="160,150 150,60 210,75 230,150" fill="#9aa0a8" stroke="#33291a" strokeWidth="2" /></g>
+        {!split && <path d={`M 152,60 L ${152 + crack * 0.1},${60 + crack * 1.6}`} stroke="#222" strokeWidth={1 + crack * 0.12} />}
+        {!split && <path d={`M 152,${60 + crack * 1.6} l 4,10`} stroke="#4fc3f7" strokeWidth={Math.max(1, water / 15)} />}
+        <text x="160" y="22" fontSize="11" fill="#33291a" textAnchor="middle" fontWeight="700">{cycles ? `${VLAB_FA_DIGITS(cycles)} شب یخ‌بندان` : "شب‌ها هنوز یخ نزده"}</text>
+        <text x="160" y="40" fontSize="10" fill={split ? "#c0392b" : "#1e6fd9"} textAnchor="middle">{split ? "صخره شکست!" : `پهنای ترک: ${VLAB_FA_DIGITS(crack.toFixed(0))}`}</text>
+        <text x="160" y="172" fontSize="9" fill="#fff" textAnchor="middle">آب هنگام یخ‌زدن حدود ۹٪ حجمش بیشتر می‌شود</text>
+      </svg>
+      <div className="vlab-controls"><div className="vlab-ctrl-col" style={{ flex: 1 }}>
+        <label className="vlab-ctrl-label">آب درون شکاف: {VLAB_FA_DIGITS(water)}٪</label><VlabRange min={10} max={100} step={5} value={water} onChange={(e) => { setWater(+e.target.value); setCycles(0); }} />
+        <div className="vlab-num-row"><button type="button" className="vlab-num-btn active" onClick={() => setCycles((c) => c + 1)}>❄️ یک شب یخ‌بندان</button><button type="button" className="vlab-num-btn" onClick={() => setCycles(0)}>از نو</button></div>
+      </div></div>
+      <div className="vlab-readout">آب به درون شکاف نفوذ می‌کند، شب یخ می‌زند و منبسط می‌شود و شکاف را بازتر می‌کند؛ روز آب می‌شود و دوباره نفوذ می‌کند. تکرار، صخره را خرد می‌کند (هوازدگی فیزیکی). مدل ساده است و پهنا مقیاس نسبی دارد.</div>
+    </div>
+  );
+}
+
 const VLAB_COMPONENTS = {
+  "fraction-add": VlabFractionAddExperiment,
+  "mean-median": VlabMeanMedianExperiment,
+  "coord-plane": VlabCoordPlaneExperiment,
+  "shape-sort": VlabShapeSortExperiment,
+  "proportion-graph": VlabProportionGraphExperiment,
+  "weathering": VlabWeatheringExperiment,
+
   "fraction-compare": VlabFractionCompareExperiment,
   "angle-types": VlabAngleTypesExperiment,
   "bar-chart": VlabBarChartExperiment,
@@ -45719,6 +45968,13 @@ const VLAB_COMPONENTS = {
 /* راهنمای یادگیری (پیش‌نویس، در انتظار بازبینی معلم) — با الهام از اصول PhET: هدف‌های کم و مشخص، چالش‌های باز («همه‌ی راه‌ها را پیدا کن»)،
    پیش‌بینی و مقایسه، ارتباط با زندگی، و برداشت‌های نادرست رایج. هر آزمایش: goals، challenges، misconception (اختیاری)، check:{q,a} */
 const VLAB_GUIDE = {
+  "fraction-add": { goals: ["کسرهای هم‌مخرج را جمع کنی.", "بدانی چرا مخرج ثابت می‌ماند."], challenges: ["۲/۶ + ۳/۶ را بساز.", "جمعی بساز که از یک کل بیشتر شود.", "مخرج را عوض کن."], misconception: "در جمع کسرها مخرج‌ها هم جمع می‌شوند؛ در حقیقت مخرج ثابت می‌ماند.", check: { q: "۲/۷ + ۳/۷ چند است؟", a: "۵/۷." } },
+  "mean-median": { goals: ["میانگین و میانه را حساب کنی.", "اثر داده‌ی پرت را ببینی."], challenges: ["یک داده را ۲۰ کن.", "همه‌ی داده‌ها را برابر کن.", "میانه را عوض نکن ولی میانگین را عوض کن."], misconception: "میانگین همیشه برابر عدد وسط است؛ در حقیقت فقط نقطه‌ی تعادل داده‌هاست.", check: { q: "میانگین ۲، ۴، ۶ چند است؟", a: "۴." } },
+  "coord-plane": { goals: ["مختصات نقطه را بخوانی.", "ناحیه‌ی نقطه را تشخیص دهی."], challenges: ["نقطه‌ای در ناحیه‌ی سوم بگذار.", "نقطه‌ای روی محور y بگذار.", "فاصله‌ی (۳،۴) از مبدأ چند است؟"], misconception: "(۲، ۵) و (۵، ۲) یک نقطه‌اند؛ در حقیقت ترتیب مهم است.", check: { q: "در (۳،۴) کدام x است؟", a: "۳." } },
+  "shape-sort": { goals: ["چندضلعی‌ها را نام ببری.", "ضلع و رأس را بشماری."], challenges: ["شش‌ضلعی بساز.", "ده‌ضلعی بساز.", "مجموع زاویه‌های مثلث چند است؟"], misconception: "ضلع‌ها از رأس‌ها بیشترند؛ در حقیقت برابرند.", check: { q: "شش‌ضلعی چند رأس دارد؟", a: "۶." } },
+  "proportion-graph": { goals: ["تناسب مستقیم را بشناسی.", "رابطه‌ی k و شیب را ببینی."], challenges: ["k را ۵ کن.", "x را ۰ کن.", "y برای k=۳ و x=۴ چند است؟"], misconception: "نمودار تناسب مستقیم از بالای محور شروع می‌شود؛ در حقیقت از مبدأ.", check: { q: "اگر k=۲ و x=۵ باشد y؟", a: "۱۰." } },
+  "weathering": { goals: ["هوازدگی فیزیکی را بشناسی.", "نقش آب و یخ را بدانی."], challenges: ["۱۰ شب یخ بزن.", "آب شکاف را کم کن.", "چرا صخره می‌شکند؟"], misconception: "آب سنگ را حل می‌کند و می‌شکند؛ در حقیقت یخ با انبساط می‌شکند.", check: { q: "هنگام یخ زدن، حجم آب چه می‌شود؟", a: "بیشتر." } },
+
   "fraction-compare": { goals: ["کسر را بخشی از کل ببینی.", "دو کسر را مقایسه کنی."], challenges: ["۱/۲ و ۲/۵ را مقایسه کن.", "دو کسر برابر بساز.", "کدام بزرگ‌تر است: ۳/۴ یا ۵/۸؟"], misconception: "کسری که مخرجش بزرگ‌تر است بزرگ‌تر است؛ در واقع برعکس است.", check: { q: "۱/۳ بزرگ‌تر است یا ۱/۴؟", a: "۱/۳." } },
   "angle-types": { goals: ["زاویه‌ی تند، قائمه و باز را بشناسی.", "اندازه‌ی زاویه را بخوانی."], challenges: ["زاویه‌ی قائمه بساز.", "زاویه‌ی تند و باز بساز.", "مکمل ۳۰° چند است؟"], misconception: "هرچه ضلع‌ها بلندتر باشند زاویه بزرگ‌تر است؛ در حقیقت فقط باز بودن مهم است.", check: { q: "زاویه‌ی ۱۲۰° چه نوعی است؟", a: "باز (منفرجه)." } },
   "bar-chart": { goals: ["نمودار میله‌ای را بخوانی.", "بیشترین و کمترین را بگویی."], challenges: ["محبوب‌ترین میوه کدام است؟", "اختلاف بیشترین و کمترین چند است؟", "نمودار را عوض کن."], misconception: "میله‌ی بلندتر یعنی اندازه‌ی بزرگ‌تر میله؛ در واقع یعنی تعداد بیشتر.", check: { q: "اگر سیب ۵ و موز ۳ باشد، اختلاف؟", a: "۲." } },

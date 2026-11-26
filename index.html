@@ -33637,18 +33637,36 @@ function VlabInclinedPlaneExperiment({ onReading }) {
   const angDeg = (Math.atan2(ty - GY, tx - BX0) * 180) / Math.PI;
   return (
     <div className="vlab-exp">
-      <svg ref={svgRef} viewBox="0 0 320 224" className="vlab-svg" style={{ background: "#03060f", borderRadius: "10px" }}>
-        <rect x="0" y={GY} width="320" height="32" fill="#1b2438" />
-        <polygon points={`${BX0},${GY} ${tx},${GY} ${tx},${ty}`} fill="#3a4670" opacity="0.55" />
-        <line x1={BX0} y1={GY} x2={tx} y2={ty} stroke="#cfd6ea" strokeWidth="3" />
-        <rect x={tx} y={ty} width={Math.max(10, 300 - tx)} height={GY - ty} fill="#27324f" stroke="#5b6a96" />
-        <text x={tx + 6} y={ty + 14} fontSize="8" fill="#9fb0e0">سکو</text>
-        <line x1={tx + 14} y1={GY} x2={tx + 14} y2={ty} stroke="#ffd98a" strokeWidth="1" strokeDasharray="3 3" /><text x={tx + 18} y={(GY + ty) / 2 + 3} fontSize="8" fill="#ffd98a" style={{ direction: "ltr", unicodeBidi: "isolate" }}>{"h=" + h + " m"}</text>
-        <g transform={`translate(${ox},${oy}) rotate(${angDeg})`}><rect x="-12" y="-20" width="24" height="20" fill="#e0925a" stroke="#6b3d1a" /><text x="0" y="-7" fontSize="7" fill="#2a1507" textAnchor="middle" style={{ direction: "ltr", unicodeBidi: "isolate" }}>{mass}kg</text>
-          <line x1="12" y1="-10" x2="40" y2="-10" stroke="#7be0a4" strokeWidth="2.4" /><polygon points="40,-10 33,-14 33,-6" fill="#7be0a4" /></g>
+      <svg ref={svgRef} viewBox="0 0 320 224" className="vlab-svg" style={{ direction: "ltr", background: "#cfeaff", borderRadius: "10px" }}>
+        <defs>
+          <linearGradient id="ipSky" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stopColor="#7cc4ff" /><stop offset="1" stopColor="#eaf7ff" /></linearGradient>
+          <linearGradient id="ipWood" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stopColor="#dcae6f" /><stop offset="1" stopColor="#a56d2c" /></linearGradient>
+        </defs>
+        <rect width="320" height="224" rx="10" fill="url(#ipSky)" />
+        <circle cx="288" cy="30" r="22" fill="#ffe27a" opacity="0.4" /><circle cx="288" cy="30" r="13" fill="#ffd23f" />
+        <ellipse cx="170" cy="30" rx="22" ry="7" fill="#fff" opacity="0.9" /><ellipse cx="182" cy="25" rx="13" ry="7" fill="#fff" opacity="0.9" />
+        <rect x="0" y={GY} width="320" height={224 - GY} fill="#6bbd57" /><rect x="0" y={GY} width="320" height="5" fill="#4ea63f" />
+        {/* سکو (آجری) */}
+        <rect x={tx} y={ty} width={Math.max(10, 300 - tx)} height={GY - ty} fill="#c9694a" stroke="#7a3a22" strokeWidth="1.2" />
+        {Array.from({ length: Math.max(0, Math.floor((GY - ty) / 9)) }, (_, i) => <line key={i} x1={tx} y1={ty + 9 * (i + 1)} x2={300} y2={ty + 9 * (i + 1)} stroke="#7a3a22" strokeWidth="0.8" opacity="0.7" />)}
+        <rect x={tx} y={ty - 5} width={Math.max(10, 300 - tx)} height="6" rx="2" fill="#b8bfcc" stroke="#6b7388" strokeWidth="1" />
+        {/* پایه و تخته‌ی شیب‌دار */}
+        <polygon points={`${BX0},${GY} ${tx},${GY} ${tx},${ty}`} fill="#dccfae" stroke="#a89572" strokeWidth="1.2" />
+        <g transform={`translate(${BX0},${GY}) rotate(${angDeg})`}>
+          <rect x="0" y="-8" width={Math.hypot(tx - BX0, ty - GY)} height="8" rx="2.5" fill="url(#ipWood)" stroke="#6b4318" strokeWidth="1.4" />
+          {Array.from({ length: Math.floor(Math.hypot(tx - BX0, ty - GY) / 20) }, (_, i) => <line key={i} x1={20 * (i + 1)} y1="-8" x2={20 * (i + 1)} y2="0" stroke="#7a4a1d" strokeWidth="0.8" />)}
+        </g>
+        <line x1={tx + 14} y1={GY} x2={tx + 14} y2={ty} stroke="#d97706" strokeWidth="1.6" strokeDasharray="4 3" />
+        <VlabPill x={Math.min(tx + 54, 280)} y={(GY + ty) / 2 + 3} text={`ارتفاع ${VLAB_FA_DIGITS(h.toFixed(2).replace(/0$/, "").replace(".", "٫"))} متر`} size={9.5} fill="#fff1d6" color="#8a3d00" />
+        {/* جعبه */}
+        <g transform={`translate(${ox},${oy}) rotate(${angDeg})`}>
+          <g transform="translate(0,-8)"><VlabCrate w={30} h={24} label={`${mass}kg`} /></g>
+          <g transform="translate(-26,-20)"><line x1="0" y1="0" x2={-(12 + Math.min(1, F / 700) * 26)} y2="0" stroke="#1f9d4a" strokeWidth="3.2" strokeLinecap="round" /></g>
+        </g>
         <circle cx={tx} cy={ty} r="13" fill="transparent" onPointerDown={startDrag("top")} style={{ cursor: "ns-resize", touchAction: "none" }} />
-        <circle cx={tx} cy={ty} r="6" fill="#ffd98a" stroke="#fff" pointerEvents="none" />
-        <text x="160" y="214" fontSize="8" fill="#9fb0e0" textAnchor="middle">نقطه‌ی زرد را بالا و پایین بکش تا شیب عوض شود</text>
+        <circle cx={tx} cy={ty} r="10" fill="#ffd23f" opacity="0.4" pointerEvents="none"><animate attributeName="r" values="8;14;8" dur="1.8s" repeatCount="indefinite" /></circle>
+        <circle cx={tx} cy={ty} r="6.5" fill="#ffd23f" stroke="#fff" strokeWidth="2" pointerEvents="none" />
+        <VlabPill x="160" y="212" text="نقطه‌ی زرد را بالا و پایین بکش تا شیب عوض شود" size={9.5} fill="#ffffff" />
       </svg>
       <VlabMeterRow height={160} meters={[{ label: "نیروی هل‌دادن", unit: "N", value: F, ranges: [100, 200, 400, 800], maj: 5, decimals: 0 }, { label: "سود مکانیکی", unit: "×", value: MA, ranges: [5, 15], maj: 5, decimals: 1 }]} />
       <div className="vlab-controls">
@@ -42795,29 +42813,38 @@ function VlabSeasonsExperiment({ onReading }) {
   const cosH = -Math.tan(phi) * Math.tan(dl);
   const dayLen = cosH >= 1 ? 0 : cosH <= -1 ? 24 : (24 / Math.PI) * Math.acos(cosH);
   const seasonTxt = day >= 80 && day < 172 ? "بهار" : day >= 172 && day < 266 ? "تابستان" : day >= 266 && day < 355 ? "پاییز" : "زمستان";
-  const phiO = ((day - 172) / 365) * 2 * Math.PI; // ۰ = اول تابستان: زمین در سمت چپ
-  const ex = 160 - 100 * Math.cos(phiO), ey = 100 + 54 * Math.sin(phiO);
+  const phiO = ((day - 172) / 365) * 2 * Math.PI;
+  const cx = 160, cy = 92, rxO = 92, ryO = 50;
+  const ex = cx - rxO * Math.cos(phiO), ey = cy + ryO * Math.sin(phiO);
   const tilt = (23.44 * Math.PI) / 180;
+  const toSun = (Math.atan2(cy - ey, cx - ex) * 180) / Math.PI;
   useEffect(() => { if (onReading) onReading(`${vlabPersianDate(day)} | میل خورشید ${decl.toFixed(1)}° | طول روز در عرض ${lat}° = ${dayLen.toFixed(1)} ساعت`); /* eslint-disable-next-line */ }, [day, lat]);
+  const bx = 24, bw = 272, dw = (dayLen / 24) * bw;
+  const marks = [[30, 92, "تابستان", "☀️"], [290, 92, "زمستان", "❄️"], [160, 18, "بهار", "🌸"], [160, 168, "پاییز", "🍂"]];
   return (
     <div className="vlab-exp">
-      <svg viewBox="0 0 320 225" className="vlab-svg" style={{ direction: "ltr", background: "#0b1330" }}>
-        <rect width="320" height="225" rx="12" fill="#0b1330" />
-        <ellipse cx="160" cy="100" rx="100" ry="54" fill="none" stroke="#44507f" strokeWidth="1.5" strokeDasharray="4 4" />
-        <circle cx="160" cy="100" r="16" fill="#ffd23f" /><circle cx="160" cy="100" r="26" fill="#ffd23f" opacity="0.25" />
-        {/* زمین؛ محور همیشه به همان سو (متمایل به راست) کج است */}
+      <svg viewBox="0 0 320 250" className="vlab-svg" style={{ direction: "ltr", background: "#14275e" }}>
+        <VlabSpaceBG w={320} h={250} id="se" />
+        <ellipse cx={cx} cy={cy} rx={rxO} ry={ryO} fill="none" stroke="#7d8cd0" strokeWidth="1.5" strokeDasharray="4 5" />
+        <VlabSpaceSun cx={cx} cy={cy} r={17} id="se" />
+        {marks.map((m) => <g key={m[2]}><VlabPill x={m[0]} y={m[1]} text={`${m[3]} ${m[2]}`} size={10} fill={seasonTxt === m[2] ? "#ffe08a" : "#ffffff"} /></g>)}
+        {/* زمین با محور کج */}
         <g transform={`translate(${ex},${ey})`}>
-          <circle r="11" fill="#2e63c4" />
-          <path d="M -6,-3 q 4,-5 8,-1 q 2,4 -2,6 q -6,2 -6,-5 Z" fill="#4caf50" />
-          <line x1={-Math.sin(tilt) * 19} y1={Math.cos(tilt) * 19} x2={Math.sin(tilt) * 19} y2={-Math.cos(tilt) * 19} stroke="#fff" strokeWidth="1.6" />
-          <circle cx={Math.sin(tilt) * 19} cy={-Math.cos(tilt) * 19} r="2" fill="#ff8a65" />
-          <text x="0" y="28" fontSize="9" fill="#ffe08a" textAnchor="middle">{vlabPersianDate(day)}</text>
+          <circle r="13" fill="url(#seEarth)" />
+          <path d="M -8,-3 q 4,-7 10,-2 q 2,6 -3,8 q -7,2 -7,-6 Z" fill="#58c06a" />
+          <path d="M 3,5 q 5,-2 7,2 q -2,5 -6,3 Z" fill="#58c06a" />
+          <g transform={`rotate(${toSun + 180})`}><path d="M 0,-13 A 13,13 0 0 1 0,13 Z" fill="#030821" opacity="0.5" /></g>
+          <circle r="13" fill="none" stroke="#cfe5ff" strokeOpacity="0.6" />
+          <line x1={-Math.sin(tilt) * 22} y1={Math.cos(tilt) * 22} x2={Math.sin(tilt) * 22} y2={-Math.cos(tilt) * 22} stroke="#fff" strokeWidth="1.8" strokeLinecap="round" />
+          <circle cx={Math.sin(tilt) * 22} cy={-Math.cos(tilt) * 22} r="2.6" fill="#ff8a65" />
         </g>
-        <text x="28" y="80" fontSize="8" fill="#aab3cc" textAnchor="middle">اول تابستان</text>
-        <text x="160" y="196" fontSize="8" fill="#aab3cc" textAnchor="middle">اول پاییز</text>
-        <text x="292" y="80" fontSize="8" fill="#aab3cc" textAnchor="middle">اول زمستان</text>
-        <text x="160" y="20" fontSize="8" fill="#aab3cc" textAnchor="middle">اول بهار</text>
-        <text x="160" y="216" fontSize="10" fill="#ffe08a" textAnchor="middle" fontWeight="700">{seasonTxt} — میل خورشید {VLAB_FA_DIGITS(decl.toFixed(1))}°</text>
+        {/* نوار طول روز */}
+        <rect x="14" y="184" width="292" height="58" rx="12" fill="#0a1238" fillOpacity="0.6" stroke="#8c98d6" strokeOpacity="0.5" />
+        <text x="160" y="200" fontSize="11" fontWeight="700" fill="#ffe08a" textAnchor="middle">{`${vlabPersianDate(day)} — ${seasonTxt}`}</text>
+        <rect x={bx} y="208" width={bw} height="14" rx="7" fill="#1c2a66" />
+        <rect x={bx + (bw - dw) / 2} y="208" width={Math.max(0, dw)} height="14" rx="7" fill="#ffd23f" />
+        <text x="160" y="218.5" fontSize="9.5" fontWeight="700" fill={dayLen > 8 ? "#5a3b00" : "#fff"} textAnchor="middle">{`روز ${VLAB_FA_DIGITS(dayLen.toFixed(1))} ساعت`}</text>
+        {[0, 6, 12, 18, 24].map((h) => <text key={h} x={bx + (h / 24) * bw} y="236" fontSize="8.5" fill="#aab6e8" textAnchor="middle">{VLAB_FA_DIGITS(h)}</text>)}
       </svg>
       <div className="vlab-controls"><div className="vlab-ctrl-col" style={{ flex: 1 }}>
         <label className="vlab-ctrl-label">تاریخ: {vlabPersianDate(day)}</label>
@@ -44709,6 +44736,22 @@ function VlabSoundVibrationExperiment({ onReading }) {
 }
 
 /* ---------- آ۴. اصطکاک و سطح شیب‌دار ---------- */
+/* جعبه‌ی چوبی واقعی (مشترک) */
+function VlabCrate({ w = 34, h = 28, label }) {
+  const pl = h / 3;
+  return (
+    <g>
+      <rect x={-w / 2 + 1.5} y={-h + 2} width={w} height={h} rx="2.5" fill="#000" opacity="0.15" />
+      <rect x={-w / 2} y={-h} width={w} height={h} rx="2.5" fill="#cf9455" stroke="#5d3513" strokeWidth="1.6" />
+      {[1, 2].map((i) => <line key={i} x1={-w / 2} y1={-h + i * pl} x2={w / 2} y2={-h + i * pl} stroke="#7a4a1d" strokeWidth="1.2" />)}
+      {[[-0.32, 0.5], [0.12, 1.5], [-0.1, 2.5], [0.3, 0.5]].map((g, i) => <line key={i} x1={g[0] * w - 4} y1={-h + g[1] * pl} x2={g[0] * w + 4} y2={-h + g[1] * pl} stroke="#e8b878" strokeWidth="1" strokeLinecap="round" />)}
+      <rect x={-w / 2 + 2.6} y={-h + 2.6} width={w - 5.2} height={h - 5.2} fill="none" stroke="#8a5624" strokeWidth="2.6" />
+      <line x1={-w / 2 + 3} y1={-h + 3} x2={w / 2 - 3} y2={-3} stroke="#8a5624" strokeWidth="2.4" />
+      {[[-1, -1], [1, -1], [-1, 1], [1, 1]].map((c, i) => <circle key={i} cx={c[0] * (w / 2 - 4.2)} cy={-h / 2 + c[1] * (h / 2 - 4.2)} r="1.3" fill="#3b2a1a" />)}
+      {label && <g><rect x={-w * 0.3} y={-h / 2 - 5} width={w * 0.6} height="10" rx="2" fill="#fff4d6" stroke="#5d3513" strokeWidth="0.8" /><text x="0" y={-h / 2 + 2.6} fontSize="7.5" fontWeight="700" fill="#4a2a0c" textAnchor="middle" style={{ direction: "ltr", unicodeBidi: "isolate" }}>{label}</text></g>}
+    </g>
+  );
+}
 const VLAB_SURF = [{ n: "یخ", mu: 0.1, c: "#bfe8ff" }, { n: "چوب صیقلی", mu: 0.35, c: "#c9a46b" }, { n: "کاغذ سنباده", mu: 0.9, c: "#a08060" }];
 function VlabFrictionSlopeExperiment({ onReading }) {
   const [ang, setAng] = useState(15);
@@ -44721,19 +44764,61 @@ function VlabFrictionSlopeExperiment({ onReading }) {
   useEffect(() => { if (!run) return; const id = setInterval(() => setPos((p) => (slides ? Math.min(1, p + 0.012 + p * 0.03) : p)), 40); return () => clearInterval(id); }, [run, slides]);
   useEffect(() => { setPos(0); setRun(false); }, [ang, si]);
   useEffect(() => { if (onReading) onReading(`${S.n} | زاویه ${ang}° | زاویه‌ی لغزش ≈ ${crit.toFixed(0)}° | ${slides ? "می‌لغزد" : "ثابت می‌ماند"}`); /* eslint-disable-next-line */ }, [ang, si]);
-  const a = (ang * Math.PI) / 180, Lr = 200, bx = 40, by = 160;
-  const top = { x: bx, y: by - Lr * Math.sin(a) }, bot = { x: bx + Lr * Math.cos(a), y: by };
-  const px = top.x + (bot.x - top.x) * (0.1 + pos * 0.75), py = top.y + (bot.y - top.y) * (0.1 + pos * 0.75);
+  const a = (ang * Math.PI) / 180, Lr = 160, bx = 30, by = 166;
+  const top = { x: bx, y: by - Lr * Math.sin(a) }, endx = bx + Lr * Math.cos(a);
+  const s = Lr * (0.1 + pos * 0.78);
+  const moving = run && slides && pos < 1;
+  const fricLen = 12 + Math.min(1, S.mu) * 24, pullLen = 8 + ang * 0.5;
+  const ar = 26;
+  const grit = Array.from({ length: 70 }, (_, i) => ({ x: (i * 37.7) % Lr, y: 1 + ((i * 13.3) % 7) }));
   return (
     <div className="vlab-exp">
-      <svg viewBox="0 0 320 190" className="vlab-svg" style={{ direction: "ltr", background: "#0b1330" }}>
-        <rect width="320" height="190" rx="12" fill="#d8ecf8" />
-        <rect y="160" width="320" height="30" fill="#7aa35a" />
-        <polygon points={`${bx},${by} ${bot.x},${by} ${top.x},${top.y}`} fill="#b0b8c8" opacity="0.5" />
-        <line x1={top.x} y1={top.y} x2={bot.x} y2={bot.y} stroke={S.c} strokeWidth="7" strokeLinecap="round" />
-        <g transform={`translate(${px},${py}) rotate(${-ang})`}><rect x="-16" y="-20" width="32" height="20" rx="3" fill="#d9453a" stroke="#6b1a12" strokeWidth="1.5" /></g>
-        <text x="160" y="22" fontSize="11" fill="#0b1f4a" textAnchor="middle" fontWeight="700">سطح: {S.n} — زاویه‌ی شیب {VLAB_FA_DIGITS(ang)}°</text>
-        <text x="200" y="60" fontSize="11" fill={slides ? "#c0392b" : "#1b7d3a"} fontWeight="700">{slides ? "جعبه می‌لغزد" : "جعبه می‌ماند"}</text>
+      <svg viewBox="0 0 320 214" className="vlab-svg" style={{ direction: "ltr", background: "#bfe3ff" }}>
+        <defs>
+          <linearGradient id="fsSky" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stopColor="#63b8ff" /><stop offset="1" stopColor="#e4f5ff" /></linearGradient>
+          <linearGradient id="fsIce" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stopColor="#f2fcff" /><stop offset="1" stopColor="#8fd4f5" /></linearGradient>
+          <linearGradient id="fsWood" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stopColor="#d9a869" /><stop offset="1" stopColor="#a8702f" /></linearGradient>
+          <linearGradient id="fsSand" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stopColor="#c9a173" /><stop offset="1" stopColor="#8c6a45" /></linearGradient>
+        </defs>
+        <rect width="320" height="214" rx="12" fill="url(#fsSky)" />
+        <circle cx="286" cy="34" r="26" fill="#ffe27a" opacity="0.4" /><circle cx="286" cy="34" r="15" fill="#ffd23f" />
+        <ellipse cx="214" cy="40" rx="22" ry="8" fill="#fff" opacity="0.95" /><ellipse cx="226" cy="34" rx="14" ry="8" fill="#fff" opacity="0.95" />
+        <ellipse cx="120" cy="30" rx="16" ry="6" fill="#fff" opacity="0.85" />
+        <path d="M 150,170 Q 220,128 320,150 L 320,214 L 150,214 Z" fill="#8fcf7a" />
+        <rect y={by} width="320" height={214 - by} fill="#6bbd57" />
+        <rect y={by} width="320" height="5" fill="#4ea63f" />
+        {[[14, 207], [96, 208], [190, 206], [236, 208], [304, 203]].map((f, i) => <g key={i}><circle cx={f[0]} cy={f[1]} r="2.2" fill={i % 2 ? "#ff8fb0" : "#fff"} /><circle cx={f[0]} cy={f[1]} r="0.9" fill="#ffd23f" /></g>)}
+        {/* پایه‌ی شیب */}
+        <polygon points={`${bx},${by} ${endx},${by} ${top.x},${top.y}`} fill="#d9c9a8" stroke="#a89572" strokeWidth="1.2" />
+        <rect x={bx - 2} y={top.y} width="9" height={by - top.y} fill="#c46a4a" stroke="#7a3a22" strokeWidth="1" />
+        {Array.from({ length: Math.max(0, Math.floor((by - top.y) / 7)) }, (_, i) => <line key={i} x1={bx - 2} y1={top.y + 7 * (i + 1)} x2={bx + 7} y2={top.y + 7 * (i + 1)} stroke="#7a3a22" strokeWidth="0.8" />)}
+        {/* تخته‌ی شیب‌دار */}
+        <g transform={`translate(${top.x},${top.y}) rotate(${ang})`}>
+          <rect x="0" y="-9" width={Lr} height="10" rx="3" fill={si === 0 ? "url(#fsIce)" : si === 1 ? "url(#fsWood)" : "url(#fsSand)"} stroke={si === 0 ? "#5aa9d6" : si === 1 ? "#6b4318" : "#5a4128"} strokeWidth="1.4" />
+          {si === 0 && [[18, 30], [60, 44], [104, 28], [140, 50], [30, 70]].map((p, i) => <line key={i} x1={p[0] * 2.3 % (Lr - 30)} y1="-6" x2={p[0] * 2.3 % (Lr - 30) + 12} y2="-6" stroke="#fff" strokeWidth="2" strokeLinecap="round" opacity="0.9" />)}
+          {si === 1 && [22, 46, 70, 94, 118, 142, 166].map((x) => <line key={x} x1={x} y1="-9" x2={x} y2="1" stroke="#7a4a1d" strokeWidth="0.9" />)}
+          {si === 2 && grit.map((g, i) => <circle key={i} cx={g.x} cy={g.y - 9} r="0.9" fill={i % 3 ? "#5a4128" : "#e5c9a0"} />)}
+          {/* جعبه */}
+          <g transform={`translate(${s},${-9})`}>
+            {moving && [0, 1, 2].map((i) => <line key={i} x1={-24 - i * 7} y1={-8 - i * 6} x2={-34 - i * 9} y2={-8 - i * 6} stroke="#fff" strokeWidth="2" strokeLinecap="round" opacity="0.85" />)}
+            <VlabCrate w={36} h={30} />
+            {/* فلش‌ها: قرمز = کشش به پایین شیب ، سبز = اصطکاک */}
+            <g transform="translate(0,-36)">
+              <line x1="0" y1="0" x2={pullLen} y2="0" stroke="#e0392b" strokeWidth="3" strokeLinecap="round" /><polygon points={`${pullLen + 6},0 ${pullLen - 1},-4.5 ${pullLen - 1},4.5`} fill="#e0392b" />
+              <line x1="0" y1="7" x2={-fricLen} y2="7" stroke="#1f9d4a" strokeWidth="3" strokeLinecap="round" /><polygon points={`${-fricLen - 6},7 ${-fricLen + 1},2.5 ${-fricLen + 1},11.5`} fill="#1f9d4a" />
+            </g>
+          </g>
+        </g>
+        {pos >= 1 && [0, 1, 2].map((i) => <circle key={i} cx={endx + 4 + i * 7} cy={by - 4 - i * 2} r={4 + i} fill="#e8dcc0" opacity={0.8 - i * 0.2} />)}
+        {/* زاویه */}
+        <path d={`M ${endx - ar},${by} A ${ar},${ar} 0 0 1 ${endx - ar * Math.cos(a)},${by - ar * Math.sin(a)}`} fill="none" stroke="#ff7a1a" strokeWidth="2.4" strokeLinecap="round" />
+        <VlabPill x={endx - 52} y={by - 8} text={`${VLAB_FA_DIGITS(ang)} درجه`} size={10} fill="#fff1d6" color="#8a3d00" />
+        {/* برچسب‌ها */}
+        <VlabPill x="160" y="20" text={`سطح: ${S.n}`} size={11} fill="#ffffff" />
+        <VlabPill x="268" y="190" text={slides ? "جعبه می‌لغزد!" : "جعبه می‌ماند"} size={12} fill={slides ? "#ffd6d0" : "#d3f5dc"} color={slides ? "#a3200f" : "#126b30"} />
+        <rect x="18" y="183" width="184" height="20" rx="10" fill="#fff" opacity="0.85" />
+        <g><line x1="30" y1="194" x2="50" y2="194" stroke="#e0392b" strokeWidth="3" strokeLinecap="round" /><text x="56" y="197.5" fontSize="9.5" fontWeight="700" fill="#7a1a10">کشش به پایین</text>
+          <line x1="122" y1="194" x2="142" y2="194" stroke="#1f9d4a" strokeWidth="3" strokeLinecap="round" /><text x="148" y="197.5" fontSize="9.5" fontWeight="700" fill="#10602a">اصطکاک</text></g>
       </svg>
       <div className="vlab-controls"><div className="vlab-ctrl-col" style={{ flex: 1 }}>
         <label className="vlab-ctrl-label">سطح شیب‌دار</label>
@@ -44839,29 +44924,108 @@ function VlabWaterCycleKidsExperiment({ onReading }) {
 }
 
 /* ---------- آ۶. فازهای ماه ---------- */
+/* ---------- ابزارهای مشترک صحنه‌های فضا (ابتدایی) ---------- */
+const VLAB_SP_STARS = Array.from({ length: 56 }, (_, i) => ({ x: (i * 97.3 + 13) % 320, y: ((i * 53.7 + 7) % 100) / 100, r: 0.7 + (i % 4) * 0.4, d: (i % 7) * 0.45 }));
+function VlabSpaceBG({ w = 320, h = 200, id = "sp" }) {
+  return (
+    <g>
+      <defs>
+        <linearGradient id={id + "Bg"} x1="0" y1="0" x2="0" y2="1"><stop offset="0" stopColor="#14275e" /><stop offset="1" stopColor="#241a5a" /></linearGradient>
+        <radialGradient id={id + "Sun"} cx="40%" cy="38%" r="70%"><stop offset="0" stopColor="#fff6b0" /><stop offset="0.55" stopColor="#ffd23f" /><stop offset="1" stopColor="#ff9f1c" /></radialGradient>
+        <radialGradient id={id + "Glow"}><stop offset="0" stopColor="#ffd23f" stopOpacity="0.55" /><stop offset="1" stopColor="#ffd23f" stopOpacity="0" /></radialGradient>
+        <radialGradient id={id + "Earth"} cx="36%" cy="32%" r="78%"><stop offset="0" stopColor="#7fd0ff" /><stop offset="0.55" stopColor="#2e7ad1" /><stop offset="1" stopColor="#173b82" /></radialGradient>
+        <radialGradient id={id + "Moon"} cx="36%" cy="32%" r="78%"><stop offset="0" stopColor="#fffdf0" /><stop offset="1" stopColor="#cdc6a4" /></radialGradient>
+      </defs>
+      <rect width={w} height={h} rx="12" fill={`url(#${id}Bg)`} />
+      {VLAB_SP_STARS.map((s, i) => (
+        <circle key={i} cx={(s.x * w) / 320} cy={s.y * h} r={s.r} fill="#fff" opacity="0.8">
+          {i % 3 === 0 && <animate attributeName="opacity" values="0.95;0.2;0.95" dur={`${2 + (i % 5) * 0.6}s`} begin={`${s.d}s`} repeatCount="indefinite" />}
+        </circle>
+      ))}
+    </g>
+  );
+}
+function VlabSpaceSun({ cx, cy, r, id = "sp" }) {
+  return (
+    <g>
+      <circle cx={cx} cy={cy} r={r * 2.4} fill={`url(#${id}Glow)`} />
+      <g>
+        {Array.from({ length: 12 }, (_, i) => { const a = (i * Math.PI) / 6; return <line key={i} x1={cx + Math.cos(a) * r * 1.18} y1={cy + Math.sin(a) * r * 1.18} x2={cx + Math.cos(a) * r * 1.55} y2={cy + Math.sin(a) * r * 1.55} stroke="#ffc928" strokeWidth="2.4" strokeLinecap="round" />; })}
+        <animateTransform attributeName="transform" type="rotate" from={`0 ${cx} ${cy}`} to={`360 ${cx} ${cy}`} dur="40s" repeatCount="indefinite" />
+      </g>
+      <circle cx={cx} cy={cy} r={r} fill={`url(#${id}Sun)`} />
+      <circle cx={cx - r * 0.33} cy={cy - r * 0.15} r={r * 0.09} fill="#7a4a00" /><circle cx={cx + r * 0.33} cy={cy - r * 0.15} r={r * 0.09} fill="#7a4a00" />
+      <path d={`M ${cx - r * 0.38},${cy + r * 0.18} Q ${cx},${cy + r * 0.6} ${cx + r * 0.38},${cy + r * 0.18}`} fill="none" stroke="#7a4a00" strokeWidth={Math.max(1.2, r * 0.07)} strokeLinecap="round" />
+      <circle cx={cx - r * 0.55} cy={cy + r * 0.25} r={r * 0.13} fill="#ff8a65" opacity="0.55" /><circle cx={cx + r * 0.55} cy={cy + r * 0.25} r={r * 0.13} fill="#ff8a65" opacity="0.55" />
+    </g>
+  );
+}
+function VlabPill({ x, y, text, size = 11, fill = "#ffffff", color = "#26335f", pad = 8 }) {
+  x = +x; y = +y;
+  const w = Math.max(24, String(text).length * size * 0.56 + pad * 2);
+  return (
+    <g>
+      <rect x={x - w / 2} y={y - size * 1.0} width={w} height={size * 1.7} rx={size * 0.85} fill={fill} opacity="0.96" />
+      <text x={x} y={y + size * 0.2} fontSize={size} fontWeight="700" fill={color} textAnchor="middle">{text}</text>
+    </g>
+  );
+}
+
 function VlabMoonPhasesExperiment({ onReading }) {
   const [deg, setDeg] = useState(0);
   const th = (deg * Math.PI) / 180;
-  const lit = (1 - Math.cos(th)) / 2; // ۰ = ماه نو ، ۱ = ماه کامل
+  const lit = (1 - Math.cos(th)) / 2;
   const names = [[22, "ماه نو"], [67, "هلال نوظهور"], [112, "تربیع اول"], [157, "ماه رو به کامل"], [203, "ماه کامل"], [248, "ماه رو به کاهش"], [293, "تربیع آخر"], [338, "هلال پایانی"]];
   const nm = (names.find((x) => deg < x[0]) || ["", "ماه نو"])[1];
   useEffect(() => { if (onReading) onReading(`${deg}° → ${nm} (${(lit * 100).toFixed(0)}٪ روشن)`); /* eslint-disable-next-line */ }, [deg]);
-  const R = 34, kcos = Math.cos(th), waxing = deg < 180, rxe = R * Math.abs(kcos);
+  const ex = 132, ey = 118, orR = 50, sx = 26, sy = 118;
+  const mx = ex - orR * Math.cos(th), my = ey + orR * Math.sin(th);
+  const sunAng = (Math.atan2(sy - my, sx - mx) * 180) / Math.PI;
+  const kcos = Math.cos(th), waxing = deg < 180;
+  const R = 36, vx = 262, vy = 124, rxe = R * Math.abs(kcos);
+  const half = waxing ? `M 0,${-R} A ${R},${R} 0 0 1 0,${R} Z` : `M 0,${-R} A ${R},${R} 0 0 0 0,${R} Z`;
   return (
     <div className="vlab-exp">
-      <svg viewBox="0 0 320 210" className="vlab-svg" style={{ direction: "ltr", background: "#0b1330" }}>
-        <rect width="320" height="210" rx="12" fill="#0b1330" />
-        {/* خورشید و مدار */}
-        <circle cx="26" cy="100" r="16" fill="#ffd23f" style={{ filter: "drop-shadow(0 0 8px #ffd23f)" }} />
-        {[-1, 1].map((s) => null)}
-                <circle cx="170" cy="100" r="56" fill="none" stroke="#556" strokeDasharray="3 4" />
-        <circle cx="170" cy="100" r="12" fill="#2e7ad1" /><text x="170" y="104" fontSize="8" fill="#fff" textAnchor="middle">زمین</text>
-        <g transform={`translate(${170 + 56 * Math.cos(th + Math.PI)},${100 + 56 * Math.sin(th)})`}><circle r="8" fill="#555" /><path d="M 0,-8 A 8,8 0 0 0 0,8 Z" fill="#f5f0d0" /></g>
-        {/* نمای از زمین */}
-        <g transform="translate(260,150)"><circle r={R} fill="#1b2142" stroke="#556" /><path d={waxing ? `M 0,${-R} A ${R},${R} 0 0 1 0,${R} Z` : `M 0,${-R} A ${R},${R} 0 0 0 0,${R} Z`} fill="#f5f0d0" /><ellipse rx={rxe} ry={R} fill={kcos > 0 ? "#1b2142" : "#f5f0d0"} /></g>
-        <text x="260" y="196" fontSize="9" fill="#ffe08a" textAnchor="middle">{nm}</text>
-        <text x="260" y="108" fontSize="9" fill="#cfe9ff" textAnchor="middle">دیدن از زمین</text>
-        <text x="130" y="16" fontSize="9" fill="#ffe08a" textAnchor="middle">نور خورشید از چپ می‌تابد</text>
+      <svg viewBox="0 0 320 230" className="vlab-svg" style={{ direction: "ltr", background: "#14275e" }}>
+        <VlabSpaceBG w={320} h={230} id="mp" />
+        <VlabSpaceSun cx={sx} cy={sy} r={15} id="mp" />
+        {[-26, 0, 26].map((d) => <line key={d} x1="56" y1={sy + d} x2="92" y2={sy + d} stroke="#ffd23f" strokeOpacity="0.35" strokeWidth="1.6" strokeDasharray="5 5" />)}
+        <circle cx={ex} cy={ey} r={orR} fill="none" stroke="#7d8cd0" strokeWidth="1.4" strokeDasharray="4 5" />
+        {/* زمین */}
+        <circle cx={ex} cy={ey} r="13" fill="url(#mpEarth)" />
+        <path d={`M ${ex - 7},${ey - 3} q 4,-6 9,-2 q 2,5 -3,7 q -6,2 -6,-5 Z`} fill="#58c06a" />
+        <path d={`M ${ex + 3},${ey + 5} q 4,-2 6,1 q -2,4 -5,3 Z`} fill="#58c06a" />
+        <VlabPill x={ex} y={ey - 22} text="زمین" size={10} fill="#d6e8ff" />
+        {/* ماه روی مدار: نیمه‌ی رو به خورشید همیشه روشن است */}
+        <g transform={`translate(${mx},${my})`}>
+          <circle r="10.5" fill="#2b3566" stroke="#8c98d6" strokeWidth="0.8" />
+          <g transform={`rotate(${sunAng})`}><path d="M 0,-10.5 A 10.5,10.5 0 0 1 0,10.5 Z" fill="url(#mpMoon)" /></g>
+          <circle r="10.5" fill="none" stroke="#fff" strokeOpacity="0.55" strokeWidth="1.2" />
+        </g>
+        <VlabPill x={mx} y={my + (my > ey + 10 ? -17 : 22)} text="ماه" size={10} fill="#fff6c9" />
+        <VlabPill x="62" y="42" text="نور خورشید" size={10} fill="#ffe9a3" />
+        {/* نمای ماه از زمین */}
+        <rect x="206" y="34" width="110" height="150" rx="14" fill="#0a1238" fillOpacity="0.55" stroke="#8c98d6" strokeOpacity="0.6" />
+        <VlabPill x={vx} y="52" text="ماه از روی زمین" size={10} fill="#cfe5ff" />
+        <g transform={`translate(${vx},${vy})`}>
+          <defs>
+            <mask id="mpMk" maskUnits="userSpaceOnUse" x={-R - 2} y={-R - 2} width={2 * R + 4} height={2 * R + 4}>
+              <rect x={-R - 2} y={-R - 2} width={2 * R + 4} height={2 * R + 4} fill="#000" />
+              <path d={half} fill="#fff" />
+              <ellipse rx={rxe} ry={R} fill={kcos > 0 ? "#000" : "#fff"} />
+            </mask>
+          </defs>
+          <circle r={R + 3} fill="#fff" fillOpacity="0.08" />
+          <circle r={R} fill="#1a2250" stroke="#6f7cc0" strokeWidth="1.2" />
+          <circle r={R} fill="#3a4580" opacity="0.35" />
+          <g mask="url(#mpMk)">
+            <circle r={R} fill="url(#mpMoon)" />
+            {[[-12, -14, 7], [10, -8, 5], [-4, 12, 8], [16, 14, 4.5], [-20, 4, 4], [6, 24, 3.5], [-14, 24, 3]].map((c, i) => <circle key={i} cx={c[0]} cy={c[1]} r={c[2]} fill="#b8b08a" opacity="0.55" />)}
+          </g>
+          <circle r={R} fill="none" stroke="#fff" strokeOpacity="0.4" strokeWidth="1.2" />
+        </g>
+        <VlabPill x={vx} y="176" text={nm} size={11} fill="#ffe08a" />
+        <VlabPill x="160" y="212" text={`روشنایی دیده‌شده: ${VLAB_FA_DIGITS((lit * 100).toFixed(0))} درصد`} size={11} fill="#ffffff" />
       </svg>
       <div className="vlab-controls"><div className="vlab-ctrl-col" style={{ flex: 1 }}>
         <label className="vlab-ctrl-label">جای ماه روی مدار: {VLAB_FA_DIGITS(deg)}°</label>
@@ -44877,31 +45041,74 @@ function VlabMoonPhasesExperiment({ onReading }) {
 /* ---------- آ۷. شب و روز ---------- */
 function VlabDayNightExperiment({ onReading }) {
   const [hour, setHour] = useState(12);
-  const ang = ((hour - 12) / 24) * 2 * Math.PI; // ظهر: مکان رو به خورشید
-  const loc = ang; // زاویه‌ی شهر نسبت به خورشید (۰ = رو به خورشید)
+  const loc = ((hour - 12) / 24) * 2 * Math.PI;
   const day = Math.cos(loc) > 0.0;
   const dawn = Math.abs(Math.cos(loc)) < 0.18;
   useEffect(() => { if (onReading) onReading(`ساعت ${hour} → ${day ? "روز" : "شب"}`); /* eslint-disable-next-line */ }, [hour]);
-  const cx = 190, cy = 100, R = 52;
-  const px = cx - R * Math.cos(loc) * -1 * -1, py = cy;
-  const cxCity = cx - R * Math.cos(loc), cyCity = cy + R * Math.sin(loc);
-  const h12 = hour;
+  const cx = 172, cy = 112, R = 54, sx = 30, sy = 112;
+  const locDeg = (loc * 180) / Math.PI;
+  const px = cx - R * Math.cos(loc), py = cy + R * Math.sin(loc);
+  const ox = -Math.cos(loc), oy = Math.sin(loc);
+  const a0 = (160 * Math.PI) / 180, a1 = (96 * Math.PI) / 180, ra = R + 10;
+  const ax1 = cx + ra * Math.cos(a0), ay1 = cy + ra * Math.sin(a0), ax2 = cx + ra * Math.cos(a1), ay2 = cy + ra * Math.sin(a1);
+  const td = [Math.sin(a1), -Math.cos(a1)];
+  const wx = 236, wy = 40, ww = 76, wh = 78;
   return (
     <div className="vlab-exp">
-      <svg viewBox="0 0 320 200" className="vlab-svg" style={{ direction: "ltr", background: "#0b1330" }}>
-        <rect width="320" height="200" rx="12" fill="#0b1330" />
-        <circle cx="30" cy="100" r="22" fill="#ffd23f" style={{ filter: "drop-shadow(0 0 12px #ffd23f)" }} />
-        {[-1, 0, 1].map((i) => <line key={i} x1="56" y1={100 + i * 26} x2="140" y2={100 + i * 26} stroke="#ffd23f" strokeOpacity="0.4" />)}
-        <circle cx={cx} cy={cy} r={R} fill="#1b2142" stroke="#8fa3d9" strokeWidth="2" />
-        <path d={`M ${cx},${cy - R} A ${R},${R} 0 0 0 ${cx},${cy + R} Z`} fill="#2e7ad1" />
-        <path d={`M ${cx},${cy - R} A ${R},${R} 0 0 1 ${cx},${cy + R} Z`} fill="#10163a" />
-        <circle cx={cxCity} cy={cyCity} r="5" fill={day ? "#ffd23f" : "#fff"} stroke="#c0392b" strokeWidth="2" />
-        <text x={cxCity} y={cyCity - 8} fontSize="9" fill="#ff9d9d" textAnchor="middle">ایران</text>
-        <text x={cx} y={cy + R + 16} fontSize="9" fill="#aab3cc" textAnchor="middle">جهت چرخش زمین: خلاف عقربه‌های ساعت</text>
-        <rect x="236" y="30" width="72" height="50" rx="8" fill={day ? "#7fb6f0" : "#0b1a3d"} stroke="#8fa3d9" />
-        {day ? <circle cx="270" cy="52" r="9" fill="#ffd23f" /> : <><circle cx="268" cy="50" r="8" fill="#f0eccf" /><circle cx="262" cy="46" r="1.2" fill="#fff" /><circle cx="290" cy="40" r="1.2" fill="#fff" /><circle cx="248" cy="38" r="1.2" fill="#fff" /></>}
-        <text x="272" y="96" fontSize="11" fill={day ? "#ffe08a" : "#9fb4ff"} textAnchor="middle" fontWeight="700">{day ? (dawn ? "سپیده‌دم/غروب" : "روز") : "شب"}</text>
-        <text x="272" y="116" fontSize="14" fill="#fff" textAnchor="middle" fontWeight="700">ساعت {VLAB_FA_DIGITS(String(h12))}</text>
+      <svg viewBox="0 0 320 230" className="vlab-svg" style={{ direction: "ltr", background: "#14275e" }}>
+        <VlabSpaceBG w={320} h={230} id="dn" />
+        <VlabSpaceSun cx={sx} cy={sy} r={17} id="dn" />
+        {[-36, -18, 0, 18, 36].map((d) => { const x2 = cx - Math.sqrt(R * R - d * d) - 4; return <line key={d} x1="58" y1={sy + d} x2={x2} y2={sy + d} stroke="#ffd23f" strokeOpacity="0.5" strokeWidth="1.8" strokeDasharray="6 5" />; })}
+        {/* زمین */}
+        <defs><clipPath id="dnClip"><circle cx={cx} cy={cy} r={R} /></clipPath></defs>
+        <circle cx={cx} cy={cy} r={R + 5} fill="#7fd0ff" opacity="0.18" />
+        <g clipPath="url(#dnClip)">
+          <circle cx={cx} cy={cy} r={R} fill="url(#dnEarth)" />
+          <g transform={`rotate(${-locDeg} ${cx} ${cy})`}>
+            <path d={`M ${cx - 46},${cy - 20} q 10,-16 28,-10 q 12,8 2,20 q -10,10 -18,6 q -12,-2 -12,-16 Z`} fill="#58c06a" />
+            <path d={`M ${cx - 4},${cy - 34} q 14,-6 26,4 q 4,12 -8,14 q -14,0 -18,-18 Z`} fill="#6bcf74" />
+            <path d={`M ${cx + 12},${cy + 8} q 16,-6 26,6 q 2,14 -12,18 q -16,2 -14,-24 Z`} fill="#58c06a" />
+            <path d={`M ${cx - 30},${cy + 22} q 10,-4 16,6 q -2,12 -12,10 q -8,-4 -4,-16 Z`} fill="#6bcf74" />
+          </g>
+          <path d={`M ${cx},${cy - R} A ${R},${R} 0 0 1 ${cx},${cy + R} Z`} fill="#030821" opacity="0.74" />
+        </g>
+        <circle cx={cx} cy={cy} r={R} fill="none" stroke="#bcd6ff" strokeOpacity="0.55" strokeWidth="1.4" />
+        {/* جهت چرخش */}
+        <path d={`M ${ax1},${ay1} A ${ra},${ra} 0 0 0 ${ax2},${ay2}`} fill="none" stroke="#ffe08a" strokeWidth="2" strokeLinecap="round" />
+        <polygon points={`${ax2 + td[0] * 7},${ay2 + td[1] * 7} ${ax2 - td[1] * 4},${ay2 + td[0] * 4} ${ax2 + td[1] * 4},${ay2 - td[0] * 4}`} fill="#ffe08a" />
+        <VlabPill x={cx} y={cy + R + 26} text="زمین خلاف عقربه‌های ساعت می‌چرخد" size={9.5} fill="#ffffff" />
+        {/* ایران */}
+        <line x1={px} y1={py} x2={px + ox * 9} y2={py + oy * 9} stroke="#fff" strokeWidth="1.6" />
+        <circle cx={px} cy={py} r="5.2" fill="#ff4d4d" stroke="#fff" strokeWidth="1.6" />
+        <VlabPill x={px + ox * 24} y={py + oy * 22} text="ایران" size={9.5} fill="#ffd0d0" color="#7a1010" />
+        <VlabPill x="62" y="62" text="خورشید" size={10} fill="#ffe9a3" />
+        {/* پنجره‌ی آسمان */}
+        <line x1={px} y1={py} x2={wx} y2={wy + wh / 2} stroke="#ff8a8a" strokeOpacity="0.5" strokeWidth="1.4" strokeDasharray="3 4" />
+        <defs>
+          <linearGradient id="dnSky" x1="0" y1="0" x2="0" y2="1">{day ? <><stop offset="0" stopColor="#4aa8f0" /><stop offset="1" stopColor="#bfe6ff" /></> : <><stop offset="0" stopColor="#050c2e" /><stop offset="1" stopColor="#1c2a66" /></>}</linearGradient>
+          <clipPath id="dnWin"><rect x={wx} y={wy} width={ww} height={wh} rx="10" /></clipPath>
+        </defs>
+        <rect x={wx - 3} y={wy - 3} width={ww + 6} height={wh + 6} rx="12" fill="#fff" opacity="0.9" />
+        <g clipPath="url(#dnWin)">
+          <rect x={wx} y={wy} width={ww} height={wh} fill="url(#dnSky)" />
+          {day ? (
+            <g>
+              <circle cx={wx + 52} cy={wy + 24} r="20" fill="#ffd23f" opacity="0.35" /><circle cx={wx + 52} cy={wy + 24} r="11" fill="#ffd23f" />
+              <ellipse cx={wx + 20} cy={wy + 22} rx="12" ry="5" fill="#fff" /><ellipse cx={wx + 28} cy={wy + 18} rx="8" ry="5" fill="#fff" />
+            </g>
+          ) : (
+            <g>
+              <circle cx={wx + 50} cy={wy + 22} r="9" fill="#fffbe0" /><circle cx={wx + 54} cy={wy + 19} r="8" fill="#1c2a66" />
+              {[[12, 14], [26, 30], [38, 12], [64, 44], [14, 48], [58, 8]].map((p, i) => <circle key={i} cx={wx + p[0]} cy={wy + p[1]} r="1.4" fill="#fff" />)}
+            </g>
+          )}
+          <path d={`M ${wx},${wy + wh - 18} Q ${wx + 22},${wy + wh - 32} ${wx + 44},${wy + wh - 20} T ${wx + ww},${wy + wh - 22} L ${wx + ww},${wy + wh} L ${wx},${wy + wh} Z`} fill={day ? "#5cc16a" : "#1f5a3c"} />
+          <rect x={wx + 10} y={wy + wh - 28} width="18" height="14" fill={day ? "#f7e4c0" : "#6b5a46"} />
+          <polygon points={`${wx + 8},${wy + wh - 28} ${wx + 19},${wy + wh - 38} ${wx + 30},${wy + wh - 28}`} fill="#d1553f" />
+          <rect x={wx + 16} y={wy + wh - 24} width="5" height="6" fill={day ? "#8a6a4a" : "#ffd23f"} />
+        </g>
+        <VlabPill x={wx + ww / 2} y={wy + wh + 22} text={day ? (dawn ? "سپیده‌دم یا غروب" : "روز است") : "شب است"} size={11} fill={day ? "#ffe08a" : "#aebcff"} />
+        <VlabPill x={wx + ww / 2} y={wy + wh + 48} text={`ساعت ${VLAB_FA_DIGITS(String(hour))}`} size={12} fill="#ffffff" />
       </svg>
       <div className="vlab-controls"><div className="vlab-ctrl-col" style={{ flex: 1 }}>
         <label className="vlab-ctrl-label">ساعت شبانه‌روز: {VLAB_FA_DIGITS(hour)}</label>
@@ -45664,34 +45871,151 @@ function VlabRatioRecipeExperiment({ onReading }) {
 }
 
 /* ---------- ج۸. مفصل‌ها و حرکت ---------- */
-const VLAB_K_JOINTS = [{ n: "لولایی (آرنج، زانو)", r: 140, c: "#4fc3f7" }, { n: "کروی (شانه، ران)", r: 300, c: "#ffb74d" }, { n: "ثابت (جمجمه)", r: 0, c: "#a1887f" }];
+const VLAB_K_JOINTS = [
+  { n: "شانه (کروی)", t: "کروی", r: 180, max: 180, c: "#ffb74d", lab: "بالا آوردن بازو" },
+  { n: "آرنج (لولایی)", t: "لولایی", r: 145, max: 170, c: "#4fc3f7", lab: "خم کردن آرنج" },
+  { n: "گردن (محوری)", t: "محوری", r: 90, max: 110, c: "#ba68c8", lab: "چرخاندن سر" },
+  { n: "جمجمه (ثابت)", t: "ثابت", r: 0, max: 100, c: "#a1887f", lab: "فشار به جمجمه" },
+];
+const VLAB_BONE = "#f6ecd2", VLAB_BONE_S = "#8a7650";
+function vlabMuscle(A, B, bulge) {
+  const dx = B[0] - A[0], dy = B[1] - A[1], L = Math.hypot(dx, dy) || 1, nx = -dy / L, ny = dx / L;
+  const p = (t, s) => [A[0] + dx * t + nx * bulge * s, A[1] + dy * t + ny * bulge * s].map((v) => v.toFixed(1)).join(",");
+  return `M ${A[0].toFixed(1)},${A[1].toFixed(1)} C ${p(0.3, 1)} ${p(0.7, 1)} ${B[0].toFixed(1)},${B[1].toFixed(1)} C ${p(0.7, -1)} ${p(0.3, -1)} ${A[0].toFixed(1)},${A[1].toFixed(1)} Z`;
+}
+function vlabZig(x1, y1, x2, y2, n, amp) {
+  const dx = x2 - x1, dy = y2 - y1, L = Math.hypot(dx, dy), nx = -dy / L, ny = dx / L;
+  let d = `M ${x1},${y1}`;
+  for (let i = 1; i <= n; i++) { const t = i / n, s = i % 2 ? 1 : -1; d += ` L ${(x1 + dx * t + nx * amp * s).toFixed(1)},${(y1 + dy * t + ny * amp * s).toFixed(1)}`; }
+  return d;
+}
 function VlabJointsExperiment({ onReading }) {
-  const [ji, setJi] = useState(0);
-  const [ang, setAng] = useState(40);
+  const [ji, setJi] = useState(1);
+  const [ang, setAng] = useState(60);
   const J = VLAB_K_JOINTS[ji];
   const a = Math.min(ang, J.r);
-  useEffect(() => { if (onReading) onReading(`${J.n}: حداکثر حرکت ${J.r}° | اکنون ${a}°`); /* eslint-disable-next-line */ }, [ji, ang]);
-  const cx = 110, cy = 100, L = 62, rad = (a * Math.PI) / 180;
+  const locked = ang > J.r;
+  useEffect(() => { if (onReading) onReading(`${J.n}: حداکثر حرکت ${J.r}° | اکنون ${Math.round(a)}°`); /* eslint-disable-next-line */ }, [ji, ang]);
+  const rotPt = (c, x, y, deg) => { const t = (deg * Math.PI) / 180; const dx = x - c[0], dy = y - c[1]; return [c[0] + dx * Math.cos(t) - dy * Math.sin(t), c[1] + dx * Math.sin(t) + dy * Math.cos(t)]; };
+  const bone = { fill: "url(#jtBone)", stroke: VLAB_BONE_S, strokeWidth: 1.8, strokeLinejoin: "round" };
+  let scene = null, tags = null;
+  if (ji === 0) {
+    const P = [160, 104], q = a / 180;
+    const a1 = (130 * Math.PI) / 180, a2 = (250 * Math.PI) / 180, R = 21;
+    const s1 = [P[0] + R * Math.cos(a1), P[1] + R * Math.sin(a1)], s2 = [P[0] + R * Math.cos(a2), P[1] + R * Math.sin(a2)];
+    const delt = [P[0] + 2, P[1] - 32], dB = rotPt(P, P[0] + 4, P[1] + 52, -a);
+    scene = (
+      <g>
+        <circle cx={P[0]} cy={P[1]} r="88" fill="none" stroke="#ffb74d" strokeWidth="1.4" strokeDasharray="3 6" opacity="0.8" />
+        <path d={`M ${s2[0].toFixed(1)},${s2[1].toFixed(1)} L 118,56 L 62,66 L 42,104 L 62,142 L 118,146 L ${s1[0].toFixed(1)},${s1[1].toFixed(1)} A ${R},${R} 0 0 1 ${s2[0].toFixed(1)},${s2[1].toFixed(1)} Z`} {...bone} />
+        <path d={`M ${s1[0].toFixed(1)},${s1[1].toFixed(1)} A ${R},${R} 0 0 1 ${s2[0].toFixed(1)},${s2[1].toFixed(1)}`} fill="none" stroke="#7fd0f5" strokeWidth="5" strokeLinecap="round" />
+        <path d="M 90,40 Q 118,30 146,44 L 154,60 L 128,64 Z" fill="url(#jtBone)" stroke={VLAB_BONE_S} strokeWidth="1.6" />
+        <g transform={`rotate(${-a} ${P[0]} ${P[1]})`}>
+          <path d={`M ${P[0] - 9},${P[1] + 12} L ${P[0] - 11},${P[1] + 104} Q ${P[0]},${P[1] + 112} ${P[0] + 11},${P[1] + 104} L ${P[0] + 9},${P[1] + 12} Z`} {...bone} />
+          <circle cx={P[0]} cy={P[1]} r="17" fill="url(#jtBone)" stroke={VLAB_BONE_S} strokeWidth="1.8" />
+          <path d={`M ${P[0] - 6},${P[1] - 12} A 14,14 0 0 1 ${P[0] + 10},${P[1] - 6}`} fill="none" stroke="#fff" strokeWidth="2.4" strokeLinecap="round" opacity="0.8" />
+        </g>
+        <path d={vlabMuscle(delt, dB, 9)} fill="#d6453b" opacity="0.86" stroke="#7a1d16" strokeWidth="1.3" />
+      </g>
+    );
+    tags = <g>
+      <line x1="66" y1="26" x2="130" y2="100" stroke="#6a7aa8" strokeWidth="1" strokeDasharray="2 3" /><VlabPill x="66" y="22" text="کاسه (کتف)" size={10} fill="#d8ecff" />
+      <line x1="256" y1="26" x2="166" y2="96" stroke="#6a7aa8" strokeWidth="1" strokeDasharray="2 3" /><VlabPill x="256" y="22" text="گوی (بازو)" size={10} fill="#ffe3c0" />
+      <VlabPill x="238" y="196" text="در همه‌ی جهت‌ها می‌چرخد" size={9.5} fill="#fff1d6" color="#8a4b00" />
+    </g>;
+    void q;
+  } else if (ji === 1) {
+    const E = [160, 112];
+    const bi = rotPt(E, 152, 138, a), tri = rotPt(E, 178, 104, a);
+    scene = (
+      <g>
+        <path d={`M 150,12 L 150,66 Q 138,82 138,100 Q 144,116 160,116 Q 176,116 182,100 Q 182,82 170,66 L 170,12 Z`} {...bone} />
+        <path d={vlabMuscle([176, 30], tri, 6 - (a / 145) * 3.2)} fill="#e4776d" opacity="0.8" stroke="#8a2c24" strokeWidth="1.2" />
+        <g transform={`rotate(${a} ${E[0]} ${E[1]})`}>
+          <path d="M 156,104 Q 170,94 178,106 L 174,122 L 168,180 Q 164,184 160,180 L 158,130 Z" {...bone} />
+          <path d="M 144,120 Q 152,110 158,120 L 156,132 L 150,178 Q 144,182 140,178 L 142,134 Z" {...bone} />
+          <ellipse cx="156" cy="192" rx="20" ry="9" fill="url(#jtBone)" stroke={VLAB_BONE_S} strokeWidth="1.4" />
+        </g>
+        <circle cx={E[0]} cy={E[1]} r="10" fill="#7fd0f5" stroke="#3b8cb8" strokeWidth="1.6" opacity="0.92" />
+        <circle cx={E[0]} cy={E[1]} r="3" fill="#2f6f95" />
+        <path d={vlabMuscle([138, 30], bi, 6.5 + (a / 145) * 8)} fill="#d6453b" opacity="0.9" stroke="#7a1d16" strokeWidth="1.3" />
+      </g>
+    );
+    tags = <g>
+      <VlabPill x="66" y="30" text="عضله‌ی جلو (دوسر)" size={9.5} fill="#ffd6d0" color="#8a1f12" />
+      <VlabPill x="256" y="30" text="عضله‌ی پشت (سه‌سر)" size={9.5} fill="#ffe0dc" color="#8a1f12" />
+      <line x1="238" y1="100" x2="188" y2="112" stroke="#6a7aa8" strokeWidth="1" strokeDasharray="2 3" /><VlabPill x="262" y="98" text="مفصل لولایی" size={10} fill="#d8f1ff" />
+      <VlabPill x="64" y="196" text="به عقب خم نمی‌شود" size={9.5} fill="#fff" color="#555" />
+    </g>;
+  } else if (ji === 2) {
+    const C = [160, 110];
+    scene = (
+      <g>
+        <ellipse cx="160" cy="154" rx="56" ry="26" fill="url(#jtBone)" stroke={VLAB_BONE_S} strokeWidth="1.8" />
+        <circle cx="160" cy="132" r="12" fill="#5a3f6e" stroke="#33203f" strokeWidth="1.4" />
+        <circle cx="160" cy="104" r="10" fill="url(#jtBone)" stroke={VLAB_BONE_S} strokeWidth="1.8" />
+        <g transform={`rotate(${a} ${C[0]} ${C[1]})`}>
+          <circle cx="160" cy="110" r="84" fill="#ffe3c2" fillOpacity="0.28" stroke="#c99a6a" strokeWidth="1.4" strokeDasharray="4 4" />
+          <polygon points="160,18 150,40 170,40" fill="#f2b787" stroke="#a8683a" strokeWidth="1.4" />
+          <ellipse cx="76" cy="112" rx="6" ry="13" fill="#f2b787" stroke="#a8683a" strokeWidth="1.2" /><ellipse cx="244" cy="112" rx="6" ry="13" fill="#f2b787" stroke="#a8683a" strokeWidth="1.2" />
+          <path d="M 102,110 A 58,34 0 1 0 218,110 A 58,34 0 1 0 102,110 Z M 130,110 A 30,20 0 1 0 190,110 A 30,20 0 1 0 130,110 Z" fillRule="evenodd" fill="url(#jtBone)" stroke={VLAB_BONE_S} strokeWidth="1.8" />
+          <path d="M 142,114 Q 160,122 178,114" fill="none" stroke="#c0392b" strokeWidth="3" strokeLinecap="round" />
+        </g>
+        <circle cx="160" cy="104" r="10" fill="none" stroke={VLAB_BONE_S} strokeWidth="1.8" opacity="0.0" />
+      </g>
+    );
+    tags = <g>
+      <VlabPill x="66" y="22" text="حلقه‌ی اطلس" size={10} fill="#efe2f7" color="#4a2a63" />
+      <VlabPill x="256" y="22" text="بینی (جلو)" size={10} fill="#ffe3c0" />
+      <line x1="256" y1="190" x2="170" y2="104" stroke="#6a7aa8" strokeWidth="1" strokeDasharray="2 3" /><VlabPill x="258" y="196" text="دندانه‌ی محور (میخ)" size={9.5} fill="#fff" color="#4a2a63" />
+      <VlabPill x="62" y="196" text="نخاع" size={10} fill="#d9c7e8" color="#33203f" />
+    </g>;
+  } else {
+    const press = (a / 100) * 5;
+    scene = (
+      <g>
+        <path d="M 130,52 C 160,18 252,20 268,82 C 276,114 260,138 240,148 L 238,166 L 192,168 L 178,148 L 128,148 C 112,148 98,130 104,108 C 106,82 112,66 130,52 Z" {...bone} />
+        <path d="M 118,152 L 124,176 Q 160,186 204,172 L 236,152" fill="#efe3c4" stroke={VLAB_BONE_S} strokeWidth="1.6" strokeLinejoin="round" />
+        {[0, 1, 2, 3, 4, 5].map((i) => <rect key={i} x={118 + i * 9} y="146" width="8" height="9" rx="2" fill="#fff" stroke="#9a8a60" strokeWidth="0.9" />)}
+        <ellipse cx="130" cy="98" rx="15" ry="13" fill="#3a2f22" stroke={VLAB_BONE_S} strokeWidth="1.4" />
+        <path d="M 108,110 L 100,128 L 116,128 Z" fill="#3a2f22" />
+        <path d={vlabZig(176, 28, 190, 106, 8, 3.2)} fill="none" stroke="#c0392b" strokeWidth="2.2" strokeLinejoin="round" />
+        <path d={vlabZig(256, 46, 266, 112, 8, 3.2)} fill="none" stroke="#c0392b" strokeWidth="2.2" strokeLinejoin="round" />
+        <path d={vlabZig(196, 112, 246, 90, 8, 3)} fill="none" stroke="#c0392b" strokeWidth="2.2" strokeLinejoin="round" />
+        <g stroke="#2d7ed8" strokeWidth="3" strokeLinecap="round" fill="#2d7ed8">
+          {[[160, 4, 160, 22 + press], [230, 8, 224, 28 + press]].map((l, i) => <g key={i}><line x1={l[0]} y1={l[1]} x2={l[2]} y2={l[3]} /><polygon points={`${l[2]},${l[3] + 7} ${l[2] - 5},${l[3] - 1} ${l[2] + 5},${l[3] - 1}`} stroke="none" /></g>)}
+        </g>
+      </g>
+    );
+    tags = <g>
+      <VlabPill x="62" y="30" text="کاسه‌ی چشم" size={10} fill="#e8e0cc" />
+      <VlabPill x="268" y="130" text="درز (جوش‌خورده)" size={9.5} fill="#ffd6d0" color="#8a1f12" />
+      <VlabPill x="262" y="196" text="تکان نمی‌خورد" size={10.5} fill="#ffe08a" />
+      <VlabPill x="66" y="196" text="فک پایین مفصل دارد" size={9.5} fill="#fff" color="#555" />
+    </g>;
+  }
   return (
     <div className="vlab-exp">
-      <svg viewBox="0 0 320 190" className="vlab-svg" style={{ direction: "ltr", background: "#0b1330" }}>
-        <rect width="320" height="190" rx="12" fill="#fbf7ec" />
-        <rect x={cx - 10} y="20" width="20" height={cy - 20} rx="9" fill="#eee" stroke="#33291a" strokeWidth="2" />
-        <g transform={`rotate(${a} ${cx} ${cy})`}><rect x={cx - 9} y={cy} width="18" height={L + 20} rx="8" fill="#eee" stroke="#33291a" strokeWidth="2" /></g>
-        {ji === 0 && <path d={`M ${cx - 16},40 Q ${cx - 40 - Math.sin(rad) * 8},${cy} ${cx - 8 + Math.sin(rad) * 30},${cy + 26}`} stroke="#c0392b" strokeWidth="7" fill="none" strokeLinecap="round" opacity="0.7" />}
-        <circle cx={cx} cy={cy} r={ji === 1 ? 14 : ji === 2 ? 5 : 11} fill={J.c} stroke="#33291a" strokeWidth="2" />
-        <text x="230" y="60" fontSize="11" fill="#33291a" textAnchor="middle" fontWeight="700">{J.n}</text>
-        <text x="230" y="88" fontSize="12" fill="#c0392b" textAnchor="middle" fontWeight="700">{J.r ? `حرکت تا ${VLAB_FA_DIGITS(J.r)}°` : "بدون حرکت"}</text>
-        <text x="230" y="112" fontSize="10" fill="#7a6b50" textAnchor="middle">اکنون: {VLAB_FA_DIGITS(Math.round(a))}°</text>
-        <text x="160" y="180" fontSize="9" fill="#7a6b50" textAnchor="middle">عضله‌ی قرمز استخوان را می‌کشد و مفصل حرکت را ممکن می‌کند</text>
+      <svg viewBox="0 0 320 236" className="vlab-svg" style={{ direction: "ltr", background: "#fbf7ec" }}>
+        <defs>
+          <linearGradient id="jtBg" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stopColor="#fff6dc" /><stop offset="1" stopColor="#ffe6b8" /></linearGradient>
+          <radialGradient id="jtBone" cx="35%" cy="30%" r="85%"><stop offset="0" stopColor="#fffaf0" /><stop offset="1" stopColor="#e4d3a4" /></radialGradient>
+        </defs>
+        <rect width="320" height="236" rx="12" fill="url(#jtBg)" />
+        {scene}
+        {tags}
+        <VlabPill x="160" y="218" text={`${J.n} — ${locked && J.r > 0 ? "رسید به آخر حرکت" : J.r ? `اکنون ${VLAB_FA_DIGITS(Math.round(a))} درجه از حداکثر ${VLAB_FA_DIGITS(J.r)}` : "هیچ حرکتی ندارد"}`} size={10.5} fill={locked || !J.r ? "#ffd6d0" : "#ffffff"} color={locked || !J.r ? "#8a1f12" : "#26335f"} />
       </svg>
       <div className="vlab-controls"><div className="vlab-ctrl-col" style={{ flex: 1 }}>
-        <div className="vlab-num-row">{VLAB_K_JOINTS.map((x, i) => <button key={i} type="button" className={"vlab-num-btn" + (ji === i ? " active" : "")} onClick={() => setJi(i)}>{x.n}</button>)}</div>
-        <label className="vlab-ctrl-label">چرخاندن استخوان: {VLAB_FA_DIGITS(ang)}°</label>
-        <VlabRange min={0} max={180} step={5} value={ang} onChange={(e) => setAng(+e.target.value)} />
+        <div className="vlab-num-row">{VLAB_K_JOINTS.map((x, i) => <button key={i} type="button" className={"vlab-num-btn" + (ji === i ? " active" : "")} onClick={() => { setJi(i); setAng(i === 3 ? 50 : 40); }}>{x.n}</button>)}</div>
+        <label className="vlab-ctrl-label">{J.lab}: {VLAB_FA_DIGITS(ang)}°</label>
+        <VlabRange min={0} max={J.max} step={1} value={Math.min(ang, J.max)} onChange={(e) => setAng(+e.target.value)} />
       </div></div>
       <div className="vlab-readout">
-        مفصل جایی است که دو استخوان به هم می‌رسند. مفصل <b>لولایی</b> مثل در فقط در یک جهت خم می‌شود؛ مفصل <b>کروی</b> در همه‌ی جهت‌ها می‌چرخد؛ مفصل <b>ثابت</b> (جمجمه) اصلاً حرکت نمی‌کند و از مغز محافظت می‌کند.
+        {ji === 0 && <>مفصل <b>کروی</b>: گوی سر استخوان بازو در کاسه‌ی کتف جا می‌گیرد؛ برای همین بازو می‌تواند دور تا دور بچرخد. غضروف آبی سطح را لغزنده می‌کند و عضله‌ی قرمز (دلتوئید) بازو را بالا می‌کشد.</>}
+        {ji === 1 && <>مفصل <b>لولایی</b> مثل لولای در فقط در یک جهت خم می‌شود. وقتی دوسر بازو (قرمز) کوتاه و پرحجم می‌شود، ساعد بالا می‌آید و سه‌سر کشیده می‌شود. زائده‌ی پشت ساعد (ساق زند زیرین) جلوی خم شدن به عقب را می‌گیرد.</>}
+        {ji === 2 && <>مفصل <b>محوری</b>: حلقه‌ی اطلس (اولین مهره) دور میخ مهره‌ی دوم می‌چرخد، مثل چرخیدن دَر دور یک میله. به همین دلیل می‌توانیم سرمان را به چپ و راست بچرخانیم، ولی بالا و پایین کردنش مفصل دیگری دارد.</>}
+        {ji === 3 && <>استخوان‌های جمجمه با <b>درزهای ثابت</b> (خط‌های دندانه‌دار قرمز) به هم قفل شده‌اند و تکان نمی‌خورند تا مغز را محافظت کنند. فقط فک پایین مفصل دارد و حرکت می‌کند.</>}
       </div>
     </div>
   );

@@ -46549,29 +46549,159 @@ function VlabPushPullExperiment({ onReading }) {
 
 /* ---------- ه۵. شناور یا غرق ---------- */
 const VLAB_E_ITEMS = [["🪵", "چوب", 0.6], ["🪨", "سنگ", 2.6], ["🍎", "سیب", 0.8], ["🔩", "پیچ آهنی", 7.8], ["🧊", "یخ", 0.92], ["🥚", "تخم‌مرغ", 1.03]];
+const VLAB_SF_SPEC = {
+  "چوب": { hh: 11, vol: 4 }, "سنگ": { hh: 13, vol: 3 }, "سیب": { hh: 13, vol: 4 },
+  "پیچ آهنی": { hh: 19, hh2: 7, vol: 1, restRot: 80 }, "یخ": { hh: 15, vol: 3 }, "تخم‌مرغ": { hh: 12, vol: 2 },
+};
+function vlabSfShape(name) {
+  if (name === "چوب") return (
+    <g>
+      <rect x="-22" y="-11" width="44" height="22" rx="5" fill="url(#sfWood)" stroke="#5d3513" strokeWidth="1.6" />
+      {[-6, 0, 6].map((y) => <path key={y} d={`M -18,${y} Q -6,${y - 2} 4,${y} T 18,${y}`} fill="none" stroke="#8a5a2c" strokeWidth="0.9" opacity="0.7" />)}
+      <ellipse cx="22" cy="0" rx="4.5" ry="11" fill="#e8c48a" stroke="#5d3513" strokeWidth="1.4" /><ellipse cx="22" cy="0" rx="2.2" ry="6" fill="none" stroke="#a9733a" strokeWidth="0.9" /><circle cx="22" cy="0" r="1" fill="#a9733a" />
+    </g>
+  );
+  if (name === "سنگ") return (
+    <g>
+      <path d="M -19,6 L -14,-8 L -3,-13 L 10,-11 L 19,-2 L 16,9 L 4,13 L -12,12 Z" fill="url(#sfStone)" stroke="#3d4350" strokeWidth="1.6" strokeLinejoin="round" />
+      <path d="M -14,-8 L -4,-2 L 10,-11 M -4,-2 L 4,13 M -4,-2 L -19,6 M 19,-2 L 4,4" fill="none" stroke="#5a6272" strokeWidth="0.9" opacity="0.8" />
+      <path d="M -10,-8 L -2,-11" stroke="#fff" strokeWidth="1.6" opacity="0.5" strokeLinecap="round" />
+    </g>
+  );
+  if (name === "سیب") return (
+    <g>
+      <path d="M 0,-9 C -6,-15 -18,-10 -15,2 C -13,12 -5,15 0,12 C 5,15 13,12 15,2 C 18,-10 6,-15 0,-9 Z" fill="url(#sfApple)" stroke="#7a1010" strokeWidth="1.5" />
+      <path d="M 0,-9 Q 1,-14 3,-16" stroke="#5d3513" strokeWidth="2" fill="none" strokeLinecap="round" />
+      <path d="M 3,-13 Q 10,-18 13,-12 Q 7,-9 3,-13 Z" fill="#4caf50" stroke="#2f6b1c" strokeWidth="0.9" />
+      <path d="M -9,-4 Q -11,2 -8,7" stroke="#fff" strokeWidth="2" fill="none" opacity="0.5" strokeLinecap="round" />
+    </g>
+  );
+  if (name === "پیچ آهنی") return (
+    <g>
+      <polygon points="-8,-19 8,-19 10,-13 -10,-13" fill="url(#sfMetal)" stroke="#3b4350" strokeWidth="1.4" />
+      <line x1="-5" y1="-16" x2="5" y2="-16" stroke="#3b4350" strokeWidth="1.6" />
+      <path d="M -4.5,-13 L 4.5,-13 L 4.5,14 L 0,20 L -4.5,14 Z" fill="url(#sfMetal)" stroke="#3b4350" strokeWidth="1.4" strokeLinejoin="round" />
+      {[-9, -5, -1, 3, 7, 11].map((y) => <line key={y} x1="-5.5" y1={y} x2="5.5" y2={y + 2.4} stroke="#3b4350" strokeWidth="1.3" />)}
+    </g>
+  );
+  if (name === "یخ") return (
+    <g>
+      <rect x="-15" y="-15" width="30" height="30" rx="4" fill="#cfeeff" fillOpacity="0.78" stroke="#7fbfe0" strokeWidth="1.6" />
+      <path d="M -11,-11 L -3,-11 L -11,-3 Z" fill="#fff" opacity="0.8" /><path d="M 4,8 L 11,8 L 11,3 Z" fill="#fff" opacity="0.55" />
+      <path d="M -6,2 L 2,-4 M 2,8 L 8,-1" stroke="#9fd2ee" strokeWidth="0.9" opacity="0.8" />
+    </g>
+  );
+  return (
+    <g>
+      <ellipse cx="0" cy="0" rx="9.5" ry="12" fill="url(#sfEgg)" stroke="#a38754" strokeWidth="1.5" />
+      <path d="M -5,-7 Q -7,-2 -5,3" stroke="#fff" strokeWidth="2" fill="none" opacity="0.7" strokeLinecap="round" />
+    </g>
+  );
+}
 function VlabSinkFloatKidsExperiment({ onReading }) {
   const [i, setI] = useState(0);
   const [salt, setSalt] = useState(false);
-  const it = VLAB_E_ITEMS[i], dw = salt ? 1.2 : 1.0;
-  const floats = it[2] < dw;
+  const [run, setRun] = useState(0);
+  const [, setTick] = useState(0);
+  const it = VLAB_E_ITEMS[i], dw = salt ? 1.2 : 1.0, rho = it[2];
+  const floats = rho < dw;
+  const sp = VLAB_SF_SPEC[it[1]];
+  const sim = React.useRef(null);
+  const WT0 = 92, FLOOR = 196, XC = 160;
   useEffect(() => { if (onReading) onReading(`${it[1]}: ${floats ? "شناور" : "غرق"}`); /* eslint-disable-next-line */ }, [i, salt]);
+  useEffect(() => {
+    sim.current = { y: 6, v: 0, t: 0, s: 0, rest: false, tEnter: -9, tRest: -9, rot: 0, stable: 0, saltT: salt ? 0 : -9 };
+    const DT = 0.033;
+    const id = setInterval(() => {
+      const S = sim.current; S.t += DT;
+      const rotF = sp.restRot ? S.rot / sp.restRot : 0;
+      const hh = sp.hh2 ? sp.hh - (sp.hh - sp.hh2) * rotF : sp.hh;
+      const wt = WT0 - sp.vol * S.s;
+      if (!S.rest) {
+        const s = vlabClamp((S.y + hh - wt) / (2 * hh), 0, 1);
+        if (s > 0 && S.s === 0) S.tEnter = S.t;
+        S.s = s;
+        if (floats) {
+          if (s > 0) { S.v += (520 * (1 - (dw / rho) * s) - 7 * S.v) * DT; }
+          else S.v += 520 * DT;
+        } else if (s > 0) { const vt = 14 + 90 * (1 - dw / rho); S.v += (vt - S.v) * Math.min(1, 10 * DT); }
+        else S.v = Math.min(300, S.v + 520 * DT);
+        S.y += S.v * DT;
+        if (sp.restRot && s > 0 && !floats) S.rot += (sp.restRot - S.rot) * 0.05;
+        if (S.y + hh >= FLOOR) { S.y = FLOOR - hh; S.v = 0; S.rest = true; S.tRest = S.t; }
+        if (floats && s > 0 && Math.abs(S.v) < 1.2 && Math.abs(s - rho / dw) < 0.02) { S.stable += DT; if (S.stable > 0.5) { S.rest = true; S.tRest = S.t; } } else S.stable = 0;
+      }
+      setTick((n) => (n + 1) % 100000);
+    }, 33);
+    return () => clearInterval(id);
+    // eslint-disable-next-line
+  }, [i, salt, run]);
+  const S = sim.current || { y: 6, v: 0, t: 0, s: 0, rest: false, tEnter: -9, tRest: -9, rot: 0, saltT: -9 };
+  const rotF = sp.restRot ? S.rot / sp.restRot : 0;
+  const hh = sp.hh2 ? sp.hh - (sp.hh - sp.hh2) * rotF : sp.hh;
+  const wt = WT0 - sp.vol * S.s;
+  const depthLeft = vlabClamp((FLOOR - hh - S.y) / 50, 0, 1);
+  const sway = !floats && S.s > 0 && !S.rest ? 7 * Math.sin(S.t * 3.2) * depthLeft : 0;
+  const x = XC + sway;
+  const xl = (y) => 88 + (y - 40) * (6 / 156), xr = (y) => 232 - (y - 40) * (6 / 156);
+  const waterPath = `M ${xl(wt)},${wt} L ${xl(FLOOR)},${FLOOR} A ${(xr(FLOOR) - xl(FLOOR)) / 2},9 0 0 0 ${xr(FLOOR)},${FLOOR} L ${xr(wt)},${wt} Z`;
+  const sinceEnter = S.t - S.tEnter, sinceRest = S.t - S.tRest;
+  const waterCol = salt ? "#4fa6cf" : "#4a97f5";
+  const done = S.rest && sinceRest > 0.3;
+  const resultTxt = floats ? "شناور شد؛ بخشی از جسم بیرون از آب می‌ماند" : "غرق شد؛ به ته ظرف رسید";
+  const salty = S.saltT >= 0 ? S.t - S.saltT : 99;
   return (
     <div className="vlab-exp">
-      <svg viewBox="0 0 320 180" className="vlab-svg" style={{ direction: "ltr", background: "#fbf7ec" }}>
-        <rect width="320" height="180" rx="12" fill="#fbf7ec" />
-        <rect x="60" y="40" width="200" height="120" rx="8" fill={salt ? "#7fbfdc" : "#a8d8f0"} stroke="#33291a" strokeWidth="2" />
-        <text x={160} y={floats ? 70 : 140} fontSize="34" textAnchor="middle">{it[0]}</text>
-        <text x="160" y="28" fontSize="11" fill="#33291a" textAnchor="middle" fontWeight="700">{it[1]} در {salt ? "آب شور" : "آب شیرین"}: {floats ? "شناور می‌شود" : "غرق می‌شود"}</text>
-        <text x="160" y="172" fontSize="9" fill="#7a6b50" textAnchor="middle">چگالی {it[1]} ≈ {VLAB_FA_DIGITS(it[2])} ، چگالی آب ≈ {VLAB_FA_DIGITS(dw)} (گرم بر سانتی‌مترمکعب)</text>
+      <svg viewBox="0 0 320 236" className="vlab-svg" style={{ direction: "ltr", background: "#eef6ff" }}>
+        <defs>
+          <linearGradient id="sfBg" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stopColor="#dff0ff" /><stop offset="1" stopColor="#f7fbff" /></linearGradient>
+          <linearGradient id="sfWater" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stopColor={waterCol} stopOpacity="0.55" /><stop offset="1" stopColor={salt ? "#1d6f9c" : "#1558b8"} stopOpacity="0.8" /></linearGradient>
+          <linearGradient id="sfWood" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stopColor="#d9a869" /><stop offset="1" stopColor="#a8702f" /></linearGradient>
+          <linearGradient id="sfStone" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stopColor="#9aa3b3" /><stop offset="1" stopColor="#5d6575" /></linearGradient>
+          <linearGradient id="sfMetal" x1="0" y1="0" x2="1" y2="0"><stop offset="0" stopColor="#c7ced9" /><stop offset="0.5" stopColor="#8e98a8" /><stop offset="1" stopColor="#5c6574" /></linearGradient>
+          <radialGradient id="sfApple" cx="38%" cy="32%" r="80%"><stop offset="0" stopColor="#ff7a6e" /><stop offset="1" stopColor="#c9261b" /></radialGradient>
+          <radialGradient id="sfEgg" cx="38%" cy="32%" r="80%"><stop offset="0" stopColor="#fffaf0" /><stop offset="1" stopColor="#ead7b0" /></radialGradient>
+          <clipPath id="sfClip"><path d={waterPath} /></clipPath>
+        </defs>
+        <rect width="320" height="236" rx="12" fill="url(#sfBg)" />
+        <rect y="206" width="320" height="30" fill="#c99a62" /><rect y="206" width="320" height="4" fill="#a87a45" />
+        <ellipse cx="160" cy="210" rx="82" ry="8" fill="#000" opacity="0.18" />
+        {/* لبه‌ی پشتی ظرف */}
+        <ellipse cx="160" cy="40" rx="72" ry="9" fill="#fff" fillOpacity="0.35" stroke="#7a93b8" strokeWidth="2" />
+        {/* آب */}
+        <path d={waterPath} fill="url(#sfWater)" />
+        <ellipse cx="160" cy={wt} rx={(xr(wt) - xl(wt)) / 2} ry="7.5" fill="#b9dcff" fillOpacity="0.8" stroke="#e8f4ff" strokeWidth="1.2" />
+        {S.s > 0 && <g><line x1={xl(WT0)} y1={WT0} x2={xr(WT0)} y2={WT0} stroke="#1a3d78" strokeWidth="1" strokeDasharray="3 3" opacity="0.55" /></g>}
+        {/* جسم */}
+        <g transform={`translate(${x.toFixed(1)},${S.y.toFixed(1)}) rotate(${S.rot.toFixed(1)})`}>{vlabSfShape(it[1])}</g>
+        <g clipPath="url(#sfClip)"><rect x="80" y={wt} width="160" height="130" fill={waterCol} opacity="0.3" /></g>
+        {/* حباب */}
+        {!floats && S.s > 0 && sinceRest < 1.4 && [0, 1, 2].map((k) => <circle key={k} cx={x + (k - 1) * 7 + 2 * Math.sin(S.t * 5 + k)} cy={Math.max(wt + 4, S.y - ((S.t * 34 + k * 14) % 46))} r={1.6 + k * 0.5} fill="#fff" opacity="0.7" />)}
+        {/* پاشش */}
+        {sinceEnter >= 0 && sinceEnter < 0.7 && [0, 1].map((k) => <ellipse key={k} cx={x} cy={WT0} rx={10 + sinceEnter * 60 + k * 10} ry={2 + sinceEnter * 6} fill="none" stroke="#fff" strokeWidth="1.6" opacity={0.9 - sinceEnter * 1.2} />)}
+        {/* نمک */}
+        {salty < 1.6 && Array.from({ length: 14 }, (_, k) => <circle key={k} cx={130 + (k * 37) % 60} cy={Math.min(wt, 20 + salty * 60 + (k % 4) * 6)} r="1.7" fill="#fff" stroke="#9fb4cf" strokeWidth="0.5" opacity={vlabClamp(1.6 - salty, 0, 1)} />)}
+        {/* شیشه‌ی جلو */}
+        <path d={`M ${xl(40)},40 L ${xl(FLOOR)},${FLOOR} A ${(xr(FLOOR) - xl(FLOOR)) / 2},9 0 0 0 ${xr(FLOOR)},${FLOOR} L ${xr(40)},40`} fill="none" stroke="#7a93b8" strokeWidth="2.4" strokeLinejoin="round" />
+        <path d="M 232,40 A 72,9 0 0 1 88,40" fill="none" stroke="#7a93b8" strokeWidth="2.6" />
+        <path d="M 100,56 L 104,176" stroke="#fff" strokeWidth="4" strokeLinecap="round" opacity="0.6" />
+        <path d="M 214,60 L 211,150" stroke="#fff" strokeWidth="2" strokeLinecap="round" opacity="0.45" />
+        {[70, 110, 150].map((y, k) => <g key={y}><line x1={xr(y) - 14} y1={y} x2={xr(y) - 3} y2={y} stroke="#6f86b5" strokeWidth="1.2" opacity="0.8" /></g>)}
+        <VlabPill x="160" y="18" text={`${it[1]} در ${salt ? "آب شور" : "آب شیرین"}`} size={11} fill="#ffffff" />
+        {S.s > 0 && sp.vol > 0 && <VlabPill x="280" y={WT0 - 8} text="سطح آب بالا آمد" size={9} fill="#fff1d6" color="#8a3d00" />}
+        {done && <VlabPill x="160" y="228" text={resultTxt} size={10.5} fill={floats ? "#d3f5dc" : "#ffd6d0"} color={floats ? "#126b30" : "#a3200f"} />}
       </svg>
       <div className="vlab-controls"><div className="vlab-ctrl-col" style={{ flex: 1 }}>
-        <div className="vlab-num-row">{VLAB_E_ITEMS.map((x, k) => <button key={k} type="button" className={"vlab-num-btn" + (i === k ? " active" : "")} onClick={() => setI(k)}>{x[0]}</button>)}<button type="button" className={"vlab-num-btn" + (salt ? " active" : "")} onClick={() => setSalt(!salt)}>🧂 نمک بریز</button></div>
+        <div className="vlab-num-row">{VLAB_E_ITEMS.map((x2, k) => <button key={k} type="button" className={"vlab-num-btn" + (i === k ? " active" : "")} onClick={() => setI(k)}>{x2[0]} {x2[1]}</button>)}</div>
+        <div className="vlab-num-row"><button type="button" className={"vlab-num-btn" + (salt ? " active" : "")} onClick={() => setSalt(!salt)}>🧂 نمک بریز</button><button type="button" className="vlab-num-btn" onClick={() => setRun((n) => n + 1)}>↻ دوباره بینداز</button></div>
+        <div style={{ fontSize: 12, color: "#5a4a30", textAlign: "center" }}>چگالی {it[1]} ≈ {VLAB_FA_DIGITS(String(rho).replace(".", "٫"))} — چگالی آب ≈ {VLAB_FA_DIGITS(String(dw).replace(".", "٫"))} (گرم بر سانتی‌مترمکعب)</div>
       </div></div>
-      <div className="vlab-readout">جسمی که از آب <b>چگال‌تر</b> باشد غرق و جسمی که کم‌چگال‌تر باشد شناور می‌شود. با افزودن نمک چگالی آب بیشتر می‌شود؛ تخم‌مرغ در آب شور شناور می‌شود. (چگالی‌ها تقریبی‌اند.)</div>
+      <div className="vlab-readout">جسمی که از آب <b>چگال‌تر</b> باشد غرق می‌شود و تا ته ظرف می‌رود؛ جسمی که کم‌چگال‌تر باشد شناور می‌ماند و فقط بخشی از آن زیر آب می‌رود. با افزودن نمک چگالی آب بیشتر می‌شود؛ تخم‌مرغ در آب شور شناور می‌شود. وقتی جسم در آب فرو می‌رود، سطح آب هم کمی بالا می‌آید. (چگالی‌ها تقریبی‌اند.)</div>
       <VlabFormulaCheck title="چگالی" fa="چگالی = جرم ÷ حجم" en="" legend="جسمی با جرم ۲۶ گرم و حجم ۱۰ سانتی‌مترمکعب" subst={`26 ÷ 10 = ?`} label="چگالی:" answer={2.6} unit="" decimals={1} />
     </div>
   );
 }
+
 
 /* ============================================================
    ققنوس — دسته‌ی متوسطه اول (الف): قرقره، فشار مایع، مدار لامپ، خطوط موازی

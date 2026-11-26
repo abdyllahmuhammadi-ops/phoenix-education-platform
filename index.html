@@ -42499,8 +42499,18 @@ function VlabVolcanoExperiment({ onReading }) {
           return <circle key={i} cx={160 + dx} cy={y} r={5 + ph * (10 + expl * 12)} fill="#5a5a60" opacity={(1 - ph) * 0.75} />;
         })}
         {/* مخروط */}
-        <path d="M 20,190 L 130,78 Q 160,66 190,78 L 300,190 Z" fill="#6b4a2f" stroke="#3b2816" strokeWidth="2" />
-        <path d="M 20,190 L 130,78 Q 160,70 160,70 L 160,190 Z" fill="#7d5a3a" opacity="0.5" />
+        <defs>
+          <linearGradient id="vcEarth" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stopColor="#5a3f26" /><stop offset="1" stopColor="#2a1a0e" /></linearGradient>
+          <linearGradient id="vcCone" x1="0" y1="0" x2="1" y2="0"><stop offset="0" stopColor="#8a6a48" /><stop offset="0.5" stopColor="#6b4a2f" /><stop offset="1" stopColor="#4a321e" /></linearGradient>
+          <clipPath id="vcClip"><path d="M 20,190 L 130,78 Q 160,66 190,78 L 300,190 Z" /></clipPath>
+        </defs>
+        <rect x="0" y="186" width="320" height="34" fill="url(#vcEarth)" /><rect x="0" y="186" width="320" height="5" fill="#4a7a34" opacity="0.8" />
+        <path d="M 20,190 L 130,78 Q 160,66 190,78 L 300,190 Z" fill="url(#vcCone)" stroke="#3b2816" strokeWidth="2" strokeLinejoin="round" />
+        <g clipPath="url(#vcClip)" fill="none">
+          {[0, 1, 2, 3, 4].map((k) => <path key={k} d={`M ${40 + k * 6},${186 - k * 22} Q 160,${60 - k * 4 + 60 + k * 10} ${280 - k * 6},${186 - k * 22}`} stroke={k % 2 ? "#9a7a55" : "#3b2816"} strokeWidth="3" opacity="0.5" />)}
+        </g>
+        <path d="M 130,78 Q 160,66 190,78 Q 160,90 130,78 Z" fill="#2a1a0e" opacity="0.7" />
+        {[[60, 176], [92, 182], [236, 178], [268, 183]].map((q, k) => <g key={k}><rect x={q[0]} y={q[1] - 7} width="2" height="7" fill="#5a3a1c" /><circle cx={q[0] + 1} cy={q[1] - 10} r="5" fill="#3e7a34" /></g>)}
         {/* گدازه روی دامنه */}
         {expl < 0.85 && (() => {
           const f = 0.3 + 0.7 * (1 - visc / 100);
@@ -43894,6 +43904,18 @@ function VlabHeatingCurveExperiment({ onReading }) {
         <path d={pts.map((p, i) => (i ? "L" : "M") + gx(p[0]).toFixed(1) + "," + gy(p[1]).toFixed(1)).join(" ")} fill="none" stroke="#ffd23f" strokeOpacity="0.35" strokeWidth="2" />
         <path d={(() => { let d2 = "M" + gx(0) + "," + gy(-20), a = 0; for (let i = 0; i < segs.length; i++) { const s = segs[i]; if (q >= a + s.e) { a += s.e; d2 += " L" + gx(a).toFixed(1) + "," + gy(s.T1).toFixed(1); } else { d2 += " L" + gx(q).toFixed(1) + "," + gy(T).toFixed(1); break; } } return d2; })()} fill="none" stroke="#ff6b6b" strokeWidth="3" />
         <circle cx={gx(Math.min(q, tot))} cy={gy(T)} r="4.5" fill="#fff" stroke="#ff6b6b" strokeWidth="2" />
+        <g transform="translate(205,74) scale(0.82)">
+          <defs><clipPath id="hcB"><path d="M4,0 L4,60 Q4,68 12,68 L56,68 Q64,68 64,60 L64,0 Z" /></clipPath></defs>
+          <g clipPath="url(#hcB)">
+            {state >= 1 && state <= 3 && <rect x="0" y={state === 1 ? 44 - frac * 14 : 28} width="68" height={68 - (state === 1 ? 44 - frac * 14 : 28)} fill="#4a9be8" opacity="0.75" />}
+            {state === 4 && <rect x="0" y={52 + frac * 14} width="68" height="16" fill="#4a9be8" opacity="0.5" />}
+            {state <= 1 && [[10, 46], [28, 40], [44, 48]].map((c, k) => <rect key={k} x={c[0]} y={c[1] + (state === 1 ? frac * 10 : 0)} width={state === 1 ? 14 * (1 - frac * 0.8) : 14} height={state === 1 ? 14 * (1 - frac * 0.8) : 14} rx="2" fill="#d8f1ff" stroke="#9ed3f2" opacity="0.95" transform={`rotate(${k * 9 - 8} ${c[0] + 7} ${c[1] + 7})`} />)}
+            {state === 3 && Array.from({ length: 6 }, (_, k) => <circle key={k} cx={14 + k * 9} cy={60 - ((frac * 90 + k * 17) % 40)} r={1.8 + (k % 3)} fill="#fff" opacity="0.8" />)}
+          </g>
+          <path d="M4,0 L4,60 Q4,68 12,68 L56,68 Q64,68 64,60 L64,0" fill="none" stroke="#cfe6ff" strokeWidth="2.2" strokeLinecap="round" />
+          <path d="M34,92 C25,84 26,76 34,70 C42,76 43,84 34,92 Z" fill="#ff9d2e" opacity={q > 0 && !done ? 0.95 : 0.2} />
+          {(state >= 3) && [0, 1, 2].map((k) => <path key={k} d={`M${18 + k * 16},-3 q5,-6 0,-12 q-5,-6 0,-12`} fill="none" stroke="#dfe8f5" strokeWidth="2.4" strokeLinecap="round" opacity={state === 4 ? 0.8 : 0.4 + frac * 0.3} />)}
+        </g>
         <text x="305" y="158" fontSize="8" fill="#aab3cc" textAnchor="end">گرمای داده‌شده (kJ)</text>
         <text x="44" y="24" fontSize="8" fill="#aab3cc">دما (°C)</text>
         <text x="160" y="178" fontSize="11" fill="#ffe08a" textAnchor="middle" fontWeight="700">{VLAB_FA_DIGITS(Math.round(T))}°C — {phase}</text>

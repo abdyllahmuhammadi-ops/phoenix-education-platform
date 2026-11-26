@@ -44645,7 +44645,9 @@ function VlabFrictionSlopeExperiment({ onReading }) {
 
 /* ---------- آ۵. چرخه‌ی آب ---------- */
 function VlabWaterCycleKidsExperiment({ onReading }) {
-  const [heat, setHeat] = useState(60);
+  const [temp, setTemp] = useState(15);
+  const heat = 30 + temp * 2;
+  const tFa = temp < 0 ? "منفی " + VLAB_FA_DIGITS(-temp) : VLAB_FA_DIGITS(temp);
   const [st, setSt] = useState({ c: 0, rain: false });
   const tk = VLAB_GEO_TICK(30);
   useEffect(() => {
@@ -44657,9 +44659,9 @@ function VlabWaterCycleKidsExperiment({ onReading }) {
     return () => clearInterval(id);
   }, [heat]);
   const { c, rain } = st;
-  const snow = heat < 35;
+  const snow = temp <= 0;
   const stage = rain ? (snow ? "③ ابر به کوه خورد، بالا رفت و سرد شد: برف می‌بارد! ④ برف آب می‌شود و به رود می‌رسد" : "③ ابر به کوه خورد، بالا رفت و سرد شد: باران! ④ آب از رود به دریا برمی‌گردد") : c < 0.35 ? "① خورشید آب دریا را بخار می‌کند" : "② بخار سرد می‌شود، ابر می‌سازد و باد آن را به سمت کوه می‌برد";
-  useEffect(() => { if (onReading) onReading(`گرمای خورشید ${heat}٪ | ${rain ? (snow ? "برف" : "باران") : "ابرسازی " + Math.round(c * 100) + "٪"}`); /* eslint-disable-next-line */ }, [heat, rain]);
+  useEffect(() => { if (onReading) onReading(`دمای هوا ${temp}°C | ${rain ? (snow ? "برف" : "باران") : "ابرسازی " + Math.round(c * 100) + "٪"}`); /* eslint-disable-next-line */ }, [temp, rain]);
   const ground = (x) => (x <= 170 ? 168 : x <= 250 ? 168 - (x - 170) * 1.5 : Math.min(168, 48 + (x - 250) * 1.5));
   const cx = rain ? 190 : 62 + Math.min(c, 1) * 128, cy = 70 - (rain ? 4 : Math.min(c, 1) * 4);
   const cs = 0.7 + Math.min(c, 1.0) * 0.5;
@@ -44719,11 +44721,12 @@ function VlabWaterCycleKidsExperiment({ onReading }) {
         <rect x="8" y="196" width="0" height="0" />
       </svg>
       <div className="vlab-controls"><div className="vlab-ctrl-col" style={{ flex: 1 }}>
-        <label className="vlab-ctrl-label">گرمای خورشید: {VLAB_FA_DIGITS(heat)}٪</label>
-        <VlabRange min={10} max={100} step={5} value={heat} onChange={(e) => setHeat(+e.target.value)} />
+        <label className="vlab-ctrl-label">🌡️ دمای هوا: {tFa} درجه‌ی سانتی‌گراد</label>
+        <VlabRange min={-10} max={35} step={5} value={temp} onChange={(e) => setTemp(+e.target.value)} />
+        <div className="vlab-num-row">{[[-5, "❄️ سرد"], [15, "🌤️ ملایم"], [30, "☀️ گرم"]].map((x) => <button key={x[0]} type="button" className={"vlab-num-btn" + (temp === x[0] ? " active" : "")} onClick={() => setTemp(x[0])}>{x[1]}</button>)}</div>
       </div></div>
       <div className="vlab-readout">
-        <b>{stage}</b>. گرمای خورشید آب دریا را <b>بخار</b> می‌کند؛ بخار بالا می‌رود و سرد می‌شود و <b>ابر</b> می‌سازد. باد ابر را به کوه می‌رساند؛ کوه ابر را بالا می‌راند، هوا سردتر می‌شود و <b>باران</b> (یا اگر هوا خیلی سرد باشد <b>برف</b>) می‌بارد. آب از <b>رود</b> به دریا برمی‌گردد و چرخه از نو شروع می‌شود. (گرمای کم = برف.)
+        <b>{stage}</b>. هوای گرم آب دریا را <b>بخار</b> می‌کند؛ بخار بالا می‌رود و سرد می‌شود و <b>ابر</b> می‌سازد. باد ابر را به کوه می‌رساند؛ کوه ابر را بالا می‌راند، هوا سردتر می‌شود و <b>باران</b> (یا اگر دما به صفر برسد <b>برف</b>) می‌بارد. آب از <b>رود</b> به دریا برمی‌گردد و چرخه از نو شروع می‌شود. هرچه هوا گرم‌تر باشد، آب سریع‌تر بخار می‌شود و چرخه تندتر می‌چرخد. وقتی دمای هوا صفر یا کمتر باشد، به‌جای باران برف می‌بارد.
       </div>
     </div>
   );

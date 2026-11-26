@@ -25081,6 +25081,51 @@ const VLAB_EXPERIMENTS = [
     tools: ["نمودار پراکندگی","خط برازش","مربع خطا"],
   },
   {
+    id: "spring-oscillator",
+    subject: "فیزیک",
+    level: "متوسطه دوم",
+    title: "نوسان جرم و فنر",
+    icon: "🌀",
+    intro: "جرم، ثابت فنر و دامنه را عوض کن و ببین دوره، بسامد و انرژی چگونه تغییر می‌کنند.",
+    tools: ["فنر","جرم","نمودار مکان–زمان"],
+  },
+  {
+    id: "atwood-machine",
+    subject: "فیزیک",
+    level: "متوسطه دوم",
+    title: "ماشین آتوود",
+    icon: "⚖️",
+    intro: "دو جرم را به دو سر نخی که از قرقره می‌گذرد ببند و ببین شتاب و کشش نخ چقدر است.",
+    tools: ["قرقره","نخ","دو جرم"],
+  },
+  {
+    id: "galton-board",
+    subject: "ریاضی",
+    level: "متوسطه دوم",
+    title: "تخته‌ی گالتون و توزیع دوجمله‌ای",
+    icon: "🎯",
+    intro: "توپ‌ها را از میان میخ‌ها رها کن و ببین چگونه زنگوله‌ی توزیع دوجمله‌ای ساخته می‌شود.",
+    tools: ["میخ‌ها","توپ","نمودار ستونی"],
+  },
+  {
+    id: "fibonacci-golden",
+    subject: "ریاضی",
+    level: "متوسطه اول",
+    title: "فیبوناچی و نسبت طلایی",
+    icon: "🌻",
+    intro: "مربع‌های فیبوناچی را بچین، مارپیچ طلایی را ببین و راز چیدمان دانه‌های آفتابگردان را کشف کن.",
+    tools: ["مربع‌ها","مارپیچ","آفتابگردان"],
+  },
+  {
+    id: "eco-succession",
+    subject: "زیست‌شناسی",
+    level: "متوسطه",
+    title: "توالی بوم‌شناختی",
+    icon: "🌲",
+    intro: "زمان را جلو ببر و ببین از سنگ بی‌خاک چگونه به‌تدریج جنگل پدید می‌آید؛ آتش‌سوزی را هم امتحان کن.",
+    tools: ["سنگ","خاک","گیاهان"],
+  },
+  {
     id: "tides",
     subject: "زمین‌شناسی",
     level: "متوسطه اول",
@@ -45529,6 +45574,272 @@ function VlabRegressionFitExperiment({ onReading }) {
   );
 }
 
+/* ---------- نوسان جرم و فنر ---------- */
+function VlabSpringOscillatorExperiment({ onReading }) {
+  const [m, setM] = useState(0.5);
+  const [k, setK] = useState(40);
+  const [A, setA] = useState(8);
+  const [run, setRun] = useState(true);
+  const [t0, setT0] = useState(0);
+  const tk = VLAB_GEO_TICK(40);
+  const [frozen, setFrozen] = useState(0);
+  const w = Math.sqrt(k / m), T = (2 * Math.PI) / w, f = 1 / T;
+  const t = run ? (tk - t0) * 0.04 : frozen;
+  const x = A * Math.cos(w * t);
+  const Am = A / 100;
+  const Etot = 0.5 * k * Am * Am, PE = 0.5 * k * (x / 100) * (x / 100), KE = Math.max(0, Etot - PE);
+  const vmax = Am * w;
+  const bx = 190 + x * 3;
+  const coil = (() => { const x0 = 26, x1 = bx - 20, n = 14; let d = `M ${x0},84`; for (let i = 0; i < n; i++) { const xa = x0 + ((i + 0.5) / n) * (x1 - x0); d += ` L ${xa.toFixed(1)},${i % 2 ? 94 : 74}`; } return d + ` L ${x1},84`; })();
+  const GX0 = 30, GX1 = 236, GY = 168, GA = 38, TW = 4;
+  const gx = (tt) => GX0 + (tt / TW) * (GX1 - GX0), gy = (xx) => GY - (xx / 15) * GA;
+  const curve = (() => { let d = ""; for (let tt = 0; tt <= TW; tt += 0.04) d += (tt ? " L " : "M ") + gx(tt).toFixed(1) + "," + gy(A * Math.cos(w * tt)).toFixed(1); return d; })();
+  const tw = t % TW;
+  const eb = (v, c, lbl, xx) => { const h = Math.min(70, (v / Math.max(Etot, 1e-9)) * 70); return <g><rect x={xx} y={206 - 70} width="14" height="70" rx="3" fill="#1a2a44" /><rect x={xx} y={206 - h} width="14" height={h} rx="3" fill={c} /><text x={xx + 7} y="218" fontSize="7" fill="#cfe0ff" textAnchor="middle">{lbl}</text></g>; };
+  useEffect(() => { if (onReading) onReading(`m=${m} kg | k=${k} N/m | A=${A} cm | T=${T.toFixed(2)} s | f=${f.toFixed(2)} Hz`); /* eslint-disable-next-line */ }, [m, k, A]);
+  return (
+    <div className="vlab-exp">
+      <svg viewBox="0 0 320 226" className="vlab-svg" style={{ direction: "ltr", background: "#0f1b33" }}>
+        <defs><linearGradient id="spBlk" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stopColor="#ffb457" /><stop offset="1" stopColor="#c46a1c" /></linearGradient></defs>
+        <rect width="320" height="226" rx="12" fill="#0f1b33" />
+        <rect x="8" y="58" width="18" height="52" rx="3" fill="#6d7a90" /><path d="M10,62 l14,6 M10,74 l14,6 M10,86 l14,6 M10,98 l14,6" stroke="#2b3547" strokeWidth="2" />
+        <rect x="8" y="104" width="304" height="8" fill="#3a475e" />
+        <line x1="190" y1="60" x2="190" y2="112" stroke="#9fd3ff" strokeWidth="1" strokeDasharray="3 3" /><text x="190" y="54" fontSize="7.5" fill="#9fd3ff" textAnchor="middle">تعادل</text>
+        <path d={coil} fill="none" stroke="#d6dde8" strokeWidth="2.2" strokeLinejoin="round" />
+        <g transform={`translate(${bx},84)`}><rect x="-20" y="-20" width="40" height="40" rx="5" fill="url(#spBlk)" stroke="#6a3a0a" strokeWidth="1.4" /><text y="5" fontSize="10" fontWeight="700" fill="#fff" textAnchor="middle">{VLAB_FA_DIGITS(m.toFixed(2))}</text></g>
+        <line x1={190} y1="128" x2={bx} y2="128" stroke="#ffd54a" strokeWidth="2" /><circle cx={bx} cy="128" r="3.2" fill="#ffd54a" /><text x="160" y="140" fontSize="8" fill="#ffe28a" textAnchor="middle">{"⁦"}x = {VLAB_FA_DIGITS(x.toFixed(1))} cm{"⁩"}</text>
+        <line x1={GX0} y1={GY} x2={GX1} y2={GY} stroke="#fff" strokeOpacity="0.3" /><line x1={GX0} y1={GY - GA - 4} x2={GX0} y2={GY + GA + 4} stroke="#fff" strokeOpacity="0.3" />
+        <path d={curve} fill="none" stroke="#5db3ff" strokeWidth="1.8" /><circle cx={gx(tw)} cy={gy(x)} r="4" fill="#ffd54a" stroke="#fff" strokeWidth="1.2" />
+        <text x="136" y="212" fontSize="8" fill="#8fa8c8" textAnchor="middle">نمودار مکان–زمان (۴ ثانیه)</text>
+        {eb(KE, "#ff6b6b", "KE", 248)}{eb(PE, "#4fc3f7", "PE", 270)}{eb(Etot, "#ffd54a", "E", 292)}
+        <text x="276" y="132" fontSize="8" fill="#8fa8c8" textAnchor="middle">انرژی</text>
+      </svg>
+      <div className="vlab-controls"><div className="vlab-ctrl-col" style={{ flex: 1 }}>
+        <label className="vlab-ctrl-label">جرم m: {VLAB_FA_DIGITS(m.toFixed(2))} kg</label>
+        <VlabRange min={0.1} max={2} step={0.05} value={m} onChange={(e) => setM(+e.target.value)} />
+        <label className="vlab-ctrl-label">ثابت فنر k: {VLAB_FA_DIGITS(k)} N/m</label>
+        <VlabRange min={10} max={100} step={5} value={k} onChange={(e) => setK(+e.target.value)} />
+        <label className="vlab-ctrl-label">دامنه A: {VLAB_FA_DIGITS(A)} cm</label>
+        <VlabRange min={2} max={14} step={1} value={A} onChange={(e) => setA(+e.target.value)} />
+        <div className="vlab-btn-row"><button className="vlab-btn" onClick={() => { if (run) { setFrozen(t); setRun(false); } else { setT0(tk - frozen / 0.04); setRun(true); } }}>{run ? "⏸ توقف" : "▶ ادامه"}</button><button className="vlab-btn" onClick={() => { setT0(tk); setFrozen(0); }}>↺ از ابتدا</button></div>
+      </div></div>
+      <div className="vlab-readout">دوره‌ی نوسان <b>T = 2π√(m/k) = {VLAB_FA_DIGITS(T.toFixed(2))} s</b> و بسامد <b>f = {VLAB_FA_DIGITS(f.toFixed(2))} Hz</b>؛ بیشینه‌ی تندی v = Aω = <b>{VLAB_FA_DIGITS(vmax.toFixed(2))} m/s</b> هنگام عبور از تعادل. انرژی کل <b>{VLAB_FA_DIGITS((Etot * 1000).toFixed(1))} mJ</b> ثابت است و بین جنبشی و کشسانی جابه‌جا می‌شود. توجه: دوره به دامنه بستگی ندارد.</div>
+    </div>
+  );
+}
+
+/* ---------- ماشین آتوود ---------- */
+function VlabAtwoodMachineExperiment({ onReading }) {
+  const [m1, setM1] = useState(0.6);
+  const [m2, setM2] = useState(0.4);
+  const [go, setGo] = useState(false);
+  const [t0, setT0] = useState(0);
+  const tk = VLAB_GEO_TICK(40);
+  const g = 9.8;
+  const a = ((m1 - m2) * g) / (m1 + m2), Tn = (2 * m1 * m2 * g) / (m1 + m2);
+  const tt = go ? (tk - t0) * 0.04 : 0;
+  const SC = 70; // px per m
+  const maxD = 0.9;
+  let d = 0.5 * Math.abs(a) * tt * tt; const hit = d >= maxD; d = Math.min(d, maxD);
+  const dy = (a >= 0 ? 1 : -1) * d * SC;
+  const sz = (m) => 22 + Math.cbrt(m) * 20;
+  const yL = 110 + dy, yR = 110 - dy;
+  const v = Math.min(Math.sqrt(2 * Math.abs(a) * maxD), Math.abs(a) * tt);
+  const rope = 17;
+  useEffect(() => { if (onReading) onReading(`m₁=${m1} kg | m₂=${m2} kg | a=${a.toFixed(2)} m/s² | T=${Tn.toFixed(2)} N`); /* eslint-disable-next-line */ }, [m1, m2]);
+  const mass = (cx, y, m, col, lbl) => { const s = sz(m); return <g><rect x={cx - s / 2} y={y} width={s} height={s} rx="4" fill={col} stroke="#00000066" strokeWidth="1.4" /><text x={cx} y={y + s / 2 + 4} fontSize="9" fontWeight="700" fill="#fff" textAnchor="middle">{lbl}</text><path d={`M ${cx},${y + s} l 0,${Math.min(40, m * g * 4)}`} stroke="#ff6b6b" strokeWidth="2.4" /><path d={`M ${cx - 4},${y + s + Math.min(40, m * g * 4) - 5} l 4,6 l 4,-6`} stroke="#ff6b6b" strokeWidth="2.4" fill="none" /></g>; };
+  return (
+    <div className="vlab-exp">
+      <svg viewBox="0 0 320 250" className="vlab-svg" style={{ direction: "ltr", background: "#0f1b33" }}>
+        <rect width="320" height="250" rx="12" fill="#0f1b33" />
+        <rect x="140" y="6" width="40" height="8" rx="3" fill="#6d7a90" /><line x1="160" y1="14" x2="160" y2="26" stroke="#aab4c4" strokeWidth="4" />
+        <circle cx="160" cy="40" r="17" fill="#2a3a56" stroke="#9fb0c8" strokeWidth="3" />
+        <g transform={`rotate(${(dy / rope) * 57.3} 160 40)`}>{[0, 60, 120].map((r) => <line key={r} x1="160" y1="40" x2="160" y2="25" stroke="#9fb0c8" strokeWidth="2" transform={`rotate(${r} 160 40)`} />)}{[0, 60, 120, 180, 240, 300].map((r) => <line key={r} x1="160" y1="40" x2="160" y2="24" stroke="#9fb0c8" strokeWidth="2" transform={`rotate(${r} 160 40)`} />)}</g>
+        <circle cx="160" cy="40" r="3" fill="#cfe0ff" />
+        <line x1={160 - rope} y1="40" x2={160 - rope} y2={yL} stroke="#d9c9a0" strokeWidth="2" /><line x1={160 + rope} y1="40" x2={160 + rope} y2={yR} stroke="#d9c9a0" strokeWidth="2" />
+        {mass(160 - rope - 0, yL, m1, "#3a86e0", "m₁")}
+        {mass(160 + rope, yR, m2, "#e08a3a", "m₂")}
+        <rect x="0" y="228" width="320" height="22" fill="#2b3547" />
+        <g transform="translate(14,150)"><text fontSize="8.5" fill="#cfe0ff">{"⁦"}m₁ = {VLAB_FA_DIGITS(m1.toFixed(2))} kg{"⁩"}</text><text y="12" fontSize="8.5" fill="#cfe0ff">{"⁦"}m₂ = {VLAB_FA_DIGITS(m2.toFixed(2))} kg{"⁩"}</text></g>
+        <g transform="translate(222,150)"><text fontSize="8.5" fill="#ffe28a">{"⁦"}a = {VLAB_FA_DIGITS(Math.abs(a).toFixed(2))} m/s²{"⁩"}</text><text y="12" fontSize="8.5" fill="#ffe28a">{"⁦"}T = {VLAB_FA_DIGITS(Tn.toFixed(2))} N{"⁩"}</text><text y="24" fontSize="8.5" fill="#ffe28a">{"⁦"}t = {VLAB_FA_DIGITS(tt.toFixed(2))} s{"⁩"}</text><text y="36" fontSize="8.5" fill="#ffe28a">{"⁦"}v = {VLAB_FA_DIGITS(v.toFixed(2))} m/s{"⁩"}</text></g>
+        <text x="160" y="244" fontSize="8" fill="#fff" textAnchor="middle">{Math.abs(a) < 0.05 ? "جرم‌ها برابرند ← شتاب صفر (تعادل)" : hit ? "به مانع رسید؛ پایان آزمایش" : "فلش قرمز = وزن؛ طول فلش متناسب با mg"}</text>
+      </svg>
+      <div className="vlab-controls"><div className="vlab-ctrl-col" style={{ flex: 1 }}>
+        <label className="vlab-ctrl-label">جرم m₁: {VLAB_FA_DIGITS(m1.toFixed(2))} kg</label>
+        <VlabRange min={0.1} max={2} step={0.05} value={m1} onChange={(e) => { setM1(+e.target.value); setGo(false); }} />
+        <label className="vlab-ctrl-label">جرم m₂: {VLAB_FA_DIGITS(m2.toFixed(2))} kg</label>
+        <VlabRange min={0.1} max={2} step={0.05} value={m2} onChange={(e) => { setM2(+e.target.value); setGo(false); }} />
+        <div className="vlab-btn-row"><button className="vlab-btn" onClick={() => { setT0(tk); setGo(true); }}>▶ رها کن</button><button className="vlab-btn" onClick={() => setGo(false)}>↺ برگرداندن</button></div>
+      </div></div>
+      <div className="vlab-readout">شتاب <b>a = (m₁ − m₂)g ÷ (m₁ + m₂) = {VLAB_FA_DIGITS(a.toFixed(2))} m/s²</b> (g = ۹٫۸) و نیروی کشش نخ <b>T = ۲m₁m₂g ÷ (m₁ + m₂) = {VLAB_FA_DIGITS(Tn.toFixed(2))} N</b>. نخ برای هر دو جرم یکی است؛ جرم سنگین‌تر پایین می‌آید ولی شتاب هرگز از g بیشتر نمی‌شود.</div>
+    </div>
+  );
+}
+
+/* ---------- تخته‌ی گالتون و توزیع دوجمله‌ای ---------- */
+function VlabGaltonBoardExperiment({ onReading }) {
+  const [n, setN] = useState(8);
+  const [p, setP] = useState(0.5);
+  const [base, setBase] = useState(0);
+  const tk = VLAB_GEO_TICK(50);
+  const NMAX = 400, SPAWN = 3, FALL = n * 4 + 6;
+  const rnd = (i, r) => { let x = (i * 2654435761 + r * 40503 + 12345) >>> 0; x ^= x << 13; x >>>= 0; x ^= x >>> 17; x ^= x << 5; x >>>= 0; return (x % 100000) / 100000; };
+  const path = (i) => Array.from({ length: n }, (_, r) => (rnd(i + 1, r + 7) < p ? 1 : 0));
+  const el = Math.max(0, tk - base);
+  const released = Math.min(NMAX, Math.floor(el / SPAWN) + 1);
+  const bins = Array(n + 1).fill(0);
+  const flying = [];
+  for (let i = 0; i < released; i++) {
+    const st = i * SPAWN, pr = el - st;
+    const pt = path(i);
+    if (pr >= FALL) bins[pt.reduce((s, v) => s + v, 0)]++;
+    else if (pr >= 0) flying.push({ i, pr, pt });
+  }
+  const done = bins.reduce((s, v) => s + v, 0);
+  const SP = Math.min(26, 290 / (n + 1)), CX = 160, RY = Math.min(15, 128 / n), Y0 = 30;
+  const yb = Y0 + n * RY + 8, hb = 232 - yb;
+  const bx = (k) => CX + (k - n / 2) * SP;
+  const binom = (nn, k) => { let c = 1; for (let i = 0; i < k; i++) c = (c * (nn - i)) / (i + 1); return c; };
+  const th = Array.from({ length: n + 1 }, (_, k) => binom(n, k) * Math.pow(p, k) * Math.pow(1 - p, n - k));
+  const mx = Math.max(4, ...bins, ...th.map((v) => v * done));
+  const hs = (v) => (v / mx) * (hb - 6);
+  const pos = (b) => { const rows = (b.pr / FALL) * n; const r = Math.min(n - 1, Math.floor(rows)), f = rows - r; let k = 0; for (let q = 0; q < r; q++) k += b.pt[q]; const x0 = CX + (k - r / 2) * SP, x1 = CX + (k + b.pt[r] - (r + 1) / 2) * SP; const y0 = Y0 + r * RY, y1 = Y0 + (r + 1) * RY; return [x0 + (x1 - x0) * f, y0 + (y1 - y0) * f - Math.sin(f * Math.PI) * 3]; };
+  const mean = done ? bins.reduce((s, v, k) => s + v * k, 0) / done : 0;
+  useEffect(() => { if (onReading) onReading(`ردیف‌ها ${n} | p=${p} | توپ‌ها ${done} | میانگین ${mean.toFixed(2)} (نظری ${(n * p).toFixed(2)})`); /* eslint-disable-next-line */ }, [n, p, Math.floor(done / 20)]);
+  return (
+    <div className="vlab-exp">
+      <svg viewBox="0 0 320 250" className="vlab-svg" style={{ direction: "ltr", background: "#10192e" }}>
+        <rect width="320" height="250" rx="12" fill="#10192e" />
+        <text x="160" y="14" fontSize="9.5" fontWeight="700" fill="#cfe0ff" textAnchor="middle">تخته‌ی گالتون</text>
+        {Array.from({ length: n }, (_, r) => Array.from({ length: r + 1 }, (_, j) => <circle key={r + "-" + j} cx={CX + (j - r / 2) * SP} cy={Y0 + r * RY + RY} r="2" fill="#7f95b8" />))}
+        {bins.map((v, k) => <g key={k}><rect x={bx(k) - SP / 2 + 1} y={232 - hs(v)} width={SP - 2} height={hs(v)} fill="#4f9dff" opacity="0.9" rx="2" /><text x={bx(k)} y="243" fontSize="7" fill="#8fa8c8" textAnchor="middle">{VLAB_FA_DIGITS(k)}</text></g>)}
+        <path d={th.map((v, k) => (k ? " L " : "M ") + bx(k).toFixed(1) + "," + (232 - hs(v * done)).toFixed(1)).join("")} fill="none" stroke="#ffd54a" strokeWidth="1.8" strokeDasharray="4 3" />
+        <line x1={SP > 0 ? bx(0) - SP / 2 : 0} y1="232" x2={bx(n) + SP / 2} y2="232" stroke="#fff" strokeOpacity="0.4" />
+        {flying.map((b) => { const [x, y] = pos(b); return <circle key={b.i} cx={x} cy={y} r="3.2" fill="#ff7a59" stroke="#fff" strokeWidth="0.8" />; })}
+        <text x="300" y="30" fontSize="8" fill="#ffe28a" textAnchor="end">{"⁧"}خط زرد: توزیع نظری{"⁩"}</text><text x="300" y="42" fontSize="8" fill="#cfe0ff" textAnchor="end">{"⁧"}تعداد توپ: {VLAB_FA_DIGITS(done)}{"⁩"}</text>
+      </svg>
+      <div className="vlab-controls"><div className="vlab-ctrl-col" style={{ flex: 1 }}>
+        <label className="vlab-ctrl-label">تعداد ردیف میخ‌ها (n): {VLAB_FA_DIGITS(n)}</label>
+        <VlabRange min={4} max={10} step={1} value={n} onChange={(e) => { setN(+e.target.value); setBase(tk); }} />
+        <label className="vlab-ctrl-label">احتمال رفتن به راست (p): {VLAB_FA_DIGITS(p.toFixed(2))}</label>
+        <VlabRange min={0.1} max={0.9} step={0.05} value={p} onChange={(e) => { setP(+e.target.value); setBase(tk); }} />
+        <div className="vlab-btn-row"><button className="vlab-btn" onClick={() => setBase(tk)}>↺ دوباره بریز</button></div>
+      </div></div>
+      <div className="vlab-readout">هر توپ در هر ردیف مستقل به چپ یا راست می‌رود؛ تعداد توپ‌های هر خانه به‌تدریج به <b>توزیع دوجمله‌ای</b> نزدیک می‌شود: <b>P(k) = C(n,k)·pᵏ·(1−p)ⁿ⁻ᵏ</b>. میانگین نظری np = {VLAB_FA_DIGITS((n * p).toFixed(2))} و میانگین تجربی تا اینجا {VLAB_FA_DIGITS(mean.toFixed(2))} است. با توپ‌های بیشتر، شکل زنگوله‌ای و خط زرد بر هم منطبق می‌شوند.</div>
+    </div>
+  );
+}
+
+/* ---------- فیبوناچی و نسبت طلایی ---------- */
+function VlabFibonacciGoldenExperiment({ onReading }) {
+  const [mode, setMode] = useState("spiral");
+  const [n, setN] = useState(8);
+  const [ang, setAng] = useState(137.5);
+  const [seeds, setSeeds] = useState(220);
+  const F = [0, 1, 1]; for (let i = 3; i <= 20; i++) F[i] = F[i - 1] + F[i - 2];
+  const phi = (1 + Math.sqrt(5)) / 2;
+  const sq = (() => {
+    const out = []; let bb = null;
+    for (let k = 1; k <= n; k++) {
+      const s = F[k], d = (k + 2) % 4; let x, y;
+      if (k === 1) { x = 0; y = 0; bb = [0, 0, 1, 1]; }
+      else if (d === 0) { x = bb[2]; y = bb[1]; bb = [bb[0], bb[1], bb[2] + s, bb[3]]; }
+      else if (d === 1) { x = bb[0]; y = bb[3]; bb = [bb[0], bb[1], bb[2], bb[3] + s]; }
+      else if (d === 2) { x = bb[0] - s; y = bb[1]; bb = [bb[0] - s, bb[1], bb[2], bb[3]]; }
+      else { x = bb[0]; y = bb[1] - s; bb = [bb[0], bb[1] - s, bb[2], bb[3]]; }
+      out.push({ k, s, d, x, y });
+    }
+    return { out, bb };
+  })();
+  const bb = sq.bb, bw = bb[2] - bb[0], bh = bb[3] - bb[1];
+  const sc = Math.min(290 / bw, 150 / bh), ox = 160 - ((bb[0] + bb[2]) / 2) * sc, oy = 112 + ((bb[1] + bb[3]) / 2) * sc;
+  const PX = (x) => ox + x * sc, PY = (y) => oy - y * sc;
+  const COLS = ["#ff8a65", "#ffb74d", "#ffd54f", "#aed581", "#4db6ac", "#4fc3f7", "#7986cb", "#ba68c8", "#f06292", "#ffab91"];
+  const arc = (q) => {
+    const { s, d, x, y } = q; const TL = [x, y + s], TR = [x + s, y + s], BL = [x, y], BR = [x + s, y];
+    const [c, a0, a1] = [[TL, BL, TR], [BL, BR, TL], [BR, TR, BL], [TR, TL, BR]][d];
+    const sweep = 0;
+    return `M ${PX(a0[0])},${PY(a0[1])} A ${s * sc},${s * sc} 0 0 ${sweep} ${PX(a1[0])},${PY(a1[1])}`;
+  };
+  const ratios = Array.from({ length: Math.min(n, 12) - 1 }, (_, i) => F[i + 3] / F[i + 2]);
+  const golden = (i) => { const r = 3.2 * Math.sqrt(i + 0.5), th = (i * ang * Math.PI) / 180; return [160 + r * Math.cos(th), 108 + r * Math.sin(th)]; };
+  useEffect(() => { if (onReading) onReading(mode === "spiral" ? `F(${n})=${F[n]} | F(${n})/F(${n - 1})=${(F[n] / F[n - 1]).toFixed(5)} | φ=${phi.toFixed(5)}` : `زاویه ${ang}° | دانه‌ها ${seeds}`); /* eslint-disable-next-line */ }, [mode, n, ang, seeds]);
+  return (
+    <div className="vlab-exp">
+      <svg viewBox="0 0 320 250" className="vlab-svg" style={{ direction: "ltr", background: "#fbf8f1" }}>
+        <rect width="320" height="250" rx="12" fill="#fbf8f1" />
+        {mode === "spiral" ? <g>
+          {sq.out.map((q) => <g key={q.k}><rect x={PX(q.x)} y={PY(q.y + q.s)} width={q.s * sc} height={q.s * sc} fill={COLS[(q.k - 1) % COLS.length]} fillOpacity="0.55" stroke="#6a5a3a" strokeWidth="1" />{q.s * sc > 12 && <text x={PX(q.x + q.s / 2)} y={PY(q.y + q.s / 2) + 4} fontSize={Math.min(16, q.s * sc * 0.38)} fontWeight="700" fill="#3a2f1a" textAnchor="middle">{VLAB_FA_DIGITS(q.s)}</text>}</g>)}
+          {sq.out.map((q) => <path key={"a" + q.k} d={arc(q)} fill="none" stroke="#c0392b" strokeWidth="2.6" strokeLinecap="round" />)}
+          <text x="160" y="196" fontSize="9" fontWeight="700" fill="#3a2f1a" textAnchor="middle">{"⁦"}{Array.from({ length: n }, (_, i) => VLAB_FA_DIGITS(F[i + 1])).join(" ، ")}{"⁩"}</text>
+          <g transform="translate(26,206)">{ratios.map((r, i) => <g key={i}><rect x={i * 24} y={32 - (Math.abs(r - phi) < 0.5 ? 0 : 0)} width="0" height="0" /><text x={i * 24 + 10} y="12" fontSize="6.5" fill="#6a5a3a" textAnchor="middle">{VLAB_FA_DIGITS(r.toFixed(2))}</text><circle cx={i * 24 + 10} cy={26 - (r - 1) * 18} r="2.4" fill={Math.abs(r - phi) < 0.01 ? "#2ea36b" : "#c0392b"} /></g>)}<line x1="0" y1={26 - (phi - 1) * 18} x2="280" y2={26 - (phi - 1) * 18} stroke="#2ea36b" strokeDasharray="3 3" /></g>
+        </g> : <g>
+          <circle cx="160" cy="108" r="104" fill="#5a3b12" opacity="0.2" />
+          {Array.from({ length: seeds }, (_, i) => { const [x, y] = golden(i); return <circle key={i} cx={x} cy={y} r={Math.min(3.4, 1.6 + i * 0.006)} fill={`hsl(${42 - (i / seeds) * 18},${70 + (i / seeds) * 20}%,${58 - (i / seeds) * 22}%)`} stroke="#3a2808" strokeWidth="0.3" />; })}
+          <text x="160" y="232" fontSize="9" fill="#3a2f1a" textAnchor="middle">{"⁦"}زاویه‌ی بین دانه‌ها = {VLAB_FA_DIGITS(ang.toFixed(1))}°{"⁩"}  {Math.abs(ang - 137.5) < 0.3 ? "(زاویه‌ی طلایی)" : "(فضای هدررفته)"}</text>
+        </g>}
+      </svg>
+      <div className="vlab-controls"><div className="vlab-ctrl-col" style={{ flex: 1 }}>
+        <div className="vlab-num-row"><button type="button" className="vlab-num-btn" style={mode === "spiral" ? { outline: "2px solid #e0a83e" } : null} onClick={() => setMode("spiral")}>مربع‌ها و مارپیچ</button><button type="button" className="vlab-num-btn" style={mode === "sun" ? { outline: "2px solid #e0a83e" } : null} onClick={() => setMode("sun")}>دانه‌های آفتابگردان</button></div>
+        {mode === "spiral" ? <><label className="vlab-ctrl-label">تعداد جمله‌ها: {VLAB_FA_DIGITS(n)}</label><VlabRange min={3} max={12} step={1} value={n} onChange={(e) => setN(+e.target.value)} /></> : <><label className="vlab-ctrl-label">زاویه‌ی دانه‌ها: {VLAB_FA_DIGITS(ang.toFixed(1))}°</label><VlabRange min={90} max={180} step={0.5} value={ang} onChange={(e) => setAng(+e.target.value)} /><label className="vlab-ctrl-label">تعداد دانه‌ها: {VLAB_FA_DIGITS(seeds)}</label><VlabRange min={50} max={400} step={10} value={seeds} onChange={(e) => setSeeds(+e.target.value)} /><div className="vlab-num-row">{[137.5, 120, 144, 90].map((a) => <button key={a} type="button" className="vlab-num-btn" onClick={() => setAng(a)}>{VLAB_FA_DIGITS(a)}°</button>)}</div></>}
+      </div></div>
+      <div className="vlab-readout">{mode === "spiral" ? <>هر جمله مجموع دو جمله‌ی قبل است. نسبت دو جمله‌ی متوالی به <b>نسبت طلایی φ = {VLAB_FA_DIGITS(phi.toFixed(4))}</b> نزدیک می‌شود؛ اکنون F({VLAB_FA_DIGITS(n)})/F({VLAB_FA_DIGITS(n - 1)}) = <b>{VLAB_FA_DIGITS((F[n] / F[n - 1]).toFixed(4))}</b>.</> : <>گیاهان دانه‌ها را با زاویه‌ی طلایی (≈ ۱۳۷٫۵°) می‌چینند تا بدون فضای خالی و با بیشترین تراکم جا شوند. با زاویه‌های «خوب» مثل ۱۲۰ یا ۹۰ درجه، دانه‌ها روی چند پرتو جمع می‌شوند و فضاهای خالی پدید می‌آید.</>}</div>
+    </div>
+  );
+}
+
+/* ---------- توالی بوم‌شناختی ---------- */
+function VlabEcoSuccessionExperiment({ onReading }) {
+  const [yr, setYr] = useState(60);
+  const [sec, setSec] = useState(false);
+  const eff = sec ? 45 + yr * 1.6 : yr;
+  const cl = (v) => Math.max(0, Math.min(1, v));
+  const op = (st, w = 22) => cl((eff - st) / w);
+  const soil = Math.min(34, eff * 0.16);
+  const SY = 176 - soil;
+  const stage = eff < 12 ? "سنگ بدون خاک" : eff < 45 ? "گلسنگ و خزه (گونه‌های پیشگام)" : eff < 95 ? "علف‌ها و گیاهان یک‌ساله" : eff < 150 ? "درختچه‌ها" : eff < 230 ? "درختان نورپسند (کاج)" : "جنگل بالغ (اوج توالی)";
+  const species = Math.round(1 + Math.min(40, eff * 0.17));
+  const biomass = Math.round(Math.min(100, (eff / 300) * 100));
+  const tree = (x, h, kind, o) => (<g key={kind + x} opacity={o} transform={`translate(${x},${SY})`}><rect x="-2.4" y={-h} width="4.8" height={h} fill="#6b4a2a" />{kind === "pine" ? [0, 1, 2].map((q) => <polygon key={q} points={`${-h * 0.26 + q * 2},${-h * (0.3 + q * 0.26)} 0,${-h * (0.62 + q * 0.26)} ${h * 0.26 - q * 2},${-h * (0.3 + q * 0.26)}`} fill="#2f7d45" />) : <circle cy={-h} r={h * 0.38} fill="#4a9a3a" stroke="#2f6a2a" strokeWidth="0.8" />}</g>);
+  const grassTuft = (x, o) => <g key={"g" + x} opacity={o} transform={`translate(${x},${SY})`}><path d="M-4,0 L-3,-8 M0,0 L0,-11 M4,0 L3,-8" stroke="#79b94a" strokeWidth="1.8" strokeLinecap="round" /></g>;
+  const shrub = (x, s, o) => <g key={"s" + x} opacity={o} transform={`translate(${x},${SY})`}><ellipse cy={-6 * s} rx={10 * s} ry={7 * s} fill="#3f8a3a" /><ellipse cx={4 * s} cy={-8 * s} rx={7 * s} ry={5 * s} fill="#58a64a" /></g>;
+  useEffect(() => { if (onReading) onReading(`${sec ? "ثانویه" : "اولیه"} | ${yr} سال | ${stage} | گونه‌ها ${species}`); /* eslint-disable-next-line */ }, [yr, sec]);
+  const gSz = (st, full) => 0.3 + 0.7 * cl((eff - st) / full);
+  return (
+    <div className="vlab-exp">
+      <svg viewBox="0 0 320 250" className="vlab-svg" style={{ direction: "ltr", background: "#0b1330" }}>
+        <defs><linearGradient id="ecSky" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stopColor="#4d8fd9" /><stop offset="1" stopColor="#bfe3f7" /></linearGradient></defs>
+        <rect width="320" height="250" rx="12" fill="url(#ecSky)" />
+        <circle cx="272" cy="32" r="14" fill="#ffe27a" opacity="0.95" /><ellipse cx="70" cy="34" rx="26" ry="8" fill="#fff" opacity="0.8" /><ellipse cx="92" cy="29" rx="16" ry="7" fill="#fff" opacity="0.8" />
+        <path d="M0,150 L70,112 L130,140 L200,100 L260,138 L320,118 L320,176 L0,176 Z" fill="#7a8794" opacity="0.55" />
+        <rect x="0" y={SY} width="320" height={176 - SY + 0.5} fill="#6b4a2c" /><rect x="0" y={SY} width="320" height="3" fill={eff > 40 ? "#6aa84a" : "#8a6a44"} opacity={Math.max(0.5, op(35))} />
+        <rect x="0" y="176" width="320" height="74" fill="#7b8794" /><path d="M0,200 l60,10 l50,-8 l70,14 l60,-10 l80,8 M20,228 l90,-8 l80,10 l120,-8" stroke="#5a6572" strokeWidth="2" fill="none" />
+        <rect x="0" y="176" width="320" height="2" fill="#3a2410" opacity={soil > 1 ? 0.6 : 0} />
+        {[30, 70, 118, 150, 205, 246, 288].map((x, i) => <circle key={"l" + x} cx={x} cy={SY - 1} r={3 + (i % 3)} fill={i % 2 ? "#d8c25a" : "#9ab84a"} opacity={op(4, 14) * (eff > 50 ? 0.5 : 1)} />)}
+        {[44, 100, 176, 232, 274].map((x) => <ellipse key={"m" + x} cx={x} cy={SY - 1} rx="11" ry="3.4" fill="#4f9a3a" opacity={op(22, 20) * (eff > 110 ? 0.6 : 1)} />)}
+        {[20, 52, 84, 120, 160, 196, 228, 262, 300].map((x) => grassTuft(x, op(45, 25)))}
+        {[40, 138, 214, 290].map((x, i) => shrub(x, gSz(95, 40) * (0.8 + (i % 2) * 0.3), op(95, 25)))}
+        {[78, 262].map((x) => tree(x, 56 * gSz(150, 70), "pine", op(150, 25)))}
+        {[30, 190, 304].map((x, i) => tree(x, 78 * gSz(215, 80) + (i % 2) * 6, "oak", op(215, 25)))}
+        {[120, 232].map((x) => tree(x, 84 * gSz(230, 80), "oak", op(230, 25)))}
+        <text x="140" y={SY - 4} fontSize="16" textAnchor="middle" opacity={op(50, 12)}>🐇</text><text x="48" y="108" fontSize="14" opacity={op(120, 12)}>🐦</text><text x="250" y={SY - 4} fontSize="20" textAnchor="middle" opacity={op(240, 12)}>🦌</text><text x="100" y={SY + 12} fontSize="10" opacity={op(40, 10)}>🐛</text>
+        {sec && yr < 12 && <text x="160" y={SY - 20} fontSize="20" textAnchor="middle">🔥</text>}
+        <rect x="8" y="8" width="146" height="42" rx="8" fill="#0b1330" opacity="0.65" />
+        <text x="14" y="22" fontSize="8.5" fill="#ffe28a">{"⁧"}مرحله: {stage}{"⁩"}</text>
+        <text x="14" y="34" fontSize="8" fill="#cfe0ff">{"⁧"}گونه‌ها: {VLAB_FA_DIGITS(species)} | خاک: {VLAB_FA_DIGITS(Math.round(soil))} سانتی‌متر{"⁩"}</text>
+        <rect x="14" y="39" width="134" height="5" rx="2.5" fill="#26334f" /><rect x="14" y="39" width={1.34 * biomass} height="5" rx="2.5" fill="#6bd16b" />
+        <text x="160" y="244" fontSize="8.5" fill="#fff" textAnchor="middle">{sec ? "توالی ثانویه: خاک از قبل هست، پس سریع‌تر پیش می‌رود" : "توالی اولیه: از سنگ بی‌خاک آغاز می‌شود؛ خاک‌سازی صدها سال طول می‌کشد"}</text>
+      </svg>
+      <div className="vlab-controls"><div className="vlab-ctrl-col" style={{ flex: 1 }}>
+        <div className="vlab-num-row"><button type="button" className="vlab-num-btn" style={!sec ? { outline: "2px solid #e0a83e" } : null} onClick={() => setSec(false)}>اولیه (سنگ بکر)</button><button type="button" className="vlab-num-btn" style={sec ? { outline: "2px solid #e0a83e" } : null} onClick={() => setSec(true)}>ثانویه (پس از آتش‌سوزی)</button></div>
+        <label className="vlab-ctrl-label">گذر زمان: {VLAB_FA_DIGITS(yr)} سال</label>
+        <VlabRange min={0} max={300} step={1} value={yr} onChange={(e) => setYr(+e.target.value)} />
+      </div></div>
+      <div className="vlab-readout">در توالی بوم‌شناختی، گونه‌های پیشگام (گلسنگ و خزه) سنگ را خاک می‌کنند، سپس علف، درختچه و درخت می‌آیند تا بوم‌سازگان به <b>جنگل بالغ (اوج)</b> برسد. هر گروه شرایط را برای گروه بعدی آماده می‌کند. پس از آتش‌سوزی یا سیل، خاک هنوز هست و فرایند (<b>توالی ثانویه</b>) خیلی سریع‌تر پیش می‌رود.</div>
+    </div>
+  );
+}
+
 const VLAB_SOLID_AREAS = [
   { n: "نوک میخ", a: 0.1, w: 3 },
   { n: "پاشنه‌ی کفش", a: 10, w: 14 },
@@ -50558,6 +50869,11 @@ const VLAB_COMPONENTS = {
   "meander": VlabMeanderExperiment,
   "seasons": VlabSeasonsExperiment,
   "tides": VlabTidesExperiment,
+  "eco-succession": VlabEcoSuccessionExperiment,
+  "fibonacci-golden": VlabFibonacciGoldenExperiment,
+  "galton-board": VlabGaltonBoardExperiment,
+  "atwood-machine": VlabAtwoodMachineExperiment,
+  "spring-oscillator": VlabSpringOscillatorExperiment,
   "regression-fit": VlabRegressionFitExperiment,
   "pythagoras-proof": VlabPythagorasProofExperiment,
   "epidemic-sir": VlabEpidemicSirExperiment,
@@ -50951,6 +51267,11 @@ const VLAB_GUIDE = {
   "epidemic-sir": { goals: ["اثر R₀ را روی اوج بیماری می‌بینم.","اثر واکسن و فاصله‌گذاری را مقایسه می‌کنم."], challenges: ["R₀ را ۳ بگذار؛ چند درصد واکسن لازم است تا بیماری خاموش شود؟","با ۵۰٪ کاهش تماس، اوج منحنی چقدر می‌آید؟","مدت بیماری چه اثری دارد؟"], misconception: "فکر می‌کنیم بیماری تا وقتی همه مبتلا نشوند ادامه می‌یابد؛ در حقیقت وقتی تعداد مستعدها کم شود، بیماری خودبه‌خود خاموش می‌شود.", check: { q: "فرمول آستانه‌ی ایمنی جمعی چیست؟", a: "۱ منهای ۱ تقسیم بر R₀" } },
   "pythagoras-proof": { goals: ["قضیه‌ی فیثاغورس را با جابه‌جایی مثلث‌ها اثبات می‌کنم.","رابطه‌ی c² = a² + b² را روی اندازه‌های مختلف می‌آزمایم."], challenges: ["سه‌تایی ۳-۴-۵ و ۵-۱۲-۱۳ را بررسی کن.","وقتی a = b است c چقدر می‌شود؟","چرا مساحت دو حالت یکی است؟"], misconception: "فکر می‌کنیم قضیه‌ی فیثاغورس برای هر مثلثی درست است؛ ولی فقط برای مثلث قائم‌الزاویه برقرار است.", check: { q: "در مثلث قائم‌الزاویه‌ای با اضلاع ۶ و ۸، وتر چقدر است؟", a: "۱۰" } },
   "regression-fit": { goals: ["مفهوم کمترین مربعات و ضریب همبستگی را می‌فهمم.","فرق همبستگی و علیت را می‌دانم."], challenges: ["با دست خطی بکش که SSE شما به خط بهینه نزدیک شود.","در مجموعه‌ی سوم r چقدر است و چرا؟","اثر یک نقطه‌ی دورافتاده را بررسی کن."], misconception: "همبستگی بالا یعنی یکی از متغیرها دیگری را ایجاد می‌کند؛ در حالی که ممکن است عامل سومی هر دو را تغییر دهد.", check: { q: "r نزدیک صفر چه معنایی دارد؟", a: "رابطه‌ی خطی ندارد." } },
+  "spring-oscillator": { goals: ["رابطه‌ی دوره‌ی نوسان را از روی m و k می‌فهمم.","جابه‌جایی انرژی جنبشی و کشسانی را می‌بینم."], challenges: ["جرم را چهار برابر کن؛ دوره چند برابر می‌شود؟","آیا دوره به دامنه بستگی دارد؟","در کدام نقطه تندی بیشینه است؟"], misconception: "فکر می‌کنیم هر چه دامنه بزرگ‌تر باشد، نوسان طولانی‌تر طول می‌کشد؛ ولی دوره‌ی نوسان فنر به دامنه بستگی ندارد.", check: { q: "اگر جرم چهار برابر شود دوره چند برابر می‌شود؟", a: "دو برابر" } },
+  "atwood-machine": { goals: ["قانون دوم نیوتن را برای دو جرم متصل به هم به کار می‌برم.","رابطه‌ی شتاب و کشش نخ را می‌آزمایم."], challenges: ["وقتی دو جرم برابرند شتاب چقدر است؟","اگر m₂ بسیار کوچک شود، شتاب به چه عددی میل می‌کند؟","کشش نخ را با وزن‌ها مقایسه کن."], misconception: "فکر می‌کنیم کشش نخ برابر وزن جرم سنگین‌تر است؛ ولی در حال حرکت، کشش بین دو وزن قرار می‌گیرد.", check: { q: "اگر m₁ = m₂ باشد شتاب چقدر است؟", a: "صفر" } },
+  "galton-board": { goals: ["رابطه‌ی مثلث خیام–پاسکال و توزیع دوجمله‌ای را می‌بینم.","اثر احتمال p بر شکل توزیع را می‌فهمم."], challenges: ["p را ۰٫۵ بگذار و شکل را ببین.","p را ۰٫۸ کن؛ قله به کدام سمت می‌رود؟","با ردیف‌های بیشتر شکل چه تغییری می‌کند؟"], misconception: "فکر می‌کنیم حرکت هر توپ قابل پیش‌بینی است؛ ولی هر توپ تصادفی است و فقط جمع توپ‌ها الگو می‌سازد.", check: { q: "میانگین توزیع دوجمله‌ای چیست؟", a: "np" } },
+  "fibonacci-golden": { goals: ["دنباله‌ی فیبوناچی و نسبت طلایی را می‌شناسم.","دلیل زاویه‌ی ۱۳۷٫۵ درجه در گیاهان را می‌فهمم."], challenges: ["نسبت‌های متوالی به چه عددی نزدیک می‌شوند؟","زاویه را ۱۲۰ کن؛ چه تفاوتی در چیدمان پیدا می‌شود؟","کدام زاویه‌ها بهترین چیدمان را می‌دهند؟"], misconception: "فکر می‌کنیم فیبوناچی فقط یک بازی عددی است؛ در حالی که در چیدمان برگ و دانه‌ی گیاهان واقعاً دیده می‌شود.", check: { q: "نسبت طلایی تقریباً چند است؟", a: "۱٫۶۱۸" } },
+  "eco-succession": { goals: ["مراحل توالی اولیه و ثانویه را می‌شناسم.","نقش گونه‌های پیشگام را می‌گویم."], challenges: ["چه موجوداتی اول بر سنگ لخت می‌رویند؟","توالی ثانویه را با اولیه مقایسه کن.","کدام مرحله بیشترین تنوع گونه‌ای دارد؟"], misconception: "فکر می‌کنیم پس از آتش‌سوزی همه‌چیز از صفر شروع می‌شود؛ ولی خاک و بذرها می‌مانند و توالی ثانویه خیلی سریع‌تر است.", check: { q: "نخستین موجودات روی سنگ لخت چه نام دارند؟", a: "گونه‌های پیشگام (گلسنگ و خزه)" } },
   "tides": { goals: ["کشش گرانشی ماه و خورشید باعث جزر و مد می‌شود.", "هم‌راستایی سه جرم کشند بزرگ و حالت عمودی کشند کوچک می‌دهد."], challenges: ["در چه فازهایی کشند بزرگ است؟", "چرا دو برآمدگی آب داریم؟", "در تربیع، دامنه‌ی کشند را چقدر می‌بینی؟"], misconception: "فکر می‌کنیم فقط یک برآمدگی رو به ماه داریم؛ اما یک برآمدگی هم در سمت مقابل پدید می‌آید.", check: { q: "در ماه نو یا ماه کامل کشند بزرگ است یا کوچک؟", a: "بزرگ." } },
 
   "res-color": { goals: ["هر رنگ نمایانگر یک رقم است و نوار سوم ضریب ده‌به‌توان است.", "مقدار مقاومت را از روی رنگ‌ها بخوانی."], challenges: ["مقاومتی با مقدار ۴٫۷ کیلواهم بساز. چه رنگ‌هایی لازم است؟", "نوار سوم را یک رنگ جلوتر ببر؛ مقاومت چند برابر می‌شود؟", "کوچک‌ترین و بزرگ‌ترین مقدار ممکن برای مقاومت ±۵٪ را حساب کن."], misconception: "گاهی فکر می‌کنیم نوار سوم هم یک رقم است؛ اما ضریب است و تعداد صفرها را مشخص می‌کند.", check: { q: "نوارها قهوه‌ای، مشکی، قرمز هستند. مقاومت چند اهم است؟", a: "۱۰ × ۱۰۰ = ۱۰۰۰ اهم (۱ کیلواهم)." } },

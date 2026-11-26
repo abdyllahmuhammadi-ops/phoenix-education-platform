@@ -29771,10 +29771,14 @@ function VlabHeartRateExperiment({ onReading }) {
         <text x="262" y="72" fontSize="10" fill="#9be8b5" textAnchor="middle">ضربه در دقیقه</text>
         <text x="262" y="22" fontSize="11" fill="#3ddc6f" textAnchor="middle" opacity={ph < 0.3 ? 1 : 0.35}>♥</text>
         {/* قلب تپنده (لاب‌دوپ) */}
-        <g transform={`translate(70,150) scale(${(1 + lub).toFixed(3)})`}>
-          <path d="M-9,-40 Q-8,-54 4,-52 L4,-32 Z" fill="#b23a3a" stroke="#7a1f1f" strokeWidth="1" /><path d="M9,-40 Q16,-56 25,-48 L15,-30 Z" fill="#b23a3a" stroke="#7a1f1f" strokeWidth="1" />
-          <path d="M0,46 C-58,6 -54,-40 -18,-44 C0,-46 8,-28 8,-20 C8,-28 22,-48 42,-44 C74,-38 74,6 0,46 Z" fill="url(#hrHeart)" stroke="#7a1f1f" strokeWidth="1.6" />
-          <path d="M-20,-22 C-10,-10 -4,8 4,28" fill="none" stroke="#ffb09b" strokeWidth="2.4" opacity="0.6" strokeLinecap="round" />
+        <g transform={`translate(70,158) scale(${(0.9 * (1 + lub)).toFixed(3)})`}>
+          <path d="M-22,-34 C-26,-60 -4,-66 6,-50 L6,-30 Z" fill="#4a78d8" stroke="#223f86" strokeWidth="1.4" />
+          <path d="M6,-34 C2,-52 24,-72 44,-58 C56,-50 52,-38 42,-36 C34,-38 30,-44 24,-44 C18,-40 18,-34 18,-28 Z" fill="#d94141" stroke="#7a1f1f" strokeWidth="1.4" />
+          <path d="M-4,-30 C-4,-48 6,-56 14,-50 L14,-30 Z" fill="#7aa0ee" stroke="#223f86" strokeWidth="1.2" />
+          <path d="M0,50 C-66,10 -58,-38 -26,-38 C-12,-38 -2,-30 0,-22 C2,-30 12,-38 28,-38 C60,-38 66,10 0,50 Z" fill="url(#hrHeart)" stroke="#7a1f1f" strokeWidth="1.8" />
+          <path d="M-4,-20 C-8,6 -4,30 4,40" fill="none" stroke="#7a1f1f" strokeWidth="1.4" opacity="0.5" />
+          <path d="M-34,-20 C-44,0 -38,22 -20,36" fill="none" stroke="#ffb7a6" strokeWidth="3" opacity="0.55" strokeLinecap="round" />
+          <path d="M12,-26 C24,-12 30,6 22,28 M22,-28 C36,-14 40,4 32,22" fill="none" stroke="#f0a64a" strokeWidth="1.8" opacity="0.9" strokeLinecap="round" />
         </g>
         <VlabPill x="70" y="212" text="لاب - دوپ" size={9.5} fill="#ffffff" color="#8a1f12" />
         {/* دونده */}
@@ -33126,22 +33130,65 @@ function VlabLungExperiment({ onReading }) {
     if (onReading) onReading(`تعداد تنفس: ${rate} در دقیقه | حجم جاری: ${tv} mL | تهویه‌ی دقیقه‌ای: ${MV.toFixed(1)} L/min`);
     // eslint-disable-next-line
   }, [rate, tv]);
-  const s = 0.92 + 0.14 * (tv / 1000) * ph * 1.6 + 0.0;
+  const dph = Math.sin(t) / 2;
+  const yb = 128 + ph * 14 * (0.5 + tv / 1000);
   const trace = [];
-  for (let k = 0; k <= 60; k++) { const tt = t - (60 - k) * 0.05 * (1 + 0); const p = (1 - Math.cos(tt)) / 2; trace.push(`${190 + k * 2},${196 - p * (tv / 1000) * 70}`); }
+  for (let k = 0; k <= 60; k++) { const tt = t - (60 - k) * 0.05 * (1 + 0); const p = (1 - Math.cos(tt)) / 2; trace.push(`${192 + k * 2},${210 - p * (tv / 1000) * 68}`); }
   return (
     <div className="vlab-exp">
-      <svg viewBox="0 0 320 220" className="vlab-svg" style={{ background: "#03060f", borderRadius: "10px" }}>
-        <defs><radialGradient id="lgL" cx="0.4" cy="0.3" r="0.9"><stop offset="0" stopColor="#ffb6bd" /><stop offset="1" stopColor="#d6566a" /></radialGradient></defs>
-        <path d="M70,28 L70,70" stroke="#e8b0b6" strokeWidth="6" strokeLinecap="round" /><path d="M70,66 L50,92 M70,66 L90,92" stroke="#e8b0b6" strokeWidth="4" strokeLinecap="round" fill="none" />
-        <g transform={`translate(50,128) scale(${s})`}><path d="M0,-30 C-30,-34 -34,0 -26,32 C-18,48 -4,40 0,24 Z" fill="url(#lgL)" stroke="#8c2340" transform="translate(-4,0)" /><path d="M0,-30 C-4,-8 -4,8 0,24" stroke="#8c2340" fill="none" opacity="0" /></g>
-        <g transform={`translate(90,128) scale(${s})`}><path d="M0,-30 C30,-34 34,0 26,32 C18,48 4,40 0,24 Z" fill="url(#lgL)" stroke="#8c2340" transform="translate(4,0)" /></g>
-        <path d="M28,150 Q70,176 112,150" fill="none" stroke="#8fa0c8" strokeWidth="3" /><text x="70" y={172 + 14 * ph} fontSize="8" fill="#9fb0e0" textAnchor="middle">دیافراگم</text>
-        <text x="70" y="16" fontSize="8" fill="#9fb0e0" textAnchor="middle">{ph > 0.5 ? "دم" : "بازدم"}</text>
-        <line x1="180" y1="196" x2="312" y2="196" stroke="#2b3760" /><line x1="180" y1="120" x2="180" y2="196" stroke="#2b3760" />
+      <svg viewBox="0 0 320 230" className="vlab-svg" style={{ background: "#0b1224", borderRadius: "10px", direction: "ltr" }}>
+        <defs>
+          <linearGradient id="lgLung" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stopColor="#f6b9c0" /><stop offset="1" stopColor="#e0818f" /></linearGradient>
+          <linearGradient id="lgDia" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stopColor="#c0584d" /><stop offset="1" stopColor="#8f3a34" /></linearGradient>
+          <clipPath id="lgAlv"><circle cx="252" cy="58" r="40" /></clipPath>
+        </defs>
+        <rect x="8" y="6" width="168" height="206" rx="12" fill="#121c36" />
+        {/* قفسه‌ی سینه: ترقوه، جناغ، دنده‌ها */}
+        <path d="M95,46 C70,44 48,48 26,56 M95,46 C120,44 142,48 164,56" fill="none" stroke="#e8dfc8" strokeWidth="4" strokeLinecap="round" />
+        <rect x="90.5" y="52" width="9" height="76" rx="3.5" fill="#e8dfc8" stroke="#b7ab8c" strokeWidth="1" />
+        {[0, 1, 2, 3, 4, 5].map((i) => { const y0 = 62 + i * 14 - ph * 2.5; const k = 1 + 0.07 * ph; const ox = 54 * k + (i < 2 ? -6 + i * 3 : i > 3 ? -4 * (i - 3) : 0); return <g key={i}><path d={`M${95 - 4},${y0} C${95 - 22},${y0 - 8} ${95 - ox * 0.9},${y0 - 6} ${95 - ox - 4},${y0 + 22}`} fill="none" stroke="#e8dfc8" strokeWidth="3.4" strokeLinecap="round" /><path d={`M${95 + 4},${y0} C${95 + 22},${y0 - 8} ${95 + ox * 0.9},${y0 - 6} ${95 + ox + 4},${y0 + 22}`} fill="none" stroke="#e8dfc8" strokeWidth="3.4" strokeLinecap="round" /></g>; })}
+        {/* قلب پشت شش‌ها */}
+        <path d="M95,92 C84,92 80,108 88,122 C94,132 104,134 112,124 C124,110 118,92 104,94 Z" fill="#9b2f3f" stroke="#5e1824" strokeWidth="1.2" />
+        {/* شش‌ها */}
+        <g transform={`translate(95,60) scale(${1 + 0.07 * ph},${1 + 0.02 * ph}) translate(-95,-60)`}>
+          <path d={`M92,64 C86,52 70,52 60,64 C46,78 42,108 41,${yb - 18} C40,${yb - 2} 56,${yb + 4} 78,${yb + 2} L92,${yb} C94,${yb - 30} 94,92 92,64 Z`} fill="url(#lgLung)" stroke="#a24455" strokeWidth="1.6" />
+          <path d={`M98,64 C104,52 120,52 130,64 C144,78 148,108 149,${yb - 18} C150,${yb - 2} 134,${yb + 4} 112,${yb + 2} L102,${yb} C98,${yb - 22} 118,118 113,102 C108,88 98,86 98,64 Z`} fill="url(#lgLung)" stroke="#a24455" strokeWidth="1.6" />
+          <g fill="none" stroke="#a24455" strokeWidth="1.2" strokeDasharray="4 3" opacity=".85"><path d={`M91,92 C74,92 56,84 44,76`} /><path d={`M91,${yb - 28} C74,${yb - 26} 56,${yb - 36} 42,${yb - 36}`} /><path d={`M101,${yb - 40} C118,${yb - 46} 134,${yb - 62} 147,${yb - 70}`} /></g>
+          {/* نایژه‌ها و حبابک‌ها */}
+          <g stroke="#fff3f4" strokeLinecap="round" fill="none" opacity=".8"><path d="M95,16 L95,64" strokeWidth="5.5" stroke="#e7b9bf" /><path d="M95,62 L80,78 M95,62 L110,78" strokeWidth="3.6" stroke="#e7b9bf" />
+            <path d="M80,78 L68,90 L56,98 M68,90 L60,108 M80,78 L74,104 L66,120 M74,104 L84,118" strokeWidth="1.8" /><path d="M110,78 L122,90 L134,98 M122,90 L130,110 M110,78 L116,104 L124,120 M116,104 L108,120" strokeWidth="1.8" /></g>
+          <g fill="#fff3f4" opacity=".92">{[[56,98],[60,108],[66,120],[84,118],[134,98],[130,110],[124,120],[108,120],[50,88],[140,90]].map((p, i) => <circle key={i} cx={p[0]} cy={p[1]} r={2.2 + 1.8 * ph} />)}</g>
+        </g>
+        {Array.from({ length: 6 }, (_, i) => <line key={i} x1="95" y1={22 + i * 7} x2="95" y2={22 + i * 7} stroke="#fff" />)}
+        {[0, 1, 2, 3, 4].map((i) => <path key={i} d={`M90.5,${24 + i * 8} L99.5,${24 + i * 8}`} stroke="#b88e94" strokeWidth="1.2" />)}
+        {/* دیافراگم */}
+        <path d={`M24,160 C24,150 40,${yb + 6} 95,${yb + 6 + 2} C150,${yb + 6} 166,150 166,160 L166,180 L24,180 Z`} fill="url(#lgDia)" stroke="#5e211d" strokeWidth="1.4" />
+        {/* فلش هوا */}
+        <g opacity={Math.abs(dph) > 0.12 ? 0.95 : 0.15}><path d={dph > 0 ? "M95,4 L95,22 M89,16 L95,24 L101,16" : "M95,24 L95,6 M89,12 L95,4 L101,12"} stroke={dph > 0 ? "#6fd3ff" : "#ffb86b"} strokeWidth="3.2" fill="none" strokeLinecap="round" strokeLinejoin="round" /></g>
+        {/* برچسب‌ها */}
+        <VlabPill x="34" y="196" text={dph > 0 ? "دم" : "بازدم"} size={9.5} fill={dph > 0 ? "#cfeeff" : "#ffe3c4"} color="#10203a" />
+        <VlabPill x="118" y="196" text={dph > 0 ? "دیافراگم پایین" : "دیافراگم بالا"} size={8.5} fill="#ffd9d2" color="#5e211d" />
+        <VlabPill x="46" y="40" text="شش راست" size={8} fill="#ffe4e8" color="#6b2030" />
+        <VlabPill x="146" y="40" text="شش چپ" size={8} fill="#ffe4e8" color="#6b2030" />
+        <VlabPill x="126" y="12" text="نای" size={8} fill="#e7b9bf" color="#4a1a22" />
+        <VlabPill x="153" y="116" text="قلب" size={8} fill="#f3c2c9" color="#6b1424" />
+        <VlabPill x="30" y="76" text="دنده" size={8} fill="#e8dfc8" color="#4a4026" />
+        {/* حبابک (بزرگ‌نمایی) */}
+        <g clipPath="url(#lgAlv)"><rect x="212" y="18" width="80" height="80" fill="#1a2744" /></g>
+        <circle cx="252" cy="58" r="40" fill="none" stroke="#516089" strokeWidth="1.6" />
+        <circle cx="252" cy="58" r="30" fill="none" stroke="#8a2a3a" strokeWidth="9" />
+        <path d="M252,28 A30,30 0 0 0 222,58 A30,30 0 0 0 252,88" fill="none" stroke="#4a7ee0" strokeWidth="9" opacity=".95" />
+        <path d="M252,28 A30,30 0 0 1 282,58 A30,30 0 0 1 252,88" fill="none" stroke="#e23743" strokeWidth="9" opacity=".95" />
+        <circle cx="252" cy="58" r="22" fill="#fbe0e3" stroke="#e58a97" strokeWidth="2.4" />
+        <text x="252" y="62" fontSize="9" fill="#7a3a46" textAnchor="middle" fontWeight="700">هوا</text>
+        {[0, 1, 2].map((i) => { const a = (t * 0.6 + i * 2.1); const ox = 252 + 32 * Math.cos(a), oy = 58 + 32 * Math.sin(a); return <circle key={i} cx={ox} cy={oy} r="2.2" fill="#fff" opacity=".7" />; })}
+        <path d="M232,44 L224,36" stroke="#6fd3ff" strokeWidth="2.2" /><text x="217" y="34" fontSize="9" fill="#6fd3ff" textAnchor="middle" fontWeight="700">O₂</text>
+        <path d="M274,38 L282,30" stroke="#d9dde8" strokeWidth="2.2" /><text x="290" y="30" fontSize="9" fill="#d9dde8" textAnchor="middle" fontWeight="700">CO₂</text>
+        <VlabPill x="252" y="104" text="حبابک (بزرگ‌نمایی)" size={7.5} fill="#e2e8ff" color="#1a2750" />
+        <line x1="190" y1="212" x2="312" y2="212" stroke="#2b3760" /><line x1="190" y1="130" x2="190" y2="212" stroke="#2b3760" />
         <polyline points={trace.join(" ")} fill="none" stroke="#7be0a4" strokeWidth="1.8" />
-        <text x="246" y="112" fontSize="8.5" fill="#cfd6ea" textAnchor="middle">نمودار اسپیرومتر</text>
-        <text x="246" y="214" fontSize="7.5" fill="#9fb0e0" textAnchor="middle">زمان →</text>
+        <text x="252" y="124" fontSize="8.5" fill="#cfd6ea" textAnchor="middle">نمودار اسپیرومتر</text>
+        <text x="252" y="226" fontSize="7.5" fill="#9fb0e0" textAnchor="middle">زمان →</text>
       </svg>
       <VlabMeterRow height={160} meters={[{ label: "حجم ریه", unit: "mL", value: cur, ranges: [3000, 4000], maj: 6, decimals: 0 }, { label: "تهویه‌ی دقیقه‌ای", unit: "L/min", value: MV, ranges: [10, 30, 60], maj: 5, decimals: 1 }]} />
       <div className="vlab-controls">
@@ -34697,22 +34744,48 @@ function VlabCellOrganellesExperiment({ onReading }) {
   return (
     <div className="vlab-exp">
       <svg ref={svgRef} viewBox="0 0 320 240" className="vlab-svg" style={{ background: "#03060f", borderRadius: "10px", touchAction: "none" }}>
-        {A ? <g><path d="M50,60 C70,24 130,20 190,26 C250,28 290,52 288,92 C286,128 240,150 180,150 C120,152 62,146 44,112 C36,92 38,74 50,60 Z" fill="#3a2038" stroke="#e88ab0" strokeWidth="3.2" /><path d="M50,60 C70,24 130,20 190,26 C250,28 290,52 288,92 C286,128 240,150 180,150 C120,152 62,146 44,112 C36,92 38,74 50,60 Z" fill="none" stroke="#ffc2da" strokeWidth="0.8" transform="translate(166 88) scale(0.97) translate(-166 -88)" /></g> : <g>
-          <path d="M48,40 L112,26 L214,24 L276,40 L286,96 L272,142 L200,152 L104,150 L44,138 L34,90 Z" fill="#1f3a2a" stroke="#d9c58a" strokeWidth="8" strokeLinejoin="round" />
-          <path d="M48,40 L112,26 L214,24 L276,40 L286,96 L272,142 L200,152 L104,150 L44,138 L34,90 Z" fill="none" stroke="#8a7438" strokeWidth="1" strokeDasharray="1.5 3" />
-          <path d="M48,40 L112,26 L214,24 L276,40 L286,96 L272,142 L200,152 L104,150 L44,138 L34,90 Z" fill="none" stroke="#ff8fb8" strokeWidth="1.8" strokeLinejoin="round" transform="translate(160 88) scale(0.9) translate(-160 -88)" />
-        </g>}
+        <defs>
+          <radialGradient id="clCyA" cx="0.4" cy="0.35" r="0.8"><stop offset="0" stopColor="#fff3f8" /><stop offset="1" stopColor="#f6cfe0" /></radialGradient>
+          <radialGradient id="clCyP" cx="0.4" cy="0.35" r="0.8"><stop offset="0" stopColor="#f6fbe8" /><stop offset="1" stopColor="#d9ecb8" /></radialGradient>
+          <radialGradient id="clNuc" cx="0.4" cy="0.35" r="0.8"><stop offset="0" stopColor="#d9c9f7" /><stop offset="1" stopColor="#a58ad8" /></radialGradient>
+          <radialGradient id="clVac" cx="0.4" cy="0.35" r="0.8"><stop offset="0" stopColor="#e6f6ff" /><stop offset="1" stopColor="#a9d6f0" /></radialGradient>
+        </defs>
         {A ? <g>
-          <circle cx="140" cy="86" r="24" fill="#6a4a9c" stroke="#b79cf0" strokeWidth="2" /><circle cx="140" cy="86" r="7" fill="#3a2a66" />
-          <path d="M180,46 q14,-6 18,6 t-4,14 q-10,6 -4,16 t6,14 q-14,6 -18,-6 t4,-14 q10,-6 4,-16z" fill="#c47a9a" opacity="0.8" stroke="#ffb3d0" />{[0, 1, 2, 3].map((i) => <circle key={i} cx={186 + (i % 2) * 8} cy={58 + i * 12} r="1.8" fill="#fff" />)}
-          <ellipse cx="236" cy="112" rx="22" ry="11" fill="#e0643c" stroke="#ffb39a" strokeWidth="1.5" /><path d="M222,112 q4,-6 8,0 t8,0 t8,0" stroke="#7a2a12" fill="none" />
-          {[0, 1, 2, 3].map((i) => <path key={i} d={`M${78 + i * 3},${108 + i * 6} q14,-8 28,0`} fill="none" stroke="#6ad0a0" strokeWidth="3" />)}
-          <circle cx="100" cy="56" r="10" fill="#c0e050" stroke="#eaffa0" />
+          <path d="M50,60 C70,24 130,20 190,26 C250,28 290,52 288,92 C286,128 240,150 180,150 C120,152 62,146 44,112 C36,92 38,74 50,60 Z" fill="url(#clCyA)" stroke="#e0709b" strokeWidth="4" />
+          <path d="M50,60 C70,24 130,20 190,26 C250,28 290,52 288,92 C286,128 240,150 180,150 C120,152 62,146 44,112 C36,92 38,74 50,60 Z" fill="none" stroke="#ffb3cf" strokeWidth="1.4" transform="translate(166 88) scale(0.985) translate(-166 -88)" />
+          {Array.from({ length: 34 }, (_, i) => <circle key={i} cx={60 + ((i * 47) % 215)} cy={36 + ((i * 29) % 108)} r="1.1" fill="#d089a8" opacity="0.7" />)}
+          {/* هسته */}
+          <circle cx="140" cy="86" r="28" fill="url(#clNuc)" stroke="#5f3f9e" strokeWidth="2.6" />
+          <circle cx="140" cy="86" r="24.6" fill="none" stroke="#5f3f9e" strokeWidth="1" strokeDasharray="2 3" />
+          <path d="M122,80 q6,-8 12,0 t12,0 M124,96 q6,8 12,0 t12,2 M128,70 q8,4 14,-2" fill="none" stroke="#7a5cc0" strokeWidth="1.2" opacity="0.8" /><circle cx="146" cy="90" r="8" fill="#5a3b94" /><circle cx="144" cy="88" r="2.6" fill="#8c6fd0" />
+          {/* شبکه‌ی آندوپلاسمی (زبر) */}
+          {[0, 1, 2, 3].map((i) => { const y = 52 + i * 8; return <g key={i}><path d={`M170,${y + 14} C184,${y - 4} 200,${y + 14} 220,${y - 2}`} fill="none" stroke="#c9588c" strokeWidth="4.4" strokeLinecap="round" />{[0, 1, 2, 3, 4, 5].map((k) => <circle key={k} cx={178 + k * 8} cy={y + 6 + Math.sin(k * 1.1 + i) * 5 - k * 1.2} r="1.5" fill="#6b1d44" />)}</g>; })}
+          <path d="M214,92 q8,6 16,-2 q10,-8 18,2" fill="none" stroke="#e08aae" strokeWidth="3" strokeLinecap="round" />
+          {/* میتوکندری */}
+          <g transform="translate(236 112) rotate(-14)"><ellipse rx="25" ry="12.5" fill="#f6b48a" stroke="#a84a22" strokeWidth="2.4" /><ellipse rx="21" ry="9" fill="#f9cfb0" stroke="#c9703c" strokeWidth="1" /><path d="M-16,-8 q3,9 0,16 M-8,-9 q3,9 0,18 M0,-9 q3,9 0,18 M8,-9 q3,9 0,18 M15,-8 q3,9 0,16" fill="none" stroke="#a84a22" strokeWidth="1.4" /></g>
+          <g transform="translate(176 130) rotate(18)" opacity="0.9"><ellipse rx="14" ry="7" fill="#f6b48a" stroke="#a84a22" strokeWidth="1.6" /><path d="M-8,-4 q2,5 0,8 M-2,-5 q2,5 0,10 M4,-5 q2,5 0,10 M9,-4 q2,5 0,8" fill="none" stroke="#a84a22" strokeWidth="1" /></g>
+          {/* گلژی */}
+          {[0, 1, 2, 3, 4].map((i) => <path key={i} d={`M${76 + i * 1.5},${130 - i * 5.5} Q92,${117 - i * 5.5} ${110 - i * 1.5},${130 - i * 5.5}`} fill="none" stroke="#d9a21a" strokeWidth="3.8" strokeLinecap="round" />)}
+          {[[70,132],[114,133],[118,108],[68,110]].map((p, i) => <circle key={i} cx={p[0]} cy={p[1]} r="3" fill="#f2cf6a" stroke="#b07d0c" />)}
+          {/* لیزوزوم */}
+          <circle cx="100" cy="56" r="10.5" fill="#b4de80" stroke="#4a7a20" strokeWidth="2" />{[[96,53],[103,55],[99,60],[104,61],[95,59]].map((p, i) => <circle key={i} cx={p[0]} cy={p[1]} r="1.5" fill="#355e14" />)}
+          <circle cx="66" cy="60" r="4" fill="#b4de80" stroke="#4a7a20" /><g transform="translate(150 134)"><rect x="-8" y="-2" width="16" height="4" rx="2" fill="#6a7bb0" transform="rotate(-12)" /><rect x="-2" y="-8" width="4" height="16" rx="2" fill="#6a7bb0" transform="rotate(-12)" /></g>
         </g> : <g>
-          <circle cx="86" cy="86" r="20" fill="#6a4a9c" stroke="#b79cf0" strokeWidth="2" /><circle cx="86" cy="86" r="6" fill="#3a2a66" />
-          <ellipse cx="170" cy="86" rx="46" ry="30" fill="#4a7ac4" opacity="0.7" stroke="#9fc4ff" />
-          <ellipse cx="238" cy="66" rx="18" ry="10" fill="#3fa66a" stroke="#9fffc4" /><ellipse cx="236" cy="104" rx="14" ry="7" fill="#3fa66a" stroke="#9fffc4" />
-          <ellipse cx="238" cy="124" rx="16" ry="8" fill="#e0643c" stroke="#ffb39a" />
+          <path d="M48,40 L112,26 L214,24 L276,40 L286,96 L272,142 L200,152 L104,150 L44,138 L34,90 Z" fill="#8fc46a" stroke="#4d8a34" strokeWidth="9" strokeLinejoin="round" />
+          <path d="M48,40 L112,26 L214,24 L276,40 L286,96 L272,142 L200,152 L104,150 L44,138 L34,90 Z" fill="url(#clCyP)" stroke="#e0709b" strokeWidth="1.6" strokeLinejoin="round" transform="translate(160 88) scale(0.965) translate(-160 -88)" />
+          {Array.from({ length: 26 }, (_, i) => <circle key={i} cx={50 + ((i * 53) % 225)} cy={40 + ((i * 31) % 100)} r="1.1" fill="#8aa860" opacity="0.7" />)}
+          {/* کریچه */}
+          <path d="M140,56 C140,36 200,34 204,58 C210,86 204,120 188,128 C164,136 142,124 138,100 C136,84 138,70 140,56 Z" fill="url(#clVac)" stroke="#5aa0c8" strokeWidth="2.4" />
+          <text x="172" y="90" fontSize="9" fill="#2e6c90" textAnchor="middle" fontWeight="700">آب و مواد</text>
+          {/* هسته */}
+          <circle cx="86" cy="86" r="24" fill="url(#clNuc)" stroke="#5f3f9e" strokeWidth="2.6" /><circle cx="86" cy="86" r="21" fill="none" stroke="#5f3f9e" strokeWidth="1" strokeDasharray="2 3" />
+          <path d="M70,80 q6,-8 12,0 t12,0 M72,96 q6,8 12,0 t12,2" fill="none" stroke="#7a5cc0" strokeWidth="1.2" /><circle cx="92" cy="90" r="7" fill="#5a3b94" />
+          {/* کلروپلاست */}
+          <g transform="translate(236 64) rotate(-10)"><ellipse rx="20" ry="11.5" fill="#6fcf7a" stroke="#1f7a32" strokeWidth="2.4" />{[-11, -2, 7].map((x, i) => <g key={i}>{[0, 1, 2, 3].map((k) => <rect key={k} x={x - 4} y={-7 + k * 3.6} width="8" height="2.6" rx="1.2" fill="#1d8a38" />)}</g>)}</g>
+          <g transform="translate(252 94) rotate(20)"><ellipse rx="11" ry="6.4" fill="#6fcf7a" stroke="#1f7a32" strokeWidth="1.6" />{[-4, 3].map((x, i) => <rect key={i} x={x - 2} y={-3.4} width="4" height="6.8" rx="1.4" fill="#1d8a38" />)}</g>
+          <g transform="translate(112 130) rotate(-8)"><ellipse rx="11" ry="6.4" fill="#6fcf7a" stroke="#1f7a32" strokeWidth="1.6" />{[-4, 3].map((x, i) => <rect key={i} x={x - 2} y={-3.4} width="4" height="6.8" rx="1.4" fill="#1d8a38" />)}</g>
+          {/* میتوکندری */}
+          <g transform="translate(236 122) rotate(12)"><ellipse rx="19" ry="10" fill="#f6b48a" stroke="#a84a22" strokeWidth="2.2" /><ellipse rx="15.5" ry="7" fill="#f9cfb0" stroke="#c9703c" strokeWidth="1" /><path d="M-11,-6 q2,7 0,12 M-4,-7 q2,7 0,14 M4,-7 q2,7 0,14 M11,-6 q2,7 0,12" fill="none" stroke="#a84a22" strokeWidth="1.2" /></g>
         </g>}
         {set.map((s) => (pl(s.id) ? <g key={s.id}><circle cx={s.x} cy={s.y} r={s.r + 4} fill="none" stroke="#7be0a4" strokeWidth="2" /><text x={s.x} y={s.y - s.r - 5} fontSize="8.5" fill="#7be0a4" textAnchor="middle" stroke="#03060f" strokeWidth="3" paintOrder="stroke">{s.n}</text></g> : <g key={s.id}><circle cx={s.x} cy={s.y} r={s.r} fill="none" stroke="#ffd98a" strokeWidth="1.4" strokeDasharray="3 3" opacity="0.9" /><text x={s.x} y={s.y + 4} fontSize="12" fill="#ffd98a" textAnchor="middle">؟</text></g>))}
         <rect x="6" y="158" width="308" height="78" rx="10" fill="#0d1428" stroke="#27324f" />
@@ -42395,33 +42468,40 @@ function VlabErosionExperiment({ onReading }) {
   const drops = Array.from({ length: Math.round(rain / 6) }, (_, i) => i);
   return (
     <div className="vlab-exp">
-      <svg viewBox="0 0 320 200" className="vlab-svg" style={{ direction: "ltr", background: "#0b1330" }}>
-        <rect width="320" height="200" rx="12" fill="#13244f" />
-        {drops.map((i) => {
-          const ph = ((tk * 3 + i * 13) % 60) / 60;
-          return <line key={i} x1={30 + ((i * 37) % 260)} y1={ph * 150} x2={26 + ((i * 37) % 260)} y2={ph * 150 + 10} stroke="#9fc9ff" strokeWidth="1.5" opacity="0.8" />;
-        })}
-        {/* دامنه: سنگ بستر */}
-        <path d={`M ${x0},${y1} L ${x1},${yTop} L ${x1},190 L ${x0},190 Z`} fill="#6e6a72" />
-        {/* خاک */}
-        <path d={`M ${x0},${y1} L ${x1},${yTop} L ${x1},${yTop + soilT} L ${x0},${y1 + soilT} Z`} fill="#8a5a33" />
-        {/* گیاه */}
-        {Array.from({ length: Math.round(veg / 6) }, (_, i) => {
-          const f = (i + 0.5) / Math.max(1, Math.round(veg / 6));
-          const px = x0 + f * (x1 - x0), py = y1 - f * (y1 - yTop);
-          return <g key={i}><line x1={px} y1={py} x2={px} y2={py - 10} stroke="#3e9a4a" strokeWidth="2" /><circle cx={px} cy={py - 12} r="4" fill="#4fbf5f" /></g>;
-        })}
-        {/* رسوبات انباشته در پای دامنه */}
-        <ellipse cx={x0 + 6} cy={y1 + 4} rx={6 + idx * 28} ry={3 + idx * 10} fill="#a9753f" opacity="0.9" />
-        {/* ذرات خاک در حال حرکت */}
-        {Array.from({ length: Math.round(idx * 12) }, (_, i) => {
-          const ph = ((tk * 1.4 + i * 19) % 100) / 100;
-          const px = x1 - ph * (x1 - x0), py = yTop + ph * (y1 - yTop);
-          return <circle key={i} cx={px} cy={py + 2} r="2.2" fill="#c08a52" />;
-        })}
-        <rect x="4" y="176" width="84" height="18" fill="#2f6bd1" opacity="0.7" rx="4" />
-        <text x="46" y="189" fontSize="9" fill="#fff" textAnchor="middle">رودخانه (گل‌آلود)</text>
-        <text x="285" y="30" fontSize="10" fill="#ffe08a" textAnchor="end">فرسایش: {VLAB_FA_DIGITS(Math.round(idx * 100))}٪</text>
+      <svg viewBox="0 0 320 200" className="vlab-svg" style={{ direction: "ltr", background: "#bfe0f7" }}>
+        <defs>
+          <linearGradient id="erSky" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stopColor={rain > 50 ? "#6f8fb0" : "#8cc9ff"} /><stop offset="1" stopColor={rain > 50 ? "#c9d9e6" : "#e8f5ff"} /></linearGradient>
+          <clipPath id="erSkyC"><path d={`M0,0 L320,0 L320,${yTop} L ${x1},${yTop} L ${x0},${y1} L 0,${y1} Z`} /></clipPath>
+        </defs>
+        <rect width="320" height="200" rx="12" fill="url(#erSky)" />
+        {/* ابر */}
+        <g opacity={0.45 + rain / 180} fill={rain > 50 ? "#56677a" : "#ffffff"}>
+          <ellipse cx="70" cy="22" rx="38" ry="12" /><ellipse cx="96" cy="16" rx="26" ry="12" /><ellipse cx="50" cy="18" rx="22" ry="10" />
+          <ellipse cx="200" cy="26" rx="44" ry="13" /><ellipse cx="226" cy="19" rx="28" ry="12" /><ellipse cx="178" cy="22" rx="24" ry="10" />
+        </g>
+        {/* باران */}
+        <g clipPath="url(#erSkyC)">{drops.map((i) => { const ph = ((tk * 3 + i * 13) % 60) / 60; const x = 14 + ((i * 41) % 292); return <line key={i} x1={x} y1={34 + ph * 140} x2={x - 4} y2={34 + ph * 140 + 10} stroke="#4f86d6" strokeWidth="1.6" opacity="0.85" />; })}</g>
+        {/* دره‌ی دور */}
+        <path d={`M0,${y1 - 14} C60,${y1 - 40} 120,${y1 - 24} 170,${y1 - 50} L170,${y1} L0,${y1} Z`} fill="#a8c5a0" opacity="0.5" />
+        {/* لایه‌های زمین */}
+        <path d={`M0,${y1} L${x0},${y1} L${x1},${yTop} L320,${yTop} L320,200 L0,200 Z`} fill="#7c7884" />
+        {Array.from({ length: 9 }, (_, i) => <path key={i} d={`M${20 + i * 36},${196 - (i % 3) * 9} l14,-3 M${30 + i * 36},${186 - (i % 2) * 8} l9,2`} stroke="#5d5a65" strokeWidth="1.2" />)}
+        <path d={`M0,${y1 + 20} L${x0},${y1 + 20} L${x1},${yTop + 20} L320,${yTop + 20} L320,${yTop + 20 + 18} L${x1},${yTop + 20 + 18} L${x0},${y1 + 38} L0,${y1 + 38} Z`} fill="#a78a64" />
+        <path d={`M0,${y1} L${x0},${y1} L${x1},${yTop} L320,${yTop} L320,${yTop + 6 + soilT * 0.9} L${x1},${yTop + 6 + soilT * 0.9} L${x0},${y1 + 6 + soilT * 0.9} L0,${y1 + 6 + soilT * 0.9} Z`} fill="#6b4423" />
+        {/* خندق‌های فرسایش */}
+        {idx > 0.3 ? [0.3, 0.55, 0.78].map((f, i) => { const px = x0 + f * (x1 - x0), py = y1 - f * (y1 - yTop); const d = 3 + idx * 9; return <path key={i} d={`M${px - 6},${py + 1} L${px - 1},${py + d} L${px + 4},${py + d - 1} L${px + 8},${py - 1} Z`} fill="#4c2f17" />; }) : null}
+        {/* چمن و گیاه */}
+        {Array.from({ length: Math.round(veg / 3.2) }, (_, i) => { const f = (i + 0.5) / Math.max(1, Math.round(veg / 3.2)); const px = x0 + f * (x1 - x0), py = y1 - f * (y1 - yTop); return <path key={i} d={`M${px - 2},${py + 1} l-1,-5 M${px},${py + 1} l0,-7 M${px + 2},${py + 1} l1,-5`} stroke="#3e9a4a" strokeWidth="1.3" fill="none" strokeLinecap="round" />; })}
+        {Array.from({ length: Math.round(veg / 20) }, (_, i) => { const f = (i + 0.7) / Math.max(1, Math.round(veg / 20)); const px = x0 + f * (x1 - x0) - 4, py = y1 - f * (y1 - yTop); const h = 10 + (i % 3) * 3; return <g key={i}><path d={`M${px},${py + 1} L${px},${py - h}`} stroke="#5d3a1a" strokeWidth="2.2" /><circle cx={px} cy={py - h - 4} r="7" fill="#3f9a4a" /><circle cx={px - 4} cy={py - h - 1} r="4.6" fill="#4fb35a" /><circle cx={px + 4} cy={py - h - 1} r="4.6" fill="#368a42" />{/* ریشه */}<path d={`M${px},${py + 1} l-4,9 M${px},${py + 1} l2,12 M${px},${py + 1} l5,8`} stroke="#8a6a3f" strokeWidth="0.9" opacity="0.8" fill="none" /></g>; })}
+        {/* روان‌آب گل‌آلود */}
+        {rain > 0 ? Array.from({ length: Math.round(2 + idx * 8) }, (_, i) => { const ph = ((tk * 0.02 * (1 + idx * 2) + i * 0.13) % 1); const px = x1 - ph * (x1 - x0), py = yTop + ph * (y1 - yTop); return <ellipse key={i} cx={px} cy={py - 1} rx={3 + idx * 3} ry="1.6" fill="#a8773f" opacity="0.8" />; }) : null}
+        {/* رودخانه و رسوب */}
+        <path d={`M0,${y1} L${x0},${y1} L${x0},${y1 + 30} L0,${y1 + 30} Z`} fill={`rgb(${Math.round(61 + idx * 85)},${Math.round(123 - idx * 20)},${Math.round(214 - idx * 150)})`} />
+        <ellipse cx={x0 + 4} cy={y1 + 2} rx={5 + idx * 26} ry={2.5 + idx * 7} fill="#a9753f" opacity="0.95" />
+        <VlabPill x="44" y={190} text={idx > 0.4 ? "رودخانه (گل‌آلود)" : "رودخانه"} size={8.5} fill="#ffffff" color="#33415a" />
+        <VlabPill x="270" y={yTop + 52} text="سنگ بستر" size={8} fill="#e8e6ee" color="#3b3844" />
+        <VlabPill x="276" y={yTop + 20} text="خاک رویی" size={8} fill="#e7d3bc" color="#4c2f17" />
+        <VlabPill x="256" y="14" text={`فرسایش: ${VLAB_FA_DIGITS(Math.round(idx * 100))} درصد`} size={10} fill="#ffffff" color={idx > 0.6 ? "#b3261e" : idx > 0.3 ? "#a85a00" : "#1b6d36"} />
       </svg>
       <div className="vlab-controls"><div className="vlab-ctrl-col" style={{ flex: 1 }}>
         <label className="vlab-ctrl-label">شیب دامنه (درجه): {VLAB_FA_DIGITS(slope)}</label>
@@ -42824,16 +42904,33 @@ function VlabTidesExperiment({ onReading }) {
   return (
     <div className="vlab-exp">
       <svg viewBox="0 0 320 210" className="vlab-svg" style={{ direction: "ltr", background: "#0b1330" }}>
-        <rect width="320" height="210" rx="12" fill="#0b1330" />
-        {/* خورشید در سمت راست */}
-        <circle cx="305" cy="100" r="9" fill="#ffd23f" /><text x="305" y="125" fontSize="9" fill="#ffd23f" textAnchor="middle">خورشید</text>
-        <line x1="296" y1="100" x2="230" y2="100" stroke="#ffd23f" strokeDasharray="4 4" opacity="0.5" />
-        <circle cx="160" cy="100" r="100" fill="none" stroke="#2c3a6b" strokeDasharray="3 5" />
-        <path d={path + " Z"} fill="#3d7bd6" opacity="0.8" stroke="#9fc9ff" strokeWidth="1.2" />
-        <circle cx="160" cy="100" r="30" fill="#2e8b57" /><circle cx="150" cy="95" r="10" fill="#3fa96c" />
-        {/* ماه */}
-        <circle cx={mx} cy={my} r="9" fill="#e8e8dc" stroke="#aaa" />
-        <text x={mx} y={my - 14} fontSize="9" fill="#fff" textAnchor="middle">ماه</text>
+        <defs>
+          <radialGradient id="tdSun" cx="0.5" cy="0.5" r="0.5"><stop offset="0" stopColor="#fff6c2" /><stop offset="0.6" stopColor="#ffd23f" /><stop offset="1" stopColor="#ff9f1c" stopOpacity="0" /></radialGradient>
+          <radialGradient id="tdSea" cx="0.5" cy="0.5" r="0.6"><stop offset="0" stopColor="#4a8fe6" /><stop offset="1" stopColor="#2b62b8" /></radialGradient>
+          <radialGradient id="tdEarth" cx="0.4" cy="0.35" r="0.75"><stop offset="0" stopColor="#3b86d8" /><stop offset="1" stopColor="#1d4f9a" /></radialGradient>
+        </defs>
+        <rect width="320" height="210" rx="12" fill="#070d24" />
+        {Array.from({ length: 28 }, (_, i) => <circle key={i} cx={(i * 71) % 320} cy={(i * 37) % 205} r={0.5 + (i % 3) * 0.4} fill="#fff" opacity="0.6" />)}
+        {/* خورشید و پرتوها */}
+        <circle cx="318" cy="100" r="40" fill="url(#tdSun)" />
+        <circle cx="312" cy="100" r="16" fill="#ffd23f" stroke="#ffb703" strokeWidth="2" />
+        {[-60, -30, 0, 30, 60].map((y) => <g key={y}><line x1="286" y1={100 + y} x2="236" y2={100 + y} stroke="#ffd23f" strokeWidth="1.2" opacity="0.55" /><polygon points={`236,${100 + y} 243,${97 + y} 243,${103 + y}`} fill="#ffd23f" opacity="0.7" /></g>)}
+        <circle cx="160" cy="100" r="100" fill="none" stroke="#33427a" strokeDasharray="3 5" />
+        {/* آب اقیانوس با دو برآمدگی */}
+        <path d={path + " Z"} fill="url(#tdSea)" opacity="0.92" stroke="#9fd0ff" strokeWidth="1.4" />
+        {/* زمین (دید از بالای قطب شمال) */}
+        <circle cx="160" cy="100" r="30" fill="url(#tdEarth)" stroke="#12356e" strokeWidth="1.2" />
+        <g fill="#4aa564" stroke="#2c7a42" strokeWidth="0.8"><path d="M148,84 C158,78 172,80 176,88 C178,96 168,98 164,104 C160,110 150,108 146,100 C142,94 142,88 148,84 Z" /><path d="M168,112 C176,108 184,112 182,119 C178,124 168,122 168,112 Z" /><path d="M136,108 C142,106 146,112 142,118 C138,122 132,114 136,108 Z" /></g>
+        <circle cx="160" cy="100" r="2.4" fill="#fff" /><text x="160" y="130" fontSize="7.5" fill="#d8e8ff" textAnchor="middle">زمین از بالای قطب شمال</text>
+        {/* ماه با بخش روشن رو به خورشید */}
+        <circle cx={mx} cy={my} r="10" fill="#4a4e5c" stroke="#9aa0b2" strokeWidth="0.8" />
+        <path d={`M${mx},${my - 10} A10,10 0 0 1 ${mx},${my + 10} Z`} fill="#f1efe2" />
+        <circle cx={mx - 3} cy={my - 3} r="1.6" fill="#c9c6b6" opacity="0.8" /><circle cx={mx + 3} cy={my + 3} r="1.2" fill="#c9c6b6" opacity="0.8" />
+        <VlabPill x={mx} y={my - 17} text="ماه" size={8.5} fill="#e8eaf2" color="#222a44" />
+        <VlabPill x="258" y="26" text="خورشید" size={8.5} fill="#fff1b8" color="#6a4800" />
+        {/* برچسب مد و جزر */}
+        <VlabPill x={160 + (R + bulgeM + bulgeS) * Math.cos(rad) * 0.98} y={100 - (R + bulgeM + bulgeS) * Math.sin(rad) * 0.98 + (Math.sin(rad) > 0.6 ? 0 : 0)} text="مدّ" size={8} fill="#cfe6ff" color="#0d3a7a" />
+        <VlabPill x={160 - (R + bulgeM + bulgeS) * Math.cos(rad) * 0.98} y={100 + (R + bulgeM + bulgeS) * Math.sin(rad) * 0.98} text="مدّ" size={8} fill="#cfe6ff" color="#0d3a7a" />
         <text x="160" y="204" fontSize="10" fill="#ffe08a" textAnchor="middle" fontWeight="700">{kind} — دامنه‌ی نسبی {VLAB_FA_DIGITS(range.toFixed(2))}</text>
       </svg>
       <div className="vlab-controls"><div className="vlab-ctrl-col" style={{ flex: 1 }}>
@@ -44608,6 +44705,14 @@ const VLAB_MAG_OBJ = [
   { n: "گیره‌ی کاغذ (فولاد)", m: true, c: "#b8bec8" }, { n: "مداد چوبی", m: false, c: "#e0c068" },
   { n: "کاغذ", m: false, c: "#f4f4f4" }, { n: "قاشق فولادی", m: true, c: "#cfd5de" },
 ];
+function vlabMagObj(name) {
+  if (name.includes("میخ")) return (<g><rect x="-17" y="-2.2" width="32" height="4.4" fill="#9aa1ab" stroke="#4b5159" strokeWidth="0.9" /><polygon points="15,-2.2 21,0 15,2.2" fill="#9aa1ab" stroke="#4b5159" strokeWidth="0.9" /><ellipse cx="-18" cy="0" rx="2.6" ry="6" fill="#b9bfc8" stroke="#4b5159" strokeWidth="0.9" /></g>);
+  if (name.includes("سکه")) return (<g><circle r="10" fill="#c9873a" stroke="#7a4a14" strokeWidth="1.2" /><circle r="7.6" fill="none" stroke="#e8b06a" strokeWidth="1" /><text y="3.6" fontSize="10" fill="#7a4a14" textAnchor="middle" fontWeight="700">۱۰۰</text><path d="M-7,-4 A9,9 0 0 1 2,-8" stroke="#fff" strokeOpacity="0.6" strokeWidth="1.6" fill="none" /></g>);
+  if (name.includes("گیره")) return (<g fill="none" stroke="#aeb6c2" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"><path d="M-13,6 L-13,-6 Q-13,-10 -9,-10 L9,-10 Q13,-10 13,-6 L13,3 Q13,6 10,6 L-6,6 Q-9,6 -9,3 L-9,-3 Q-9,-6 -6,-6 L6,-6" stroke="#6c7480" strokeWidth="3.2" /><path d="M-13,6 L-13,-6 Q-13,-10 -9,-10 L9,-10 Q13,-10 13,-6 L13,3 Q13,6 10,6 L-6,6 Q-9,6 -9,3 L-9,-3 Q-9,-6 -6,-6 L6,-6" /></g>);
+  if (name.includes("مداد")) return (<g><rect x="-20" y="-3.4" width="30" height="6.8" fill="#f2c230" stroke="#8a6a0c" strokeWidth="0.9" /><rect x="-26" y="-3.4" width="6" height="6.8" fill="#e98a9a" stroke="#8a3a4a" strokeWidth="0.9" /><rect x="-20" y="-3.4" width="3" height="6.8" fill="#b8bec8" /><polygon points="10,-3.4 20,0 10,3.4" fill="#e8c48a" stroke="#8a6a3a" strokeWidth="0.9" /><polygon points="17,-1.2 20,0 17,1.2" fill="#333" /></g>);
+  if (name.includes("کاغذ") && !name.includes("گیره")) return (<g><path d="M-10,-12 L6,-12 L12,-6 L12,12 L-10,12 Z" fill="#ffffff" stroke="#9aa0ac" strokeWidth="1.1" /><path d="M6,-12 L6,-6 L12,-6" fill="#e8ecf2" stroke="#9aa0ac" strokeWidth="1" />{[-4, 0, 4, 8].map((y) => <line key={y} x1="-7" y1={y} x2="9" y2={y} stroke="#b8bec8" strokeWidth="1" />)}</g>);
+  return (<g><ellipse cx="-12" cy="0" rx="9" ry="6.4" fill="#d6dbe3" stroke="#6c7480" strokeWidth="1.2" /><rect x="-4" y="-2" width="24" height="4" rx="2" fill="#cfd5de" stroke="#6c7480" strokeWidth="1.2" /></g>);
+}
 function VlabMagnetPolesExperiment({ onReading }) {
   const [d, setD] = useState(70);
   const [flip, setFlip] = useState(false);
@@ -44620,15 +44725,35 @@ function VlabMagnetPolesExperiment({ onReading }) {
   const Mag = ({ x, left, right }) => (<g transform={`translate(${x},50)`}><rect width="60" height="26" fill={left === "N" ? "#e53935" : "#1e6fd9"} /><rect x="30" width="30" height="26" fill="#1e6fd9" style={{ display: "none" }} /><rect x="0" width="30" height="26" fill={left === "N" ? "#e53935" : "#1e6fd9"} /><rect x="30" width="30" height="26" fill={right === "N" ? "#e53935" : "#1e6fd9"} /><text x="15" y="18" fontSize="13" fill="#fff" textAnchor="middle" fontWeight="700">{left}</text><text x="45" y="18" fontSize="13" fill="#fff" textAnchor="middle" fontWeight="700">{right}</text><rect width="60" height="26" fill="none" stroke="#222" strokeWidth="1.5" /></g>);
   return (
     <div className="vlab-exp">
-      <svg viewBox="0 0 320 210" className="vlab-svg" style={{ direction: "ltr", background: "#0b1330" }}>
+      <svg viewBox="0 0 320 210" className="vlab-svg" style={{ direction: "ltr", background: "#f3efe6" }}>
+        <defs>
+          <linearGradient id="mgGl" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stopColor="#fff" stopOpacity="0.55" /><stop offset="0.5" stopColor="#fff" stopOpacity="0" /><stop offset="1" stopColor="#000" stopOpacity="0.25" /></linearGradient>
+          <linearGradient id="mgTab" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stopColor="#caa070" /><stop offset="1" stopColor="#a9794a" /></linearGradient>
+        </defs>
         <rect width="320" height="210" rx="12" fill="#f3efe6" />
-        <Mag x={x1} left="S" right="N" /><Mag x={x2} left={flip ? "N" : "S"} right={flip ? "S" : "N"} />
-        <text x="160" y="28" fontSize="11" fill={attract ? "#1b7d3a" : "#c0392b"} textAnchor="middle" fontWeight="700">{attract ? "ناهمنام روبه‌رو: می‌ربایند ←→" : "همنام روبه‌رو: دفع می‌کنند →←"}</text>
-        {attract ? <><path d={`M ${x1 + 62},96 l ${strength * 28 + 6},0`} stroke="#1b7d3a" strokeWidth="3" /><path d={`M ${x2 - 2},96 l ${-(strength * 28 + 6)},0`} stroke="#1b7d3a" strokeWidth="3" /></> : <><path d={`M ${x1 + 62},96 l ${-(strength * 28 + 6)},0`} stroke="#c0392b" strokeWidth="3" /><path d={`M ${x2 - 2},96 l ${strength * 28 + 6},0`} stroke="#c0392b" strokeWidth="3" /></>}
-        <line x1="20" y1="140" x2="300" y2="140" stroke="#bbb" strokeDasharray="3 3" />
-        <g transform="translate(60,160)"><rect width="50" height="26" fill="#e53935" /><text x="25" y="17" fontSize="11" fill="#fff" textAnchor="middle">آهنربا</text></g>
-        <g transform={`translate(${O.m ? 118 : 170},166)`}><rect width="36" height="14" rx="4" fill={O.c} stroke="#555" /></g>
-        <text x="160" y="204" fontSize="10" fill={O.m ? "#1b7d3a" : "#c0392b"} textAnchor="middle" fontWeight="700">{O.n}: {O.m ? "جذب می‌شود" : "جذب نمی‌شود"}</text>
+        {/* خطوط میدان */}
+        {(() => {
+          const xa = x1 + 66, xb = x2, gap = Math.max(10, xb - xa), ys = [-3, -2, -1, 0, 1, 2, 3];
+          return <g fill="none" stroke="#5a6a8a" strokeWidth="1.2" opacity="0.85">{ys.map((k) => attract
+            ? <g key={k}><path d={`M${xa},${63 + k * 4} C${xa + gap * 0.3},${63 + k * 13} ${xb - gap * 0.3},${63 + k * 13} ${xb},${63 + k * 4}`} />{Array.from({ length: 6 }, (_, j) => { const t = (j + 0.5) / 6; const X = xa + (xb - xa) * t, Y = 63 + k * 4 + k * 13 * 0.75 * Math.sin(Math.PI * t); return <circle key={j} cx={X} cy={Y} r="0.9" fill="#444" />; })}</g>
+            : <g key={k}><path d={`M${xa},${63 + k * 4} C${xa + gap * 0.28},${63 + k * 8} ${xa + gap * 0.38},${63 + k * 13} ${xa + gap * 0.5},${63 + k * 17}`} /><path d={`M${xb},${63 + k * 4} C${xb - gap * 0.28},${63 + k * 8} ${xb - gap * 0.38},${63 + k * 13} ${xb - gap * 0.5},${63 + k * 17}`} /></g>)}</g>;
+        })()}
+        {/* آهنرباها */}
+        {[[x1, "S", "N"], [x2, flip ? "N" : "S", flip ? "S" : "N"]].map((m, i) => (
+          <g key={i} transform={`translate(${m[0]},49)`}>
+            <rect width="33" height="28" rx="3" fill={m[1] === "N" ? "#e53935" : "#2f6fe0"} stroke="#222" strokeWidth="1.2" /><rect x="33" width="33" height="28" rx="3" fill={m[2] === "N" ? "#e53935" : "#2f6fe0"} stroke="#222" strokeWidth="1.2" />
+            <rect width="66" height="28" rx="3" fill="url(#mgGl)" />
+            <text x="16.5" y="20" fontSize="17" fill="#fff" fontWeight="700" textAnchor="middle" stroke="#222" strokeWidth="0.6">{m[1]}</text><text x="49.5" y="20" fontSize="17" fill="#fff" fontWeight="700" textAnchor="middle" stroke="#222" strokeWidth="0.6">{m[2]}</text>
+          </g>))}
+        <VlabPill x="160" y="22" text={attract ? "قطب‌های ناهمنام روبه‌رو: همدیگر را می‌ربایند" : "قطب‌های همنام روبه‌رو: همدیگر را دفع می‌کنند"} size={9.5} fill={attract ? "#d6f5dd" : "#ffd9d4"} color={attract ? "#1b6d36" : "#a8342a"} />
+        {attract ? <g fill="#1b7d3a"><path d={`M${x1 + 70},64 l${6 + strength * 22},0`} stroke="#1b7d3a" strokeWidth="3" /><polygon points={`${x1 + 78 + strength * 22},64 ${x1 + 70 + strength * 22},59 ${x1 + 70 + strength * 22},69`} /><path d={`M${x2 - 4},64 l${-6 - strength * 22},0`} stroke="#1b7d3a" strokeWidth="3" /><polygon points={`${x2 - 12 - strength * 22},64 ${x2 - 4 - strength * 22},59 ${x2 - 4 - strength * 22},69`} /></g>
+          : <g fill="#c0392b"><path d={`M${x1 + 66},64 l${-6 - strength * 22},0`} stroke="#c0392b" strokeWidth="3" /><polygon points={`${x1 + 58 - strength * 22},64 ${x1 + 66 - strength * 22},59 ${x1 + 66 - strength * 22},69`} /><path d={`M${x2},64 l${6 + strength * 22},0`} stroke="#c0392b" strokeWidth="3" /><polygon points={`${x2 + 8 + strength * 22},64 ${x2 + strength * 22},59 ${x2 + strength * 22},69`} /></g>}
+        {/* میز آزمایش جسم */}
+        <rect x="0" y="136" width="320" height="74" fill="url(#mgTab)" /><rect x="0" y="136" width="320" height="4" fill="#8a5d33" />
+        <g transform="translate(24,152)"><rect width="44" height="30" rx="3" fill="#2f6fe0" stroke="#222" strokeWidth="1.2" /><rect width="22" height="30" rx="3" fill="#e53935" stroke="#222" strokeWidth="1.2" /><rect width="44" height="30" rx="3" fill="url(#mgGl)" /><text x="11" y="21" fontSize="15" fill="#fff" fontWeight="700" textAnchor="middle" stroke="#222" strokeWidth="0.5">N</text><text x="33" y="21" fontSize="15" fill="#fff" fontWeight="700" textAnchor="middle" stroke="#222" strokeWidth="0.5">S</text></g>
+        <g style={{ transform: `translate(${O.m ? 86 : 180}px,167px)`, transition: "transform .7s ease" }}>{vlabMagObj(O.n)}</g>
+        {O.m ? <g fill="none" stroke="#1b7d3a" strokeWidth="1.4" strokeLinecap="round" opacity="0.8"><path d="M118,158 q5,9 0,18" /><path d="M126,154 q7,13 0,26" /><path d="M134,150 q9,17 0,34" /></g> : null}
+        <VlabPill x="160" y="198" text={`${O.n}: ${O.m ? "جذب می‌شود" : "جذب نمی‌شود"}`} size={9.5} fill={O.m ? "#d6f5dd" : "#ffd9d4"} color={O.m ? "#1b6d36" : "#a8342a"} />
       </svg>
       <div className="vlab-controls"><div className="vlab-ctrl-col" style={{ flex: 1 }}>
         <label className="vlab-ctrl-label">فاصله‌ی دو آهنربا: {VLAB_FA_DIGITS(d)}</label>
@@ -45328,15 +45453,29 @@ function VlabHealthyPlateExperiment({ onReading }) {
   useEffect(() => { if (onReading) onReading(`گروه‌ها: ${gs.join("،")} | ${ok ? "متعادل" : "نامتعادل"}`); /* eslint-disable-next-line */ }, [cnt]);
   return (
     <div className="vlab-exp">
-      <svg viewBox="0 0 320 190" className="vlab-svg" style={{ direction: "ltr", background: "#0b1330" }}>
-        <rect width="320" height="190" rx="12" fill="#fbf7ec" />
-        {VLAB_GROUPS.map((g, i) => { const y = 14 + i * 28; return (<g key={i}>
-          <text x="312" y={y + 10} fontSize="9.5" fill="#33291a" textAnchor="end" fontWeight="700">{g.n}</text>
-          <rect x="30" y={y + 14} width="180" height="7" rx="3" fill="#e5dcc6" />
-          {g.hi > 0 && <rect x={30 + (g.lo / 11) * 180} y={y + 13} width={((g.hi - g.lo) / 11) * 180 + 3} height="9" rx="3" fill={g.c} opacity="0.35" stroke={g.c} />}
-          <rect x="30" y={y + 14} width={Math.min(11, gs[i]) / 11 * 180} height="7" rx="3" fill={g.c} />
-          <text x="214" y={y + 21} fontSize="8.5" fill="#33291a">{VLAB_FA_DIGITS(gs[i])}</text></g>); })}
-        <text x="160" y="186" fontSize="10" fill={total === 0 ? "#7a6b50" : ok ? "#1b7d3a" : "#c0392b"} textAnchor="middle" fontWeight="700">{total === 0 ? "غذا به بشقاب اضافه کن" : ok ? "✔ یک روز غذایی متعادل" : "✘ هنوز متعادل نیست"}</text>
+      <svg viewBox="0 0 320 200" className="vlab-svg" style={{ direction: "ltr", background: "#b98a5a" }}>
+        <defs><linearGradient id="hpTab" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stopColor="#c99a68" /><stop offset="1" stopColor="#a87a4c" /></linearGradient><radialGradient id="hpPl" cx="0.4" cy="0.35" r="0.8"><stop offset="0" stopColor="#ffffff" /><stop offset="1" stopColor="#e6e9ee" /></radialGradient></defs>
+        <rect width="320" height="200" rx="12" fill="url(#hpTab)" />
+        {[28, 58, 88, 118, 148, 178].map((y) => <path key={y} d={`M0,${y} C80,${y - 4} 200,${y + 4} 320,${y}`} stroke="#8d6338" strokeWidth="0.8" opacity="0.35" fill="none" />)}
+        <ellipse cx="100" cy="104" rx="90" ry="88" fill="#000" opacity="0.18" />
+        <circle cx="98" cy="98" r="88" fill="url(#hpPl)" stroke="#cfd5de" strokeWidth="2" />
+        <circle cx="98" cy="98" r="76" fill="#fbfcfe" stroke="#dde2ea" strokeWidth="1.5" />
+        {VLAB_GROUPS.slice(0, 5).map((g, i) => { const a0 = (-90 + i * 72) * Math.PI / 180, a1 = (-90 + (i + 1) * 72) * Math.PI / 180; const R = 76; const good = gs[i] >= g.lo && gs[i] <= g.hi; return <path key={i} d={`M98,98 L${98 + R * Math.cos(a0)},${98 + R * Math.sin(a0)} A${R},${R} 0 0 1 ${98 + R * Math.cos(a1)},${98 + R * Math.sin(a1)} Z`} fill={g.c} fillOpacity={good ? 0.38 : 0.14} stroke={g.c} strokeWidth="1.4" strokeDasharray={good ? "0" : "4 3"} />; })}
+        {VLAB_GROUPS.slice(0, 5).map((g, i) => { const am = (-90 + i * 72 + 36) * Math.PI / 180; return <text key={i} x={98 + 68 * Math.cos(am)} y={98 + 68 * Math.sin(am) + 3} fontSize="7" fill="#5a4a30" textAnchor="middle" fontWeight="700">{g.n.split("،")[0].split(" ")[0] === "گوشت" ? "پروتئین" : g.n.split(" ")[0] === "شیر" ? "لبنیات" : g.n.split(" ")[0]}</text>; })}
+        {VLAB_GROUPS.slice(0, 5).map((g, gi) => { const am = (-90 + gi * 72 + 36) * Math.PI / 180; const units = []; VLAB_FOODS.forEach((f, i) => { if (f.g === gi) for (let k = 0; k < cnt[i]; k++) units.push(f.e); }); return <g key={gi}>{units.map((e, j) => { const aa = am + ((j % 3) - 1) * 0.3; const r = 26 + Math.floor(j / 3) * 15 + (j % 2) * 4; return <text key={j} x={98 + r * Math.cos(aa)} y={98 + r * Math.sin(aa) + 7} fontSize="19" textAnchor="middle">{e}</text>; })}</g>; })}
+        <circle cx="98" cy="98" r="5" fill="#fbfcfe" stroke="#dde2ea" />
+        {/* تنقلات خارج از بشقاب */}
+        <rect x="196" y="144" width="116" height="48" rx="10" fill="#fff3f0" stroke="#e57a6c" strokeDasharray="4 3" strokeWidth="1.4" opacity="0.95" />
+        <text x="254" y="156" fontSize="8" fill="#a8342a" textAnchor="middle" fontWeight="700">تنقلات (کم)</text>
+        {(() => { const u = []; VLAB_FOODS.forEach((f, i) => { if (f.g === 5) for (let k = 0; k < cnt[i]; k++) u.push(f.e); }); return u.slice(0, 8).map((e, j) => <text key={j} x={210 + (j % 4) * 26} y={176 + Math.floor(j / 4) * 14} fontSize="17" textAnchor="middle">{e}</text>); })()}
+        {/* نوارها */}
+        {VLAB_GROUPS.slice(0, 5).map((g, i) => { const y = 14 + i * 25; const full = Math.min(11, gs[i]); const good = gs[i] >= g.lo && gs[i] <= g.hi; return (<g key={i}>
+          <text x="312" y={y + 8} fontSize="8.5" fill="#fff" textAnchor="end" fontWeight="700" stroke="#6a4724" strokeWidth="2.4" paintOrder="stroke">{g.n}</text>
+          <rect x="204" y={y + 12} width="108" height="7" rx="3.5" fill="#fff" opacity="0.85" />
+          <rect x={204 + (g.lo / 11) * 108} y={y + 10} width={((g.hi - g.lo) / 11) * 108 + 2} height="11" rx="4" fill={g.c} opacity="0.4" stroke={g.c} />
+          <rect x="204" y={y + 12} width={(full / 11) * 108} height="7" rx="3.5" fill={g.c} />
+          <text x="198" y={y + 19} fontSize="9" fill={good ? "#e6ffe9" : "#fff"} textAnchor="end" fontWeight="700" stroke="#6a4724" strokeWidth="2.4" paintOrder="stroke">{good ? "✔ " : ""}{VLAB_FA_DIGITS(gs[i])}</text></g>); })}
+        <VlabPill x="100" y="192" text={total === 0 ? "غذا به بشقاب اضافه کن" : ok ? "✔ یک روز غذایی متعادل" : "✘ هنوز متعادل نیست"} size={9.5} fill={total === 0 ? "#fff6e0" : ok ? "#d6f5dd" : "#ffd9d4"} color={total === 0 ? "#6b5530" : ok ? "#1b6d36" : "#a8342a"} />
       </svg>
       <div className="vlab-controls"><div className="vlab-ctrl-col" style={{ flex: 1 }}>
         <div className="vlab-num-row" style={{ flexWrap: "wrap" }}>{VLAB_FOODS.map((f, i) => (<span key={i} style={{ display: "inline-flex", alignItems: "center", gap: 2 }}><button type="button" className="vlab-num-btn" onClick={() => set(i, -1)}>−</button><button type="button" className={"vlab-num-btn" + (cnt[i] ? " active" : "")} onClick={() => set(i, 1)}>{f.e} {f.n}{cnt[i] ? " ×" + VLAB_FA_DIGITS(cnt[i]) : ""}</button></span>))}</div>
@@ -46536,15 +46675,34 @@ function VlabFossilLayersExperiment({ onReading }) {
 function VlabFoldMountainExperiment({ onReading }) {
   const [sq, setSq] = useState(0);
   useEffect(() => { if (onReading) onReading(`فشردگی ${sq}٪`); /* eslint-disable-next-line */ }, [sq]);
-  const L = 280 * (1 - sq / 100 * 0.5), amp = sq * 0.45;
+  const L = 280 * (1 - sq / 100 * 0.5), amp = sq * 0.5;
   const path = (y0, c) => { let d = ""; for (let i = 0; i <= 60; i++) { const x = 20 + (L * i) / 60; const y = y0 - amp * Math.sin((i / 60) * Math.PI * 4) * (1 - (y0 - 80) / 160); d += (i ? "L" : "M") + x.toFixed(1) + "," + y.toFixed(1) + " "; } return <path d={d} stroke={c} strokeWidth="14" fill="none" />; };
   return (
     <div className="vlab-exp">
-      <svg viewBox="0 0 320 190" className="vlab-svg" style={{ direction: "ltr", background: "#0b1330" }}>
-        <rect width="320" height="190" rx="12" fill="#0b1330" />
-        {["#e57373", "#ffb74d", "#fff176", "#81c784", "#64b5f6"].map((c, i) => <g key={i}>{path(110 + i * 14, c)}</g>)}
-        <rect x="6" y="70" width="14" height="110" fill="#78909c" /><rect x={20 + L} y="70" width="14" height="110" fill="#78909c" />
-        <text x="160" y="22" fontSize="10" fill="#ffe08a" textAnchor="middle" fontWeight="700">طول لایه‌ها از {VLAB_FA_DIGITS(280)} به {VLAB_FA_DIGITS(Math.round(L))} رسیده (فشردگی {VLAB_FA_DIGITS(sq)}٪)</text>
+      <svg viewBox="0 0 320 200" className="vlab-svg" style={{ direction: "ltr", background: "#cfe8ff" }}>
+        <defs><linearGradient id="fmSky" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stopColor="#8cc9ff" /><stop offset="1" stopColor="#e6f5ff" /></linearGradient></defs>
+        <rect width="320" height="200" rx="12" fill="url(#fmSky)" />
+        <circle cx="282" cy="30" r="13" fill="#ffe27a" opacity="0.9" />
+        {(() => {
+          const cols = ["#8a6a3d", "#e3c88c", "#b8d27a", "#6fb2a0", "#9a86c4", "#b86a5a"];
+          const N = 64, xs = Array.from({ length: N + 1 }, (_, i) => i / N);
+          const by = (k, u) => 88 + k * 19 - amp * (1 - 0.09 * k) * Math.sin(u * Math.PI * 4);
+          const X = (u) => 20 + L * u;
+          const bands = cols.map((c, k) => {
+            const top = xs.map((u, i) => `${i ? "L" : "M"}${X(u).toFixed(1)},${by(k, u).toFixed(1)}`).join(" ");
+            const bot = k === 5 ? `L${X(1)},192 L${X(0)},192 Z` : xs.slice().reverse().map((u) => `L${X(u).toFixed(1)},${by(k + 1, u).toFixed(1)}`).join(" ") + " Z";
+            return <g key={k}><path d={top + " " + bot} fill={c} stroke="#4a3a28" strokeWidth="0.8" />{k < 5 ? <path d={xs.map((u, i) => `${i ? "L" : "M"}${X(u).toFixed(1)},${(by(k, u) + (by(k + 1, u) - by(k, u)) * 0.5).toFixed(1)}`).join(" ")} fill="none" stroke="#fff" strokeOpacity="0.28" strokeDasharray="3 4" strokeWidth="1" /> : null}</g>;
+          });
+          const crest = [0.125, 0.625], trough = [0.375, 0.875];
+          return <g><rect x={20} y="150" width={L} height="42" fill="#b86a5a" />{bands}
+            {amp > 8 ? crest.map((u, i) => <g key={i}><path d={`M${X(u) - 14},${by(0, u) + 5} L${X(u)},${by(0, u) - 4} L${X(u) + 14},${by(0, u) + 5} Z`} fill="#fff" opacity={amp > 14 ? 0.95 : 0.6} /><text x={X(u)} y={by(0, u) - 8} fontSize="8.5" fill="#33291a" textAnchor="middle" fontWeight="700" stroke="#fff" strokeWidth="2.6" paintOrder="stroke">تاقدیس</text></g>) : null}
+            {amp > 8 ? trough.map((u, i) => <text key={i} x={X(u)} y={by(0, u) + 15} fontSize="8.5" fill="#fff" textAnchor="middle" fontWeight="700" stroke="#4a3a28" strokeWidth="2.6" paintOrder="stroke">ناودیس</text>) : null}
+            {[0.04, 0.25, 0.46, 0.7, 0.9].map((u, i) => <g key={i} transform={`translate(${X(u)},${by(0, u) - 1})`}><path d="M0,0 L0,-7" stroke="#4a3a28" strokeWidth="1.4" /><circle cx="0" cy="-10" r="4.5" fill="#3f8a46" /></g>)}</g>;
+        })()}
+        <rect x="2" y="84" width="18" height="108" fill="#6c7a86" stroke="#3e4a55" strokeWidth="1.4" /><rect x={20 + L} y="84" width="18" height="108" fill="#6c7a86" stroke="#3e4a55" strokeWidth="1.4" />
+        <g fill="#d63a2a" stroke="#7a1d12" strokeWidth="1"><path d="M8,124 L14,124 L14,120 L22,128 L14,136 L14,132 L8,132 Z" transform="translate(2,0)" /><path d={`M${48 + L},124 L${42 + L},124 L${42 + L},120 L${34 + L},128 L${42 + L},136 L${42 + L},132 L${48 + L},132 Z`} transform="translate(-2,0)" /></g>
+        <VlabPill x="160" y="14" text={`طول لایه‌ها: ${VLAB_FA_DIGITS(280)} ← ${VLAB_FA_DIGITS(Math.round(L))}`} size={9.5} fill="#ffffff" color="#33291a" />
+        <VlabPill x="160" y="190" text="لایه‌های رسوبی (از جوان در بالا تا کهن در پایین)" size={8} fill="#fff6e0" color="#4a3a28" />
       </svg>
       <div className="vlab-controls"><div className="vlab-ctrl-col" style={{ flex: 1 }}>
         <label className="vlab-ctrl-label">فشار از دو طرف: {VLAB_FA_DIGITS(sq)}٪</label>

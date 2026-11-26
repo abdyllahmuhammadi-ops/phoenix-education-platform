@@ -22641,6 +22641,49 @@ function VlabMeterRow({ meters, height }) {
 /* ============================================================
    ققنوس — لغزنده + کادر عددی (دانش‌آموز می‌تواند عدد دقیق را تایپ کند؛ تصویر و فرمول همان عدد را نشان می‌دهند)
    ============================================================ */
+/* ===== کادربندی خودکار برچسب‌های SVG آزمایشگاه: اگر نوشته‌ای از لبه‌ی تصویر بیرون بزند، به‌اندازه‌ی لازم به داخل می‌آید ===== */
+function VlabTextFit({ children }) {
+  const ref = React.useRef(null);
+  useEffect(() => {
+    const fit = () => {
+      const root = ref.current;
+      if (!root) return;
+      root.querySelectorAll("svg").forEach((svg) => {
+        const vb = svg.viewBox && svg.viewBox.baseVal;
+        const R = svg.getBoundingClientRect();
+        if (!vb || !vb.width || R.width < 150) return;
+        const k = R.width / vb.width;
+        svg.querySelectorAll("text").forEach((t) => {
+          if (t.dataset.fitDx !== undefined) {
+            if (t.dataset.fitBase) t.setAttribute("transform", t.dataset.fitBase); else t.removeAttribute("transform");
+            delete t.dataset.fitDx;
+          }
+          if (!t.textContent.trim() || t.hasAttribute("transform")) return;
+          const r = t.getBoundingClientRect();
+          if (!r.width) return;
+          let dx = 0, dy = 0;
+          if (r.left < R.left + 2) dx = R.left + 2 - r.left;
+          else if (r.right > R.right - 2) dx = R.right - 2 - r.right;
+          if (r.top < R.top + 1) dy = R.top + 1 - r.top;
+          else if (r.bottom > R.bottom - 1) dy = R.bottom - 1 - r.bottom;
+          if ((dx || dy) && Math.abs(dx) < 90 * k && Math.abs(dy) < 30 * k && r.width < R.width - 6) {
+            const m = t.getScreenCTM();
+            const sx = m && m.a ? Math.abs(m.a) : k, sy = m && m.d ? Math.abs(m.d) : k;
+            const lx = m && m.a < 0 ? -dx / sx : dx / sx, ly = m && m.d < 0 ? -dy / sy : dy / sy;
+            t.dataset.fitBase = t.getAttribute("transform") || "";
+            t.dataset.fitDx = String(dx);
+            t.setAttribute("transform", "translate(" + lx.toFixed(1) + "," + ly.toFixed(1) + ")");
+          }
+        });
+      });
+    };
+    fit();
+    const id = setInterval(fit, 250);
+    return () => clearInterval(id);
+  }, []);
+  return <div ref={ref}>{children}</div>;
+}
+
 function VlabRange({ min, max, step, value, onChange, style, ...rest }) {
   const mn = +min, mx = +max;
   const explicitStep = step !== undefined && step !== null && step !== "";
@@ -36204,7 +36247,7 @@ function VlabInscribedAngleExperiment({ onReading }) {
   const pt = (d) => [CX + R * Math.cos(rad(d)), CY - R * Math.sin(rad(d))];
   const aD = 90 + m / 2, bD = 90 - m / 2;
   const A = pt(aD), B = pt(bD), P = pt(p), O = [CX, CY];
-  const ang = (V, U, W) => { const a = [U[0] - V[0], U[1] - V[1]], b = [W[0] - V[0], W[1] - V[1]]; return (Math.acos((a[0] * b[0] + a[1] * b[1]) / (Math.hypot(...a) * Math.hypot(...b))) * 180) / Math.PI; };
+  const ang = (V, U, W) => { const a = [U[0] - V[0], U[1] - V[1]], b = [W[0] - V[0], W[1] - V[1]]; const den = Math.hypot(...a) * Math.hypot(...b); if (!den) return 0; return (Math.acos(Math.max(-1, Math.min(1, (a[0] * b[0] + a[1] * b[1]) / den))) * 180) / Math.PI; };
   const norm = (x) => ((x % 360) + 360) % 360;
   const onArc = norm(p - bD) < m;
   const insc = ang(P, A, B);
@@ -36263,7 +36306,8 @@ function VlabGeoTransformExperiment({ onReading }) {
     return [q[0] * k, q[1] * k];
   };
   const out = tri.map(img);
-  const S = 20, CX = 120, CY = 120;
+  const mAbs = Math.max(5, ...tri.concat(out).map((q) => Math.max(Math.abs(q[0]), Math.abs(q[1]))));
+  const S = Math.min(20, 100 / mAbs), CX = 120, CY = 120;
   const X = (v) => CX + v * S, Y = (v) => CY - v * S;
   const poly = (pts) => pts.map((q) => `${X(q[0]).toFixed(1)},${Y(q[1]).toFixed(1)}`).join(" ");
   const fa = (v, d = 2) => vlabMFa(v, Number.isInteger(Math.round(v * 100) / 100) ? 0 : d);
@@ -36274,8 +36318,8 @@ function VlabGeoTransformExperiment({ onReading }) {
   return (
     <div className="vlab-exp">
       <svg viewBox="0 0 320 196" className="vlab-svg" style={{ background: "#03060f", borderRadius: "10px" }}>
-        {Array.from({ length: 17 }).map((_, i) => (<line key={"v" + i} x1={CX + (i - 6) * S} y1="0" x2={CX + (i - 6) * S} y2="196" stroke={i === 6 ? "#6a7aa8" : "#141c36"} strokeWidth="1" />))}
-        {Array.from({ length: 10 }).map((_, i) => (<line key={"h" + i} x1="0" y1={CY + (i - 6) * S} x2="320" y2={CY + (i - 6) * S} stroke={i === 6 ? "#6a7aa8" : "#141c36"} strokeWidth="1" />))}
+        {Array.from({ length: 41 }).map((_, i) => (<line key={"v" + i} x1={CX + (i - 20) * S} y1="0" x2={CX + (i - 20) * S} y2="196" stroke={i === 20 ? "#6a7aa8" : "#141c36"} strokeWidth="1" />))}
+        {Array.from({ length: 41 }).map((_, i) => (<line key={"h" + i} x1="0" y1={CY + (i - 20) * S} x2="320" y2={CY + (i - 20) * S} stroke={i === 20 ? "#6a7aa8" : "#141c36"} strokeWidth="1" />))}
         {mode === "ref" && ax === "d" ? <line x1={X(-4)} y1={Y(-4)} x2={X(4)} y2={Y(4)} stroke="#ff6b6b" strokeWidth="1.2" strokeDasharray="4 3" /> : null}
         <polygon points={poly(tri)} fill="#5bb8ff" fillOpacity="0.35" stroke="#5bb8ff" strokeWidth="1.8" />
         <polygon points={poly(out)} fill="#ff9d1c" fillOpacity="0.35" stroke="#ff9d1c" strokeWidth="1.8" />
@@ -38356,7 +38400,9 @@ function VlabPositionTimeExperiment({ onReading }) {
   const xAt = (tt) => tt <= 4 ? x0 + v1 * tt : tt <= 6 ? x0 + v1 * 4 : x0 + v1 * 4 + v3 * (tt - 6);
   const seg = t <= 4 ? 1 : t <= 6 ? 2 : 3;
   const vNow = seg === 1 ? v1 : seg === 2 ? 0 : v3;
-  const GX = 24, GW = 270, GY = 20, GH = 100, xmax = 18, xmin = -6;
+  const GX = 24, GW = 270, GY = 20, GH = 100;
+  const xs4 = [xAt(0), xAt(4), xAt(6), xAt(10), 0];
+  const xmax = Math.max(18, Math.ceil(Math.max(...xs4) / 2) * 2 + 2), xmin = Math.min(-6, Math.floor(Math.min(...xs4) / 2) * 2 - 2);
   const gx = (tt) => GX + (tt / 10) * GW, gy = (x) => GY + GH - ((x - xmin) / (xmax - xmin)) * GH;
   const line = [[0, xAt(0)], [4, xAt(4)], [6, xAt(6)], [10, xAt(10)]].map((p, i) => (i ? "L" : "M") + gx(p[0]) + "," + gy(p[1])).join("");
   const rx = (x) => 20 + ((x - xmin) / (xmax - xmin)) * 280;
@@ -39276,7 +39322,7 @@ function VlabShadowHeightExperiment({ onReading }) {
   const h = 1;
   const rad = (a) => (a * Math.PI) / 180;
   const sH = H / Math.tan(rad(sun)), sh = h / Math.tan(rad(sun));
-  const sc = Math.min(14, 150 / sH);
+  const sc = Math.min(14, 150 / sH, 100 / H);
   const G = 138;
   const fa = (v, d = 1) => vlabMFa(v, d);
   return (
@@ -44849,7 +44895,7 @@ function StudentVirtualLabView({ onBack, grade, studentCode, schoolCode }) {
               <button type="button" className="vlab-tb-btn" onClick={() => { try { window.print(); } catch (e) {} }}>🖨 برگه‌ی فعالیت (چاپ)</button>
             </div>
             <div ref={labBoxRef}>
-            {ActiveComponent && <ActiveComponent key={resetKey} onReading={setReading} />}
+            {ActiveComponent && <VlabTextFit key={resetKey}><ActiveComponent onReading={setReading} /></VlabTextFit>}
             </div>
             {ActiveComponent && VLAB_EVERYDAY[activeId] && <VlabEverydayCard title={VLAB_EVERYDAY[activeId].title} text={VLAB_EVERYDAY[activeId].text}>{VLAB_EVERYDAY[activeId].art}</VlabEverydayCard>}
 

@@ -45125,26 +45125,93 @@ function VlabDayNightExperiment({ onReading }) {
 function VlabCeleryDyeExperiment({ onReading }) {
   const [hr, setHr] = useState(0);
   const [env, setEnv] = useState("room");
+  const [play, setPlay] = useState(false);
   const speed = env === "sun" ? 1.6 : env === "dark" ? 0.6 : 1;
   const h = vlabClamp((hr / 24) * speed, 0, 1);
-  const col = "#d81b60";
-  useEffect(() => { if (onReading) onReading(`${hr} ساعت (${env}) → رنگ تا ${(h * 100).toFixed(0)}٪ ساقه بالا رفته`); /* eslint-disable-next-line */ }, [hr, env]);
+  const hrI = Math.round(hr);
+  useEffect(() => {
+    if (!play) return;
+    const id = setInterval(() => setHr((x) => { const n = x + 0.12; if (n >= 24) { setPlay(false); return 24; } return n; }), 80);
+    return () => clearInterval(id);
+  }, [play]);
+  useEffect(() => { if (onReading) onReading(`${hrI} ساعت (${env}) → رنگ تا ${(h * 100).toFixed(0)}٪ ساقه بالا رفته`); /* eslint-disable-next-line */ }, [hrI, env]);
+  const dye = "#1e6fe0", yb = 206, yt = 78, H = yb - yt;
+  const lx = (y, f) => { const t = (yb - y) / H; const xb = 118 + 24 * f, xt = 124 + 12 * f; return xb + (xt - xb) * t; };
+  const yH = (k) => yb - H * vlabClamp(h * (0.8 + 0.1 * k), 0, 1);
+  const lobed = "M 0,0 C -9,-6 -14,-16 -9,-23 C -6,-27 -4,-23 -2,-29 C -1,-32 1,-32 2,-29 C 4,-23 6,-27 9,-23 C 14,-16 9,-6 0,0 Z";
+  const leafTint = vlabClamp((h - 0.7) / 0.3, 0, 1) * 0.55;
+  const bg = env === "sun" ? ["#fff3c4", "#ffe9a0"] : env === "dark" ? ["#aebbd6", "#8fa0c4"] : ["#f6f0e2", "#ece3cf"];
+  const vapDur = env === "sun" ? 1.5 : env === "dark" ? 4.2 : 2.6;
+  const pct = Math.round(h * 100);
   return (
     <div className="vlab-exp">
-      <svg viewBox="0 0 320 200" className="vlab-svg" style={{ direction: "ltr", background: "#0b1330" }}>
-        <rect width="320" height="200" rx="12" fill="#f3efe6" />
-        <path d="M 110,170 L 118,196 L 202,196 L 210,170 Z" fill="#cde9ff" stroke="#8fa3d9" /><rect x="112" y={170 + 4} width="96" height="22" fill={col} opacity="0.6" />
-        <rect x="150" y="30" width="20" height="150" rx="8" fill="#9ccc65" stroke="#4a7c28" strokeWidth="2" />
-        <rect x="152" y={176 - 142 * h} width="16" height={142 * h} rx="6" fill={col} opacity="0.85" />
-        {[0, 1, 2].map((i) => <ellipse key={i} cx={i === 1 ? 160 : i === 0 ? 132 : 188} cy={i === 1 ? 22 : 36} rx="22" ry="11" fill={h > 0.85 ? "#e0558a" : "#7cb342"} stroke="#3f6b1c" transform={`rotate(${(i - 1) * 22} ${i === 1 ? 160 : i === 0 ? 132 : 188} ${i === 1 ? 22 : 36})`} />)}
-        <text x="160" y="16" fontSize="0">.</text>
-        <text x="260" y="70" fontSize="10" fill="#0b1f4a" textAnchor="middle" fontWeight="700">رنگ تا {VLAB_FA_DIGITS(Math.round(h * 100))}٪ بالا آمد</text>
-        <text x="60" y="110" fontSize="26" textAnchor="middle">{env === "sun" ? "☀️" : env === "dark" ? "🌙" : "🏠"}</text>
+      <svg viewBox="0 0 320 232" className="vlab-svg" style={{ direction: "ltr", background: bg[0] }}>
+        <defs>
+          <linearGradient id="cdBg" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stopColor={bg[0]} /><stop offset="1" stopColor={bg[1]} /></linearGradient>
+          <linearGradient id="cdStalk" x1="0" y1="0" x2="1" y2="0"><stop offset="0" stopColor="#b9dd8a" /><stop offset="0.5" stopColor="#dff0b8" /><stop offset="1" stopColor="#a5cf72" /></linearGradient>
+          <linearGradient id="cdWater" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stopColor="#4a97f5" /><stop offset="1" stopColor="#1558b8" /></linearGradient>
+          <linearGradient id="cdLeaf" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stopColor="#5fae3c" /><stop offset="1" stopColor="#3f8a28" /></linearGradient>
+          <clipPath id="cdClip"><path d={`M 118,${yb} L 124,${yt} Q 130,${yt - 8} 136,${yt} L 142,${yb} Z`} /></clipPath>
+        </defs>
+        <rect width="320" height="232" rx="12" fill="url(#cdBg)" />
+        <rect y="218" width="320" height="14" fill="#b88a55" opacity="0.55" />
+        {/* نماد محیط */}
+        {env === "sun" && <g><circle cx="276" cy="34" r="30" fill="#ffd23f" opacity="0.3" /><circle cx="276" cy="34" r="16" fill="#ffc928" />{Array.from({ length: 10 }, (_, i) => { const a = (i * Math.PI) / 5; return <line key={i} x1={276 + Math.cos(a) * 21} y1={34 + Math.sin(a) * 21} x2={276 + Math.cos(a) * 29} y2={34 + Math.sin(a) * 29} stroke="#ffb400" strokeWidth="2.6" strokeLinecap="round" />; })}</g>}
+        {env === "dark" && <g><circle cx="276" cy="34" r="15" fill="#f5f0d0" /><circle cx="282" cy="30" r="13" fill="#8fa0c4" />{[[240, 20], [300, 60], [252, 56], [230, 40]].map((p, i) => <circle key={i} cx={p[0]} cy={p[1]} r="1.6" fill="#fff" />)}</g>}
+        {env === "room" && <g><rect x="248" y="12" width="56" height="46" rx="4" fill="#cfe9ff" stroke="#9a7b4f" strokeWidth="3" /><line x1="276" y1="12" x2="276" y2="58" stroke="#9a7b4f" strokeWidth="2" /><line x1="248" y1="35" x2="304" y2="35" stroke="#9a7b4f" strokeWidth="2" /></g>}
+        {/* ساقه */}
+        <path d={`M 118,${yb} L 124,${yt} Q 130,${yt - 8} 136,${yt} L 142,${yb} Z`} fill="url(#cdStalk)" stroke="#6f9e3f" strokeWidth="1.6" />
+        {[0.22, 0.5, 0.78].map((f, i) => <line key={i} x1={lx(yb, f)} y1={yb} x2={lx(yt, f)} y2={yt} stroke="#8db85a" strokeWidth="1.2" />)}
+        <g clipPath="url(#cdClip)"><rect x="110" y={yb - H * h} width="40" height={H * h + 4} fill={dye} opacity="0.62" /></g>
+        {[0.12, 0.36, 0.64, 0.88].map((f, i) => <line key={i} x1={lx(yb, f)} y1={yb} x2={lx(yH(i), f)} y2={yH(i)} stroke={dye} strokeWidth="2.4" strokeLinecap="round" />)}
+        {/* برگ‌ها */}
+        {[[-58, 0.95, 20], [-32, 1.15, 34], [0, 1.35, 46], [32, 1.15, 34], [58, 0.95, 20]].map((l, i) => (
+          <g key={i} transform={`translate(130,${yt - 4}) rotate(${l[0]}) scale(0.85)`}>
+            <line x1="0" y1="0" x2="0" y2={-l[2] * 0.5} stroke="#6f9e3f" strokeWidth="2" />
+            <g transform={`translate(0,${-l[2] * 0.5}) scale(${l[1]})`}>
+              <path d={lobed} fill="url(#cdLeaf)" stroke="#2f6b1c" strokeWidth="1" />
+              <path d={lobed} fill={dye} opacity={leafTint} />
+              <line x1="0" y1="0" x2="0" y2="-24" stroke="#2f6b1c" strokeWidth="0.8" opacity="0.7" />
+            </g>
+          </g>
+        ))}
+        {/* تبخیر از برگ */}
+        {[0, 1, 2].map((i) => (
+          <circle key={i} cx={104 + i * 26} cy="40" r="3" fill="#fff" opacity="0">
+            <animate attributeName="cy" values="48;18" dur={`${vapDur}s`} begin={`${i * 0.5}s`} repeatCount="indefinite" />
+            <animate attributeName="opacity" values="0;0.9;0" dur={`${vapDur}s`} begin={`${i * 0.5}s`} repeatCount="indefinite" />
+          </circle>
+        ))}
+        {/* لیوان و آب آبی */}
+        <path d="M 78,160 L 82,216 Q 130,226 178,216 L 182,160 Z" fill="url(#cdWater)" opacity="0.92" />
+        <ellipse cx="130" cy="160" rx="52" ry="5.5" fill="#7bb8ff" />
+        <rect x="118" y={yb - 8} width="24" height="10" fill="#8cc152" opacity="0" />
+        {[[96, 200, 2.6], [158, 190, 2.2], [112, 184, 1.8], [150, 208, 2.4]].map((b, i) => (
+          <circle key={i} cx={b[0]} cy={b[1]} r={b[2]} fill="#fff" opacity="0.55"><animate attributeName="cy" values={`${b[1]};${b[1] - 24}`} dur={`${2.4 + i * 0.5}s`} repeatCount="indefinite" /></circle>
+        ))}
+        <path d="M 76,152 L 82,218 Q 130,228 178,218 L 184,152" fill="none" stroke="#6f86b5" strokeWidth="2.4" strokeLinejoin="round" />
+        <path d="M 88,168 L 90,206" stroke="#fff" strokeWidth="3" strokeLinecap="round" opacity="0.55" />
+        <path d="M 74,152 Q 130,146 186,152" fill="none" stroke="#6f86b5" strokeWidth="2.4" strokeLinecap="round" />
+        {/* برچسب‌ها */}
+        <VlabPill x="250" y="166" text="آب رنگی (آبی)" size={10} fill="#d6e8ff" color="#123f8c" />
+        <VlabPill x="56" y="116" text="ساقه‌ی کرفس" size={10} fill="#e6f4cf" color="#2d5a12" />
+        <line x1="86" y1="116" x2="119" y2="116" stroke="#6f9e3f" strokeWidth="1.2" strokeDasharray="2 3" />
+        <VlabPill x="52" y="30" text="تبخیر از برگ" size={9.5} fill="#ffffff" color="#4a5a7a" />
+        {/* مقطع ساقه */}
+        <g transform="translate(250,98)">
+          <circle r="31" fill="#fff" opacity="0.7" />
+          <path d="M -24,6 Q -22,-18 0,-18 Q 22,-18 24,6 Q 20,14 12,8 Q 0,2 -12,8 Q -20,14 -24,6 Z" fill="url(#cdStalk)" stroke="#6f9e3f" strokeWidth="1.4" />
+          {Array.from({ length: 8 }, (_, i) => { const t = (i / 7) * Math.PI; const x = -18 * Math.cos(t), y = -4 - 8 * Math.sin(t); return <circle key={i} cx={x} cy={y} r="2.5" fill={h > 0.25 + i * 0.05 ? dye : "#cfe3a5"} stroke="#6f9e3f" strokeWidth="0.8" />; })}
+        </g>
+        <VlabPill x="250" y="144" text="مقطع ساقه (لوله‌ها)" size={9} fill="#ffffff" color="#4a5a7a" />
+        <VlabPill x="250" y="189" text={`رنگ تا ${VLAB_FA_DIGITS(pct)} درصد بالا آمد`} size={10} fill="#ffffff" color="#123f8c" />
+        <VlabPill x="250" y="211" text={`${VLAB_FA_DIGITS(hrI)} ساعت گذشته`} size={10} fill="#fff1d6" color="#8a3d00" />
       </svg>
       <div className="vlab-controls"><div className="vlab-ctrl-col" style={{ flex: 1 }}>
         <div className="vlab-num-row">{[["room", "اتاق"], ["sun", "آفتاب"], ["dark", "تاریکی"]].map((p) => <button key={p[0]} type="button" className={"vlab-num-btn" + (env === p[0] ? " active" : "")} onClick={() => setEnv(p[0])}>{p[1]}</button>)}</div>
-        <label className="vlab-ctrl-label">گذشت زمان (ساعت): {VLAB_FA_DIGITS(hr)}</label>
-        <VlabRange min={0} max={24} step={1} value={hr} onChange={(e) => setHr(+e.target.value)} />
+        <label className="vlab-ctrl-label">گذشت زمان (ساعت): {VLAB_FA_DIGITS(hrI)}</label>
+        <VlabRange min={0} max={24} step={1} value={hrI} onChange={(e) => { setPlay(false); setHr(+e.target.value); }} />
+        <div className="vlab-num-row"><button type="button" className="vlab-num-btn active" onClick={() => { if (hr >= 24) setHr(0); setPlay((p) => !p); }}>{play ? "⏸ ایست" : "▶ بگذار زمان بگذرد"}</button></div>
       </div></div>
       <div className="vlab-readout">
         گیاه آب را با <b>لوله‌های باریک</b> ساقه از ریشه به برگ‌ها می‌رساند. وقتی ساقه‌ی کرفس را در آب رنگی بگذاریم، رنگ در ساقه بالا می‌رود و مسیر آب را نشان می‌دهد. در آفتاب برگ‌ها بیشتر آب تبخیر می‌کنند و آب سریع‌تر بالا می‌رود.
@@ -45872,6 +45939,7 @@ function VlabRatioRecipeExperiment({ onReading }) {
 
 /* ---------- ج۸. مفصل‌ها و حرکت ---------- */
 const VLAB_K_JOINTS = [
+  { n: "ساختار مفصل (زانو)", t: "زانو", r: 140, max: 140, c: "#4fc3f7", lab: "خم کردن زانو" },
   { n: "شانه (کروی)", t: "کروی", r: 180, max: 180, c: "#ffb74d", lab: "بالا آوردن بازو" },
   { n: "آرنج (لولایی)", t: "لولایی", r: 145, max: 170, c: "#4fc3f7", lab: "خم کردن آرنج" },
   { n: "گردن (محوری)", t: "محوری", r: 90, max: 110, c: "#ba68c8", lab: "چرخاندن سر" },
@@ -45890,7 +45958,7 @@ function vlabZig(x1, y1, x2, y2, n, amp) {
   return d;
 }
 function VlabJointsExperiment({ onReading }) {
-  const [ji, setJi] = useState(1);
+  const [ji, setJi] = useState(0);
   const [ang, setAng] = useState(60);
   const J = VLAB_K_JOINTS[ji];
   const a = Math.min(ang, J.r);
@@ -45899,7 +45967,45 @@ function VlabJointsExperiment({ onReading }) {
   const rotPt = (c, x, y, deg) => { const t = (deg * Math.PI) / 180; const dx = x - c[0], dy = y - c[1]; return [c[0] + dx * Math.cos(t) - dy * Math.sin(t), c[1] + dx * Math.sin(t) + dy * Math.cos(t)]; };
   const bone = { fill: "url(#jtBone)", stroke: VLAB_BONE_S, strokeWidth: 1.8, strokeLinejoin: "round" };
   let scene = null, tags = null;
-  if (ji === 0) {
+  if (J.t === "زانو") {
+    const C = [160, 112], ak = a;
+    const al = ((180 - 0.5 * a) * Math.PI) / 180, Rp = 38;
+    const pp = [C[0] + Rp * Math.cos(al), C[1] + Rp * Math.sin(al)];
+    const U = [pp[0] + 14 * Math.cos(al + Math.PI / 2), pp[1] + 14 * Math.sin(al + Math.PI / 2)];
+    const Lw = [pp[0] + 14 * Math.cos(al - Math.PI / 2), pp[1] + 14 * Math.sin(al - Math.PI / 2)];
+    const T = rotPt(C, 141, 184, ak), A1 = rotPt(C, 150, 146, ak), P1 = rotPt(C, 172, 146, ak);
+    const tend = { stroke: "#efe0b0", strokeWidth: 5.5, strokeLinecap: "round", fill: "none" };
+    const tendO = { stroke: "#a98d3a", strokeWidth: 7.5, strokeLinecap: "round", fill: "none" };
+    const num = (x, y, n) => <g><circle cx={x} cy={y} r="8" fill="#26335f" stroke="#fff" strokeWidth="1.4" /><text x={x} y={y + 3.6} fontSize="10.5" fontWeight="700" fill="#fff" textAnchor="middle">{n}</text></g>;
+    scene = (
+      <g>
+        <path d="M 136,52 Q 112,100 118,146 Q 120,168 140,178 L 184,178 Q 204,168 206,146 Q 212,100 184,52 Z" fill="#ffe9a0" opacity="0.7" stroke="#c9a227" strokeWidth="1.6" strokeDasharray="4 3" />
+        <path d="M 148,2 L 172,2 L 176,58 Q 192,76 190,106 Q 188,140 160,142 Q 132,140 130,106 Q 128,76 144,58 Z" {...bone} />
+        <path d={`M ${C[0] + 30 * Math.cos(0.5)},${C[1] + 30 * Math.sin(0.5)} A 30,30 0 0 1 ${C[0] + 30 * Math.cos(Math.PI - 0.5)},${C[1] + 30 * Math.sin(Math.PI - 0.5)}`} fill="none" stroke="#7fd0f5" strokeWidth="5" strokeLinecap="round" />
+        <g transform={`rotate(${ak} ${C[0]} ${C[1]})`}>
+          <path d="M 128,150 L 192,150 Q 194,162 182,172 L 176,194 L 174,252 L 146,252 L 144,194 L 138,172 Q 126,162 128,150 Z" {...bone} />
+          <ellipse cx="141" cy="184" rx="4.5" ry="6" fill="url(#jtBone)" stroke={VLAB_BONE_S} strokeWidth="1.2" />
+          <line x1="130" y1="148" x2="190" y2="148" stroke="#7fd0f5" strokeWidth="4" strokeLinecap="round" />
+          <path d="M 128,147 L 152,147 Q 144,141 138,132 Q 134,127 130,127 Z" fill="#3aa6a0" stroke="#1f6b66" strokeWidth="1.2" />
+          <path d="M 192,147 L 168,147 Q 176,141 182,132 Q 186,127 190,127 Z" fill="#3aa6a0" stroke="#1f6b66" strokeWidth="1.2" />
+        </g>
+        <path d={`M ${A1[0].toFixed(1)},${A1[1].toFixed(1)} L 172,98`} stroke="#e07a1f" strokeWidth="3.4" strokeLinecap="round" />
+        <path d={`M ${P1[0].toFixed(1)},${P1[1].toFixed(1)} L 148,98`} stroke="#c0451a" strokeWidth="3.4" strokeLinecap="round" />
+        {/* عضله و تاندون */}
+        <path d={vlabMuscle([120, -6], [128, 50], 13)} fill="#d6453b" opacity="0.92" stroke="#7a1d16" strokeWidth="1.4" />
+        <path d={`M 128,48 L ${U[0].toFixed(1)},${U[1].toFixed(1)}`} {...tendO} /><path d={`M 128,48 L ${U[0].toFixed(1)},${U[1].toFixed(1)}`} {...tend} />
+        <g transform={`translate(${pp[0].toFixed(1)},${pp[1].toFixed(1)}) rotate(${(al * 180) / Math.PI - 180})`}>
+          <ellipse rx="8.5" ry="15" fill="url(#jtBone)" stroke={VLAB_BONE_S} strokeWidth="1.8" />
+          <path d="M 6,-9 Q 9,0 6,9" fill="none" stroke="#7fd0f5" strokeWidth="2.6" strokeLinecap="round" />
+        </g>
+        <path d={`M ${Lw[0].toFixed(1)},${Lw[1].toFixed(1)} L ${T[0].toFixed(1)},${T[1].toFixed(1)}`} {...tendO} /><path d={`M ${Lw[0].toFixed(1)},${Lw[1].toFixed(1)} L ${T[0].toFixed(1)},${T[1].toFixed(1)}`} {...tend} />
+        {num(104, 22, "۱")}{num(112, 66, "۲")}{num(pp[0] - 14, pp[1] - 12, "۳")}{num(160, 30, "۴")}{num(122, 156, "۵")}{num(200, 140, "۶")}{num(202, 84, "۷")}{num(164, 98, "۸")}{num(rotPt(C, 160, 222, ak)[0], rotPt(C, 160, 222, ak)[1], "۹")}
+      </g>
+    );
+    tags = <g>
+      <VlabPill x="262" y="22" text="مفصل لولایی (زانو)" size={10} fill="#d8f1ff" />
+    </g>;
+  } else if (J.t === "کروی") {
     const P = [160, 104], q = a / 180;
     const a1 = (130 * Math.PI) / 180, a2 = (250 * Math.PI) / 180, R = 21;
     const s1 = [P[0] + R * Math.cos(a1), P[1] + R * Math.sin(a1)], s2 = [P[0] + R * Math.cos(a2), P[1] + R * Math.sin(a2)];
@@ -45921,10 +46027,10 @@ function VlabJointsExperiment({ onReading }) {
     tags = <g>
       <line x1="66" y1="26" x2="130" y2="100" stroke="#6a7aa8" strokeWidth="1" strokeDasharray="2 3" /><VlabPill x="66" y="22" text="کاسه (کتف)" size={10} fill="#d8ecff" />
       <line x1="256" y1="26" x2="166" y2="96" stroke="#6a7aa8" strokeWidth="1" strokeDasharray="2 3" /><VlabPill x="256" y="22" text="گوی (بازو)" size={10} fill="#ffe3c0" />
-      <VlabPill x="238" y="196" text="در همه‌ی جهت‌ها می‌چرخد" size={9.5} fill="#fff1d6" color="#8a4b00" />
+      <VlabPill x="262" y="196" text="در همه‌ی جهت‌ها می‌چرخد" size={9.5} fill="#fff1d6" color="#8a4b00" />
     </g>;
     void q;
-  } else if (ji === 1) {
+  } else if (J.t === "لولایی") {
     const E = [160, 112];
     const bi = rotPt(E, 152, 138, a), tri = rotPt(E, 178, 104, a);
     scene = (
@@ -45942,12 +46048,12 @@ function VlabJointsExperiment({ onReading }) {
       </g>
     );
     tags = <g>
-      <VlabPill x="66" y="30" text="عضله‌ی جلو (دوسر)" size={9.5} fill="#ffd6d0" color="#8a1f12" />
-      <VlabPill x="256" y="30" text="عضله‌ی پشت (سه‌سر)" size={9.5} fill="#ffe0dc" color="#8a1f12" />
+      <VlabPill x="62" y="30" text="عضله‌ی جلو (دوسر)" size={9.5} fill="#ffd6d0" color="#8a1f12" />
+      <VlabPill x="266" y="30" text="عضله‌ی پشت (سه‌سر)" size={9.5} fill="#ffe0dc" color="#8a1f12" />
       <line x1="238" y1="100" x2="188" y2="112" stroke="#6a7aa8" strokeWidth="1" strokeDasharray="2 3" /><VlabPill x="262" y="98" text="مفصل لولایی" size={10} fill="#d8f1ff" />
       <VlabPill x="64" y="196" text="به عقب خم نمی‌شود" size={9.5} fill="#fff" color="#555" />
     </g>;
-  } else if (ji === 2) {
+  } else if (J.t === "محوری") {
     const C = [160, 110];
     scene = (
       <g>
@@ -46007,15 +46113,16 @@ function VlabJointsExperiment({ onReading }) {
         <VlabPill x="160" y="218" text={`${J.n} — ${locked && J.r > 0 ? "رسید به آخر حرکت" : J.r ? `اکنون ${VLAB_FA_DIGITS(Math.round(a))} درجه از حداکثر ${VLAB_FA_DIGITS(J.r)}` : "هیچ حرکتی ندارد"}`} size={10.5} fill={locked || !J.r ? "#ffd6d0" : "#ffffff"} color={locked || !J.r ? "#8a1f12" : "#26335f"} />
       </svg>
       <div className="vlab-controls"><div className="vlab-ctrl-col" style={{ flex: 1 }}>
-        <div className="vlab-num-row">{VLAB_K_JOINTS.map((x, i) => <button key={i} type="button" className={"vlab-num-btn" + (ji === i ? " active" : "")} onClick={() => { setJi(i); setAng(i === 3 ? 50 : 40); }}>{x.n}</button>)}</div>
+        <div className="vlab-num-row">{VLAB_K_JOINTS.map((x, i) => <button key={i} type="button" className={"vlab-num-btn" + (ji === i ? " active" : "")} onClick={() => { setJi(i); setAng(i === 4 ? 50 : 40); }}>{x.n}</button>)}</div>
         <label className="vlab-ctrl-label">{J.lab}: {VLAB_FA_DIGITS(ang)}°</label>
         <VlabRange min={0} max={J.max} step={1} value={Math.min(ang, J.max)} onChange={(e) => setAng(+e.target.value)} />
       </div></div>
       <div className="vlab-readout">
-        {ji === 0 && <>مفصل <b>کروی</b>: گوی سر استخوان بازو در کاسه‌ی کتف جا می‌گیرد؛ برای همین بازو می‌تواند دور تا دور بچرخد. غضروف آبی سطح را لغزنده می‌کند و عضله‌ی قرمز (دلتوئید) بازو را بالا می‌کشد.</>}
-        {ji === 1 && <>مفصل <b>لولایی</b> مثل لولای در فقط در یک جهت خم می‌شود. وقتی دوسر بازو (قرمز) کوتاه و پرحجم می‌شود، ساعد بالا می‌آید و سه‌سر کشیده می‌شود. زائده‌ی پشت ساعد (ساق زند زیرین) جلوی خم شدن به عقب را می‌گیرد.</>}
-        {ji === 2 && <>مفصل <b>محوری</b>: حلقه‌ی اطلس (اولین مهره) دور میخ مهره‌ی دوم می‌چرخد، مثل چرخیدن دَر دور یک میله. به همین دلیل می‌توانیم سرمان را به چپ و راست بچرخانیم، ولی بالا و پایین کردنش مفصل دیگری دارد.</>}
-        {ji === 3 && <>استخوان‌های جمجمه با <b>درزهای ثابت</b> (خط‌های دندانه‌دار قرمز) به هم قفل شده‌اند و تکان نمی‌خورند تا مغز را محافظت کنند. فقط فک پایین مفصل دارد و حرکت می‌کند.</>}
+        {J.t === "زانو" && <div className="vlab-legend-grid">{[["۱","عضله‌ی چهارسر ران","#d6453b"],["۲","تاندون (عضله را به کشکک وصل می‌کند)","#e9d9a6"],["۳","کشکک","#f6ecd2"],["۴","استخوان ران","#f6ecd2"],["۵","غضروف مفصلی (لغزنده، آبی)","#7fd0f5"],["۶","منیسک (کُوسن، سبزآبی)","#3aa6a0"],["۷","مایع مفصلی (زرد) در کپسول","#ffe08a"],["۸","رباط‌های صلیبی (استخوان را به استخوان وصل می‌کنند)","#e07a1f"],["۹","استخوان درشت‌نی","#f6ecd2"]].map((x) => <div key={x[0]} style={{ display: "flex", alignItems: "center", gap: 6, margin: "2px 0" }}><span style={{ width: 18, height: 18, borderRadius: 9, background: "#26335f", color: "#fff", fontSize: 11, display: "inline-flex", alignItems: "center", justifyContent: "center", flex: "none" }}>{x[0]}</span><span style={{ width: 10, height: 10, borderRadius: 3, background: x[2], border: "1px solid #8a7650", flex: "none" }} /><span>{x[1]}</span></div>)}<div style={{ marginTop: 6 }}>مفصل جایی است که دو استخوان به هم می‌رسند؛ <b>غضروف</b> لغزنده است، <b>مایع مفصلی</b> مثل روغن عمل می‌کند و <b>رباط</b> و <b>کپسول</b> مفصل را نگه می‌دارند. زانو یک مفصل <b>لولایی</b> است.</div></div>}
+        {J.t === "کروی" && <>مفصل <b>کروی</b>: گوی سر استخوان بازو در کاسه‌ی کتف جا می‌گیرد؛ برای همین بازو می‌تواند دور تا دور بچرخد. غضروف آبی سطح را لغزنده می‌کند و عضله‌ی قرمز (دلتوئید) بازو را بالا می‌کشد.</>}
+        {J.t === "لولایی" && <>مفصل <b>لولایی</b> مثل لولای در فقط در یک جهت خم می‌شود. وقتی دوسر بازو (قرمز) کوتاه و پرحجم می‌شود، ساعد بالا می‌آید و سه‌سر کشیده می‌شود. زائده‌ی پشت ساعد (ساق زند زیرین) جلوی خم شدن به عقب را می‌گیرد.</>}
+        {J.t === "محوری" && <>مفصل <b>محوری</b>: حلقه‌ی اطلس (اولین مهره) دور میخ مهره‌ی دوم می‌چرخد، مثل چرخیدن دَر دور یک میله. به همین دلیل می‌توانیم سرمان را به چپ و راست بچرخانیم، ولی بالا و پایین کردنش مفصل دیگری دارد.</>}
+        {J.t === "ثابت" && <>استخوان‌های جمجمه با <b>درزهای ثابت</b> (خط‌های دندانه‌دار قرمز) به هم قفل شده‌اند و تکان نمی‌خورند تا مغز را محافظت کنند. فقط فک پایین مفصل دارد و حرکت می‌کند.</>}
       </div>
     </div>
   );

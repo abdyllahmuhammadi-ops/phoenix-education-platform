@@ -7439,7 +7439,7 @@ function PsadFreeAccess() {
       <div style={{ marginTop: 12 }}>
         <p style={{ color: "#6b7399", fontSize: 12, lineHeight: 1.9, margin: "0 0 10px" }}>فقط شما این فهرست را می‌بینید. دانش‌آموز رایگان هیچ برچسبی نمی‌بیند و مرحله‌ی پرداخت برایش بی‌صدا رد می‌شود.</p>
         <div style={{ display: "flex", gap: 8, marginBottom: 10 }}>
-          {[["school", "مدرسه (کد ۸ رقمی)"], ["student", "دانش‌آموز (کد ملی)"]].map(([k, l]) => (
+          {[["school", "مدرسه (کد ۸ رقمی) — " + data.schools.length.toLocaleString("fa-IR") + " مورد"], ["student", "دانش‌آموز (کد ملی) — " + data.students.length.toLocaleString("fa-IR") + " مورد"]].map(([k, l]) => (
             <button key={k} type="button" onClick={() => { setTab(k); setMsg(""); }} style={{ flex: 1, padding: "8px 6px", borderRadius: 10, border: "1px solid " + (tab === k ? "#c8862b" : "rgba(28,37,64,0.15)"), background: tab === k ? "rgba(224,168,62,0.18)" : "transparent", fontWeight: 700, fontSize: 12.5, cursor: "pointer", fontFamily: "inherit", color: "#1c2540" }}>{l}</button>
           ))}
         </div>

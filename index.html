@@ -4810,7 +4810,7 @@ function StudentRegistration({ language, onBack, onContinue, prefillPhone }) {
                 <div className="psr-row">
                   <div className="psr-field">
                     <label className="psr-label">
-                      {t.schoolCode} {!isFreeApplicant && <span className="psr-star">*</span>}
+                      {t.schoolCode}
                     </label>
                     <input
                       className="psr-input psr-w-lg"
@@ -5542,7 +5542,7 @@ function StudentRegistration({ language, onBack, onContinue, prefillPhone }) {
               if (!guardianRelation) missing.push("نسبت ولی");
               if (!studentPhone.trim()) missing.push("شماره موبایل ولی/دانش‌آموز");
               if (!isFreeApplicant) {
-                if (!schoolCode.trim()) missing.push("کد مدرسه");
+                if (schoolCode.trim() && schoolCode.trim().length !== 8) missing.push("کد مدرسه (۸ رقم)"); // موقتاً اختیاری؛ بعداً دوباره اجباری شود
                 if (!schoolNameInput.trim()) missing.push("نام کامل مدرسه");
                 const schoolTypeEl = document.getElementById("psr-schooltype");
                 if (!schoolTypeEl || !schoolTypeEl.value) missing.push("نوع مدرسه");

@@ -18104,6 +18104,31 @@ function AutoWidthSearch({ value, onChange, placeholder }) {
   );
 }
 
+function StudentSchoolCodeReminder({ onSave }) {
+  const [v, setV] = useState("");
+  const [msg, setMsg] = useState("");
+  const [busy, setBusy] = useState(false);
+  const [done, setDone] = useState(false);
+  if (done) return <div style={{ margin: "10px 14px", padding: "10px 14px", background: "#e6f6ea", border: "1px solid #9ad2a8", borderRadius: 12, fontSize: 13, color: "#1d5a2e" }}>✅ کد مدرسه ثبت شد؛ از این پس معلم‌های مدرسه‌ات می‌توانند تو را در کلاس ببینند.</div>;
+  const go = async () => {
+    setBusy(true); setMsg("");
+    const r2 = onSave ? await onSave(v) : { ok: false, msg: "ذخیره ممکن نشد." };
+    setBusy(false);
+    if (r2 && r2.ok) setDone(true); else setMsg((r2 && r2.msg) || "ذخیره ممکن نشد؛ دوباره تلاش کن.");
+  };
+  return (
+    <div dir="rtl" style={{ margin: "10px 14px", padding: "12px 14px", background: "#fff6dc", border: "1.5px solid #e0a83e", borderRadius: 14, fontFamily: "'Vazirmatn', Tahoma, Arial, sans-serif" }}>
+      <div style={{ fontWeight: 800, fontSize: 13.5, color: "#7a4a00", marginBottom: 4 }}>🏫 کد مدرسه‌ات را ثبت کن</div>
+      <div style={{ fontSize: 12.5, color: "#6b5a2c", lineHeight: 1.9, marginBottom: 8 }}>برای این‌که معلم‌ها و مدیر مدرسه تو را در کلاس ببینند و نمره و پیام‌ها به دستت برسد، کد ۸ رقمی مدرسه‌ات را وارد کن.</div>
+      <div style={{ display: "flex", gap: 8, alignItems: "center" }}>
+        <input value={v} maxLength={8} inputMode="numeric" placeholder="۸ رقم" onChange={(e) => setV(e.target.value)} style={{ flex: 1, direction: "ltr", textAlign: "center", padding: "9px 10px", borderRadius: 10, border: "1px solid #d9c48a", fontSize: 15, fontFamily: "inherit" }} />
+        <button type="button" onClick={go} disabled={busy || !v.trim()} style={{ padding: "9px 16px", borderRadius: 10, border: "none", background: "#e0a83e", color: "#fff", fontWeight: 800, fontSize: 13.5, fontFamily: "inherit", cursor: "pointer", opacity: busy || !v.trim() ? 0.6 : 1 }}>ثبت</button>
+      </div>
+      {msg && <div style={{ color: "#b3261e", fontSize: 12, marginTop: 6 }}>{msg}</div>}
+    </div>
+  );
+}
+
 function StudentDashboard({
   studentName = "دانش آموز عزیز",
   schoolCode = "",
@@ -18122,6 +18147,7 @@ function StudentDashboard({
   onOpenTeachingLibrary,
   onOpenHomeworkHelper,
   onOpenSystemSuggestionBox,
+  onSaveSchoolCode,
   onLogout,
 }) {
   const [todaySchedule, setTodaySchedule] = useState([]);
@@ -18682,6 +18708,7 @@ function StudentDashboard({
         }
       `}</style>
 
+      {!schoolCode && <StudentSchoolCodeReminder onSave={onSaveSchoolCode} />}
       {/* ---------- هدر ---------- */}
       <div className="sdb-hero">
         {emberSeeds.map((e, i) => (
@@ -56894,6 +56921,40 @@ function PhoenixApp() {
     const info = studentAcademicInfo || {};
     return (
       <StudentDashboard
+        onSaveSchoolCode={async (rawCode) => {
+          const c = palNormDigits(rawCode);
+          if (c.length !== 8) return { ok: false, msg: "کد مدرسه باید دقیقاً ۸ رقم باشد." };
+          try {
+            const updated = { ...info, schoolCode: c };
+            if (info.className) {
+              const studentCode = info.studentCode;
+              const rosterKey = "gradebook-roster:" + c + ":" + skey(info.className);
+              let roster = [];
+              try { const raw = await authStorageGet(rosterKey, true); if (raw) roster = JSON.parse(raw); } catch (e) { roster = []; }
+              const entry = { firstName: info.firstName || "", lastName: info.lastName || "", studentCode, guardianPhone: info.guardianPhone || "", nationalCode: info.nationalCode || "", gender: info.gender || "", grade: info.grade, fieldOfStudy: info.fieldOfStudy };
+              const idx = roster.findIndex((q) => q.studentCode === studentCode);
+              if (idx >= 0) roster[idx] = entry; else roster.push(entry);
+              roster.sort((a, b) => (a.lastName || "").localeCompare(b.lastName || "", "fa"));
+              await authStorageSet(rosterKey, JSON.stringify(roster), true);
+              if (info.nationalCode && String(info.nationalCode).length === 10) await authStorageSet("student-by-national-code:" + info.nationalCode, JSON.stringify({ schoolCode: c, className: info.className, studentCode }), true);
+              const classesKey = "school-classes:" + c;
+              let classList = [];
+              try { const raw2 = await authStorageGet(classesKey, true); if (raw2) classList = JSON.parse(raw2); } catch (e) { classList = []; }
+              if (!classList.includes(info.className)) { classList.push(info.className); await authStorageSet(classesKey, JSON.stringify(classList), true); }
+            }
+            try {
+              let regSchools = [];
+              const rawReg = await authStorageGet("all-registered-schools", true);
+              if (rawReg) regSchools = JSON.parse(rawReg);
+              if (!regSchools.includes(c)) { regSchools.push(c); await authStorageSet("all-registered-schools", JSON.stringify(regSchools), true); }
+            } catch (e) {}
+            if (info.studentPhone) await saveLoginProfile(info.studentPhone, "student", updated);
+            setStudentAcademicInfo(updated);
+            return { ok: true };
+          } catch (e) {
+            return { ok: false, msg: "ذخیره ممکن نشد؛ دوباره تلاش کن." };
+          }
+        }}
         studentName={[info.firstName, info.lastName].filter(Boolean).join(" ") || "دانش آموز عزیز"}
         schoolCode={info.schoolCode || ""}
         className={info.className || ""}

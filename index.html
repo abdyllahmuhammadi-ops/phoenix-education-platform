@@ -13759,12 +13759,21 @@ function SystemAdminRegistration({ onBack, onContinue }) {
       return;
     }
     setIssueSaving(true);
+    // قفلِ مالکِ سامانه: فقط یک مدیر سامانه — نفر اول ثبت می‌شود و بعد از آن هیچ شماره‌ی دیگری نمی‌تواند ثبت‌نام کند
+    let owner = null;
+    try { const rawOwner = await authStorageGet("system-admin-owner", true); if (rawOwner) owner = JSON.parse(rawOwner); } catch (e) { owner = null; }
+    if (owner && owner.mobile && owner.mobile !== mobile) {
+      setIssueSaving(false);
+      setIssueError("مدیر سامانه قبلاً ثبت شده است؛ ثبت‌نام مدیر سامانه‌ی دوم ممکن نیست.");
+      return;
+    }
     const codeSave = await authStorageSet("login-code:" + mobile, code, true);
     if (!codeSave.ok) {
       setIssueSaving(false);
       setIssueError("ذخیره‌ی رمز ورود ناموفق بود. لطفاً دوباره روی همین دکمه بزنید — اطلاعات فرم شما حفظ شده است.");
       return;
     }
+    if (!owner) await authStorageSet("system-admin-owner", JSON.stringify({ mobile, at: Date.now() }), true);
     setIssueSaving(false);
     setLastCode(code);
     setIssued(true);

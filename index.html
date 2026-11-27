@@ -7394,7 +7394,7 @@ function PsadFreeAccess() {
   const [text, setText] = useState("");
   const [until, setUntil] = useState("1406/06/30");
   const [msg, setMsg] = useState("");
-  useEffect(() => { (async () => { if (await waitForStorage()) setData(await phoenixFreeLoad()); })(); }, []);
+  useEffect(() => { (async () => { await waitForStorage(1500); setData(await phoenixFreeLoad()); })(); }, []);
   const len = tab === "school" ? 8 : 10;
   const add = async () => {
     const tokens = text.split(/[\s,،;؛]+/).map(palNormDigits).filter(Boolean);
@@ -7412,7 +7412,8 @@ function PsadFreeAccess() {
       if (back[0] !== pr[0] || back[1] !== pr[1] || back[2] !== pr[2]) { setMsg("این تاریخ شمسی وجود ندارد؛ روز و ماه را بررسی کنید."); return; }
       untilTs = dt.getTime();
     }
-    const next = { schools: [...data.schools], students: [...data.students] };
+    const cur = await phoenixFreeLoad(); // همیشه از آخرین ذخیره شروع می‌کنیم تا چیزی پاک نشود
+    const next = { schools: [...cur.schools], students: [...cur.students] };
     const key = tab === "school" ? "schools" : "students", f = tab === "school" ? "code" : "nid";
     for (const g of good) {
       const i = next[key].findIndex((x) => x[f] === g);
@@ -7502,10 +7503,9 @@ function TuitionPaymentStep({ academicInfo, onBack, onFinish }) {
     let alive = true;
     (async () => {
       try {
-        if (await waitForStorage()) {
-          const fr = await phoenixIsFree(academicInfo && academicInfo.nationalCode, academicInfo && academicInfo.schoolCode);
-          if (alive && fr) { setIsFree(true); handlePay(true); }
-        }
+        await waitForStorage(1500);
+        const fr = await phoenixIsFree(academicInfo && academicInfo.nationalCode, academicInfo && academicInfo.schoolCode);
+        if (alive && fr) { setIsFree(true); handlePay(true); }
       } catch (e) {}
       if (alive) setFreeChecked(true);
     })();

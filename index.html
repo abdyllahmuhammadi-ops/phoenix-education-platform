@@ -7394,7 +7394,15 @@ function PsadFreeAccess() {
   const [text, setText] = useState("");
   const [until, setUntil] = useState("1406/06/30");
   const [msg, setMsg] = useState("");
-  useEffect(() => { (async () => { await waitForStorage(1500); setData(await phoenixFreeLoad()); })(); }, []);
+  const [diag, setDiag] = useState("در حال بررسی ذخیره‌سازی…");
+  useEffect(() => { (async () => {
+    await waitForStorage(1500);
+    const d = await phoenixFreeLoad();
+    setData(d);
+    let ls = "ناموجود";
+    try { window.localStorage.setItem("phoenix_probe", "1"); window.localStorage.removeItem("phoenix_probe"); ls = "فعال"; } catch (e) { ls = "مسدود"; }
+    setDiag("نسخه ۱۵۹ | ذخیره‌ی سامانه: " + (typeof window !== "undefined" && window.storage ? "هست" : "نیست") + " | ذخیره‌ی مرورگر: " + ls + " | بارگذاری‌شده: " + d.schools.length + " مدرسه، " + d.students.length + " دانش‌آموز");
+  })(); }, []);
   const len = tab === "school" ? 8 : 10;
   const add = async () => {
     const tokens = text.split(/[\s,،;؛]+/).map(palNormDigits).filter(Boolean);
@@ -7451,6 +7459,7 @@ function PsadFreeAccess() {
           <button type="button" className="psad-query-btn" onClick={add} disabled={!text.trim()} style={{ marginRight: "auto" }}>افزودن</button>
         </div>
         {msg && <p style={{ fontSize: 12.5, color: "#2c6e3f", margin: "4px 0 8px" }}>{msg}</p>}
+        <p style={{ fontSize: 10.5, color: "#9aa0b8", margin: "2px 0 8px", direction: "rtl" }}>{diag}</p>
         {list.length === 0 ? <p className="psad-empty" style={{ padding: "12px 0" }}>هنوز موردی ثبت نشده است.</p> : (
           <div style={{ maxHeight: 240, overflowY: "auto", display: "flex", flexDirection: "column", gap: 6 }}>
             {list.map((x) => (

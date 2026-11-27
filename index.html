@@ -7401,7 +7401,7 @@ function PsadFreeAccess() {
     setData(d);
     let ls = "ناموجود";
     try { window.localStorage.setItem("phoenix_probe", "1"); window.localStorage.removeItem("phoenix_probe"); ls = "فعال"; } catch (e) { ls = "مسدود"; }
-    setDiag("نسخه ۱۵۹ | ذخیره‌ی سامانه: " + (typeof window !== "undefined" && window.storage ? "هست" : "نیست") + " | ذخیره‌ی مرورگر: " + ls + " | بارگذاری‌شده: " + d.schools.length + " مدرسه، " + d.students.length + " دانش‌آموز");
+    setDiag("نسخه ۱۶۱ | ذخیره‌ی سامانه: " + (typeof window !== "undefined" && window.storage ? "هست" : "نیست") + " | ذخیره‌ی مرورگر: " + ls + " | بارگذاری‌شده: " + d.schools.length + " مدرسه، " + d.students.length + " دانش‌آموز");
   })(); }, []);
   const len = tab === "school" ? 8 : 10;
   const add = async () => {
@@ -7412,7 +7412,7 @@ function PsadFreeAccess() {
     // تاریخ پایان به‌صورت شمسی (سال/ماه/روز) وارد می‌شود؛ پیش‌فرض ۳۰ شهریور ۱۴۰۶
     let untilTs = 0;
     if (until.trim()) {
-      const pr = palNormDigits(until).split(/[\/\-.]/).map((q) => parseInt(q, 10));
+      const pr = String(until).replace(/[۰-۹]/g, (d) => "۰۱۲۳۴۵۶۷۸۹".indexOf(d)).replace(/[٠-٩]/g, (d) => "٠١٢٣٤٥٦٧٨٩".indexOf(d)).trim().split(/[\/\-.]/).map((q) => parseInt(q, 10));
       if (pr.length !== 3 || pr.some((q) => !q) || pr[0] < 1300 || pr[0] > 1500 || pr[1] < 1 || pr[1] > 12 || pr[2] < 1 || pr[2] > 31) { setMsg("تاریخ پایان را شمسی و به شکل «۱۴۰۶/۰۶/۳۰» بنویسید (یا خالی بگذارید تا دائمی شود)."); return; }
       const [gy, gm, gd] = palJalaliToGregorian(pr[0], pr[1], pr[2]);
       const dt = new Date(gy, gm - 1, gd, 23, 59, 59);

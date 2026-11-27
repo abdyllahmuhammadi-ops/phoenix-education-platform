@@ -7369,6 +7369,18 @@ async function phoenixFreeLoad() {
   } catch (e) { return { schools: [], students: [] }; }
 }
 async function phoenixFreeSave(data) { return authStorageSet("free-access", JSON.stringify(data), true); }
+function palJalaliToGregorian(jy, jm, jd) {
+  jy += 1595;
+  let days = -355668 + 365 * jy + Math.floor(jy / 33) * 8 + Math.floor(((jy % 33) + 3) / 4) + jd + (jm < 7 ? (jm - 1) * 31 : (jm - 7) * 30 + 186);
+  let gy = 400 * Math.floor(days / 146097); days %= 146097;
+  if (days > 36524) { days -= 1; gy += 100 * Math.floor(days / 36524); days %= 36524; if (days >= 365) days++; }
+  gy += 4 * Math.floor(days / 1461); days %= 1461;
+  if (days > 365) { gy += Math.floor((days - 1) / 365); days = (days - 1) % 365; }
+  let gd = days + 1;
+  const sa = [0, 31, (gy % 4 === 0 && gy % 100 !== 0) || gy % 400 === 0 ? 29 : 28, 31, 30, 31, 30, 31, 31, 30, 31, 30, 31];
+  let gm = 0; while (gm < 13 && gd > sa[gm]) { gd -= sa[gm]; gm++; }
+  return [gy, gm, gd];
+}
 function palFreeActive(item) { return !item.until || item.until >= Date.now(); }
 async function phoenixIsFree(nationalCode, schoolCode) {
   const d = await phoenixFreeLoad();
@@ -7380,7 +7392,7 @@ function PsadFreeAccess() {
   const [data, setData] = useState({ schools: [], students: [] });
   const [tab, setTab] = useState("school");
   const [text, setText] = useState("");
-  const [until, setUntil] = useState("");
+  const [until, setUntil] = useState("1406/06/30");
   const [msg, setMsg] = useState("");
   useEffect(() => { (async () => { if (await waitForStorage()) setData(await phoenixFreeLoad()); })(); }, []);
   const len = tab === "school" ? 8 : 10;
@@ -7389,7 +7401,17 @@ function PsadFreeAccess() {
     const good = [...new Set(tokens.filter((t) => t.length === len))];
     const bad = tokens.length - good.length;
     if (!good.length) { setMsg("کد معتبر پیدا نشد؛ هر کد باید " + len.toLocaleString("fa-IR") + " رقم باشد."); return; }
-    const untilTs = until ? new Date(until + "T23:59:59").getTime() : 0;
+    // تاریخ پایان به‌صورت شمسی (سال/ماه/روز) وارد می‌شود؛ پیش‌فرض ۳۰ شهریور ۱۴۰۶
+    let untilTs = 0;
+    if (until.trim()) {
+      const pr = palNormDigits(until).split(/[\/\-.]/).map((q) => parseInt(q, 10));
+      if (pr.length !== 3 || pr.some((q) => !q) || pr[0] < 1300 || pr[0] > 1500 || pr[1] < 1 || pr[1] > 12 || pr[2] < 1 || pr[2] > 31) { setMsg("تاریخ پایان را شمسی و به شکل «۱۴۰۶/۰۶/۳۰» بنویسید (یا خالی بگذارید تا دائمی شود)."); return; }
+      const [gy, gm, gd] = palJalaliToGregorian(pr[0], pr[1], pr[2]);
+      const dt = new Date(gy, gm - 1, gd, 23, 59, 59);
+      const back = new Intl.DateTimeFormat("fa-IR-u-nu-latn").format(dt).split("/").map((q) => parseInt(q, 10));
+      if (back[0] !== pr[0] || back[1] !== pr[1] || back[2] !== pr[2]) { setMsg("این تاریخ شمسی وجود ندارد؛ روز و ماه را بررسی کنید."); return; }
+      untilTs = dt.getTime();
+    }
     const next = { schools: [...data.schools], students: [...data.students] };
     const key = tab === "school" ? "schools" : "students", f = tab === "school" ? "code" : "nid";
     for (const g of good) {
@@ -7423,8 +7445,8 @@ function PsadFreeAccess() {
         </div>
         <textarea rows={3} style={box} placeholder={tab === "school" ? "یک یا چند کد مدرسه — با فاصله، ویرگول یا خط جدید" : "یک یا چند کد ملی — با فاصله، ویرگول یا خط جدید"} value={text} onChange={(e) => setText(e.target.value)} />
         <div style={{ display: "flex", gap: 8, alignItems: "center", margin: "8px 0", flexWrap: "wrap" }}>
-          <label style={{ fontSize: 12, color: "#6b7399" }}>تاریخ پایان (اختیاری):</label>
-          <input type="date" value={until} onChange={(e) => setUntil(e.target.value)} style={{ ...box, width: "auto", padding: "6px 10px" }} />
+          <label style={{ fontSize: 12, color: "#6b7399" }}>تاریخ پایان شمسی (خالی = دائمی):</label>
+          <input type="text" inputMode="numeric" placeholder="1406/06/30" value={until} onChange={(e) => setUntil(e.target.value)} style={{ ...box, width: 120, padding: "6px 10px", textAlign: "center" }} />
           <button type="button" className="psad-query-btn" onClick={add} disabled={!text.trim()} style={{ marginRight: "auto" }}>افزودن</button>
         </div>
         {msg && <p style={{ fontSize: 12.5, color: "#2c6e3f", margin: "4px 0 8px" }}>{msg}</p>}

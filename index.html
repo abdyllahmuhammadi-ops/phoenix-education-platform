@@ -7401,7 +7401,7 @@ function PsadFreeAccess() {
     setData(d);
     let ls = "ناموجود";
     try { window.localStorage.setItem("phoenix_probe", "1"); window.localStorage.removeItem("phoenix_probe"); ls = "فعال"; } catch (e) { ls = "مسدود"; }
-    setDiag("نسخه ۱۶۱ | ذخیره‌ی سامانه: " + (typeof window !== "undefined" && window.storage ? "هست" : "نیست") + " | ذخیره‌ی مرورگر: " + ls + " | بارگذاری‌شده: " + d.schools.length + " مدرسه، " + d.students.length + " دانش‌آموز");
+    setDiag("نسخه ۱۶۲ | ذخیره‌ی سامانه: " + (typeof window !== "undefined" && window.storage ? "هست" : "نیست") + " | ذخیره‌ی مرورگر: " + ls + " | بارگذاری‌شده: " + d.schools.length + " مدرسه، " + d.students.length + " دانش‌آموز");
   })(); }, []);
   const len = tab === "school" ? 8 : 10;
   const add = async () => {
@@ -7438,7 +7438,7 @@ function PsadFreeAccess() {
     const next = { ...data, [key]: data[key].filter((x) => x[f] !== v) };
     await phoenixFreeSave(next); setData(next);
   };
-  const list = tab === "school" ? data.schools : data.students;
+  const list = [...(tab === "school" ? data.schools : data.students)].sort((x, y) => String(x[tab === "school" ? "code" : "nid"]).localeCompare(String(y[tab === "school" ? "code" : "nid"]), "en", { numeric: true })); // از کوچک به بزرگ
   const f = tab === "school" ? "code" : "nid";
   const fmt = (x) => (x.until ? "تا " + new Date(x.until).toLocaleDateString("fa-IR") : "دائمی") + (x.until && x.until < Date.now() ? " (منقضی)" : "");
   const box = { width: "100%", border: "1px solid rgba(28,37,64,0.18)", borderRadius: 10, padding: "9px 12px", fontFamily: "inherit", fontSize: 13, background: "#fff", direction: "ltr", textAlign: "left" };
